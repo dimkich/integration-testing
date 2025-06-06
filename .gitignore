@@ -7,6 +7,11 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
+.idea/
+.gradle
+.intellijPlatform
+integration-testing-idea-plugin/build
+.flattened-pom.xml
 # https://github.com/takari/maven-wrapper#usage-without-binary-jar
 .mvn/wrapper/maven-wrapper.jar
 

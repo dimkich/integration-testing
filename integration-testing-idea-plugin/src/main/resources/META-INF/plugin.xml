@@ -1,0 +1,41 @@
+<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+
+<idea-plugin>
+
+  <!-- Unique id for this plugin. Must stay constant for the life of the plugin. -->
+  <id>io.github.dimkich.integration.testing.idea-plugin</id>
+
+  <!-- Text to display as name on Settings | Plugin page -->
+  <name>Integration Testing</name>
+
+  <!-- Indicate this plugin can be loaded in all IntelliJ Platform-based products. -->
+  <depends>com.intellij.modules.platform</depends>
+  <!-- Product and plugin compatibility requirements -->
+  <depends>com.intellij.modules.java</depends>
+
+  <!-- Text to display as description on Settings | Plugin page -->
+  <description>
+    <![CDATA[
+      This plugin allow to control Dimkich Integration Tests.
+    ]]>
+  </description>
+  <change-notes>
+    <![CDATA[
+      <ul>
+        <li><b>0.1.0</b> First release.</li>
+      </ul>
+    ]]>
+  </change-notes>
+
+  <!-- Text to display as company information on Settings | Plugin page -->
+  <vendor url="https://github.com/dimkich/integration-testing">Dimkich</vendor>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="Integration Testing" secondary="true" icon="MyIcons.Logo" anchor="right"
+                factoryClass="io.github.dimkich.integration.testing.IntegrationTestsFactory"/>
+    <java.programPatcher implementation="io.github.dimkich.integration.testing.JvmArgumentsProgramPatcher"/>
+    <applicationService serviceImplementation="io.github.dimkich.integration.testing.ArgStorage"/>
+  </extensions>
+
+</idea-plugin>
