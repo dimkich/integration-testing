@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.xml;
+package io.github.dimkich.integration.testing.web;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.JsonParser;

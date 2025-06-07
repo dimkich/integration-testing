@@ -30,17 +30,11 @@ import io.github.dimkich.integration.testing.xml.polymorphic.PolymorphicUnwrappe
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.SpringHandlerInstantiator;
 import org.springframework.validation.FieldError;
-import org.springframework.web.client.RestClientResponseException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -49,7 +43,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Import({ObjectToLocationStorage.class, PolymorphicUnwrappedResolverBuilder.class})
 public class XmlConfig {
-    private final ConfigurableListableBeanFactory beanFactory;
     private final ObjectToLocationStorage objectToLocationStorage;
     @Setter(onMethod = @__({@Autowired, @Lazy}))
     private PolymorphicUnwrappedResolverBuilder resolverBuilder;
@@ -61,18 +54,13 @@ public class XmlConfig {
         jacksonModule.addSerializer(BigDecimal.class, new BigDecimalSerializer());
         jacksonModule.setMixInAnnotation(Throwable.class, ThrowableMixIn.class);
         jacksonModule.setMixInAnnotation(FieldError.class, FieldErrorMixIn.class);
-        jacksonModule.setMixInAnnotation(ResponseEntity.class, ResponseEntityMixIn.class);
-        jacksonModule.setMixInAnnotation(HttpStatusCode.class, ResponseEntityMixIn.HttpStatusMixIn.class);
-        jacksonModule.setMixInAnnotation(RestClientResponseException.class, ResponseEntityMixIn.RestClientResponseExceptionMixin.class);
-        jacksonModule.setMixInAnnotation(HttpMethod.class, HttpMethodMixIn.class);
 
         return new Module()
                 .addParentType(TestCaseInit.class)
                 .addSubTypes(EntriesObjectKeyObjectValue.class, EntriesStringKeyObjectValue.class,
                         MapStringKeyStringValue.class, MapStringKeyObjectValue.class, DateTimeInit.class,
                         MapStorageInit.class, TestDataStorageInit.class, BeanInit.class,
-                        TablesStorageSetup.class, TablesStorageInit.class, ResponseEntity.class, SpringErrorDto.class,
-                        HttpMethod.class)
+                        TablesStorageSetup.class, TablesStorageInit.class, SpringErrorDto.class)
                 .addJacksonModule(jacksonModule)
                 .addJacksonModule(new JavaTimeModule())
                 .addJacksonModule(new BeanAsAttributesModule(resolverBuilder))
@@ -99,12 +87,14 @@ public class XmlConfig {
         builder.defaultPrettyPrinter(printer);
 
         builder.setDefaultTyping(resolverBuilder);
-        builder.handlerInstantiator(new SpringHandlerInstantiator(beanFactory));
 
         SimpleFilterProvider filterProvider = new SimpleFilterProvider();
         for (Module module : modules) {
             module.getJacksonModules().forEach(builder::addModules);
             module.getJacksonFilters().forEach(f -> filterProvider.addFilter(f.getKey(), f.getValue()));
+            if (module.getHandlerInstantiator() != null) {
+                builder.handlerInstantiator(module.getHandlerInstantiator());
+            }
         }
         builder.filterProvider(filterProvider);
 

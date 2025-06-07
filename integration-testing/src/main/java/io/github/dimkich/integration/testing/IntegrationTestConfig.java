@@ -8,6 +8,7 @@ import io.github.dimkich.integration.testing.initialization.InitializationConfig
 import io.github.dimkich.integration.testing.openapi.OpenApiConfig;
 import io.github.dimkich.integration.testing.storage.StorageConfig;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletionConfig;
+import io.github.dimkich.integration.testing.web.WebConfig;
 import io.github.dimkich.integration.testing.xml.XmlConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,19 +25,7 @@ import org.springframework.web.context.WebApplicationContext;
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "integration.testing.enabled", havingValue = "true")
 @Import({DynamicTestBuilder.class, XmlConfig.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeService.class,
-        InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class, TestClockService.class})
+        InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class, TestClockService.class,
+        WebConfig.class})
 public class IntegrationTestConfig {
-
-    @Bean
-    MockMvcBuilderCustomizer portCustomizer() {
-        return builder -> builder.apply(new MockMvcConfigurer() {
-            @Override
-            public RequestPostProcessor beforeMockMvcCreated(ConfigurableMockMvcBuilder<?> builder, WebApplicationContext context) {
-                return request -> {
-                    request.setLocalPort(request.getServerPort());
-                    return request;
-                };
-            }
-        });
-    }
 }

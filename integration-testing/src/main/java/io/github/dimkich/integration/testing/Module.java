@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.databind.cfg.HandlerInstantiator;
 import com.fasterxml.jackson.databind.ser.PropertyFilter;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
@@ -17,6 +18,7 @@ public class Module {
     private final List<Pair<Class<?>, String>> aliases = new ArrayList<>();
     private final List<com.fasterxml.jackson.databind.Module> jacksonModules = new ArrayList<>();
     private final List<Pair<String, PropertyFilter>> jacksonFilters = new ArrayList<>();
+    private HandlerInstantiator handlerInstantiator;
 
     public Module addParentType(Class<?> type) {
         parentTypes.add(type);
@@ -52,6 +54,11 @@ public class Module {
 
     public Module addJacksonFilter(String id, PropertyFilter filter) {
         jacksonFilters.add(Pair.of(id, filter));
+        return this;
+    }
+
+    public Module setHandlerInstantiator(HandlerInstantiator handlerInstantiator) {
+        this.handlerInstantiator = handlerInstantiator;
         return this;
     }
 }
