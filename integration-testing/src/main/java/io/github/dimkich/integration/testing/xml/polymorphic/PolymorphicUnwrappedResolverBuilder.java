@@ -9,9 +9,10 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
 import com.fasterxml.jackson.dataformat.xml.XmlTypeResolverBuilder;
+import io.github.dimkich.integration.testing.Module;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -22,64 +23,33 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 public class PolymorphicUnwrappedResolverBuilder extends XmlTypeResolverBuilder {
+    private final List<Module> modules;
+
     private final Map<Class<?>, Set<NamedType>> parentToSubTypeMap = new HashMap<>();
     private final Map<String, NamedType> subTypes = new HashMap<>();
     @Getter
-    @Setter
     private String unwrappedTypeProperty;
 
-    @SneakyThrows
-    public static PolymorphicUnwrappedResolverBuilder createDefault() {
-        PolymorphicUnwrappedResolverBuilder typeResolverBuilder = new PolymorphicUnwrappedResolverBuilder();
-        typeResolverBuilder.init(JsonTypeInfo.Id.NAME, null);
-        typeResolverBuilder.inclusion(JsonTypeInfo.As.PROPERTY);
-        typeResolverBuilder.typeProperty("type");
-        typeResolverBuilder.setUnwrappedTypeProperty("utype");
-        typeResolverBuilder.addParentType(Object.class).addParentType(Throwable.class)
+    @PostConstruct
+    void init() throws ClassNotFoundException {
+        init(JsonTypeInfo.Id.NAME, null);
+        inclusion(JsonTypeInfo.As.PROPERTY);
+        typeProperty("type");
+        unwrappedTypeProperty = "utype";
+        addParentType(Object.class).addParentType(Throwable.class)
                 .addAlias(Class.forName("java.util.ImmutableCollections$ListN"), "arrayList")
                 .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class,
                         LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class);
-        return typeResolverBuilder;
-    }
-
-    public PolymorphicUnwrappedResolverBuilder addParentType(Class<?> parent) {
-        parentToSubTypeMap.computeIfAbsent(parent, p -> subTypes.values().stream()
-                .filter(n -> p.isAssignableFrom(n.getType()))
-                .collect(Collectors.toCollection(LinkedHashSet::new)));
-        return this;
-    }
-
-    public PolymorphicUnwrappedResolverBuilder addSubType(Class<?> subType) {
-        return addSubType(subType, subType.getSimpleName().substring(0, 1).toLowerCase() + subType.getSimpleName().substring(1));
-    }
-
-    public PolymorphicUnwrappedResolverBuilder addSubTypes(Class<?>... subType) {
-        Arrays.stream(subType).forEach(this::addSubType);
-        return this;
-    }
-
-    public PolymorphicUnwrappedResolverBuilder addSubType(Class<?> subType, String name) {
-        if (subTypes.containsKey(name)) {
-            throw new RuntimeException(String.format("SubType with name %s already added", name));
+        for (Module module : modules) {
+            module.getParentTypes().forEach(this::addParentType);
+            module.getSubTypesWithName().forEach(p -> this.addSubType(p.getKey(), p.getValue()));
+            module.getSubTypes().forEach(this::addSubTypes);
+            module.getAliases().forEach(p -> this.addAlias(p.getKey(), p.getValue()));
         }
-        NamedType namedType = new NamedType(subType, name);
-        subTypes.put(name, namedType);
-
-        parentToSubTypeMap.entrySet().stream()
-                .filter(e -> e.getKey().isAssignableFrom(subType))
-                .forEach(e -> e.getValue().add(namedType));
-        return this;
-    }
-
-    public PolymorphicUnwrappedResolverBuilder addAlias(Class<?> subType, String alias) {
-        NamedType namedType = new NamedType(subType, alias);
-        parentToSubTypeMap.entrySet().stream()
-                .filter(e -> e.getKey().isAssignableFrom(subType))
-                .forEach(e -> e.getValue().add(namedType));
-        return this;
     }
 
     public Set<String> getTypeAttributes() {
@@ -111,5 +81,42 @@ public class PolymorphicUnwrappedResolverBuilder extends XmlTypeResolverBuilder 
             return new PolymorphicAsPropertyTypeDeserializer(this, (AsPropertyTypeDeserializer) typeDeserializer, null);
         }
         return null;
+    }
+
+    private PolymorphicUnwrappedResolverBuilder addParentType(Class<?> parent) {
+        parentToSubTypeMap.computeIfAbsent(parent, p -> subTypes.values().stream()
+                .filter(n -> p.isAssignableFrom(n.getType()))
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
+        return this;
+    }
+
+    private PolymorphicUnwrappedResolverBuilder addSubType(Class<?> subType) {
+        return addSubType(subType, subType.getSimpleName().substring(0, 1).toLowerCase() + subType.getSimpleName().substring(1));
+    }
+
+    private PolymorphicUnwrappedResolverBuilder addSubTypes(Class<?>... subType) {
+        Arrays.stream(subType).forEach(this::addSubType);
+        return this;
+    }
+
+    private PolymorphicUnwrappedResolverBuilder addSubType(Class<?> subType, String name) {
+        if (subTypes.containsKey(name)) {
+            throw new RuntimeException(String.format("SubType with name %s already added", name));
+        }
+        NamedType namedType = new NamedType(subType, name);
+        subTypes.put(name, namedType);
+
+        parentToSubTypeMap.entrySet().stream()
+                .filter(e -> e.getKey().isAssignableFrom(subType))
+                .forEach(e -> e.getValue().add(namedType));
+        return this;
+    }
+
+    private PolymorphicUnwrappedResolverBuilder addAlias(Class<?> subType, String alias) {
+        NamedType namedType = new NamedType(subType, alias);
+        parentToSubTypeMap.entrySet().stream()
+                .filter(e -> e.getKey().isAssignableFrom(subType))
+                .forEach(e -> e.getValue().add(namedType));
+        return this;
     }
 }

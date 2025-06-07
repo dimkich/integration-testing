@@ -11,11 +11,17 @@ import java.util.List;
 
 @Getter
 public class Module {
+    private final List<Class<?>> parentTypes = new ArrayList<>();
     private final List<Pair<Class<?>, String>> subTypesWithName = new ArrayList<>();
     private final List<Class<?>> subTypes = new ArrayList<>();
     private final List<Pair<Class<?>, String>> aliases = new ArrayList<>();
     private final List<com.fasterxml.jackson.databind.Module> jacksonModules = new ArrayList<>();
     private final List<Pair<String, PropertyFilter>> jacksonFilters = new ArrayList<>();
+
+    public Module addParentType(Class<?> type) {
+        parentTypes.add(type);
+        return this;
+    }
 
     public Module addSubTypes(Class<?> subType, String name) {
         subTypesWithName.add(Pair.of(subType, name));

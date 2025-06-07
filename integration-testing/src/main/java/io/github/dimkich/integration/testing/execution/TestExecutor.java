@@ -31,6 +31,7 @@ public class TestExecutor {
     private final List<TestCaseConverter> testCaseConverters;
     private final List<AfterTestCase> afterTestCases;
     private final List<TestMessageSender> testMessageSenders;
+    private final TestCaseMapper testCaseMapper;
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private InitializationService initializationService;
     @Setter(onMethod_ = {@Autowired, @Lazy})
@@ -39,8 +40,6 @@ public class TestExecutor {
     private TestMessagePoller testMessagePoller;
     @Getter
     private TestCase testCase;
-    @Getter
-    private TestCaseMapper testCaseMapper;
 
     public void waitForStart() throws InterruptedException {
         if (running) {

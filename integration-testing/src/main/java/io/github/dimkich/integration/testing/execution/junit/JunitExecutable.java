@@ -19,7 +19,7 @@ import java.util.Objects;
 public class JunitExecutable implements Executable {
     private final TestExecutor testExecutor;
     private final Assertion assertion;
-    private TestCaseMapper testCaseMapper;
+    private final TestCaseMapper testCaseMapper;
     private TestCase testCase;
 
     @Override

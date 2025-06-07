@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
+import io.github.dimkich.integration.testing.Module;
 import io.github.dimkich.integration.testing.xml.attributes.BeanAsAttributes;
 import io.github.dimkich.integration.testing.xml.map.JsonMapKey;
 import io.github.dimkich.integration.testing.xml.token.XmlTokenBuffer;
@@ -17,6 +18,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,16 +31,17 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SpringBootTest(classes = {XmlConfig.class, XmlMapperTest.Config.class})
 class XmlMapperTest {
-    private final XmlMapper xmlMapper = (XmlMapper) ((XmlMapper) new XmlTestCaseMapperBuilder()
-            .addSubTypes(MapKeyNotWrapped.class, MapKeyWrapped.class,
-                    MapAttrNotWrapped.class, MapAttrWrapped.class, TypeTest.class)
-            .build()
-            .unwrap())
-            .disable(ToXmlGenerator.Feature.WRITE_XML_1_1)
-            .enable(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS)
-            .disable(SerializationFeature.INDENT_OUTPUT);
+    private final XmlMapper xmlMapper;
 
+    @Autowired
+    public XmlMapperTest(XmlTestCaseMapper xmlTestCaseMapper) {
+        xmlMapper = (XmlMapper) (xmlTestCaseMapper.unwrap())
+                .disable(ToXmlGenerator.Feature.WRITE_XML_1_1)
+                .enable(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS)
+                .disable(SerializationFeature.INDENT_OUTPUT);
+    }
 
     static Object[][] data() {
         return new Object[][]{
@@ -90,6 +96,15 @@ class XmlMapperTest {
         p = buffer.asParser();
         p.nextToken();
         assertEquals(o, p.readValueAs(o.getClass()));
+    }
+
+    @Configuration
+    static class Config {
+        @Bean
+        Module testModule() {
+            return new Module().addSubTypes(MapKeyNotWrapped.class, MapKeyWrapped.class,
+                    MapAttrNotWrapped.class, MapAttrWrapped.class, TypeTest.class);
+        }
     }
 
     @Data

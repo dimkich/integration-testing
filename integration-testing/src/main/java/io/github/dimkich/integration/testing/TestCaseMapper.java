@@ -3,6 +3,8 @@ package io.github.dimkich.integration.testing;
 import java.io.IOException;
 
 public interface TestCaseMapper {
+    void setPath(String path);
+
     String getFilePath();
 
     TestCase readAllTestCases() throws IOException;

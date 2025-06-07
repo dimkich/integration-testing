@@ -2,7 +2,8 @@ package io.github.dimkich.integration.testing.storage;
 
 import io.github.dimkich.integration.testing.TestCaseMapper;
 import io.github.dimkich.integration.testing.TestDataStorage;
-import lombok.Setter;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 
@@ -11,18 +12,21 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class TestDataStorages {
     private final Map<String, TestDataStorage> storageMap;
     private final ObjectsDifference objectsDifference;
-    @Setter
-    private TestCaseMapper testCaseMapper;
+    private final TestCaseMapper testCaseMapper;
+
     private Map<String, Map<Object, Object>> currentValue = new LinkedHashMap<>();
 
-    public TestDataStorages(Map<String, TestDataStorage> storageMap, ObjectsDifference objectsDifference) {
-        this.storageMap = storageMap.entrySet().stream()
+    @PostConstruct
+    void init() {
+        Map<String, TestDataStorage> map = storageMap.entrySet().stream()
                 .map(e -> Pair.of(e.getKey().startsWith("#") ? e.getKey().substring(1) : e.getKey(), e.getValue()))
                 .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (x, y) -> y, LinkedHashMap::new));
-        this.objectsDifference = objectsDifference;
+        storageMap.clear();
+        storageMap.putAll(map);
     }
 
     public <T extends TestDataStorage> T getTestDataStorage(String name, Class<T> cls) {

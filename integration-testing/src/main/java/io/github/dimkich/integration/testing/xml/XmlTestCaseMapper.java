@@ -7,6 +7,7 @@ import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestCaseMapper;
 import io.github.dimkich.integration.testing.util.TestUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import org.springframework.core.io.ClassPathResource;
 
@@ -16,12 +17,12 @@ import java.io.IOException;
 
 @RequiredArgsConstructor
 public class XmlTestCaseMapper implements TestCaseMapper {
+    private final static String fileHeader = "<!-- @" + "formatter:off -->";
     private final XmlMapper xmlMapper;
-    private final String path;
-    private final String fileHeader;
     private final ObjectToLocationStorage objectToLocationStorage;
-    private final Class<? extends TestCase> rootTestCaseClass;
 
+    @Setter
+    private String path;
     private Cloner cloner;
 
     @Override
@@ -32,7 +33,7 @@ public class XmlTestCaseMapper implements TestCaseMapper {
     public TestCase readAllTestCases() throws IOException {
         objectToLocationStorage.start();
         try {
-            return xmlMapper.readValue(new ClassPathResource(path).getInputStream(), rootTestCaseClass);
+            return xmlMapper.readValue(new ClassPathResource(path).getInputStream(), TestCase.class);
         } finally {
             objectToLocationStorage.end();
         }

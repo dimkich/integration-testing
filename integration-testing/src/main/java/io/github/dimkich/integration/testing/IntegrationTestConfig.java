@@ -8,6 +8,7 @@ import io.github.dimkich.integration.testing.initialization.InitializationConfig
 import io.github.dimkich.integration.testing.openapi.OpenApiConfig;
 import io.github.dimkich.integration.testing.storage.StorageConfig;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletionConfig;
+import io.github.dimkich.integration.testing.xml.XmlConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcBuilderCustomizer;
@@ -22,7 +23,7 @@ import org.springframework.web.context.WebApplicationContext;
 @Configuration
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "integration.testing.enabled", havingValue = "true")
-@Import({DynamicTestBuilder.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeService.class,
+@Import({DynamicTestBuilder.class, XmlConfig.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeService.class,
         InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class, TestClockService.class})
 public class IntegrationTestConfig {
 
