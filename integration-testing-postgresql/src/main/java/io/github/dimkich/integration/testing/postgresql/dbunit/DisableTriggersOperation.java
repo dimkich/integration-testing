@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.dbunit;
+package io.github.dimkich.integration.testing.postgresql.dbunit;
 
 import lombok.RequiredArgsConstructor;
 import org.dbunit.DatabaseUnitException;

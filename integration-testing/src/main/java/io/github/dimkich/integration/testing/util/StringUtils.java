@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.lang.reflect.Field;
+import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Map;
 
@@ -120,5 +121,15 @@ public class StringUtils {
             appendIdentityHashCode(buffer, coll);
             appendDetail(buffer, fieldName, coll.toArray());
         }
+    }
+
+    private static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    private static final SecureRandom rnd = new SecureRandom();
+
+    public static String randomString(int len){
+        StringBuilder sb = new StringBuilder(len);
+        for(int i = 0; i < len; i++)
+            sb.append(AB.charAt(rnd.nextInt(AB.length())));
+        return sb.toString();
     }
 }

@@ -21,23 +21,20 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.github.dimkich.integration.testing</groupId>
+            <artifactId>integration-testing</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.playtika.testcontainers</groupId>
             <artifactId>embedded-postgresql</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.github.dimkich.integration.testing</groupId>
-            <artifactId>integration-testing</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

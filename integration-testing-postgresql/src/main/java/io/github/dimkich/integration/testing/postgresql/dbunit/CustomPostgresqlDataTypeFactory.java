@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.dbunit;
+package io.github.dimkich.integration.testing.postgresql.dbunit;
 
 import org.dbunit.dataset.datatype.AbstractDataType;
 import org.dbunit.dataset.datatype.DataType;

@@ -1,7 +1,6 @@
 package io.github.dimkich.integration.testing.postgresql;
 
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
 import java.lang.annotation.Inherited;
@@ -15,6 +14,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target(TYPE)
 @Retention(RUNTIME)
 @TestPropertySource("classpath:postgresql.properties")
-@ImportAutoConfiguration(classes = {LiquibaseAutoConfiguration.class})
+@ImportAutoConfiguration(classes = PostgresqlDataStorageFactory.class)
 public @interface EnableTestPostgreSQL {
 }

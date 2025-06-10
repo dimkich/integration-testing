@@ -1,6 +1,11 @@
 package io.github.dimkich.integration.testing.storage;
 
-import com.zaxxer.hikari.HikariConfig;
+import io.github.dimkich.integration.testing.TestDataStorage;
+import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageFactory;
+import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
+import jakarta.annotation.PostConstruct;
+import lombok.Cleanup;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -8,43 +13,77 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.flyway.FlywayProperties;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.boot.jdbc.DatabaseDriver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.jdbc.datasource.SimpleDriverDataSource;
+import org.springframework.jdbc.support.JdbcUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Configuration
+@RequiredArgsConstructor
+@ConditionalOnClass(JdbcUtils.class)
 @Import({TestDataStorages.class, ObjectsDifference.class})
 @EnableConfigurationProperties(StorageProperties.class)
 public class StorageConfig {
+    private final ConfigurableListableBeanFactory beanFactory;
     @Autowired(required = false)
-    private LiquibaseProperties liquibaseProperties;
+    private final LiquibaseProperties liquibaseProperties;
+    @Autowired(required = false)
+    private final FlywayProperties flywayProperties;
+    private final List<SQLDataStorageFactory> factoriesList;
+    private Map<String, SQLDataStorageFactory> factoriesMap;
 
-    public DataSourceStorage createDataSourceStorage(String name, DataSource dataSource) throws SQLException {
-        String url = null;
-        String username = null;
-        String password = null;
-        if (liquibaseProperties != null) {
-            url = liquibaseProperties.getUrl();
-            username = liquibaseProperties.getUser();
-            password = liquibaseProperties.getPassword();
+    @PostConstruct
+    void init() {
+        factoriesMap = factoriesList.stream()
+                .collect(Collectors.toMap(SQLDataStorageFactory::getDriverClassName, Function.identity()));
+    }
+
+    public TestDataStorage createDataSourceStorage(String name, DataSource dataSource) throws SQLException {
+        @Cleanup Connection connection = dataSource.getConnection();
+        String url = connection.getMetaData().getURL();
+        String username = connection.getMetaData().getUserName();
+        String product = connection.getMetaData().getDatabaseProductName();
+        DatabaseDriver databaseDriver = DatabaseDriver.fromProductName(JdbcUtils.commonDatabaseName(product));
+        SQLDataStorageFactory factory = factoriesMap.get(databaseDriver.getDriverClassName());
+        if (factory == null) {
+            factory = factoriesMap.get(DatabaseDriver.fromJdbcUrl(url).getDriverClassName());
         }
-        if (dataSource instanceof HikariConfig config) {
-            url = url == null ? config.getJdbcUrl() : url;
-            username = username == null ? config.getUsername() : username;
-            password = password == null ? config.getPassword() : password;
+        if (factory == null) {
+            throw new SQLException("Unsupported database driver: " + databaseDriver);
         }
-        DataSourceBuilder<?> builder = DataSourceBuilder.create().type(SimpleDriverDataSource.class)
-                .url(url).username(username).password(password);
-        DataSource ds = builder.build();
-        Connection connection = ds.getConnection();
-        return new DataSourceStorage(name, connection, new TablesRestrictionService(connection, username));
+        DataSourceProperties properties = null;
+        if (liquibaseProperties != null && !username.equals(liquibaseProperties.getUser())) {
+            properties = new DataSourceProperties();
+            properties.setUsername(liquibaseProperties.getUser());
+            properties.setPassword(liquibaseProperties.getPassword());
+        } else if (flywayProperties != null && !username.equals(flywayProperties.getUser())) {
+            properties = new DataSourceProperties();
+            properties.setUsername(flywayProperties.getUser());
+            properties.setPassword(flywayProperties.getPassword());
+        }
+        if (properties != null) {
+            properties.setUrl(url);
+            properties.setDriverClassName(databaseDriver.getDriverClassName());
+        }
+        Connection adminConnection = factory.createConnection(url, properties);
+        String newUser = adminConnection.getMetaData().getUserName();
+        if (newUser.equals(username)) {
+            throw new SQLException("Cannot use one username in admin and regular connections");
+        }
+        return new SQLDataStorageService(factory.createStorage(name, adminConnection, newUser), beanFactory);
     }
 
     @Configuration
@@ -54,7 +93,7 @@ public class StorageConfig {
         public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
             String factoryBean = beanFactory.getBeanNamesForType(StorageConfig.class)[0];
             for (String name : beanFactory.getBeanNamesForType(DataSource.class)) {
-                AbstractBeanDefinition definition = BeanDefinitionBuilder.rootBeanDefinition(DataSourceStorage.class)
+                AbstractBeanDefinition definition = BeanDefinitionBuilder.rootBeanDefinition(TestDataStorage.class)
                         .setFactoryMethodOnBean("createDataSourceStorage", factoryBean)
                         .addConstructorArgValue(name)
                         .addConstructorArgReference(name)
