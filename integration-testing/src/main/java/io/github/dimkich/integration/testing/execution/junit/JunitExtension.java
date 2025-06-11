@@ -1,5 +1,6 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
+import io.github.dimkich.integration.testing.assertion.FileOperations;
 import io.github.dimkich.integration.testing.execution.TestCaseBeanMocks;
 import io.github.dimkich.integration.testing.execution.TestCaseStaticMock;
 import io.github.dimkich.integration.testing.openapi.TestOpenAPI;
@@ -11,8 +12,8 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import java.util.List;
 import java.util.Set;
 
-@Getter
 public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
+    private static boolean initialized = false;
     @Getter
     private static Thread testThread;
     @Getter
@@ -40,6 +41,10 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         }
         testOpenAPIS = List.of(context.getRequiredTestClass().getAnnotationsByType(TestOpenAPI.class));
         staticMocks = List.of(context.getRequiredTestClass().getAnnotationsByType(TestCaseStaticMock.class));
+        if (!initialized) {
+            new FileOperations().clearTestsDir();
+            initialized = true;
+        }
     }
 
     @Override

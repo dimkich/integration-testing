@@ -8,7 +8,7 @@ import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.launcher.*;
 
-public class ExecutionListener implements TestExecutionListener, LauncherDiscoveryListener {
+public class ExecutionListener implements TestExecutionListener {
     @Getter
     private static ExecutionListener instance;
     @Setter

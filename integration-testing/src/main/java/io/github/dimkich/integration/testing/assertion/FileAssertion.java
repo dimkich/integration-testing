@@ -7,8 +7,6 @@ import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
@@ -20,17 +18,11 @@ import java.util.*;
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "file")
 public class FileAssertion implements Assertion {
-    private final FileOperations fileOperations;
     private static final String SETTINGS_FILE = "settings.txt";
     private final Set<String> initialized = new HashSet<>();
     private String name;
     private int testCaseIndex = 0;
     private final Map<TestCase, String> map = new HashMap<>();
-
-    @EventListener(ApplicationReadyEvent.class)
-    void init() {
-        fileOperations.clearTestsDir();
-    }
 
     @Override
     public void assertTestCaseEquals(TestCaseMapper mapper, TestCase expected, TestCase actual) throws Exception {
