@@ -1,5 +1,6 @@
 package io.github.dimkich.integration.testing.redis;
 
+import io.github.dimkich.integration.testing.redis.redisson.RedissonConfig;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 
