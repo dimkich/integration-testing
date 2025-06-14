@@ -1,51 +1,42 @@
 package io.github.dimkich.integration.testing.redis.redisson;
 
-import io.github.dimkich.integration.testing.TestDataStorage;
+import io.github.dimkich.integration.testing.redis.redisson.convert.RBridge;
+import io.github.dimkich.integration.testing.redis.redisson.convert.RBridgeFactory;
+import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.redisson.api.RObject;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class RedissonDataStorage implements TestDataStorage, MethodInterceptor {
+public class RedissonDataStorage implements KeyValueDataStorage, MethodInterceptor {
     @Getter
     private final String name;
-    private final Map<String, RObject> redissonObjects = new LinkedHashMap<>();
+    private final Map<String, RBridge> redissonObjects = new LinkedHashMap<>();
 
     @Override
-    public Map<Object, Object> getCurrentValue() {
+    public Map<String, Object> getKeysData() {
         return redissonObjects.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> this.convert(e.getValue()), (a, b) -> a, LinkedHashMap::new));
-    }
-
-    private Object convert(RObject object) {
-        if (object instanceof Collection<?> collection) {
-            return new ArrayList<>(collection);
-        }
-        if (object instanceof Map<?, ?> map) {
-            return new LinkedHashMap<>(map);
-        }
-        return object;
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(), (a, b) -> a, LinkedHashMap::new));
     }
 
     @Override
-    public boolean isEmpty() {
-        return false;
+    public void putKeysData(Map<String, Object> map) {
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            RBridge bridge = redissonObjects.get(entry.getKey());
+            bridge.set(entry.getValue());
+        }
     }
 
     @Override
-    public void clear() {
-        for (RObject object : redissonObjects.values()) {
-            if (object instanceof Collection<?> collection) {
-                collection.clear();
-            }
-            if (object instanceof Map<?, ?> map) {
-                map.clear();
-            }
+    public void clearAll() {
+        for (RBridge object : redissonObjects.values()) {
+            object.clear();
         }
     }
 
@@ -53,7 +44,7 @@ public class RedissonDataStorage implements TestDataStorage, MethodInterceptor {
     public Object invoke(MethodInvocation invocation) throws Throwable {
         Object object = invocation.proceed();
         if (object instanceof RObject rObject) {
-            redissonObjects.put(rObject.getName(), rObject);
+            redissonObjects.put(rObject.getName(), RBridgeFactory.create(rObject));
         }
         return object;
     }

@@ -34,7 +34,7 @@ public class RedissonConfig implements BeanPostProcessor, BeanFactoryPostProcess
             AbstractBeanDefinition definition = BeanDefinitionBuilder.rootBeanDefinition(RedissonDataStorage.class)
                     .addConstructorArgValue(name)
                     .getBeanDefinition();
-            ((BeanDefinitionRegistry) beanFactory).registerBeanDefinition(name + "DataStorage", definition);
+            ((BeanDefinitionRegistry) beanFactory).registerBeanDefinition("#" + name, definition);
         }
     }
 
@@ -42,7 +42,7 @@ public class RedissonConfig implements BeanPostProcessor, BeanFactoryPostProcess
     public Object postProcessAfterInitialization(@Nonnull Object bean, @Nonnull String beanName) throws BeansException {
         if (bean instanceof RedissonClient) {
             ProxyFactory factory = new ProxyFactory(bean);
-            factory.addAdvice(beanFactory.getBean(beanName + "DataStorage", RedissonDataStorage.class));
+            factory.addAdvice(beanFactory.getBean("#" + beanName, RedissonDataStorage.class));
             return factory.getProxy();
         }
         return bean;
