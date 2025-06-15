@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.deser.std.DelegatingDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
-import io.github.dimkich.integration.testing.util.FunctionWithIO;
+import eu.ciechanowiec.sneakyfun.SneakyFunction;
 
 import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
@@ -45,7 +45,8 @@ public class BeanAsAttributesDeserializer extends DelegatingDeserializer {
         return deserialize(p, ctxt, (jp) -> super.deserializeWithType(jp, ctxt, typeDeserializer, intoValue));
     }
 
-    private Object deserialize(JsonParser p, DeserializationContext ctxt, FunctionWithIO<JsonParser, Object> function) throws IOException {
+    private Object deserialize(JsonParser p, DeserializationContext ctxt,
+                               SneakyFunction<JsonParser, Object, IOException> function) throws IOException {
         XMLStreamReader xmlStreamReader = ((FromXmlParser) p).getStaxReader();
 
         String name;

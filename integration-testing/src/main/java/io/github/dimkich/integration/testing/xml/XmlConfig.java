@@ -59,8 +59,8 @@ public class XmlConfig {
                 .addParentType(TestCaseInit.class)
                 .addSubTypes(EntriesObjectKeyObjectValue.class, EntriesStringKeyObjectValue.class,
                         MapStringKeyStringValue.class, MapStringKeyObjectValue.class, DateTimeInit.class,
-                        MapStorageInit.class, TestDataStorageInit.class, BeanInit.class,
-                        TablesStorageSetup.class, TablesStorageInit.class, SpringErrorDto.class)
+                        KeyValueStorageInit.class, BeanInit.class,
+                        SqlStorageSetup.class, SqlStorageInit.class, SpringErrorDto.class)
                 .addJacksonModule(jacksonModule)
                 .addJacksonModule(new JavaTimeModule())
                 .addJacksonModule(new BeanAsAttributesModule(resolverBuilder))

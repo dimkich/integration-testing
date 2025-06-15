@@ -17,10 +17,9 @@ import org.dbunit.dataset.IDataSet;
 import org.dbunit.operation.CompositeOperation;
 import org.dbunit.operation.DatabaseOperation;
 
-import java.sql.*;
 import java.sql.Date;
+import java.sql.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class PostgresqlDataStorage implements SQLDataStorage {
@@ -46,8 +45,8 @@ public class PostgresqlDataStorage implements SQLDataStorage {
     }
 
     @Override
-    public Map<String, Map<String, Object>> getTablesData(Collection<String> tables) throws Exception {
-        Map<String, Map<String, Object>> currentValue = new LinkedHashMap<>();
+    public Map<String, Object> getTablesData(Collection<String> tables) throws Exception {
+        Map<String, Object> currentValue = new LinkedHashMap<>();
         @Cleanup Statement statement = connection.createStatement();
         for (String table : tables) {
             @Cleanup ResultSet resultSet = statement.executeQuery("SELECT * FROM " + table);

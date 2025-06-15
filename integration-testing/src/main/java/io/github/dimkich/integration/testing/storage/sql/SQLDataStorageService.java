@@ -2,7 +2,7 @@ package io.github.dimkich.integration.testing.storage.sql;
 
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.dbunit.HumanReadableXmlDataSet;
-import io.github.dimkich.integration.testing.initialization.TablesStorageSetup;
+import io.github.dimkich.integration.testing.initialization.SqlStorageSetup;
 import io.github.dimkich.integration.testing.util.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -26,7 +26,7 @@ public class SQLDataStorageService implements TestDataStorage {
 
     private Set<String> allowedTables = Set.of();
     private IDataSet dataSet;
-    private Map<String, TablesStorageSetup.TableCacheReload> tableCacheReload = Map.of();
+    private Map<String, SqlStorageSetup.TableHook> tableHooks = Map.of();
     private boolean initialized = false;
 
     @Override
@@ -34,7 +34,7 @@ public class SQLDataStorageService implements TestDataStorage {
         return storage.getName();
     }
 
-    public void setDbUnitXml(List<String> paths) throws DataSetException, IOException {
+    public void setDbUnitXml(Collection<String> paths) throws DataSetException, IOException {
         List<IDataSet> dataSets = new ArrayList<>();
         for (String dataSetPath : paths) {
             IDataSet dataSet = new HumanReadableXmlDataSet(new ClassPathResource(dataSetPath).getInputStream());
@@ -43,13 +43,13 @@ public class SQLDataStorageService implements TestDataStorage {
         this.dataSet = new CompositeDataSet(dataSets.toArray(IDataSet[]::new));
     }
 
-    public void setTableCacheReload(List<TablesStorageSetup.TableCacheReload> tableCacheReload) {
-        this.tableCacheReload = tableCacheReload.stream()
-                .collect(Collectors.toMap(TablesStorageSetup.TableCacheReload::getTableName, Function.identity()));
+    public void setTableHooks(Collection<SqlStorageSetup.TableHook> tableHooks) {
+        this.tableHooks = tableHooks.stream()
+                .collect(Collectors.toMap(SqlStorageSetup.TableHook::getTableName, Function.identity()));
     }
 
     public void prepareData(Collection<String> sqls, Set<String> tablesToChange,
-                            Collection<String> tablesToLoad, boolean loadAllTables, boolean disableCacheReload) throws Exception {
+                            Collection<String> tablesToLoad, boolean loadAllTables, boolean disableTableHooks) throws Exception {
         if (!initialized) {
             storage.initTableRestriction();
             initialized = true;
@@ -97,13 +97,13 @@ public class SQLDataStorageService implements TestDataStorage {
         }
 
         if (reloadAll) {
-            if (!disableCacheReload) {
-                for (TablesStorageSetup.TableCacheReload table : tableCacheReload.values()) {
+            if (!disableTableHooks) {
+                for (SqlStorageSetup.TableHook table : tableHooks.values()) {
                     this.reloadCache(table);
                 }
             }
         } else if (!changedTables.isEmpty()) {
-            if (!disableCacheReload) {
+            if (!disableTableHooks) {
                 for (String table : changedTables) {
                     this.reloadCache(table);
                 }
@@ -113,28 +113,18 @@ public class SQLDataStorageService implements TestDataStorage {
 
     @Override
     @SneakyThrows
-    public Map<Object, Object> getCurrentValue() {
-        return storage.getTablesData(allowedTables).entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k1, k2) -> k2, LinkedHashMap::new));
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return false;
-    }
-
-    @Override
-    public void clear() {
+    public Map<String, Object> getCurrentValue() {
+        return storage.getTablesData(allowedTables);
     }
 
     private void reloadCache(String table) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        TablesStorageSetup.TableCacheReload reload = tableCacheReload.get(table);
+        SqlStorageSetup.TableHook reload = tableHooks.get(table);
         if (reload != null) {
             reloadCache(reload);
         }
     }
 
-    private void reloadCache(TablesStorageSetup.TableCacheReload reload) throws NoSuchMethodException,
+    private void reloadCache(SqlStorageSetup.TableHook reload) throws NoSuchMethodException,
             InvocationTargetException, IllegalAccessException {
         Object bean = beanFactory.getBean(reload.getBeanName());
         bean.getClass().getMethod(reload.getBeanMethod()).invoke(bean);

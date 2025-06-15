@@ -17,7 +17,7 @@ public class DateTimeInit extends TestCaseInit {
     @JacksonXmlProperty(isAttribute = true)
     private ZonedDateTime dateTime;
     @JacksonXmlProperty(isAttribute = true)
-    public Duration addDuration;
+    private Duration addDuration;
 
     @Override
     public Integer getOrder() {

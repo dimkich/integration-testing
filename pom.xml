@@ -20,6 +20,7 @@
 
         <redisson.version>3.19.3</redisson.version>
         <sugar-cubes-cloner.version>1.2.3</sugar-cubes-cloner.version>
+        <sneaky-fun.version>1.0.0</sneaky-fun.version>
         <dbunit.version>3.0.0</dbunit.version>
 
         <flatten-maven-plugin.version>1.7.0</flatten-maven-plugin.version>
@@ -129,6 +130,11 @@
                 <groupId>io.github.sugar-cubes</groupId>
                 <artifactId>sugar-cubes-cloner</artifactId>
                 <version>${sugar-cubes-cloner.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.ciechanowiec</groupId>
+                <artifactId>sneakyfun</artifactId>
+                <version>${sneaky-fun.version}</version>
             </dependency>
 
             <dependency>

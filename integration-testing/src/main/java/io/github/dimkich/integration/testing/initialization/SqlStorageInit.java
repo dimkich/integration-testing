@@ -16,31 +16,36 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @ToString
-public class TablesStorageInit extends TestCaseInit {
+public class SqlStorageInit extends TestCaseInit {
     @JacksonXmlProperty(isAttribute = true)
     private String name;
     @JacksonXmlProperty(isAttribute = true)
     private Boolean loadAllTables;
     @JacksonXmlProperty(isAttribute = true)
-    private Boolean disableCacheReload;
+    private Boolean disableTableHooks;
     private List<String> sqlFilePath;
     private List<String> sql;
     private String tablesToChange;
     private String tablesToLoad;
 
+    @Override
+    public Integer getOrder() {
+        return 2000;
+    }
+
     @Component
     @RequiredArgsConstructor
-    public static class Initializer implements TestCaseInitializer<TablesStorageInit> {
+    public static class Initializer implements TestCaseInitializer<SqlStorageInit> {
         private final TestDataStorages testDataStorages;
 
         @Override
-        public Class<TablesStorageInit> getTestCaseInitClass() {
-            return TablesStorageInit.class;
+        public Class<SqlStorageInit> getTestCaseInitClass() {
+            return SqlStorageInit.class;
         }
 
         @Override
         @SneakyThrows
-        public void init(TablesStorageInit init) {
+        public void init(SqlStorageInit init) {
             SQLDataStorageService storage = testDataStorages.getTestDataStorage(init.getName(), SQLDataStorageService.class);
 
             List<String> sqls = new ArrayList<>();
@@ -54,8 +59,8 @@ public class TablesStorageInit extends TestCaseInit {
             }
             storage.prepareData(sqls, stringToList(init.getTablesToChange()), stringToList(init.getTablesToLoad()),
                     init.getLoadAllTables() != null && init.getLoadAllTables(),
-                    init.getDisableCacheReload() != null && init.getDisableCacheReload());
-            testDataStorages.getMapDiff();
+                    init.getDisableTableHooks() != null && init.getDisableTableHooks());
+            testDataStorages.setNewCurrentValue(init.getName());
         }
 
         private Set<String> stringToList(String string) {

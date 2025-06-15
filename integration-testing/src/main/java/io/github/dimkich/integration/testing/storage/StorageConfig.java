@@ -1,6 +1,8 @@
 package io.github.dimkich.integration.testing.storage;
 
 import io.github.dimkich.integration.testing.TestDataStorage;
+import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
+import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorageService;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageFactory;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import jakarta.annotation.PostConstruct;
@@ -96,6 +98,12 @@ public class StorageConfig {
                 AbstractBeanDefinition definition = BeanDefinitionBuilder.rootBeanDefinition(TestDataStorage.class)
                         .setFactoryMethodOnBean("createDataSourceStorage", factoryBean)
                         .addConstructorArgValue(name)
+                        .addConstructorArgReference(name)
+                        .getBeanDefinition();
+                ((BeanDefinitionRegistry) beanFactory).registerBeanDefinition("#" + name, definition);
+            }
+            for (String name : beanFactory.getBeanNamesForType(KeyValueDataStorage.class)) {
+                AbstractBeanDefinition definition = BeanDefinitionBuilder.rootBeanDefinition(KeyValueDataStorageService.class)
                         .addConstructorArgReference(name)
                         .getBeanDefinition();
                 ((BeanDefinitionRegistry) beanFactory).registerBeanDefinition("#" + name, definition);

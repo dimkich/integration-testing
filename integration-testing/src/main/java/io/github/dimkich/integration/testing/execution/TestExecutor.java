@@ -1,5 +1,6 @@
 package io.github.dimkich.integration.testing.execution;
 
+import eu.ciechanowiec.sneakyfun.SneakyConsumer;
 import io.github.dimkich.integration.testing.*;
 import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
@@ -60,7 +61,8 @@ public class TestExecutor {
         testCase.getParentsAndItselfAsc()
                 .flatMap(tc -> tc.getInits().stream())
                 .filter(i -> i.getActualLevel() == testCase.getLevel())
-                .forEach(initializationService::init);
+                .sorted(Comparator.comparing(TestCaseInit::getOrder))
+                .forEach(SneakyConsumer.sneaky(initializationService::init));
         for (BeforeTestCase beforeTestCase : beforeTestCases) {
             beforeTestCase.accept(testCase);
         }
@@ -75,7 +77,7 @@ public class TestExecutor {
         }
         testCase = expectedTestCase;
         log.info(">>> {}", testCase.getFullName());
-        log.info(testCaseMapper.getCurrentPathAndLocation(testCase).replace("\\", "/"));
+        log.info(testCaseMapper.getCurrentPathAndLocation(testCase));
         if (assertion.makeTestCaseDeepClone()) {
             testCase = testCaseMapper.deepClone(testCase);
         }

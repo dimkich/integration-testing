@@ -74,7 +74,7 @@ public class XmlTestCaseMapper implements TestCaseMapper {
     }
 
     public String getCurrentPathAndLocation(TestCase testCase) throws IOException {
-        String result = TestUtils.getTestResourceFile(path).getCanonicalPath();
+        String result = TestUtils.getTestResourceFile(path).getCanonicalPath().replace("\\", "/");
         Location location = objectToLocationStorage.getLocation(testCase);
         if (location != null) {
             result += ":" + location.getLineNumber() + ":" + location.getColumnNumber();

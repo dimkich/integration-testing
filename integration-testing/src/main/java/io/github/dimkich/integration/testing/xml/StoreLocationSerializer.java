@@ -1,6 +1,5 @@
 package io.github.dimkich.integration.testing.xml;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -8,7 +7,7 @@ import com.fasterxml.jackson.databind.deser.std.DelegatingDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
-import io.github.dimkich.integration.testing.util.SupplierWithIO;
+import eu.ciechanowiec.sneakyfun.SneakySupplier;
 
 import javax.xml.stream.Location;
 import java.io.IOException;
@@ -41,7 +40,7 @@ public class StoreLocationSerializer extends DelegatingDeserializer {
         return deserialize(p, () -> super.deserializeWithType(p, ctxt, typeDeserializer, intoValue));
     }
 
-    private Object deserialize(JsonParser p, SupplierWithIO<Object> objectSupplier) throws IOException {
+    private Object deserialize(JsonParser p, SneakySupplier<Object, IOException> objectSupplier) throws IOException {
         Location location = null;
         if (p instanceof FromXmlParser parser) {
             location = parser.getStaxReader().getLocation();
@@ -52,6 +51,7 @@ public class StoreLocationSerializer extends DelegatingDeserializer {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public JsonDeserializer<Object> unwrappingDeserializer(NameTransformer unwrapper) {
         JsonDeserializer<?> unwrapped = _delegatee.unwrappingDeserializer(unwrapper);
         if (unwrapped != _delegatee) {

@@ -1,14 +1,14 @@
 package io.github.dimkich.integration.testing.storage;
 
-import io.github.dimkich.integration.testing.TestCaseMapper;
+import eu.ciechanowiec.sneakyfun.SneakyFunction;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -16,15 +16,13 @@ import java.util.stream.Collectors;
 public class TestDataStorages {
     private final Map<String, TestDataStorage> storageMap;
     private final ObjectsDifference objectsDifference;
-    private final TestCaseMapper testCaseMapper;
 
-    private Map<String, Map<Object, Object>> currentValue = new LinkedHashMap<>();
+    private Map<String, Map<String, Object>> currentValue = new LinkedHashMap<>();
 
     @PostConstruct
     void init() {
-        Map<String, TestDataStorage> map = storageMap.entrySet().stream()
-                .map(e -> Pair.of(e.getKey().startsWith("#") ? e.getKey().substring(1) : e.getKey(), e.getValue()))
-                .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (x, y) -> y, LinkedHashMap::new));
+        Map<String, TestDataStorage> map = storageMap.values().stream()
+                .collect(Collectors.toMap(TestDataStorage::getName, Function.identity(), (x, y) -> y, LinkedHashMap::new));
         storageMap.clear();
         storageMap.putAll(map);
     }
@@ -37,26 +35,21 @@ public class TestDataStorages {
         return cls.cast(storage);
     }
 
-    public void clear() {
-        currentValue.clear();
-        storageMap.values().forEach(TestDataStorage::clear);
-    }
-
-    public void addTestDataStorage(TestDataStorage testDataStorage) {
-        storageMap.put(testDataStorage.getName(), testDataStorage);
-    }
-
     public Object getMapDiff() {
-        Map<String, Map<Object, Object>> currentValue = getCurrentValue();
+        Map<String, Map<String, Object>> currentValue = getCurrentValue();
         Object diff = objectsDifference.getDifference(this.currentValue, currentValue);
         this.currentValue = currentValue;
         return diff;
     }
 
-    private Map<String, Map<Object, Object>> getCurrentValue() {
+    public void setNewCurrentValue(String name) throws Exception {
+        TestDataStorage testDataStorage = getTestDataStorage(name, TestDataStorage.class);
+        currentValue.put(name, testDataStorage.getCurrentValue());
+    }
+
+    private Map<String, Map<String, Object>> getCurrentValue() {
         return storageMap.values().stream()
-                .filter(ds -> !ds.isEmpty())
-                .collect(Collectors.toMap(TestDataStorage::getName, s -> testCaseMapper.deepClone(s.getCurrentValue()),
+                .collect(Collectors.toMap(TestDataStorage::getName, SneakyFunction.sneaky(TestDataStorage::getCurrentValue),
                         (v1, v2) -> v2, LinkedHashMap::new));
     }
 }

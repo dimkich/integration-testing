@@ -17,7 +17,8 @@ public class InitializationService {
                 .collect(Collectors.toMap(TestCaseInit.TestCaseInitializer::getTestCaseInitClass, Function.identity()));
     }
 
-    public void init(TestCaseInit init) {
+    @SuppressWarnings("unchecked")
+    public void init(TestCaseInit init) throws Exception {
         TestCaseInit.TestCaseInitializer<TestCaseInit> initializer = (TestCaseInit.TestCaseInitializer<TestCaseInit>) map.get(init.getClass());
         if (initializer == null) {
             throw new RuntimeException(String.format("Initializer for class %s not found", init.getClass().getName()));

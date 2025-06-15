@@ -5,9 +5,5 @@ import java.util.Map;
 public interface TestDataStorage {
     String getName();
 
-    Map<Object, Object> getCurrentValue();
-
-    boolean isEmpty();
-
-    void clear();
+    Map<String, Object> getCurrentValue() throws Exception;
 }

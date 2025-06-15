@@ -4,8 +4,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import({InitializationService.class, DateTimeInit.Initializer.class, TablesStorageInit.Initializer.class,
-        MapStorageInit.Initializer.class, TestDataStorageInit.Initializer.class, BeanInit.Initializer.class,
-        TablesStorageSetup.Initializer.class})
+@Import({InitializationService.class, DateTimeInit.Initializer.class, SqlStorageInit.Initializer.class,
+        KeyValueStorageInit.Initializer.class, BeanInit.Initializer.class,
+        SqlStorageSetup.Initializer.class})
 public class InitializationConfig {
 }

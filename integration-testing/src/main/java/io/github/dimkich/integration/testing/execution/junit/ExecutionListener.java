@@ -1,12 +1,15 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
+import eu.ciechanowiec.sneakyfun.SneakyConsumer;
 import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
-import io.github.dimkich.integration.testing.util.ConsumerWithException;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
-import org.junit.platform.launcher.*;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
 
 public class ExecutionListener implements TestExecutionListener {
     @Getter
@@ -68,7 +71,7 @@ public class ExecutionListener implements TestExecutionListener {
         }
     }
 
-    private TestCase execute(UniqueId uniqueId, ConsumerWithException<TestCase> consumer) throws Exception {
+    private TestCase execute(UniqueId uniqueId, SneakyConsumer<TestCase, Exception> consumer) throws Exception {
         TestCase testCase = root;
         for (UniqueId.Segment segment : uniqueId.getSegments()) {
             if (segment.getType().equals("dynamic-container") || segment.getType().equals("dynamic-test")) {

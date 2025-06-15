@@ -45,6 +45,10 @@
             <artifactId>sugar-cubes-cloner</artifactId>
         </dependency>
         <dependency>
+            <groupId>eu.ciechanowiec</groupId>
+            <artifactId>sneakyfun</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>

@@ -31,6 +31,6 @@ public abstract class TestCaseInit implements Comparable<TestCaseInit> {
     public interface TestCaseInitializer<T extends TestCaseInit> {
         Class<T> getTestCaseInitClass();
 
-        void init(T testCaseInit);
+        void init(T testCaseInit) throws Exception;
     }
 }
