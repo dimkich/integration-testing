@@ -5,8 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.lang.annotation.*;
 
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(JunitExtension.class)
@@ -23,8 +21,7 @@ public @interface TestOpenAPI {
     String basePath() default "";
 
     @Target(ElementType.TYPE)
-    @Retention(RUNTIME)
-    @ExtendWith(JunitExtension.class)
+    @Retention(RetentionPolicy.RUNTIME)
     @interface List {
         TestOpenAPI[] value();
     }

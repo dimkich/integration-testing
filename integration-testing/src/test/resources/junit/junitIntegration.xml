@@ -1,0 +1,143 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<testCase>
+    <testCase name="all">
+        <bean>launcher</bean>
+        <method>execute</method>
+        <request type="arrayList">
+            <item type="selClass">io.github.dimkich.integration.testing.junit.SimpleTest</item>
+        </request>
+        <response type="arrayList">
+            <response type="string">before root</response>
+            <response type="string">before #1</response>
+            <response type="string">#1</response>
+            <response type="string">after #1</response>
+            <response type="string">before #2</response>
+            <response type="string">before #2#1</response>
+            <response type="string">#2#1</response>
+            <response type="string">after #2#1</response>
+            <response type="string">before #2#2</response>
+            <response type="string">before #2#2#1</response>
+            <response type="string">#2#2#1</response>
+            <response type="string">after #2#2#1</response>
+            <response type="string">before #2#2#2</response>
+            <response type="string">#2#2#2</response>
+            <response type="string">after #2#2#2</response>
+            <response type="string">after #2#2</response>
+            <response type="string">before #2#3</response>
+            <response type="string">#2#3</response>
+            <response type="string">after #2#3</response>
+            <response type="string">after #2</response>
+            <response type="string">before #3</response>
+            <response type="string">#3</response>
+            <response type="string">after #3</response>
+            <response type="string">before #4</response>
+            <response type="string">before #4#1</response>
+            <response type="string">#4#1</response>
+            <response type="string">after #4#1</response>
+            <response type="string">before #4#2</response>
+            <response type="string">before #4#2#1</response>
+            <response type="string">#4#2#1</response>
+            <response type="string">after #4#2#1</response>
+            <response type="string">before #4#2#2</response>
+            <response type="string">#4#2#2</response>
+            <response type="string">after #4#2#2</response>
+            <response type="string">after #4#2</response>
+            <response type="string">before #4#3</response>
+            <response type="string">#4#3</response>
+            <response type="string">after #4#3</response>
+            <response type="string">after #4</response>
+            <response type="string">before #5</response>
+            <response type="string">#5</response>
+            <response type="string">after #5</response>
+            <response type="string">after root</response>
+        </response>
+    </testCase>
+    <testCase name="first">
+        <bean>launcher</bean>
+        <method>execute</method>
+        <request type="arrayList">
+            <item type="selUniqueId">[dynamic-test:#1]</item>
+        </request>
+        <response type="arrayList">
+            <response type="string">before root</response>
+            <response type="string">before #1</response>
+            <response type="string">#1</response>
+            <response type="string">after #1</response>
+            <response type="string">after root</response>
+        </response>
+    </testCase>
+    <testCase name="several">
+        <bean>launcher</bean>
+        <method>execute</method>
+        <request type="arrayList">
+            <item type="selUniqueId">[dynamic-test:#1]</item>
+            <item type="selUniqueId">[dynamic-container:#2]/[dynamic-container:#2]</item>
+            <item type="selUniqueId">[dynamic-container:#4]</item>
+        </request>
+        <response type="arrayList">
+            <response type="string">before root</response>
+            <response type="string">before #1</response>
+            <response type="string">#1</response>
+            <response type="string">after #1</response>
+            <response type="string">before #2</response>
+            <response type="string">before #2#2</response>
+            <response type="string">before #2#2#1</response>
+            <response type="string">#2#2#1</response>
+            <response type="string">after #2#2#1</response>
+            <response type="string">before #2#2#2</response>
+            <response type="string">#2#2#2</response>
+            <response type="string">after #2#2#2</response>
+            <response type="string">after #2#2</response>
+            <response type="string">before #4</response>
+            <response type="string">before #4#1</response>
+            <response type="string">#4#1</response>
+            <response type="string">after #4#1</response>
+            <response type="string">before #4#2</response>
+            <response type="string">before #4#2#1</response>
+            <response type="string">#4#2#1</response>
+            <response type="string">after #4#2#1</response>
+            <response type="string">before #4#2#2</response>
+            <response type="string">#4#2#2</response>
+            <response type="string">after #4#2#2</response>
+            <response type="string">after #4#2</response>
+            <response type="string">before #4#3</response>
+            <response type="string">#4#3</response>
+            <response type="string">after #4#3</response>
+            <response type="string">after #4</response>
+            <response type="string">after root</response>
+        </response>
+    </testCase>
+    <testCase name="one first test in container">
+        <bean>launcher</bean>
+        <method>execute</method>
+        <request type="arrayList">
+            <item type="selUniqueId">[dynamic-container:#2]/[dynamic-container:#2]/[dynamic-test:#1]</item>
+        </request>
+        <response type="arrayList">
+            <response type="string">before root</response>
+            <response type="string">before #2</response>
+            <response type="string">before #2#2</response>
+            <response type="string">before #2#2#1</response>
+            <response type="string">#2#2#1</response>
+            <response type="string">after #2#2#1</response>
+            <response type="string">after #2#2</response>
+            <response type="string">after #2</response>
+            <response type="string">after root</response>
+        </response>
+    </testCase>
+    <testCase name="last">
+        <bean>launcher</bean>
+        <method>execute</method>
+        <request type="arrayList">
+            <item type="selUniqueId">[dynamic-test:#5]</item>
+        </request>
+        <response type="arrayList">
+            <response type="string">before root</response>
+            <response type="string">before #5</response>
+            <response type="string">#5</response>
+            <response type="string">after #5</response>
+            <response type="string">after root</response>
+        </response>
+    </testCase>
+</testCase>

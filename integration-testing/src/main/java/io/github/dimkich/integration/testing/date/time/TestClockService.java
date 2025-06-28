@@ -8,8 +8,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 
 public class TestClockService extends ClockService implements NowSetter {
-    public TestClockService(Clock clock) {
-        super(clock);
+    public TestClockService() {
+        super(Clock.systemUTC());
     }
 
     public void addDuration(Duration duration) {

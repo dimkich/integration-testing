@@ -1,6 +1,5 @@
 package io.github.dimkich.integration.testing;
 
-import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import lombok.RequiredArgsConstructor;
@@ -13,15 +12,14 @@ import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public class DynamicTestBuilder {
-    private final TestExecutor testExecutor;
     private final JunitExecutable junitExecutable;
     private final TestCaseMapper testCaseMapper;
 
     public Stream<DynamicNode> build(String path) throws Exception {
         testCaseMapper.setPath(path);
         TestCase testCase = testCaseMapper.readAllTestCases();
-        ExecutionListener.getInstance().setRoot(testCase);
-        ExecutionListener.getInstance().setTestExecutor(testExecutor);
+        junitExecutable.setRootTestCase(testCase);
+        junitExecutable.setExecutionListener(ExecutionListener.getLast());
         return testCase.getSubTestCases().stream().map(this::toDynamicNode);
     }
 
@@ -31,7 +29,6 @@ public class DynamicTestBuilder {
             return DynamicContainer.dynamicContainer(testCase.getName(), testCase.getSubTestCases().stream()
                     .map(this::toDynamicNode));
         }
-        junitExecutable.setTestCase(testCase);
         return DynamicTest.dynamicTest(testCase.getName(), junitExecutable);
     }
 }

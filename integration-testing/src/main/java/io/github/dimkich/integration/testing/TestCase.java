@@ -2,7 +2,6 @@ package io.github.dimkich.integration.testing;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import io.github.dimkich.integration.testing.message.MessageDto;
 import lombok.Getter;
@@ -46,25 +45,16 @@ public class TestCase {
     private List<TestCase> subTestCases = new ArrayList<>();
 
     @JsonIgnore
-    public TestCase getRootTestCase() {
-        TestCase testCase = this;
-        while (testCase.getParentTestCase() != null) {
-            testCase = testCase.getParentTestCase();
-        }
-        return testCase;
-    }
-
-    @JsonIgnore
     public boolean isContainer() {
         return !subTestCases.isEmpty();
     }
 
     @JsonIgnore
-    public boolean isLast() {
-        return parentTestCase == null
-               || ExecutionListener.getInstance().getLastTestCase() == this
-               || parentTestCase.getSubTestCases().get(parentTestCase.getSubTestCases().size() - 1) == this
-                  && parentTestCase.isLast();
+    public boolean isLastLeaf() {
+        if (parentTestCase == null) {
+            return true;
+        }
+        return parentTestCase.getSubTestCases().get(parentTestCase.getSubTestCases().size() - 1) == this;
     }
 
     public void executeMethod(BeanFactory beanFactory, BiFunction<String, Object, Object> responseConverter) throws IllegalAccessException {

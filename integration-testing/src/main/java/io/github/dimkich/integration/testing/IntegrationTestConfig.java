@@ -10,19 +10,11 @@ import io.github.dimkich.integration.testing.storage.StorageConfig;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletionConfig;
 import io.github.dimkich.integration.testing.web.WebConfig;
 import io.github.dimkich.integration.testing.xml.XmlConfig;
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcBuilderCustomizer;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
-import org.springframework.test.web.servlet.setup.MockMvcConfigurer;
-import org.springframework.web.context.WebApplicationContext;
 
 @Configuration
-@RequiredArgsConstructor
 @ConditionalOnProperty(value = "integration.testing.enabled", havingValue = "true")
 @Import({DynamicTestBuilder.class, XmlConfig.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeService.class,
         InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class, TestClockService.class,

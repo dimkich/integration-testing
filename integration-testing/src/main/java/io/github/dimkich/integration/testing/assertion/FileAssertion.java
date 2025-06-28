@@ -3,10 +3,13 @@ package io.github.dimkich.integration.testing.assertion;
 import io.github.dimkich.integration.testing.Assertion;
 import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestCaseMapper;
-import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
+import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
@@ -19,10 +22,13 @@ import java.util.*;
 @ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "file")
 public class FileAssertion implements Assertion {
     private static final String SETTINGS_FILE = "settings.txt";
+    @Setter(onMethod_ = {@Autowired, @Lazy})
+    private JunitExecutable executable;
+
     private final Set<String> initialized = new HashSet<>();
+    private final Map<TestCase, String> map = new HashMap<>();
     private String name;
     private int testCaseIndex = 0;
-    private final Map<TestCase, String> map = new HashMap<>();
 
     @Override
     public void assertTestCaseEquals(TestCaseMapper mapper, TestCase expected, TestCase actual) throws Exception {
@@ -59,7 +65,7 @@ public class FileAssertion implements Assertion {
     }
 
     private String write(String data, String fileNamePostfix) throws IOException {
-        String fileName = AssertionConfig.resultDir + File.separator + ExecutionListener.getInstance().getTestFullName()
+        String fileName = AssertionConfig.resultDir + File.separator + executable.getTestFullName()
                           + File.separator + fileNamePostfix;
         Files.writeString(Paths.get(fileName), data);
         return fileName;
@@ -71,7 +77,7 @@ public class FileAssertion implements Assertion {
         }
         name = RandomStringUtils.random(16, true, true) + "_";
 
-        String dir = AssertionConfig.resultDir + File.separator + ExecutionListener.getInstance().getTestFullName()
+        String dir = AssertionConfig.resultDir + File.separator + executable.getTestFullName()
                      + File.separator;
         Files.createDirectories(Paths.get(dir));
         File[] files = new File(dir).listFiles();

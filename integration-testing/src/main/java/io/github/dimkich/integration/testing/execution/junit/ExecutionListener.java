@@ -1,56 +1,58 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
-import eu.ciechanowiec.sneakyfun.SneakyConsumer;
-import io.github.dimkich.integration.testing.TestCase;
-import io.github.dimkich.integration.testing.execution.TestExecutor;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 
 public class ExecutionListener implements TestExecutionListener {
+    private static final Deque<ExecutionListener> instances = new ArrayDeque<>();
     @Getter
-    private static ExecutionListener instance;
-    @Setter
-    private TestCase root;
-    @Setter
-    private TestExecutor testExecutor;
-    @Getter
-    private TestCase lastTestCase;
-    @Getter
-    private String testFullName;
-
-    private boolean rootInitialized;
+    private final Deque<JunitTestInfo> junitTests = new ArrayDeque<>();
+    private DiscoveryListener discoveryListener;
 
     public ExecutionListener() {
-        instance = this;
+        instances.addLast(this);
+    }
+
+    public static ExecutionListener getLast() {
+        return instances.getLast();
+    }
+
+    @Override
+    public void testPlanExecutionStarted(TestPlan testPlan) {
+        discoveryListener = DiscoveryListener.getLast();
+    }
+
+    @Override
+    public void testPlanExecutionFinished(TestPlan testPlan) {
+        discoveryListener = null;
+        DiscoveryListener.removeLast();
+        instances.removeLast();
     }
 
     @Override
     @SneakyThrows
     public void executionStarted(TestIdentifier testIdentifier) {
-        if (root != null) {
-            if (testFullName == null) {
-                UniqueId id = testIdentifier.getUniqueIdObject();
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < 3; i++) {
-                    builder.append(id.getSegments().get(i).getValue().replaceAll("[^A-Za-z0-9]", "-")
-                                    .replace("--", "-"))
-                            .append("-");
-                }
-                while (builder.charAt(builder.length() - 1) == '-') builder.deleteCharAt(builder.length() - 1);
-                testFullName = builder.toString();
-            }
-            if (!rootInitialized) {
-                testExecutor.before(root);
-                rootInitialized = true;
-            }
-            TestCase testCase = execute(testIdentifier.getUniqueIdObject(), tc -> testExecutor.before(tc));
-            if (DiscoveryListener.getInstance().isLastTestCase(testIdentifier.getUniqueIdObject())) {
-                lastTestCase = testCase;
+        UniqueId id = testIdentifier.getUniqueIdObject();
+        List<UniqueId.Segment> segments = id.getSegments();
+        if (segments.size() > 2) {
+            UniqueId.Segment segment = segments.get(segments.size() - 1);
+            switch (segment.getType()) {
+                case "test-factory":
+                    junitTests.addLast(new JunitTestInfo(id, discoveryListener.isLastTestCase(id)));
+                    break;
+                case "dynamic-container":
+                case "dynamic-test":
+                    junitTests.getLast().setSubTestCaseIndex(Integer.parseInt(segment.getValue().substring(1)) - 1);
+                    junitTests.addLast(new JunitTestInfo(id, discoveryListener.isLastTestCase(id)));
             }
         }
     }
@@ -58,31 +60,8 @@ public class ExecutionListener implements TestExecutionListener {
     @Override
     @SneakyThrows
     public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-        if (root != null) {
-            if (testIdentifier.getUniqueIdObject().getLastSegment().getType().equals("test-factory")) {
-                testExecutor.after(root);
-                root = null;
-                testExecutor = null;
-                rootInitialized = false;
-                testFullName = null;
-                return;
-            }
-            execute(testIdentifier.getUniqueIdObject(), tc -> testExecutor.after(tc));
+        if (testIdentifier.getUniqueIdObject().getSegments().size() > 2 && !junitTests.isEmpty()) {
+            junitTests.removeLast();
         }
-    }
-
-    private TestCase execute(UniqueId uniqueId, SneakyConsumer<TestCase, Exception> consumer) throws Exception {
-        TestCase testCase = root;
-        for (UniqueId.Segment segment : uniqueId.getSegments()) {
-            if (segment.getType().equals("dynamic-container") || segment.getType().equals("dynamic-test")) {
-                int index = Integer.parseInt(segment.getValue().substring(1)) - 1;
-                if (index >= testCase.getSubTestCases().size()) {
-                    return null;
-                }
-                testCase = testCase.getSubTestCases().get(index);
-            }
-        }
-        consumer.accept(testCase);
-        return testCase;
     }
 }
