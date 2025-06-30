@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.web;
+package io.github.dimkich.integration.testing.web.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;

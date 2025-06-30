@@ -2,39 +2,68 @@ package io.github.dimkich.integration.testing.web;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.github.dimkich.integration.testing.Module;
+import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
+import io.github.dimkich.integration.testing.web.jackson.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcBuilderCustomizer;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.SpringHandlerInstantiator;
+import org.springframework.test.web.client.MockMvcClientHttpRequestFactory;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcConfigurer;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.WebApplicationContext;
+
+import java.net.URI;
 
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnClass({ResponseEntity.class, SpringHandlerInstantiator.class, RestClientResponseException.class})
+@ConditionalOnClass({ResponseEntity.class, SpringHandlerInstantiator.class, RestClientResponseException.class,
+        WebConfig.TestRestTemplateConfig.class})
 public class WebConfig {
     private final ConfigurableListableBeanFactory beanFactory;
 
     @Bean
     Module webTestModule() {
         SimpleModule jacksonModule = new SimpleModule();
+        jacksonModule.setMixInAnnotation(RequestEntity.class, RequestEntityMixIn.class);
         jacksonModule.setMixInAnnotation(ResponseEntity.class, ResponseEntityMixIn.class);
-        jacksonModule.setMixInAnnotation(HttpStatusCode.class, ResponseEntityMixIn.HttpStatusMixIn.class);
-        jacksonModule.setMixInAnnotation(RestClientResponseException.class, ResponseEntityMixIn.RestClientResponseExceptionMixin.class);
+        jacksonModule.setMixInAnnotation(HttpStatusCode.class, HttpStatusMixIn.class);
+        jacksonModule.setMixInAnnotation(RestClientResponseException.class, RestClientResponseExceptionMixin.class);
+        jacksonModule.setMixInAnnotation(HttpClientErrorException.class, HttpClientErrorExceptionMixIn.class);
         jacksonModule.setMixInAnnotation(HttpMethod.class, HttpMethodMixIn.class);
         return new Module()
                 .setHandlerInstantiator(new SpringHandlerInstantiator(beanFactory))
                 .addJacksonModule(jacksonModule)
-                .addSubTypes(ResponseEntity.class, HttpMethod.class);
+                .addSubTypes(HttpClientErrorException.BadRequest.class, "httpClientErrorException.BadRequest")
+                .addSubTypes(HttpClientErrorException.Unauthorized.class, "httpClientErrorException.Unauthorized")
+                .addSubTypes(HttpClientErrorException.Forbidden.class, "httpClientErrorException.Forbidden")
+                .addSubTypes(HttpClientErrorException.NotFound.class, "httpClientErrorException.NotFound")
+                .addSubTypes(HttpClientErrorException.MethodNotAllowed.class, "httpClientErrorException.MethodNotAllowed")
+                .addSubTypes(HttpClientErrorException.NotAcceptable.class, "httpClientErrorException.NotAcceptable")
+                .addSubTypes(HttpClientErrorException.Conflict.class, "httpClientErrorException.Conflict")
+                .addSubTypes(HttpClientErrorException.Gone.class, "httpClientErrorException.Gone")
+                .addSubTypes(HttpClientErrorException.UnsupportedMediaType.class, "httpClientErrorException.UnsupportedMediaType")
+                .addSubTypes(HttpClientErrorException.UnprocessableEntity.class, "httpClientErrorException.UnprocessableEntity")
+                .addSubTypes(HttpClientErrorException.TooManyRequests.class, "httpClientErrorException.TooManyRequests")
+                .addSubTypes(RequestEntity.class, ResponseEntity.class, HttpMethod.class);
     }
 
     @Bean
@@ -48,5 +77,33 @@ public class WebConfig {
                 };
             }
         });
+    }
+
+    @TestConfiguration
+    public static class TestRestTemplateConfig implements BeanFactoryPostProcessor {
+        @Override
+        public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+            for (TestRestTemplate testRestTemplate : JunitExtension.getTestRestTemplates()) {
+                String factoryBean = beanFactory.getBeanNamesForType(getClass())[0];
+                AbstractBeanDefinition definition = BeanDefinitionBuilder.rootBeanDefinition(RestTemplate.class)
+                        .setFactoryMethodOnBean("createRestTemplate", factoryBean)
+                        .addConstructorArgValue(testRestTemplate.basePath())
+                        .addConstructorArgReference("mockMvcClientHttpRequestFactory")
+                        .getBeanDefinition();
+                ((BeanDefinitionRegistry) beanFactory).registerBeanDefinition(testRestTemplate.beanName(), definition);
+            }
+        }
+
+        RestTemplate createRestTemplate(String basePath,
+                                        @Autowired(required = false) MockMvcClientHttpRequestFactory factory) {
+            RestTemplate restTemplate = new RestTemplate();
+            if (factory != null) {
+                restTemplate.setRequestFactory((u, m) -> {
+                    u = URI.create(basePath).resolve(u);
+                    return factory.createRequest(u, m);
+                });
+            }
+            return restTemplate;
+        }
     }
 }

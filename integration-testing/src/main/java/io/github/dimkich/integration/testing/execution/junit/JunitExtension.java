@@ -4,6 +4,7 @@ import io.github.dimkich.integration.testing.assertion.FileOperations;
 import io.github.dimkich.integration.testing.execution.TestCaseBeanMocks;
 import io.github.dimkich.integration.testing.execution.TestCaseStaticMock;
 import io.github.dimkich.integration.testing.openapi.TestOpenAPI;
+import io.github.dimkich.integration.testing.web.TestRestTemplate;
 import lombok.Getter;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -27,6 +28,8 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     @Getter
     private static List<TestOpenAPI> testOpenAPIS = List.of();
     @Getter
+    private static List<TestRestTemplate> testRestTemplates = List.of();
+    @Getter
     private static List<TestCaseStaticMock> staticMocks = List.of();
 
     @Override
@@ -41,6 +44,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         }
         testOpenAPIS = List.of(context.getRequiredTestClass().getAnnotationsByType(TestOpenAPI.class));
         staticMocks = List.of(context.getRequiredTestClass().getAnnotationsByType(TestCaseStaticMock.class));
+        testRestTemplates = List.of(context.getRequiredTestClass().getAnnotationsByType(TestRestTemplate.class));
         if (!initialized) {
             new FileOperations().clearTestsDir();
             initialized = true;
@@ -55,6 +59,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         spyClasses = Set.of();
         spyNames = Set.of();
         testOpenAPIS = List.of();
+        testRestTemplates = List.of();
         staticMocks = List.of();
     }
 
