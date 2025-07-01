@@ -58,6 +58,13 @@ public class TestExecutor {
     }
 
     public void before(TestCase testCase) throws Exception {
+        this.testCase = testCase;
+        if (!running) {
+            synchronized (this) {
+                running = true;
+                notifyAll();
+            }
+        }
         testCase.getParentsAndItselfAsc()
                 .flatMap(tc -> tc.getInits().stream())
                 .filter(i -> i.getActualLevel() == testCase.getLevel())
@@ -69,17 +76,15 @@ public class TestExecutor {
     }
 
     public void runTest(TestCase expectedTestCase) throws Exception {
-        if (!running) {
-            synchronized (this) {
-                running = true;
-                notifyAll();
-            }
-        }
         testCase = expectedTestCase;
         log.info(">>> {}", testCase.getFullName());
         log.info(testCaseMapper.getCurrentPathAndLocation(testCase));
         if (assertion.makeTestCaseDeepClone()) {
             testCase = testCaseMapper.deepClone(testCase);
+        } else {
+            testCase.setResponse(null);
+            testCase.setDataStorageDiff(null);
+            testCase.setOutboundMessages(null);
         }
 
         try {
@@ -99,13 +104,11 @@ public class TestExecutor {
         }
 
         int countMessages = testCase.getOutboundMessages() == null ? 0 : testCase.getOutboundMessages().size();
-        testCase.setOutboundMessages(null);
         if (testMessagePoller != null) {
             List<MessageDto<?>> messages = testMessagePoller.pollMessages(countMessages);
             messages.sort(Comparator.comparing(MessageDto::toString));
             testCase.setOutboundMessages(messages.isEmpty() ? null : messages);
         }
-        testCase.setDataStorageDiff(null);
         if (testDataStorages != null) {
             testCase.setDataStorageDiff(testDataStorages.getMapDiff());
         }

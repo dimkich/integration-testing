@@ -6,6 +6,7 @@ import io.github.sugarcubes.cloner.Cloners;
 import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestCaseMapper;
 import io.github.dimkich.integration.testing.util.TestUtils;
+import io.github.sugarcubes.cloner.CopyAction;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -65,7 +66,13 @@ public class XmlTestCaseMapper implements TestCaseMapper {
     @SneakyThrows
     public <T> T deepClone(T object) {
         if (cloner == null) {
-            cloner = Cloners.builder().build();
+            cloner = Cloners.builder()
+                    .fieldAction(TestCase.class, "inits", CopyAction.ORIGINAL)
+                    .fieldAction(TestCase.class, "parentTestCase", CopyAction.ORIGINAL)
+                    .fieldAction(TestCase.class, "response", CopyAction.NULL)
+                    .fieldAction(TestCase.class, "outboundMessages", CopyAction.NULL)
+                    .fieldAction(TestCase.class, "dataStorageDiff", CopyAction.NULL)
+                    .build();
         }
         if (object instanceof Throwable) {
             return object;
