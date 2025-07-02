@@ -26,6 +26,8 @@ import org.springframework.test.web.client.MockMvcClientHttpRequestFactory;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcConfigurer;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
@@ -49,6 +51,7 @@ public class WebConfig {
         jacksonModule.setMixInAnnotation(RestClientResponseException.class, RestClientResponseExceptionMixin.class);
         jacksonModule.setMixInAnnotation(HttpClientErrorException.class, HttpClientErrorExceptionMixIn.class);
         jacksonModule.setMixInAnnotation(HttpMethod.class, HttpMethodMixIn.class);
+        jacksonModule.addDeserializer(LinkedMultiValueMapStringString.class, new MultiValueMapDeserializer());
         return new Module()
                 .setHandlerInstantiator(new SpringHandlerInstantiator(beanFactory))
                 .addJacksonModule(jacksonModule)
@@ -63,7 +66,8 @@ public class WebConfig {
                 .addSubTypes(HttpClientErrorException.UnsupportedMediaType.class, "httpClientErrorException.UnsupportedMediaType")
                 .addSubTypes(HttpClientErrorException.UnprocessableEntity.class, "httpClientErrorException.UnprocessableEntity")
                 .addSubTypes(HttpClientErrorException.TooManyRequests.class, "httpClientErrorException.TooManyRequests")
-                .addSubTypes(RequestEntity.class, ResponseEntity.class, HttpMethod.class);
+                .addSubTypes(RequestEntity.class, ResponseEntity.class, HttpMethod.class,
+                        LinkedMultiValueMapStringString.class);
     }
 
     @Bean

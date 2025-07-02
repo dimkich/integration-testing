@@ -9,10 +9,14 @@ import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
 
-public class MultiValueMapDeserializer extends JsonDeserializer<MultiValueMap<String, String>> {
+public class MultiValueMapDeserializer extends JsonDeserializer<LinkedMultiValueMapStringString> {
     @Override
-    public MultiValueMap<String, String> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        LinkedMultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+    public LinkedMultiValueMapStringString deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        LinkedMultiValueMapStringString map = new LinkedMultiValueMapStringString();
+        if (p.currentToken() == JsonToken.FIELD_NAME) {
+            p.nextToken();
+            map.add(p.currentName(), p.getValueAsString());
+        }
         while (p.nextToken() != JsonToken.END_OBJECT) {
             if (p.currentToken() == JsonToken.FIELD_NAME) {
                 p.nextToken();

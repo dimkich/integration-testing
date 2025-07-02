@@ -21,7 +21,8 @@ public class RequestEntityMixIn {
     @JsonCreator
     public RequestEntityMixIn(
             @JsonProperty("body") Object body,
-            @JsonDeserialize(using = MultiValueMapDeserializer.class) @JsonProperty("headers") MultiValueMap<String, String> headers,
+            @JsonDeserialize(as = LinkedMultiValueMapStringString.class) @JsonProperty("headers") MultiValueMap<String,
+                    String> headers,
             @JsonProperty("method") HttpMethod method,
             @JsonProperty("url") URI url) {
     }

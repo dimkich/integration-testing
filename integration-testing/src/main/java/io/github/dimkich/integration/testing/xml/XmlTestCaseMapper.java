@@ -13,8 +13,11 @@ import lombok.SneakyThrows;
 import org.springframework.core.io.ClassPathResource;
 
 import javax.xml.stream.Location;
+import java.io.ByteArrayInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Modifier;
 
 @RequiredArgsConstructor
 public class XmlTestCaseMapper implements TestCaseMapper {
@@ -72,6 +75,7 @@ public class XmlTestCaseMapper implements TestCaseMapper {
                     .fieldAction(TestCase.class, "response", CopyAction.NULL)
                     .fieldAction(TestCase.class, "outboundMessages", CopyAction.NULL)
                     .fieldAction(TestCase.class, "dataStorageDiff", CopyAction.NULL)
+                    .typeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
                     .build();
         }
         if (object instanceof Throwable) {

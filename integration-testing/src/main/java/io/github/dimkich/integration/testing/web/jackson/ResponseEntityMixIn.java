@@ -12,7 +12,7 @@ public class ResponseEntityMixIn {
     @JsonCreator
     public ResponseEntityMixIn(
             @JsonProperty("body") Object body,
-            @JsonDeserialize(using = MultiValueMapDeserializer.class) @JsonProperty("headers") MultiValueMap<String, String> headers,
+            @JsonDeserialize(as = LinkedMultiValueMapStringString.class) @JsonProperty("headers") MultiValueMap<String, String> headers,
             @JsonProperty("statusCode") HttpStatusCode status) {
     }
 }
