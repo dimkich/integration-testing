@@ -43,33 +43,32 @@ public class MockAnswer implements Answer<Object> {
             nestedCalls++;
             try {
                 Object result = invocation.callRealMethod();
-                mi.setResult(result);
-            } catch (Exception e) {
-                mi.setException(e);
+                mi.addResult(result);
+            } catch (Throwable e) {
+                mi.addException(e);
             } finally {
                 nestedCalls--;
             }
         }
-        if (mi.getException() != null) {
-            throw mi.getException();
-        }
+        mi.tryThrowException();
         if (returnMock(mockInvokeFound)) {
             if (invocation.getMethod().getReturnType().equals(Void.TYPE)) {
                 return null;
             }
-            mi.setResult(Mockito.mock(invocation.getMethod().getReturnType(), Answers.RETURNS_DEEP_STUBS));
-            return mi.getResult();
+            mi.addResult(Mockito.mock(invocation.getMethod().getReturnType(), Answers.RETURNS_DEEP_STUBS));
+            return mi.getCurrentResult();
         }
-        return mi.getResult();
+        return mi.getCurrentResult();
     }
 
     private boolean callRealMethod(boolean mockInvokeFound) {
-        return isSpy || properties.isMockAlwaysCallRealMethods() || properties.isMockCallRealMethodsOnNoData() && !mockInvokeFound;
+        return (isSpy && !mockInvokeFound) || properties.isMockAlwaysCallRealMethods()
+               || properties.isMockCallRealMethodsOnNoData() && !mockInvokeFound;
     }
 
     private boolean addMockInvoke(boolean mockInvokeFound) {
         return nestedCalls == 0 && (!mockInvokeFound || properties.isMockAlwaysCallRealMethods())
-                && (!isSpy || properties.isSpyCreateData());
+               && (!isSpy || properties.isSpyCreateData());
     }
 
     private boolean returnMock(boolean mockInvokeFound) {

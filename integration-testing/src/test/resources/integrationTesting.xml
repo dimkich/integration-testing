@@ -1,0 +1,59 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<testCase>
+    <testCase name="mockInvoke">
+        <mockInvoke name="converter" method="convertToString">
+            <arg type="integer">1</arg>
+            <result>
+                <return type="string">1</return>
+            </result>
+            <result>
+                <return type="string">2</return>
+            </result>
+            <result>
+                <throw type="httpClientErrorException.BadRequest">
+                    <statusCode>BAD_REQUEST</statusCode>
+                    <rawStatusCode>400</rawStatusCode>
+                    <message>Not supported yet.</message>
+                </throw>
+            </result>
+            <result>
+                <return type="string">4</return>
+            </result>
+        </mockInvoke>
+        <testCase name="1">
+            <bean>converter</bean>
+            <method>convertToString</method>
+            <request type="integer">1</request>
+            <response type="string">1</response>
+        </testCase>
+        <testCase name="2">
+            <bean>converter</bean>
+            <method>convertToString</method>
+            <request type="integer">1</request>
+            <response type="string">2</response>
+        </testCase>
+        <testCase name="3">
+            <bean>converter</bean>
+            <method>convertToString</method>
+            <request type="integer">1</request>
+            <response type="httpClientErrorException.BadRequest">
+                <statusCode>BAD_REQUEST</statusCode>
+                <rawStatusCode>400</rawStatusCode>
+                <message>Not supported yet.</message>
+            </response>
+        </testCase>
+        <testCase name="4">
+            <bean>converter</bean>
+            <method>convertToString</method>
+            <request type="integer">1</request>
+            <response type="string">4</response>
+        </testCase>
+        <testCase name="5">
+            <bean>converter</bean>
+            <method>convertToString</method>
+            <request type="integer">1</request>
+            <response type="string">1</response>
+        </testCase>
+    </testCase>
+</testCase>

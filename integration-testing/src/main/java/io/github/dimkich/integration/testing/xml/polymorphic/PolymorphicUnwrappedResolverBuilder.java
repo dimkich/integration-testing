@@ -39,6 +39,7 @@ public class PolymorphicUnwrappedResolverBuilder extends XmlTypeResolverBuilder 
         typeProperty("type");
         unwrappedTypeProperty = "utype";
         addParentType(Object.class).addParentType(Throwable.class)
+                .addAlias(Class.forName("java.util.ImmutableCollections$List12"), "arrayList")
                 .addAlias(Class.forName("java.util.ImmutableCollections$ListN"), "arrayList")
                 .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,

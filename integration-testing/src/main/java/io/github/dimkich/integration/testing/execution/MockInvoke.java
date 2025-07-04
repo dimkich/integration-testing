@@ -1,5 +1,7 @@
 package io.github.dimkich.integration.testing.execution;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -7,6 +9,7 @@ import lombok.experimental.Accessors;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonDifferenceCalculator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicMarkableReference;
@@ -28,8 +31,46 @@ public class MockInvoke {
     @JacksonXmlProperty(isAttribute = true)
     private String method;
     private List<Object> arg;
-    private Object result;
-    private Throwable exception;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<MockInvokeResult> result;
+    @JsonIgnore
+    private int resultIndex = 0;
+
+    public void addResult(Object result) {
+        if (this.result == null) {
+            this.result = new ArrayList<>();
+        }
+        this.result.add(new MockInvokeResult(result));
+    }
+
+    public void addException(Throwable e) {
+        if (this.result == null) {
+            this.result = new ArrayList<>();
+        }
+        this.result.add(new MockInvokeResult(e));
+    }
+
+    @JsonIgnore
+    public Object getCurrentResult() {
+        if (this.result == null) {
+            return null;
+        }
+        MockInvokeResult r = result.get(resultIndex % result.size());
+        resultIndex++;
+        return r.getReturn1();
+    }
+
+    @JsonIgnore
+    public void tryThrowException() throws Throwable {
+        if (this.result == null) {
+            return;
+        }
+        MockInvokeResult r = result.get(resultIndex % result.size());
+        if (r.getThrow1() != null) {
+            resultIndex++;
+            throw r.getThrow1();
+        }
+    }
 
     @SneakyThrows
     public boolean equalsTo(String name, String method, List<Object> arg) {
