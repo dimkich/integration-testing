@@ -6,7 +6,6 @@ import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
 import io.github.dimkich.integration.testing.web.jackson.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
@@ -23,11 +22,10 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.SpringHandlerInstantiator;
 import org.springframework.test.web.client.MockMvcClientHttpRequestFactory;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcConfigurer;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
@@ -92,16 +90,16 @@ public class WebConfig {
                 AbstractBeanDefinition definition = BeanDefinitionBuilder.rootBeanDefinition(RestTemplate.class)
                         .setFactoryMethodOnBean("createRestTemplate", factoryBean)
                         .addConstructorArgValue(testRestTemplate.basePath())
-                        .addConstructorArgReference("mockMvcClientHttpRequestFactory")
+                        .addConstructorArgReference("mockMvc")
                         .getBeanDefinition();
                 ((BeanDefinitionRegistry) beanFactory).registerBeanDefinition(testRestTemplate.beanName(), definition);
             }
         }
 
-        RestTemplate createRestTemplate(String basePath,
-                                        @Autowired(required = false) MockMvcClientHttpRequestFactory factory) {
+        RestTemplate createRestTemplate(String basePath, MockMvc mockMvc) {
             RestTemplate restTemplate = new RestTemplate();
-            if (factory != null) {
+            if (mockMvc != null) {
+                MockMvcClientHttpRequestFactory factory = new MockMvcClientHttpRequestFactory(mockMvc);
                 restTemplate.setRequestFactory((u, m) -> {
                     u = URI.create(basePath).resolve(u);
                     return factory.createRequest(u, m);
