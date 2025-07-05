@@ -32,7 +32,7 @@ public class RedissonMock {
         return calls.keySet();
     }
 
-    public Object call(Object targetObject, String name, Codec codec, InvocationOnMock invocation) {
+    public Object call(Object targetObject, String name, Codec codec, InvocationOnMock invocation, Object config) {
         String method = invocation.getMethod().getName();
         if (method.endsWith("Async")) {
             method = method.substring(0, method.length() - 5);
@@ -40,7 +40,7 @@ public class RedissonMock {
         if (!calls.containsKey(method)) {
             throw new IllegalArgumentException("Unsupported method: " + method);
         }
-        Object result = calls.get(method).apply(new RMockInvoke(targetObject, method, name, codec, invocation));
+        Object result = calls.get(method).apply(new RMockInvoke(targetObject, method, name, codec, invocation, config));
         if (RFuture.class.isAssignableFrom(invocation.getMethod().getReturnType())) {
             return new CompletableFutureWrapper<>(result);
         }

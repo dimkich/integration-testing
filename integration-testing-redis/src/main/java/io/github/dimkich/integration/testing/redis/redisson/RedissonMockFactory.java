@@ -1,29 +1,35 @@
 package io.github.dimkich.integration.testing.redis.redisson;
 
+import eu.ciechanowiec.sneakyfun.SneakyFunction;
+import io.netty.buffer.ByteBuf;
+import lombok.SneakyThrows;
+import org.redisson.RedissonObject;
 import org.redisson.api.*;
+import org.redisson.jcache.JCache;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class RedissonMockFactory {
     private static final byte[] ZERO_BYTE_ARRAY = new byte[0];
-    private static final Function<RMockInvoke, Object> NULL = redissonInvocation -> null;
-    private static final Function<RMockInvoke, Object> ZERO = redissonInvocation -> 0;
-    private static final Function<RMockInvoke, Object> INT_MAX = redissonInvocation -> Integer.MAX_VALUE;
-    private static final Function<RMockInvoke, Object> TRUE = redissonInvocation -> true;
-    private static final Function<RMockInvoke, Object> FALSE = redissonInvocation -> false;
-    private static final Function<RMockInvoke, Object> BYTE_ARRAY = redissonInvocation -> ZERO_BYTE_ARRAY;
+    private static final Function<RMockInvoke, Object> NULL = mi -> null;
+    private static final Function<RMockInvoke, Object> ZERO = mi -> 0;
+    private static final Function<RMockInvoke, Object> INT_MAX = mi -> Integer.MAX_VALUE;
+    private static final Function<RMockInvoke, Object> TRUE = mi -> true;
+    private static final Function<RMockInvoke, Object> FALSE = mi -> false;
+    private static final Function<RMockInvoke, Object> BYTE_ARRAY = mi -> ZERO_BYTE_ARRAY;
 
     private RedissonMock object;
     private RedissonMock destroyable;
     private RedissonMock expirable;
+    private RedissonMock redissonObject;
     private RedissonMock bucket;
     private RedissonMock map;
     private RedissonMock mapCache;
+    private RedissonMock jCache;
     private RedissonMock concurrentMap;
 
     public RedissonMock getObject() {
@@ -55,6 +61,45 @@ public class RedissonMockFactory {
                     .add("getExpireTime", INT_MAX).add(getObject());
         }
         return expirable;
+    }
+
+    public RedissonMock getRedissonObject() {
+        if (redissonObject == null) {
+            redissonObject = new RedissonMock(RedissonObject.class).add("getLockByValue", NULL)
+                    .add("getRawName", RMockInvoke::getName).add("getLockByMapKey", NULL)
+                    .add("encodeMapKey",
+                            SneakyFunction.sneaky(mc -> mc.getCodec().getMapKeyEncoder().encode(mc.getArg1())))
+                    .add("encodeMapValue",
+                            SneakyFunction.sneaky(mc -> mc.getCodec().getMapValueEncoder().encode(mc.getArg1())))
+                    .add("encode", new Function<>() {
+                        @Override
+                        @SneakyThrows
+                        @SuppressWarnings("unchecked")
+                        public Object apply(RMockInvoke mc) {
+                            if (mc.getInvocation().getArguments().length == 1) {
+                                if (mc.getArg1() instanceof Collection<?> values) {
+                                    List<ByteBuf> result = new ArrayList<>(values.size());
+                                    for (Object object : values) {
+                                        result.add(mc.getCodec().getValueEncoder().encode(object));
+                                    }
+                                    return result;
+                                }
+                                return mc.getCodec().getValueEncoder().encode(mc.getArg1());
+                            }
+                            if (mc.getArg1() instanceof Collection params && mc.getArg2() instanceof Collection<?> values) {
+                                for (Object object : values) {
+                                    params.add(mc.getCodec().getValueEncoder().encode(object));
+                                }
+                                return null;
+                            }
+                            Object v = mc.getCodec().getValueEncoder().encode(mc.getArg2());
+                            ((Collection<Object>) mc.getArg1()).add(v);
+                            return null;
+                        }
+                    })
+                    .add(getObject());
+        }
+        return redissonObject;
     }
 
     public RedissonMock getBucket() {
@@ -153,6 +198,28 @@ public class RedissonMockFactory {
                     .add(getMap());
         }
         return mapCache;
+    }
+
+    public RedissonMock getJCache() {
+        if (jCache == null) {
+            jCache = new RedissonMock(JCache.class).add("invoke", NULL).add("close", NULL)
+                    .add("deregisterCacheEntryListener", NULL).add("unwrap", NULL)
+                    .add("invokeAll", NULL).add("isClosed", FALSE)
+                    .add("registerCacheEntryListener", NULL).add("getCacheManager", NULL)
+                    .add("getConfiguration", RMockInvoke::getConfig)
+                    .add("getAndPut", mc -> mc.concurrentMap().put(mc.getArg1(), mc.getArg2()))
+                    .add("getAndReplace", mc -> mc.concurrentMap().put(mc.getArg1(), mc.getArg2()))
+                    .add("getAndRemove", mc -> mc.concurrentMap().remove(mc.getArg1()))
+                    .add("iterator", mc -> mc.concurrentMap().entrySet().iterator())
+                    .add("spliterator", mc -> mc.concurrentMap().entrySet().spliterator())
+                    .add("removeAll",
+                            mc -> {
+                                ((Collection<?>) mc.getArg1()).forEach(v -> mc.concurrentMap().remove(v));
+                                return null;
+                            })
+                    .add(getRedissonObject()).add(getMap());
+        }
+        return jCache;
     }
 
     RedissonMock getConcurrentMap() {

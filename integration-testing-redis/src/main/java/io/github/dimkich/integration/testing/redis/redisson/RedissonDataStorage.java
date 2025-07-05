@@ -5,8 +5,6 @@ import io.github.dimkich.integration.testing.redis.redisson.convert.RBridgeFacto
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
 import org.redisson.api.RObject;
 
 import java.util.LinkedHashMap;
@@ -14,7 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class RedissonDataStorage implements KeyValueDataStorage, MethodInterceptor {
+public class RedissonDataStorage implements KeyValueDataStorage {
     @Getter
     private final String name;
     private final Map<String, RBridge> redissonObjects = new LinkedHashMap<>();
@@ -40,12 +38,9 @@ public class RedissonDataStorage implements KeyValueDataStorage, MethodIntercept
         }
     }
 
-    @Override
-    public Object invoke(MethodInvocation invocation) throws Throwable {
-        Object object = invocation.proceed();
+    void tryPut(Object object) {
         if (object instanceof RObject rObject) {
             redissonObjects.put(rObject.getName(), RBridgeFactory.create(rObject));
         }
-        return object;
     }
 }

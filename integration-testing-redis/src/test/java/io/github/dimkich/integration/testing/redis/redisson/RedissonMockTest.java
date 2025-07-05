@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.redisson.Redisson;
+import org.redisson.RedissonObject;
 import org.redisson.api.*;
+import org.redisson.jcache.JCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
@@ -208,9 +210,11 @@ class RedissonMockTest {
                 {RObject.class, factory.getObject()},
                 {RDestroyable.class, factory.getDestroyable()},
                 {RExpirable.class, factory.getExpirable()},
+                {RedissonObject.class, factory.getRedissonObject()},
                 {RBucket.class, factory.getBucket()},
                 {RMap.class, factory.getMap()},
                 {RMapCache.class, factory.getMapCache()},
+                {JCache.class, factory.getJCache()},
         };
     }
 

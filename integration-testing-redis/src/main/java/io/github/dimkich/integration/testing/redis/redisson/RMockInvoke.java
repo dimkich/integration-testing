@@ -21,6 +21,7 @@ public class RMockInvoke {
     private final String name;
     private final Codec codec;
     private final InvocationOnMock invocation;
+    private final Object config;
 
     public Object getMock() {
         return invocation.getMock();
