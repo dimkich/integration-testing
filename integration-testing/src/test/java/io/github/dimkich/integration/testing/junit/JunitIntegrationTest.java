@@ -29,8 +29,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectUniqueId;
 
 @IntegrationTesting
-@SpringBootTest(classes = {IntegrationTestConfig.class, JunitIntegrationTest.Config.class},
-        properties = {"integration.testing.enabled=true"})
+@SpringBootTest(classes = {IntegrationTestConfig.class, JunitIntegrationTest.Config.class})
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class JunitIntegrationTest {
     private final DynamicTestBuilder dynamicTestBuilder;
