@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.storage;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorageService;
+import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueOperationsConfig;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageFactory;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import jakarta.annotation.PostConstruct;
@@ -15,6 +16,8 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -22,6 +25,7 @@ import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.jdbc.DatabaseDriver;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.support.JdbcUtils;
 
@@ -89,6 +93,8 @@ public class StorageConfig {
     }
 
     @Configuration
+    @Import(KeyValueOperationsConfig.class)
+    @DependsOn(KeyValueOperationsConfig.beanName)
     @EnableConfigurationProperties(LiquibaseProperties.class)
     public static class DataSourceConfig implements BeanFactoryPostProcessor {
         @Override
