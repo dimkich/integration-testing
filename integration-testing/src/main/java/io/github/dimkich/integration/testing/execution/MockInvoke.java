@@ -51,6 +51,11 @@ public class MockInvoke {
     }
 
     @JsonIgnore
+    public void reset() {
+        resultIndex = 0;
+    }
+
+    @JsonIgnore
     public Object getCurrentResult() {
         if (this.result == null) {
             return null;
