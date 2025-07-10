@@ -21,9 +21,7 @@ import io.github.dimkich.integration.testing.storage.mapping.EntriesStringKeyObj
 import io.github.dimkich.integration.testing.storage.mapping.MapStringKeyObjectValue;
 import io.github.dimkich.integration.testing.storage.mapping.MapStringKeyStringValue;
 import io.github.dimkich.integration.testing.xml.attributes.BeanAsAttributesModule;
-import io.github.dimkich.integration.testing.xml.config.jackson.BigDecimalSerializer;
-import io.github.dimkich.integration.testing.xml.config.jackson.Lf4SpacesIndenter;
-import io.github.dimkich.integration.testing.xml.config.jackson.ThrowableMixIn;
+import io.github.dimkich.integration.testing.xml.config.jackson.*;
 import io.github.dimkich.integration.testing.xml.map.MapModule;
 import io.github.dimkich.integration.testing.xml.polymorphic.PolymorphicUnwrappedModule;
 import io.github.dimkich.integration.testing.xml.polymorphic.PolymorphicUnwrappedResolverBuilder;
@@ -37,6 +35,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.validation.FieldError;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.util.List;
 
 @Configuration
@@ -54,12 +53,15 @@ public class XmlConfig {
         jacksonModule.addSerializer(BigDecimal.class, new BigDecimalSerializer());
         jacksonModule.setMixInAnnotation(Throwable.class, ThrowableMixIn.class);
         jacksonModule.setMixInAnnotation(FieldError.class, FieldErrorMixIn.class);
+        jacksonModule.setMixInAnnotation(SecureRandom.class, SecureRandomMixIn.class);
+        jacksonModule.setMixInAnnotation(byte[].class, ByteArrayMixIn.class);
 
         return new Module()
                 .addParentType(TestCaseInit.class)
+                .addSubTypes(byte[].class, "byte[]")
                 .addSubTypes(EntriesObjectKeyObjectValue.class, EntriesStringKeyObjectValue.class,
                         MapStringKeyStringValue.class, MapStringKeyObjectValue.class, DateTimeInit.class,
-                        KeyValueStorageInit.class, BeanInit.class, MockInit.class,
+                        KeyValueStorageInit.class, BeanInit.class, MockInit.class, SecureRandom.class,
                         SqlStorageSetup.class, SqlStorageInit.class, SpringErrorDto.class)
                 .addJacksonModule(jacksonModule)
                 .addJacksonModule(new JavaTimeModule())

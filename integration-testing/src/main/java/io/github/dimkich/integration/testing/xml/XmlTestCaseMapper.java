@@ -1,11 +1,11 @@
 package io.github.dimkich.integration.testing.xml;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import io.github.sugarcubes.cloner.Cloner;
-import io.github.sugarcubes.cloner.Cloners;
 import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestCaseMapper;
 import io.github.dimkich.integration.testing.util.TestUtils;
+import io.github.sugarcubes.cloner.Cloner;
+import io.github.sugarcubes.cloner.Cloners;
 import io.github.sugarcubes.cloner.CopyAction;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -16,8 +16,7 @@ import javax.xml.stream.Location;
 import java.io.ByteArrayInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Modifier;
+import java.security.SecureRandom;
 
 @RequiredArgsConstructor
 public class XmlTestCaseMapper implements TestCaseMapper {
@@ -76,6 +75,7 @@ public class XmlTestCaseMapper implements TestCaseMapper {
                     .fieldAction(TestCase.class, "outboundMessages", CopyAction.NULL)
                     .fieldAction(TestCase.class, "dataStorageDiff", CopyAction.NULL)
                     .typeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
+                    .typeAction(SecureRandom.class, CopyAction.ORIGINAL)
                     .build();
         }
         if (object instanceof Throwable) {
