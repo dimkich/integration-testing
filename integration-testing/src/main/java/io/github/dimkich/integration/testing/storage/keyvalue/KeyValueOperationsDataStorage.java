@@ -23,14 +23,12 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
         return keyValueOperations.getMappingContext().getPersistentEntities().stream()
                 .map(pe -> (KeyValuePersistentEntity<?, ?>) pe)
                 .filter(pe -> pe.getKeySpace() != null)
-                .map(pe -> {
+                .flatMap(pe -> {
                     Iterable<?> iterable = keyValueOperations.getKeyValueAdapter().getAllOf(pe.getKeySpace());
-                    Map<Object, Object> map = StreamSupport.stream(iterable.spliterator(), false)
-                            .collect(Collectors.toMap(o -> pe.getIdentifierAccessor(o).getRequiredIdentifier(), o -> o,
-                                    (v1, v2) -> v2, LinkedHashMap::new));
-                    return Map.entry(pe.getKeySpace(), map);
+                    return StreamSupport.stream(iterable.spliterator(), false)
+                            .map(o -> Map.entry(pe.getKeySpace() + "_"
+                                    + pe.getIdentifierAccessor(o).getRequiredIdentifier(), o));
                 })
-                .filter(e -> !e.getValue().isEmpty())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v2,
                         LinkedHashMap::new));
     }
