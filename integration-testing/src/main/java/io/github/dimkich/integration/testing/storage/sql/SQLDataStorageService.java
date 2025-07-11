@@ -34,6 +34,12 @@ public class SQLDataStorageService implements TestDataStorage {
         return storage.getName();
     }
 
+    public void executeSqls(Collection<String> sqls) throws Exception {
+        if (sqls != null && !sqls.isEmpty()) {
+            storage.executeSql(sqls);
+        }
+    }
+
     public void setDbUnitXml(Collection<String> paths) throws DataSetException, IOException {
         List<IDataSet> dataSets = new ArrayList<>();
         for (String dataSetPath : paths) {

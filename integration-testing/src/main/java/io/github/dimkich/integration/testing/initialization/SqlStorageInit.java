@@ -23,10 +23,9 @@ public class SqlStorageInit extends TestCaseInit {
     private Boolean loadAllTables;
     @JacksonXmlProperty(isAttribute = true)
     private Boolean disableTableHooks;
-    private List<String> sqlFilePath;
-    private List<String> sql;
     private String tablesToChange;
     private String tablesToLoad;
+    private List<String> sql;
 
     @Override
     public Integer getOrder() {
@@ -49,11 +48,6 @@ public class SqlStorageInit extends TestCaseInit {
             SQLDataStorageService storage = testDataStorages.getTestDataStorage(init.getName(), SQLDataStorageService.class);
 
             List<String> sqls = new ArrayList<>();
-            if (init.getSqlFilePath() != null) {
-                for (String sqlFile : init.getSqlFilePath()) {
-                    sqls.add(new String(new ClassPathResource(sqlFile).getInputStream().readAllBytes(), StandardCharsets.UTF_8));
-                }
-            }
             if (init.getSql() != null) {
                 sqls.addAll(init.getSql());
             }

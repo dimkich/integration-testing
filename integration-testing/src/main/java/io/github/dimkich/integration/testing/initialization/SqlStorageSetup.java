@@ -5,8 +5,10 @@ import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import lombok.*;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Getter
@@ -15,6 +17,8 @@ import java.util.*;
 public class SqlStorageSetup extends TestCaseInit {
     @JacksonXmlProperty(isAttribute = true)
     private String name;
+    private List<String> sqlFilePath;
+    private List<String> sql;
     private Set<String> dbUnitPath;
     private Set<TableHook> tableHook;
 
@@ -47,6 +51,17 @@ public class SqlStorageSetup extends TestCaseInit {
         @SneakyThrows
         public void init(SqlStorageSetup init) {
             SQLDataStorageService storage = testDataStorages.getTestDataStorage(init.getName(), SQLDataStorageService.class);
+
+            List<String> sqls = new ArrayList<>();
+            if (init.getSqlFilePath() != null) {
+                for (String sqlFile : init.getSqlFilePath()) {
+                    sqls.add(new String(new ClassPathResource(sqlFile).getInputStream().readAllBytes(), StandardCharsets.UTF_8));
+                }
+            }
+            if (init.getSql() != null) {
+                sqls.addAll(init.getSql());
+            }
+            storage.executeSqls(sqls);
 
             if (init.getDbUnitPath() != null) {
                 storage.setDbUnitXml(init.getDbUnitPath());
