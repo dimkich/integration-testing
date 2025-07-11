@@ -3,26 +3,27 @@ package io.github.dimkich.integration.testing.xml;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestCaseMapper;
+import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.util.TestUtils;
 import io.github.sugarcubes.cloner.Cloner;
 import io.github.sugarcubes.cloner.Cloners;
-import io.github.sugarcubes.cloner.CopyAction;
+import io.github.sugarcubes.cloner.ReflectionClonerBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.springframework.core.io.ClassPathResource;
 
 import javax.xml.stream.Location;
-import java.io.ByteArrayInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.security.SecureRandom;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class XmlTestCaseMapper implements TestCaseMapper {
     private final static String fileHeader = "<!-- @" + "formatter:off -->";
     private final XmlMapper xmlMapper;
     private final ObjectToLocationStorage objectToLocationStorage;
+    private final List<TestSetupModule> modules;
 
     @Setter
     private String path;
@@ -68,15 +69,12 @@ public class XmlTestCaseMapper implements TestCaseMapper {
     @SneakyThrows
     public <T> T deepClone(T object) {
         if (cloner == null) {
-            cloner = Cloners.builder()
-                    .fieldAction(TestCase.class, "inits", CopyAction.ORIGINAL)
-                    .fieldAction(TestCase.class, "parentTestCase", CopyAction.ORIGINAL)
-                    .fieldAction(TestCase.class, "response", CopyAction.NULL)
-                    .fieldAction(TestCase.class, "outboundMessages", CopyAction.NULL)
-                    .fieldAction(TestCase.class, "dataStorageDiff", CopyAction.NULL)
-                    .typeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
-                    .typeAction(SecureRandom.class, CopyAction.ORIGINAL)
-                    .build();
+            ReflectionClonerBuilder builder = Cloners.builder();
+            for (TestSetupModule module : modules) {
+                module.getFieldActions().forEach(builder::fieldAction);
+                module.getTypeActions().forEach(builder::typeAction);
+            }
+            cloner = builder.build();
         }
         if (object instanceof Throwable) {
             return object;

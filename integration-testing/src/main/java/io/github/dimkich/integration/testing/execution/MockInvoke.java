@@ -27,7 +27,6 @@ public class MockInvoke {
     static {
         compConfig.registerEqualsForType((amr1, amr2) -> compCalculator.determineDifferences(amr1.getReference(),
                 amr2.getReference(), compConfig).isEmpty(), AtomicMarkableReference.class);
-        compConfig.registerEqualsForType((sr1, sr2) -> true, SecureRandom.class);
     }
 
     @JacksonXmlProperty(isAttribute = true)

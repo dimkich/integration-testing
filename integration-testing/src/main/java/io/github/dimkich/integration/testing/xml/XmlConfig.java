@@ -11,6 +11,7 @@ import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.initialization.*;
@@ -25,6 +26,7 @@ import io.github.dimkich.integration.testing.xml.config.jackson.*;
 import io.github.dimkich.integration.testing.xml.map.MapModule;
 import io.github.dimkich.integration.testing.xml.polymorphic.PolymorphicUnwrappedModule;
 import io.github.dimkich.integration.testing.xml.polymorphic.PolymorphicUnwrappedResolverBuilder;
+import io.github.sugarcubes.cloner.CopyAction;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.validation.FieldError;
 
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.util.List;
@@ -63,6 +66,14 @@ public class XmlConfig {
                         MapStringKeyStringValue.class, MapStringKeyObjectValue.class, DateTimeInit.class,
                         KeyValueStorageInit.class, BeanInit.class, MockInit.class, SecureRandom.class,
                         SqlStorageSetup.class, SqlStorageInit.class, SpringErrorDto.class)
+                .clonerFieldAction(TestCase.class, "inits", CopyAction.ORIGINAL)
+                .clonerFieldAction(TestCase.class, "parentTestCase", CopyAction.ORIGINAL)
+                .clonerFieldAction(TestCase.class, "response", CopyAction.NULL)
+                .clonerFieldAction(TestCase.class, "outboundMessages", CopyAction.NULL)
+                .clonerFieldAction(TestCase.class, "dataStorageDiff", CopyAction.NULL)
+                .clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)
+                .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
+                .addEqualsForType(SecureRandom.class, (sr1, sr2) -> true)
                 .addJacksonModule(jacksonModule)
                 .addJacksonModule(new JavaTimeModule())
                 .addJacksonModule(new BeanAsAttributesModule(resolverBuilder))
@@ -105,6 +116,6 @@ public class XmlConfig {
         SerializerFactoryConfig config = ((BasicSerializerFactory) xmlMapper.getSerializerFactory()).getFactoryConfig();
         xmlMapper.setSerializerFactory(new FixedBeanSerializerFactory(config));
 
-        return new XmlTestCaseMapper(xmlMapper, objectToLocationStorage);
+        return new XmlTestCaseMapper(xmlMapper, objectToLocationStorage, modules);
     }
 }

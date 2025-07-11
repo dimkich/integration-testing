@@ -3,9 +3,12 @@ package io.github.dimkich.integration.testing;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.databind.cfg.HandlerInstantiator;
 import com.fasterxml.jackson.databind.ser.PropertyFilter;
+import io.github.sugarcubes.cloner.CopyAction;
+import io.github.sugarcubes.cloner.ReflectionUtils;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.BiPredicate;
 
@@ -18,6 +21,8 @@ public class TestSetupModule {
     private final List<com.fasterxml.jackson.databind.Module> jacksonModules = new ArrayList<>();
     private final List<Pair<String, PropertyFilter>> jacksonFilters = new ArrayList<>();
     private final Map<Class<?>, BiPredicate<?, ?>> equalsMap = new HashMap<>();
+    private final Map<Field, CopyAction> fieldActions = new LinkedHashMap<>();
+    private final Map<Class<?>, CopyAction> typeActions = new LinkedHashMap<>();
     private HandlerInstantiator handlerInstantiator;
 
     public TestSetupModule addParentType(Class<?> type) {
@@ -64,6 +69,21 @@ public class TestSetupModule {
 
     public <T> TestSetupModule addEqualsForType(Class<T> type, BiPredicate<? super T, ? super T> equals) {
         equalsMap.put(type, equals);
+        return this;
+    }
+
+    public TestSetupModule clonerFieldAction(Class<?> type, String field, CopyAction action) {
+        clonerFieldAction(ReflectionUtils.getField(type, field), action);
+        return this;
+    }
+
+    public TestSetupModule clonerFieldAction(Field field, CopyAction action) {
+        fieldActions.put(field, action);
+        return this;
+    }
+
+    public TestSetupModule clonerTypeAction(Class<?> type, CopyAction action) {
+        typeActions.put(type, action);
         return this;
     }
 }

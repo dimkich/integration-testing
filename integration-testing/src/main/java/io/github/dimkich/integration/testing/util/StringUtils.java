@@ -85,7 +85,7 @@ public class StringUtils {
                 return this.getStringBuffer().toString();
             }
             if (getObject() != null && Enum.class.isAssignableFrom(getObject().getClass())) {
-                return ((Enum<?>)getObject()).name();
+                return ((Enum<?>) getObject()).name();
             }
             try {
                 return super.toString();
@@ -126,9 +126,9 @@ public class StringUtils {
     private static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final SecureRandom rnd = new SecureRandom();
 
-    public static String randomString(int len){
+    public static String randomString(int len) {
         StringBuilder sb = new StringBuilder(len);
-        for(int i = 0; i < len; i++)
+        for (int i = 0; i < len; i++)
             sb.append(AB.charAt(rnd.nextInt(AB.length())));
         return sb.toString();
     }
