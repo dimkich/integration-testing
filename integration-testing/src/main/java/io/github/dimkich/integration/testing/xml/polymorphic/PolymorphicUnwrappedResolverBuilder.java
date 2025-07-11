@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
 import com.fasterxml.jackson.dataformat.xml.XmlTypeResolverBuilder;
-import io.github.dimkich.integration.testing.Module;
+import io.github.dimkich.integration.testing.TestSetupModule;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class PolymorphicUnwrappedResolverBuilder extends XmlTypeResolverBuilder {
-    private final List<Module> modules;
+    private final List<TestSetupModule> modules;
 
     private final Map<Class<?>, Set<NamedType>> parentToSubTypeMap = new HashMap<>();
     private final Map<String, NamedType> subTypes = new HashMap<>();
@@ -46,7 +46,7 @@ public class PolymorphicUnwrappedResolverBuilder extends XmlTypeResolverBuilder 
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class,
                         LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class);
-        for (Module module : modules) {
+        for (TestSetupModule module : modules) {
             module.getParentTypes().forEach(this::addParentType);
             module.getSubTypesWithName().forEach(p -> this.addSubType(p.getKey(), p.getValue()));
             module.getSubTypes().forEach(this::addSubTypes);

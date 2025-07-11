@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.web;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.github.dimkich.integration.testing.Module;
+import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
 import io.github.dimkich.integration.testing.web.jackson.*;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ public class WebConfig {
     private final ConfigurableListableBeanFactory beanFactory;
 
     @Bean
-    Module webTestModule() {
+    TestSetupModule webTestModule() {
         SimpleModule jacksonModule = new SimpleModule();
         jacksonModule.setMixInAnnotation(RequestEntity.class, RequestEntityMixIn.class);
         jacksonModule.setMixInAnnotation(ResponseEntity.class, ResponseEntityMixIn.class);
@@ -50,7 +50,7 @@ public class WebConfig {
         jacksonModule.setMixInAnnotation(HttpClientErrorException.class, HttpClientErrorExceptionMixIn.class);
         jacksonModule.setMixInAnnotation(HttpMethod.class, HttpMethodMixIn.class);
         jacksonModule.addDeserializer(LinkedMultiValueMapStringString.class, new MultiValueMapDeserializer());
-        return new Module()
+        return new TestSetupModule()
                 .setHandlerInstantiator(new SpringHandlerInstantiator(beanFactory))
                 .addJacksonModule(jacksonModule)
                 .addSubTypes(HttpClientErrorException.BadRequest.class, "httpClientErrorException.BadRequest")

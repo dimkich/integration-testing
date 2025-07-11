@@ -11,7 +11,7 @@ import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.github.dimkich.integration.testing.Module;
+import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.initialization.*;
 import io.github.dimkich.integration.testing.openapi.FieldErrorMixIn;
@@ -47,7 +47,7 @@ public class XmlConfig {
     private PolymorphicUnwrappedResolverBuilder resolverBuilder;
 
     @Bean
-    Module xmlModule() {
+    TestSetupModule xmlModule() {
         SimpleModule jacksonModule = new SimpleModule();
         jacksonModule.setDeserializerModifier(new StoreLocationBeanDeserializerModifier(objectToLocationStorage));
         jacksonModule.addSerializer(BigDecimal.class, new BigDecimalSerializer());
@@ -56,7 +56,7 @@ public class XmlConfig {
         jacksonModule.setMixInAnnotation(SecureRandom.class, SecureRandomMixIn.class);
         jacksonModule.setMixInAnnotation(byte[].class, ByteArrayMixIn.class);
 
-        return new Module()
+        return new TestSetupModule()
                 .addParentType(TestCaseInit.class)
                 .addSubTypes(byte[].class, "byte[]")
                 .addSubTypes(EntriesObjectKeyObjectValue.class, EntriesStringKeyObjectValue.class,
@@ -71,7 +71,7 @@ public class XmlConfig {
     }
 
     @Bean
-    XmlTestCaseMapper testCaseMapper(List<Module> modules) {
+    XmlTestCaseMapper testCaseMapper(List<TestSetupModule> modules) {
         XmlMapper.Builder builder = XmlMapper.builder();
         builder.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         builder.configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
@@ -91,7 +91,7 @@ public class XmlConfig {
         builder.setDefaultTyping(resolverBuilder);
 
         SimpleFilterProvider filterProvider = new SimpleFilterProvider();
-        for (Module module : modules) {
+        for (TestSetupModule module : modules) {
             module.getJacksonModules().forEach(builder::addModules);
             module.getJacksonFilters().forEach(f -> filterProvider.addFilter(f.getKey(), f.getValue()));
             if (module.getHandlerInstantiator() != null) {

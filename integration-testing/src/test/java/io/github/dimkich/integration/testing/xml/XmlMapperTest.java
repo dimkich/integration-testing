@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
-import io.github.dimkich.integration.testing.Module;
+import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.xml.attributes.BeanAsAttributes;
 import io.github.dimkich.integration.testing.xml.map.JsonMapKey;
 import io.github.dimkich.integration.testing.xml.token.XmlTokenBuffer;
@@ -101,8 +101,8 @@ class XmlMapperTest {
     @Configuration
     static class Config {
         @Bean
-        Module testModule() {
-            return new Module().addSubTypes(MapKeyNotWrapped.class, MapKeyWrapped.class,
+        TestSetupModule testModule() {
+            return new TestSetupModule().addSubTypes(MapKeyNotWrapped.class, MapKeyWrapped.class,
                     MapAttrNotWrapped.class, MapAttrWrapped.class, TypeTest.class);
         }
     }

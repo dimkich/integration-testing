@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Getter
-public class Module {
+public class TestSetupModule {
     private final List<Class<?>> parentTypes = new ArrayList<>();
     private final List<Pair<Class<?>, String>> subTypesWithName = new ArrayList<>();
     private final List<Class<?>> subTypes = new ArrayList<>();
@@ -20,44 +20,44 @@ public class Module {
     private final List<Pair<String, PropertyFilter>> jacksonFilters = new ArrayList<>();
     private HandlerInstantiator handlerInstantiator;
 
-    public Module addParentType(Class<?> type) {
+    public TestSetupModule addParentType(Class<?> type) {
         parentTypes.add(type);
         return this;
     }
 
-    public Module addSubTypes(Class<?> subType, String name) {
+    public TestSetupModule addSubTypes(Class<?> subType, String name) {
         subTypesWithName.add(Pair.of(subType, name));
         return this;
     }
 
-    public Module addSubTypes(Class<?>... classes) {
+    public TestSetupModule addSubTypes(Class<?>... classes) {
         subTypes.addAll(Arrays.asList(classes));
         return this;
     }
 
-    public Module addSubTypes(JsonSubTypes jsonSubTypes) {
+    public TestSetupModule addSubTypes(JsonSubTypes jsonSubTypes) {
         for (JsonSubTypes.Type type : jsonSubTypes.value()) {
             addSubTypes(type.value(), type.name());
         }
         return this;
     }
 
-    public Module addAlias(Class<?> subType, String alias) {
+    public TestSetupModule addAlias(Class<?> subType, String alias) {
         aliases.add(Pair.of(subType, alias));
         return this;
     }
 
-    public Module addJacksonModule(com.fasterxml.jackson.databind.Module jacksonModule) {
+    public TestSetupModule addJacksonModule(com.fasterxml.jackson.databind.Module jacksonModule) {
         jacksonModules.add(jacksonModule);
         return this;
     }
 
-    public Module addJacksonFilter(String id, PropertyFilter filter) {
+    public TestSetupModule addJacksonFilter(String id, PropertyFilter filter) {
         jacksonFilters.add(Pair.of(id, filter));
         return this;
     }
 
-    public Module setHandlerInstantiator(HandlerInstantiator handlerInstantiator) {
+    public TestSetupModule setHandlerInstantiator(HandlerInstantiator handlerInstantiator) {
         this.handlerInstantiator = handlerInstantiator;
         return this;
     }

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.dimkich.integration.testing.DynamicTestBuilder;
 import io.github.dimkich.integration.testing.IntegrationTestConfig;
 import io.github.dimkich.integration.testing.IntegrationTesting;
-import io.github.dimkich.integration.testing.Module;
+import io.github.dimkich.integration.testing.TestSetupModule;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DynamicNode;
@@ -42,8 +42,8 @@ public class JunitIntegrationTest {
     @Configuration
     static class Config {
         @Bean
-        Module module() {
-            return new Module().addSubTypes(Selector.class.getAnnotation(JsonSubTypes.class));
+        TestSetupModule module() {
+            return new TestSetupModule().addSubTypes(Selector.class.getAnnotation(JsonSubTypes.class));
         }
 
         @Bean
