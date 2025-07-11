@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.execution;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import io.github.dimkich.integration.testing.TestSetupModule;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicMarkableReference;
+import java.util.function.BiPredicate;
 
 @Data
 @Accessors(chain = true)
@@ -37,6 +39,11 @@ public class MockInvoke {
     private List<MockInvokeResult> result;
     @JsonIgnore
     private int resultIndex = 0;
+
+    @SuppressWarnings("unchecked")
+    public static void addEqualsForType(Class<?> type, BiPredicate<?, ?> equals) {
+        compConfig.registerEqualsForType((BiPredicate<Object, Object>)equals, (Class<Object>)type);
+    }
 
     public void addResult(Object result) {
         if (this.result == null) {

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
 import com.fasterxml.jackson.dataformat.xml.XmlTypeResolverBuilder;
 import io.github.dimkich.integration.testing.TestSetupModule;
+import io.github.dimkich.integration.testing.execution.MockInvoke;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -51,6 +53,7 @@ public class PolymorphicUnwrappedResolverBuilder extends XmlTypeResolverBuilder 
             module.getSubTypesWithName().forEach(p -> this.addSubType(p.getKey(), p.getValue()));
             module.getSubTypes().forEach(this::addSubTypes);
             module.getAliases().forEach(p -> this.addAlias(p.getKey(), p.getValue()));
+            module.getEqualsMap().forEach(MockInvoke::addEqualsForType);
         }
     }
 

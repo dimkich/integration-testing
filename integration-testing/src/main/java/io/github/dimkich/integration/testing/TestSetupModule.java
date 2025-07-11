@@ -6,9 +6,8 @@ import com.fasterxml.jackson.databind.ser.PropertyFilter;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.function.BiPredicate;
 
 @Getter
 public class TestSetupModule {
@@ -18,6 +17,7 @@ public class TestSetupModule {
     private final List<Pair<Class<?>, String>> aliases = new ArrayList<>();
     private final List<com.fasterxml.jackson.databind.Module> jacksonModules = new ArrayList<>();
     private final List<Pair<String, PropertyFilter>> jacksonFilters = new ArrayList<>();
+    private final Map<Class<?>, BiPredicate<?, ?>> equalsMap = new HashMap<>();
     private HandlerInstantiator handlerInstantiator;
 
     public TestSetupModule addParentType(Class<?> type) {
@@ -59,6 +59,11 @@ public class TestSetupModule {
 
     public TestSetupModule setHandlerInstantiator(HandlerInstantiator handlerInstantiator) {
         this.handlerInstantiator = handlerInstantiator;
+        return this;
+    }
+
+    public <T> TestSetupModule addEqualsForType(Class<T> type, BiPredicate<? super T, ? super T> equals) {
+        equalsMap.put(type, equals);
         return this;
     }
 }
