@@ -7,15 +7,11 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.keyvalue.core.KeyValueOperations;
 
-@Configuration(KeyValueOperationsConfig.beanName)
 @Import(KeyValueOperationsConfig.Enabled.class)
 public class KeyValueOperationsConfig {
-    public static final String beanName = "keyValueOperationsConfig";
-
     @ConditionalOnClass(KeyValueOperations.class)
     static class Enabled implements BeanFactoryPostProcessor {
         @Override

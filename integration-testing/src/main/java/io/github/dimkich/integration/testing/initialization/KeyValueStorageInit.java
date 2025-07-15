@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.initialization;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
-import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorageService;
+import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
@@ -37,13 +37,13 @@ public class KeyValueStorageInit extends TestCaseInit {
 
         @Override
         public void init(KeyValueStorageInit init) throws Exception {
-            KeyValueDataStorageService storage = testDataStorages.getTestDataStorage(init.getName(),
-                    KeyValueDataStorageService.class);
+            KeyValueDataStorage storage = testDataStorages.getTestDataStorage(init.getName(),
+                    KeyValueDataStorage.class);
             if (init.getClear() != null && init.getClear()) {
-                storage.clear();
+                storage.clearAll();
             }
             if (init.getMap() != null) {
-                storage.setData(init.getMap());
+                storage.putKeysData(init.getMap());
             }
             testDataStorages.setNewCurrentValue(init.getName());
         }

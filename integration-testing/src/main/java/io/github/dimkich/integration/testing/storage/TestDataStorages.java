@@ -8,14 +8,20 @@ import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class TestDataStorages {
+    private final static Supplier<Map<String, Map<String, Object>>> ordered = LinkedHashMap::new;
+    private final static Supplier<Map<String, Map<String, Object>>> sorted = TreeMap::new;
+
     private final Map<String, TestDataStorage> storageMap;
     private final ObjectsDifference objectsDifference;
+    private final StorageProperties properties;
 
     private Map<String, Map<String, Object>> currentValue = new LinkedHashMap<>();
 
@@ -50,6 +56,6 @@ public class TestDataStorages {
     private Map<String, Map<String, Object>> getCurrentValue() {
         return storageMap.values().stream()
                 .collect(Collectors.toMap(TestDataStorage::getName, SneakyFunction.sneaky(TestDataStorage::getCurrentValue),
-                        (v1, v2) -> v2, LinkedHashMap::new));
+                        (v1, v2) -> v2, properties.getSort(0) ? sorted : ordered));
     }
 }

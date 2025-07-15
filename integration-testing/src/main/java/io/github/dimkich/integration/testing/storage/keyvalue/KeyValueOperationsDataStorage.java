@@ -19,7 +19,7 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
     private final KeyValueOperations keyValueOperations;
 
     @Override
-    public Map<String, Object> getKeysData() {
+    public Map<String, Object> getCurrentValue() {
         return keyValueOperations.getMappingContext().getPersistentEntities().stream()
                 .map(pe -> (KeyValuePersistentEntity<?, ?>) pe)
                 .filter(pe -> pe.getKeySpace() != null)

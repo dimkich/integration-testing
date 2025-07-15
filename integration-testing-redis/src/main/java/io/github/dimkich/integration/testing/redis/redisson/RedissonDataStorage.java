@@ -18,7 +18,7 @@ public class RedissonDataStorage implements KeyValueDataStorage {
     private final Map<String, RBridge> redissonObjects = new LinkedHashMap<>();
 
     @Override
-    public Map<String, Object> getKeysData() {
+    public Map<String, Object> getCurrentValue() {
         return redissonObjects.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(), (a, b) -> a, LinkedHashMap::new));
     }

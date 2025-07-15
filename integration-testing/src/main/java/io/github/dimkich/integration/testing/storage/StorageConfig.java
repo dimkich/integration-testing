@@ -3,8 +3,6 @@ package io.github.dimkich.integration.testing.storage;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
-import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
-import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorageService;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueOperationsConfig;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageFactory;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
@@ -25,7 +23,6 @@ import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.jdbc.DatabaseDriver;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.support.JdbcUtils;
 
@@ -96,7 +93,6 @@ public class StorageConfig {
 
     @Configuration
     @Import(KeyValueOperationsConfig.class)
-    @DependsOn(KeyValueOperationsConfig.beanName)
     @EnableConfigurationProperties(LiquibaseProperties.class)
     public static class DataSourceConfig implements BeanFactoryPostProcessor {
         @Override
@@ -106,12 +102,6 @@ public class StorageConfig {
                 AbstractBeanDefinition definition = BeanDefinitionBuilder.rootBeanDefinition(TestDataStorage.class)
                         .setFactoryMethodOnBean("createDataSourceStorage", factoryBean)
                         .addConstructorArgValue(name)
-                        .addConstructorArgReference(name)
-                        .getBeanDefinition();
-                ((BeanDefinitionRegistry) beanFactory).registerBeanDefinition("#" + name, definition);
-            }
-            for (String name : beanFactory.getBeanNamesForType(KeyValueDataStorage.class)) {
-                AbstractBeanDefinition definition = BeanDefinitionBuilder.rootBeanDefinition(KeyValueDataStorageService.class)
                         .addConstructorArgReference(name)
                         .getBeanDefinition();
                 ((BeanDefinitionRegistry) beanFactory).registerBeanDefinition("#" + name, definition);
