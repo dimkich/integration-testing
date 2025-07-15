@@ -1,6 +1,8 @@
 package io.github.dimkich.integration.testing.storage;
 
 import io.github.dimkich.integration.testing.TestDataStorage;
+import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
+import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorageService;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueOperationsConfig;
@@ -16,8 +18,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -40,10 +40,11 @@ import java.util.stream.Collectors;
 @Configuration
 @RequiredArgsConstructor
 @ConditionalOnClass(JdbcUtils.class)
-@Import({TestDataStorages.class, ObjectsDifference.class})
+@Import({TestDataStorages.class, ObjectsDifference.class, MockInvokeConfig.class})
 @EnableConfigurationProperties(StorageProperties.class)
 public class StorageConfig {
     private final ConfigurableListableBeanFactory beanFactory;
+    private final TestExecutor testExecutor;
     @Autowired(required = false)
     private final LiquibaseProperties liquibaseProperties;
     @Autowired(required = false)
@@ -89,7 +90,8 @@ public class StorageConfig {
         if (newUser.equals(username)) {
             throw new SQLException("Cannot use one username in admin and regular connections");
         }
-        return new SQLDataStorageService(factory.createStorage(name, adminConnection, newUser), beanFactory);
+        return new SQLDataStorageService(factory.createStorage(name, adminConnection, newUser), beanFactory,
+                testExecutor);
     }
 
     @Configuration

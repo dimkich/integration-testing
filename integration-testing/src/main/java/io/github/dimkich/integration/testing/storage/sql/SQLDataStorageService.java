@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.storage.sql;
 
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.dbunit.HumanReadableXmlDataSet;
+import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.initialization.SqlStorageSetup;
 import io.github.dimkich.integration.testing.util.CollectionUtils;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class SQLDataStorageService implements TestDataStorage {
     private final SQLDataStorage storage;
     private final BeanFactory beanFactory;
+    private final TestExecutor testExecutor;
 
     private Set<String> allowedTables = Set.of();
     private IDataSet dataSet;
@@ -132,7 +134,12 @@ public class SQLDataStorageService implements TestDataStorage {
 
     private void reloadCache(SqlStorageSetup.TableHook reload) throws NoSuchMethodException,
             InvocationTargetException, IllegalAccessException {
-        Object bean = beanFactory.getBean(reload.getBeanName());
-        bean.getClass().getMethod(reload.getBeanMethod()).invoke(bean);
+        testExecutor.setExecuting(true);
+        try {
+            Object bean = beanFactory.getBean(reload.getBeanName());
+            bean.getClass().getMethod(reload.getBeanMethod()).invoke(bean);
+        } finally {
+            testExecutor.setExecuting(false);
+        }
     }
 }

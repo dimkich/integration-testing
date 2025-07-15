@@ -60,7 +60,7 @@ public class JunitExecutable implements Executable {
     }
 
     public boolean isTestRunning() {
-        return testExecutor != null && testExecutor.getTestCase() != null;
+        return testExecutor != null && testExecutor.isExecuting();
     }
 
     public MockInvoke search(String mockName, String method, List<Object> args) {

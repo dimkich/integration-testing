@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.initialization;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import io.github.dimkich.integration.testing.TestCaseInit;
+import io.github.dimkich.integration.testing.execution.TestExecutor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class BeanInit extends TestCaseInit {
     @RequiredArgsConstructor
     public static class Initializer implements TestCaseInitializer<BeanInit> {
         private final BeanFactory beanFactory;
+        private final TestExecutor testExecutor;
 
         @Override
         public Class<BeanInit> getTestCaseInitClass() {
@@ -42,9 +44,14 @@ public class BeanInit extends TestCaseInit {
         @Override
         @SneakyThrows
         public void init(BeanInit testCaseInit) {
-            for (BeanMethod beanMethod : testCaseInit.getBean()) {
-                Object bean = beanFactory.getBean(beanMethod.getName());
-                bean.getClass().getMethod(beanMethod.getMethod()).invoke(bean);
+            testExecutor.setExecuting(true);
+            try {
+                for (BeanMethod beanMethod : testCaseInit.getBean()) {
+                    Object bean = beanFactory.getBean(beanMethod.getName());
+                    bean.getClass().getMethod(beanMethod.getMethod()).invoke(bean);
+                }
+            } finally {
+                testExecutor.setExecuting(false);
             }
         }
     }

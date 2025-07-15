@@ -41,6 +41,9 @@ public class TestExecutor {
     private TestMessagePoller testMessagePoller;
     @Getter
     private TestCase testCase;
+    @Getter
+    @Setter
+    private boolean executing = false;
 
     public void waitForStart() throws InterruptedException {
         if (running) {
@@ -87,8 +90,9 @@ public class TestExecutor {
             testCase.setOutboundMessages(null);
         }
 
+        waitCompletion.start();
+        executing = true;
         try {
-            waitCompletion.start();
             MessageDto<?> message = testCase.getInboundMessage();
             if (message != null) {
                 testMessageSenders.stream()
@@ -100,7 +104,11 @@ public class TestExecutor {
                 testCase.executeMethod(beanFactory, (m, r) -> testCaseMapper.deepClone(r));
             }
         } finally {
-            waitCompletion.waitCompletion();
+            try {
+                waitCompletion.waitCompletion();
+            } finally {
+                executing = false;
+            }
         }
 
         int countMessages = testCase.getOutboundMessages() == null ? 0 : testCase.getOutboundMessages().size();

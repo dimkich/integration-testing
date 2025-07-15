@@ -1,11 +1,15 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
 import io.github.dimkich.integration.testing.assertion.FileOperations;
+import io.github.dimkich.integration.testing.date.time.MockJavaTime;
+import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
 import io.github.dimkich.integration.testing.execution.TestCaseBeanMocks;
 import io.github.dimkich.integration.testing.execution.TestCaseStaticMock;
 import io.github.dimkich.integration.testing.openapi.TestOpenAPI;
 import io.github.dimkich.integration.testing.web.TestRestTemplate;
+import io.github.sugarcubes.cloner.ClonerAgentSetUp;
 import lombok.Getter;
+import net.bytebuddy.agent.ByteBuddyAgent;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -33,8 +37,13 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     private static List<TestCaseStaticMock> staticMocks = List.of();
 
     @Override
-    public void beforeAll(ExtensionContext context) {
+    public void beforeAll(ExtensionContext context) throws Exception {
         testThread = Thread.currentThread();
+        ClonerAgentSetUp.setClonerInstrumentationIfNone(ByteBuddyAgent.install());
+        MockJavaTime mockJavaTime = context.getRequiredTestClass().getAnnotation(MockJavaTime.class);
+        if (mockJavaTime != null) {
+            MockJavaTimeSetUp.setUp(mockJavaTime);
+        }
         TestCaseBeanMocks mocks = context.getRequiredTestClass().getAnnotation(TestCaseBeanMocks.class);
         if (mocks != null) {
             mockClasses = Set.of(mocks.mockClasses());
