@@ -50,12 +50,16 @@ public class TestDataStorages {
 
     public void setNewCurrentValue(String name) throws Exception {
         TestDataStorage testDataStorage = getTestDataStorage(name, TestDataStorage.class);
-        currentValue.put(name, testDataStorage.getCurrentValue());
+        currentValue.put(name, testDataStorage.getCurrentValue(properties.getExcludedFields(name)));
     }
 
     private Map<String, Map<String, Object>> getCurrentValue() {
         return storageMap.values().stream()
-                .collect(Collectors.toMap(TestDataStorage::getName, SneakyFunction.sneaky(TestDataStorage::getCurrentValue),
-                        (v1, v2) -> v2, properties.getSort(0) ? sorted : ordered));
+                .collect(Collectors.toMap(
+                        TestDataStorage::getName,
+                        SneakyFunction.sneaky(s -> s.getCurrentValue(properties.getExcludedFields(s.getName()))),
+                        (v1, v2) -> v2,
+                        properties.getSort(0) ? sorted : ordered
+                ));
     }
 }

@@ -6,6 +6,7 @@ import org.redisson.api.RMultimap;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -31,5 +32,10 @@ public class MultimapBridge implements RBridge {
     @Override
     public void clear() {
         multimap.clear();
+    }
+
+    @Override
+    public void excludeFields(Set<String> fields) {
+        multimap.keySet().removeAll(fields);
     }
 }

@@ -12,7 +12,7 @@ public interface SQLDataStorage {
 
     void executeSql(Collection<String> sql) throws Exception;
 
-    Map<String, Object> getTablesData(Collection<String> tables) throws Exception;
+    Map<String, Object> getTablesData(Collection<String> tables, Map<String, Set<String>> excludedRows) throws Exception;
 
     void loadDataset(IDataSet dataSet) throws Exception;
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 @RequiredArgsConstructor
 public class CollectionBridge implements RBridge {
@@ -22,5 +23,9 @@ public class CollectionBridge implements RBridge {
     @Override
     public void clear() {
         collection.clear();
+    }
+
+    @Override
+    public void excludeFields(Set<String> fields) {
     }
 }

@@ -1,14 +1,17 @@
 package io.github.dimkich.integration.testing.storage.keyvalue;
 
+import eu.ciechanowiec.sneakyfun.SneakyFunction;
+import io.github.dimkich.integration.testing.util.TestUtils;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.keyvalue.core.KeyValueOperations;
 import org.springframework.data.keyvalue.core.mapping.KeyValuePersistentEntity;
+import org.springframework.data.keyvalue.core.mapping.KeyValuePersistentProperty;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -19,15 +22,23 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
     private final KeyValueOperations keyValueOperations;
 
     @Override
-    public Map<String, Object> getCurrentValue() {
+    public Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) {
         return keyValueOperations.getMappingContext().getPersistentEntities().stream()
                 .map(pe -> (KeyValuePersistentEntity<?, ?>) pe)
                 .filter(pe -> pe.getKeySpace() != null)
                 .flatMap(pe -> {
                     Iterable<?> iterable = keyValueOperations.getKeyValueAdapter().getAllOf(pe.getKeySpace());
+                    Set<String> excluded = excludedFields.get(pe.getKeySpace());
                     return StreamSupport.stream(iterable.spliterator(), false)
-                            .map(o -> Map.entry(pe.getKeySpace() + "_"
-                                    + pe.getIdentifierAccessor(o).getRequiredIdentifier(), o));
+                            .map(SneakyFunction.sneaky(o -> {
+                                if (excluded != null) {
+                                    for (String field : excluded) {
+                                        setNull(pe, field, o);
+                                    }
+                                }
+                                return Map.entry(pe.getKeySpace() + "_"
+                                        + pe.getIdentifierAccessor(o).getRequiredIdentifier(), o);
+                            }));
                 })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v2,
                         LinkedHashMap::new));
@@ -53,5 +64,27 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
                 .map(KeyValuePersistentEntity::getKeySpace)
                 .filter(Objects::nonNull)
                 .forEach(ks -> keyValueOperations.getKeyValueAdapter().deleteAllOf(ks));
+    }
+
+    private void setNull(KeyValuePersistentEntity<?, ?> pe, String fieldName, Object o) throws InvocationTargetException,
+            IllegalAccessException {
+        KeyValuePersistentProperty<?> property = pe.getPersistentProperty(fieldName);
+        if (property == null) {
+            throw new RuntimeException(String.format("Property '%s' not found in keyspace '%s'", fieldName,
+                    pe.getKeySpace()));
+        }
+        Object value = TestUtils.getDefaultValue(property.getActualType());
+        Method method = property.getSetter();
+        if (method != null) {
+            method.invoke(o, value);
+            return;
+        }
+        Field field = property.getField();
+        if (field != null) {
+            field.set(o, value);
+            return;
+        }
+        throw new RuntimeException(String.format("Property '%s' in keyspace '%s' is inaccessible", fieldName,
+                pe.getKeySpace()));
     }
 }

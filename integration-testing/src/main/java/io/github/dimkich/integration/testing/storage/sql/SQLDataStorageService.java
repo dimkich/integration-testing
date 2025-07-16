@@ -121,8 +121,8 @@ public class SQLDataStorageService implements TestDataStorage {
 
     @Override
     @SneakyThrows
-    public Map<String, Object> getCurrentValue() {
-        return storage.getTablesData(allowedTables);
+    public Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) {
+        return storage.getTablesData(allowedTables, excludedFields);
     }
 
     private void reloadCache(String table) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {

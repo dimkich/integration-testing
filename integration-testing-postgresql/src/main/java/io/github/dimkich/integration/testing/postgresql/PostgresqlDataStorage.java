@@ -46,15 +46,19 @@ public class PostgresqlDataStorage implements SQLDataStorage {
     }
 
     @Override
-    public Map<String, Object> getTablesData(Collection<String> tables) throws Exception {
+    public Map<String, Object> getTablesData(Collection<String> tables, Map<String, Set<String>> excludedRows) throws Exception {
         Map<String, Object> currentValue = new LinkedHashMap<>();
         @Cleanup Statement statement = connection.createStatement();
         for (String table : tables) {
             @Cleanup ResultSet resultSet = statement.executeQuery("SELECT * FROM " + table);
             ResultSetMetaData metaData = resultSet.getMetaData();
+            Set<String> exclude = excludedRows.get(table);
             while (resultSet.next()) {
                 Map<String, Object> record = new LinkedHashMap<>();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                    if (exclude != null && exclude.contains(metaData.getColumnName(i))) {
+                        continue;
+                    }
                     Object object = resultSet.getObject(i);
                     if (object instanceof Timestamp timestamp) {
                         object = timestamp.toLocalDateTime();

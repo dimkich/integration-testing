@@ -9,6 +9,7 @@ import org.redisson.api.RObject;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -18,9 +19,17 @@ public class RedissonDataStorage implements KeyValueDataStorage {
     private final Map<String, RBridge> redissonObjects = new LinkedHashMap<>();
 
     @Override
-    public Map<String, Object> getCurrentValue() {
+    public Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) {
         return redissonObjects.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(), (a, b) -> a, LinkedHashMap::new));
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        e -> {
+                            Set<String> fields = excludedFields.get(e.getKey());
+                            if (fields != null) {
+                                e.getValue().excludeFields(fields);
+                            }
+                            return e.getValue().get();
+                        },
+                        (a, b) -> a, LinkedHashMap::new));
     }
 
     @Override
