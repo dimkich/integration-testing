@@ -17,7 +17,7 @@ public class MockInit extends TestCaseInit {
 
     @Override
     public Integer getOrder() {
-        return 3000;
+        return 4000;
     }
 
     @RequiredArgsConstructor

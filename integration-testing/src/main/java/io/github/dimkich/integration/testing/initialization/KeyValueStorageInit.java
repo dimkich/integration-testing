@@ -22,7 +22,7 @@ public class KeyValueStorageInit extends TestCaseInit {
 
     @Override
     public Integer getOrder() {
-        return 2000;
+        return 3000;
     }
 
     @Component
