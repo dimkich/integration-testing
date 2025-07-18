@@ -38,9 +38,11 @@ public class MockJavaTimeSetUp {
 
         Method currentTimeMillis = JavaTimeAdvice.class.getMethod("currentTimeMillis");
         new AgentBuilder.Default()
+                .disableClassFormatChanges()
                 .with(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE))
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Reiterating.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .ignore(none())
                 .type(matcher)
@@ -67,15 +69,16 @@ public class MockJavaTimeSetUp {
         Method newGetNanoTimeAdjustment = JavaTimeAdvice.class.getMethod("getNanoTimeAdjustment", long.class);
         Method newGetDefaultRef = JavaTimeAdvice.class.getMethod("getDefaultRef");
 
-        Clock.class.getNestMembers(); // Inner classes of Clock is not instrumented without this line
         String[] classes = new String[]{Date.class.getName(), GregorianCalendar.class.getName(),
                 "java.util.JapaneseImperialCalendar", "sun.util.calendar.AbstractCalendar",
                 "sun.util.calendar.Gregorian", "sun.util.calendar.JulianCalendar",
                 "sun.util.calendar.ZoneInfo", "sun.util.calendar.ZoneInfoFile"};
         new AgentBuilder.Default()
+                .disableClassFormatChanges()
                 .with(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE))
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Reiterating.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .disableClassFormatChanges()
                 .ignore(none())
