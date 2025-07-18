@@ -3,129 +3,150 @@ package io.github.dimkich.integration.testing.xml;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.dom4j.*;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class TNode {
-    private final Document document;
     private final Node node;
 
     @SneakyThrows
     public static TNode create(File file) {
-        DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        Document document = builder.parse(file);
-        return new TNode(document, document);
+        SAXReader reader = new SAXReader();
+        Document document = reader.read(file);
+        return new TNode(document);
     }
 
     @SneakyThrows
     public static TNode create(InputStream stream) {
-        DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        Document document = builder.parse(stream);
-        return new TNode(document, document);
+        SAXReader reader = new SAXReader();
+        Document document = reader.read(stream);
+        return new TNode(document);
     }
 
-    public TNode createTextNode(String text) {
-        return new TNode(document, document.createTextNode(text));
+    public TNode findChildNode(String name) {
+        return getChildNodes()
+                .filter(n2 -> n2.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No such node: " + name));
     }
 
-    public TNode createNode(String tag, String value) {
-        Element element = document.createElement(tag);
-        element.appendChild(document.createTextNode(value));
-        return new TNode(document, element);
+    public Stream<TNode> findChildNodes(String name) {
+        return getChildNodes().filter(n -> n.getName().equals(name));
+    }
+
+    public TNode addChild(String name) {
+        return new TNode(((Element) node).addElement(name));
+    }
+
+    public TNode addChild(String tag, String value) {
+        Element element = ((Element) node).addElement(tag);
+        element.setText(value);
+        return new TNode(element);
+    }
+
+    public void remove() {
+        node.getParent().remove(node);
     }
 
     public String getName() {
-        return node.getNodeName();
+        return node.getName();
     }
 
     public TNode setName(String newName) {
-        document.renameNode(node, null, newName);
+        node.setName(newName);
         return this;
     }
 
     public String getValue() {
-        return switch (node.getNodeType()) {
-            case Node.ELEMENT_NODE -> node.getFirstChild().getTextContent();
-            case Node.TEXT_NODE -> node.getNodeValue();
-            default -> throw new RuntimeException();
-        };
+        return node.getText().isEmpty() ? null : node.getText();
     }
 
     public TNode setValue(String value) {
-        switch (node.getNodeType()) {
-            case Node.ELEMENT_NODE -> node.getFirstChild().setTextContent(value);
-            case Node.TEXT_NODE -> node.setNodeValue(value);
-            default -> throw new RuntimeException();
+        if (value == null) {
+            for (Iterator<Node> iterator = ((Branch) node).nodeIterator(); iterator.hasNext(); ) {
+                Node node = iterator.next();
+                if (node.getNodeType() == Node.TEXT_NODE || node.getNodeType() == Node.CDATA_SECTION_NODE) {
+                    iterator.remove();
+                }
+            }
+            return this;
         }
+        node.setText(value);
         return this;
     }
 
     public String getAttributeValue(String name) {
-        return node.getAttributes() == null ? null : node.getAttributes().getNamedItem(name) == null
-                ? null : node.getAttributes().getNamedItem(name).getNodeValue();
+        if (node instanceof Element element) {
+            for (Attribute attribute : element.attributes()) {
+                if (attribute.getName().equals(name)) {
+                    return attribute.getValue();
+                }
+            }
+        }
+        return null;
     }
 
     public TNode setAttributeValue(String name, String value) {
-        Node attrNode = node.getAttributes().getNamedItem(name);
-        if (attrNode == null) {
-            ((Element) node).setAttribute(name, value);
-        } else {
-            attrNode.setNodeValue(value);
-        }
+        ((Element) node).addAttribute(name, value);
         return this;
     }
 
-    public List<TNode> getChildNodes() {
-        NodeList nodeList = node.getChildNodes();
-        return IntStream.range(0, nodeList.getLength())
-                .mapToObj(nodeList::item)
-                .map(n -> new TNode(document, n))
-                .toList();
+    public Stream<TNode> getChildNodes() {
+        if (node instanceof Branch branch) {
+            return branch.content().stream()
+                    .filter(n -> n instanceof Element)
+                    .map(TNode::new);
+        }
+        return Stream.of();
     }
 
-    public TNode setChildNodes(List<TNode> nodes) {
-        while (node.getChildNodes().getLength() > 0) {
-            node.removeChild(node.getFirstChild());
-        }
-        for (TNode tNode : nodes) {
-            node.appendChild(tNode.node);
-        }
+    public TNode setChildNodes(Collection<TNode> newChildNodes) {
+        ((Branch) node).setContent(newChildNodes.stream().map(tn -> tn.node).toList());
         return this;
     }
 
-    public Stream<TNode> stream() {
-        return getChildNodes().stream()
-                .flatMap(n -> Stream.concat(Stream.of(n), n.stream()));
+    public Stream<TNode> findNodes() {
+        if (node instanceof Branch branch) {
+            return branch.content().stream()
+                    .filter(n -> n instanceof Element)
+                    .map(TNode::new)
+                    .flatMap(n -> Stream.concat(Stream.of(n), n.findNodes()));
+        }
+        return Stream.of();
     }
 
-    public void save(File file) {
-        save(new StreamResult(file));
-    }
-
-    public void save(OutputStream stream) {
-        save(new StreamResult(stream));
+    public Stream<TNode> findNodes(String name) {
+        return findNodes().filter(n -> n.getName().equals(name));
     }
 
     @SneakyThrows
-    private void save(StreamResult streamResult) {
-        DOMSource dom = new DOMSource(document);
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.transform(dom, streamResult);
+    public void save(File file, boolean prettyPrint) {
+        save(new FileOutputStream(file), prettyPrint);
+    }
+
+    @SneakyThrows
+    public void save(OutputStream stream, boolean prettyPrint) {
+        XMLWriter writer;
+        if (prettyPrint) {
+            OutputFormat format = OutputFormat.createPrettyPrint();
+            format.setIndentSize(4);
+            format.setNewLineAfterDeclaration(false);
+            format.setLineSeparator(System.lineSeparator());
+            writer = new XMLWriter(stream, format);
+        } else {
+            writer = new XMLWriter(stream);
+        }
+        writer.write(node);
     }
 }
