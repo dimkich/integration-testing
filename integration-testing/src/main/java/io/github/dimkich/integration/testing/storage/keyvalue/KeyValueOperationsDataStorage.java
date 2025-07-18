@@ -1,12 +1,16 @@
 package io.github.dimkich.integration.testing.storage.keyvalue;
 
 import eu.ciechanowiec.sneakyfun.SneakyFunction;
+import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.util.TestUtils;
+import io.github.sugarcubes.cloner.Cloner;
+import io.github.sugarcubes.cloner.Cloners;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.keyvalue.core.KeyValueOperations;
 import org.springframework.data.keyvalue.core.mapping.KeyValuePersistentEntity;
 import org.springframework.data.keyvalue.core.mapping.KeyValuePersistentProperty;
+import org.springframework.data.map.MapKeyValueAdapter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -21,8 +25,11 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
     private final String name;
     private final KeyValueOperations keyValueOperations;
 
+    private Cloner cloner;
+
     @Override
     public Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) {
+        boolean clone = keyValueOperations.getKeyValueAdapter() instanceof MapKeyValueAdapter;
         return keyValueOperations.getMappingContext().getPersistentEntities().stream()
                 .map(pe -> (KeyValuePersistentEntity<?, ?>) pe)
                 .filter(pe -> pe.getKeySpace() != null)
@@ -30,6 +37,7 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
                     Iterable<?> iterable = keyValueOperations.getKeyValueAdapter().getAllOf(pe.getKeySpace());
                     Set<String> excluded = excludedFields.get(pe.getKeySpace());
                     return StreamSupport.stream(iterable.spliterator(), false)
+                            .map(o -> clone ? clone(o) : o)
                             .map(SneakyFunction.sneaky(o -> {
                                 if (excluded != null) {
                                     for (String field : excluded) {
@@ -59,11 +67,7 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
 
     @Override
     public void clearAll() {
-        keyValueOperations.getMappingContext().getPersistentEntities().stream()
-                .map(pe -> (KeyValuePersistentEntity<?, ?>) pe)
-                .map(KeyValuePersistentEntity::getKeySpace)
-                .filter(Objects::nonNull)
-                .forEach(ks -> keyValueOperations.getKeyValueAdapter().deleteAllOf(ks));
+        keyValueOperations.getKeyValueAdapter().clear();
     }
 
     private void setNull(KeyValuePersistentEntity<?, ?> pe, String fieldName, Object o) throws InvocationTargetException,
@@ -86,5 +90,12 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
         }
         throw new RuntimeException(String.format("Property '%s' in keyspace '%s' is inaccessible", fieldName,
                 pe.getKeySpace()));
+    }
+
+    private Object clone(Object o) {
+        if (cloner == null) {
+            cloner = Cloners.builder().build();
+        }
+        return cloner.clone(o);
     }
 }
