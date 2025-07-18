@@ -31,4 +31,9 @@ public abstract class MapContainer<K, T> implements Container {
     public boolean isEmpty() {
         return map.isEmpty();
     }
+
+    @Override
+    public void clearNullValueKeys() {
+        map.entrySet().removeIf(entry -> entry.getValue() == null);
+    }
 }

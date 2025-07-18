@@ -35,4 +35,8 @@ public interface Container {
 
     @JsonIgnore
     boolean isEmpty();
+
+    @JsonIgnore
+    default void clearNullValueKeys() {
+    }
 }

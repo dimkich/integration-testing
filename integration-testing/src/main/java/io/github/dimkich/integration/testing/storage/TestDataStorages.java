@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.storage;
 
 import eu.ciechanowiec.sneakyfun.SneakyFunction;
 import io.github.dimkich.integration.testing.TestDataStorage;
+import io.github.dimkich.integration.testing.storage.mapping.Container;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -44,6 +45,9 @@ public class TestDataStorages {
     public Object getMapDiff() {
         Map<String, Map<String, Object>> currentValue = getCurrentValue();
         Object diff = objectsDifference.getDifference(this.currentValue, currentValue);
+        if (diff instanceof Container container) {
+            container.clearNullValueKeys();
+        }
         this.currentValue = currentValue;
         return diff;
     }
