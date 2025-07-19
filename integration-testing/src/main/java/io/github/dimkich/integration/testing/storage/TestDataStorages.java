@@ -52,9 +52,8 @@ public class TestDataStorages {
         return diff;
     }
 
-    public void setNewCurrentValue(String name) throws Exception {
-        TestDataStorage testDataStorage = getTestDataStorage(name, TestDataStorage.class);
-        currentValue.put(name, testDataStorage.getCurrentValue(properties.getExcludedFields(name)));
+    public void setNewCurrentValue() {
+        this.currentValue = getCurrentValue();
     }
 
     private Map<String, Map<String, Object>> getCurrentValue() {

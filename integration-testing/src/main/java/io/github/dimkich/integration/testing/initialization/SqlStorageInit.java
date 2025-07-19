@@ -54,7 +54,6 @@ public class SqlStorageInit extends TestCaseInit {
             storage.prepareData(sqls, stringToList(init.getTablesToChange()), stringToList(init.getTablesToLoad()),
                     init.getLoadAllTables() != null && init.getLoadAllTables(),
                     init.getDisableTableHooks() != null && init.getDisableTableHooks());
-            testDataStorages.setNewCurrentValue(init.getName());
         }
 
         private Set<String> stringToList(String string) {

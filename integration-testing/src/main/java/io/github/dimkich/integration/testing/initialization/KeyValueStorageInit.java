@@ -45,7 +45,6 @@ public class KeyValueStorageInit extends TestCaseInit {
             if (init.getMap() != null) {
                 storage.putKeysData(init.getMap());
             }
-            testDataStorages.setNewCurrentValue(init.getName());
         }
     }
 }

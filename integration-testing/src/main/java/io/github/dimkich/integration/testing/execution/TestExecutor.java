@@ -41,6 +41,7 @@ public class TestExecutor {
     private TestMessagePoller testMessagePoller;
     @Getter
     private TestCase testCase;
+    private TestCase expectedTestCase;
     @Getter
     @Setter
     private boolean executing = false;
@@ -60,8 +61,16 @@ public class TestExecutor {
         }
     }
 
-    public void before(TestCase testCase) throws Exception {
-        this.testCase = testCase;
+    public void before(TestCase expectedTestCase) throws Exception {
+        this.expectedTestCase = expectedTestCase;
+        if (assertion.makeTestCaseDeepClone()) {
+            testCase = testCaseMapper.deepClone(expectedTestCase);
+        } else {
+            testCase = expectedTestCase;
+            testCase.setResponse(null);
+            testCase.setDataStorageDiff(null);
+            testCase.setOutboundMessages(null);
+        }
         if (!running) {
             synchronized (this) {
                 running = true;
@@ -76,20 +85,14 @@ public class TestExecutor {
         for (BeforeTestCase beforeTestCase : beforeTestCases) {
             beforeTestCase.accept(testCase);
         }
+        if (testDataStorages != null) {
+            testDataStorages.setNewCurrentValue();
+        }
     }
 
-    public void runTest(TestCase expectedTestCase) throws Exception {
-        testCase = expectedTestCase;
+    public void runTest(TestCase tc) throws Exception {
         log.info(">>> {}", testCase.getFullName());
         log.info(testCaseMapper.getCurrentPathAndLocation(testCase));
-        if (assertion.makeTestCaseDeepClone()) {
-            testCase = testCaseMapper.deepClone(testCase);
-        } else {
-            testCase.setResponse(null);
-            testCase.setDataStorageDiff(null);
-            testCase.setOutboundMessages(null);
-        }
-
         waitCompletion.start();
         executing = true;
         try {
@@ -122,13 +125,17 @@ public class TestExecutor {
         }
         testCaseConverters.forEach(c -> c.convertNoException(testCase));
 
-        assertion.assertTestCaseEquals(testCaseMapper, expectedTestCase, testCase);
+        assertion.assertTestCaseEquals(testCaseMapper, this.expectedTestCase, testCase);
     }
 
     public void after(TestCase testCase) throws Exception {
-        this.testCase = null;
-        for (AfterTestCase afterTestCase : afterTestCases) {
-            afterTestCase.accept(testCase);
+        try {
+            for (AfterTestCase afterTestCase : afterTestCases) {
+                afterTestCase.accept(testCase);
+            }
+        } finally {
+            this.testCase = null;
+            this.expectedTestCase = null;
         }
     }
 }
