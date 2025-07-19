@@ -4,13 +4,11 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 
-@Data
-@EqualsAndHashCode(callSuper = false)
+@Getter
+@Setter
+@ToString
 public class MockInit extends TestCaseInit {
     @JacksonXmlProperty(isAttribute = true)
     private Boolean resetAll;

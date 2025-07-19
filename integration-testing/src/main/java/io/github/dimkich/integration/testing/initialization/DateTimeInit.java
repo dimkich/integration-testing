@@ -3,16 +3,15 @@ package io.github.dimkich.integration.testing.initialization;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 
-@Data
-@EqualsAndHashCode(callSuper = false)
+@Getter
+@Setter
+@ToString
 public class DateTimeInit extends TestCaseInit {
     @JacksonXmlProperty(isAttribute = true)
     private ZonedDateTime dateTime;

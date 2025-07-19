@@ -3,17 +3,15 @@ package io.github.dimkich.integration.testing.initialization;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Data
-@EqualsAndHashCode(callSuper = false)
+@Getter
+@Setter
+@ToString
 public class BeanInit extends TestCaseInit {
     private List<BeanMethod> bean;
 
