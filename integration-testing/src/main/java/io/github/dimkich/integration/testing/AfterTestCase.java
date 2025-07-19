@@ -1,5 +1,5 @@
 package io.github.dimkich.integration.testing;
 
 public interface AfterTestCase {
-    void accept(TestCase testCase) throws Exception;
+    void after(TestCase testCase) throws Exception;
 }

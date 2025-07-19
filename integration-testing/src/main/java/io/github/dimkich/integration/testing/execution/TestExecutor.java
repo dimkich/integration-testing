@@ -83,7 +83,7 @@ public class TestExecutor {
                 .sorted(Comparator.comparing(TestCaseInit::getOrder))
                 .forEach(SneakyConsumer.sneaky(initializationService::init));
         for (BeforeTestCase beforeTestCase : beforeTestCases) {
-            beforeTestCase.accept(testCase);
+            beforeTestCase.before(testCase);
         }
         if (testDataStorages != null) {
             testDataStorages.setNewCurrentValue();
@@ -131,7 +131,7 @@ public class TestExecutor {
     public void after(TestCase testCase) throws Exception {
         try {
             for (AfterTestCase afterTestCase : afterTestCases) {
-                afterTestCase.accept(testCase);
+                afterTestCase.after(testCase);
             }
         } finally {
             this.testCase = null;
