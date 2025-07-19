@@ -36,7 +36,8 @@ public class MockJavaTimeSetUp {
             matcher = matcher.or(nameStartsWith(name));
         }
 
-        Method currentTimeMillis = JavaTimeAdvice.class.getMethod("currentTimeMillis");
+        Method currentTimeMillis = System.class.getMethod("currentTimeMillis");
+        Method newCurrentTimeMillis = JavaTimeAdvice.class.getMethod("currentTimeMillis");
         new AgentBuilder.Default()
                 .disableClassFormatChanges()
                 .with(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE))
@@ -48,8 +49,8 @@ public class MockJavaTimeSetUp {
                 .type(matcher)
                 .transform((builder, td, cl, module, domain) -> builder
                         .visit(MemberSubstitution.relaxed()
-                                .method(named("currentTimeMillis"))
-                                .replaceWith(currentTimeMillis)
+                                .method(is(currentTimeMillis))
+                                .replaceWith(newCurrentTimeMillis)
                                 .on(any())))
                 .installOnByteBuddyAgent();
     }
@@ -64,6 +65,7 @@ public class MockJavaTimeSetUp {
 
         Method getDefaultRef = makeMethodAccessible(TimeZone.class, t -> t.getDeclaredMethod("getDefaultRef"));
         JavaTimeAdvice.setRealGetDefaultRef(SneakySupplier.sneaky(() -> (TimeZone) getDefaultRef.invoke(null)));
+        Method currentTimeMillis = System.class.getMethod("currentTimeMillis");
 
         Method newCurrentTimeMillis = JavaTimeAdvice.class.getMethod("currentTimeMillis");
         Method newGetNanoTimeAdjustment = JavaTimeAdvice.class.getMethod("getNanoTimeAdjustment", long.class);
@@ -85,20 +87,20 @@ public class MockJavaTimeSetUp {
                 .type(namedOneOf(classes).or(nameStartsWith(Clock.class.getName())))
                 .transform((builder, td, cl, module, domain) -> builder
                         .visit(MemberSubstitution.relaxed()
-                                .method(named("currentTimeMillis"))
+                                .method(is(currentTimeMillis))
                                 .replaceWith(newCurrentTimeMillis)
                                 .on(any())))
                 .type(named(Clock.class.getName()))
                 .transform((builder, td, cl, module, domain) -> builder
                         .visit(MemberSubstitution.relaxed()
-                                .method(named("getNanoTimeAdjustment"))
+                                .method(is(getNanoTimeAdjustment))
                                 .replaceWith(newGetNanoTimeAdjustment)
                                 .on(any())))
                 .type(namedOneOf(Calendar.class.getName(), Date.class.getName(), GregorianCalendar.class.getName(),
                         TimeZone.class.getName()))
                 .transform((builder, td, cl, module, domain) -> builder
                         .visit(MemberSubstitution.relaxed()
-                                .method(named("getDefaultRef"))
+                                .method(is(getDefaultRef))
                                 .replaceWith(newGetDefaultRef)
                                 .on(any())))
                 .installOnByteBuddyAgent();
