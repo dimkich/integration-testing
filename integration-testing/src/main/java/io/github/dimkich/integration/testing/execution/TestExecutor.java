@@ -92,7 +92,7 @@ public class TestExecutor {
 
     public void runTest(TestCase tc) throws Exception {
         log.info(">>> {}", testCase.getFullName());
-        log.info(testCaseMapper.getCurrentPathAndLocation(testCase));
+        log.info(testCaseMapper.getCurrentPathAndLocation(expectedTestCase));
         waitCompletion.start();
         executing = true;
         try {
