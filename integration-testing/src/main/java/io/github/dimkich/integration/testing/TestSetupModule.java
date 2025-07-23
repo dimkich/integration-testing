@@ -11,6 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 @Getter
 public class TestSetupModule {
@@ -23,6 +24,7 @@ public class TestSetupModule {
     private final Map<Class<?>, BiPredicate<?, ?>> equalsMap = new HashMap<>();
     private final Map<Field, CopyAction> fieldActions = new LinkedHashMap<>();
     private final Map<Class<?>, CopyAction> typeActions = new LinkedHashMap<>();
+    private final Map<Predicate<Class<?>>, CopyAction> predicateTypeActions = new LinkedHashMap<>();
     private HandlerInstantiator handlerInstantiator;
 
     public TestSetupModule addParentType(Class<?> type) {
@@ -84,6 +86,11 @@ public class TestSetupModule {
 
     public TestSetupModule clonerTypeAction(Class<?> type, CopyAction action) {
         typeActions.put(type, action);
+        return this;
+    }
+
+    public TestSetupModule clonerTypeAction(Predicate<Class<?>> type, CopyAction action) {
+        predicateTypeActions.put(type, action);
         return this;
     }
 }

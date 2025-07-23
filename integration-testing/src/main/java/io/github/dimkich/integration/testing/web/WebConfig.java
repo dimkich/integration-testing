@@ -38,7 +38,7 @@ public class WebConfig {
     private final ConfigurableListableBeanFactory beanFactory;
 
     @Bean
-    TestSetupModule webTestModule() {
+    TestSetupModule webTestModule() throws ClassNotFoundException {
         SimpleModule jacksonModule = new SimpleModule();
         jacksonModule.setMixInAnnotation(RequestEntity.class, RequestEntityMixIn.class);
         jacksonModule.setMixInAnnotation(ResponseEntity.class, ResponseEntityMixIn.class);
@@ -51,6 +51,8 @@ public class WebConfig {
         return new TestSetupModule()
                 .setHandlerInstantiator(new SpringHandlerInstantiator(beanFactory))
                 .addJacksonModule(jacksonModule)
+                .addAlias(Class.forName("org.springframework.http.converter.ResourceHttpMessageConverter$1"), "resource")
+                .addAlias(Class.forName("org.springframework.http.converter.ResourceHttpMessageConverter$2"), "resource")
                 .addSubTypes(HttpClientErrorException.BadRequest.class, "httpClientErrorException.BadRequest")
                 .addSubTypes(HttpClientErrorException.Unauthorized.class, "httpClientErrorException.Unauthorized")
                 .addSubTypes(HttpClientErrorException.Forbidden.class, "httpClientErrorException.Forbidden")

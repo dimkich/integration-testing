@@ -34,6 +34,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.validation.FieldError;
 
 import java.io.ByteArrayInputStream;
@@ -57,15 +59,17 @@ public class XmlConfig {
         jacksonModule.setMixInAnnotation(Throwable.class, ThrowableMixIn.class);
         jacksonModule.setMixInAnnotation(FieldError.class, FieldErrorMixIn.class);
         jacksonModule.setMixInAnnotation(SecureRandom.class, SecureRandomMixIn.class);
+        jacksonModule.setMixInAnnotation(Resource.class, SpringResourceMixIn.class);
         jacksonModule.setMixInAnnotation(byte[].class, ByteArrayMixIn.class);
 
         return new TestSetupModule()
                 .addParentType(TestCaseInit.class)
                 .addSubTypes(byte[].class, "byte[]")
+                .addAlias(ByteArrayResource.class, "resource")
                 .addSubTypes(EntriesObjectKeyObjectValue.class, EntriesStringKeyObjectValue.class,
                         MapStringKeyStringValue.class, MapStringKeyObjectValue.class, DateTimeInit.class,
                         KeyValueStorageInit.class, BeanInit.class, MockInit.class, SecureRandom.class,
-                        SqlStorageSetup.class, SqlStorageInit.class, SpringErrorDto.class)
+                        SqlStorageSetup.class, SqlStorageInit.class, SpringErrorDto.class, Resource.class)
                 .clonerFieldAction(TestCase.class, "inits", CopyAction.ORIGINAL)
                 .clonerFieldAction(TestCase.class, "parentTestCase", CopyAction.ORIGINAL)
                 .clonerFieldAction(TestCase.class, "response", CopyAction.NULL)
@@ -73,6 +77,7 @@ public class XmlConfig {
                 .clonerFieldAction(TestCase.class, "dataStorageDiff", CopyAction.NULL)
                 .clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
+                .clonerTypeAction(Resource.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .addEqualsForType(SecureRandom.class, (sr1, sr2) -> true)
                 .addJacksonModule(jacksonModule)
                 .addJacksonModule(new JavaTimeModule())

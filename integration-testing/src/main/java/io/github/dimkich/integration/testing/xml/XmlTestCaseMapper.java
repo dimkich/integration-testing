@@ -73,6 +73,7 @@ public class XmlTestCaseMapper implements TestCaseMapper {
             for (TestSetupModule module : modules) {
                 module.getFieldActions().forEach(builder::fieldAction);
                 module.getTypeActions().forEach(builder::typeAction);
+                module.getPredicateTypeActions().forEach(builder::typeAction);
             }
             cloner = builder.build();
         }
