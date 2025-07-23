@@ -16,12 +16,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcBuilderCus
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.json.SpringHandlerInstantiator;
-import org.springframework.test.web.client.MockMvcClientHttpRequestFactory;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
@@ -49,6 +46,7 @@ public class WebConfig {
         jacksonModule.setMixInAnnotation(RestClientResponseException.class, RestClientResponseExceptionMixin.class);
         jacksonModule.setMixInAnnotation(HttpClientErrorException.class, HttpClientErrorExceptionMixIn.class);
         jacksonModule.setMixInAnnotation(HttpMethod.class, HttpMethodMixIn.class);
+        jacksonModule.setMixInAnnotation(HttpEntity.class, HttpEntityMixIn.class);
         jacksonModule.addDeserializer(LinkedMultiValueMapStringString.class, new MultiValueMapDeserializer());
         return new TestSetupModule()
                 .setHandlerInstantiator(new SpringHandlerInstantiator(beanFactory))
@@ -64,8 +62,8 @@ public class WebConfig {
                 .addSubTypes(HttpClientErrorException.UnsupportedMediaType.class, "httpClientErrorException.UnsupportedMediaType")
                 .addSubTypes(HttpClientErrorException.UnprocessableEntity.class, "httpClientErrorException.UnprocessableEntity")
                 .addSubTypes(HttpClientErrorException.TooManyRequests.class, "httpClientErrorException.TooManyRequests")
-                .addSubTypes(RequestEntity.class, ResponseEntity.class, HttpMethod.class,
-                        LinkedMultiValueMapStringString.class);
+                .addSubTypes(RequestEntity.class, ResponseEntity.class, HttpMethod.class, HttpEntity.class,
+                        LinkedMultiValueMapStringString.class, LinkedMultiValueMapStringObject.class);
     }
 
     @Bean
@@ -98,13 +96,16 @@ public class WebConfig {
 
         RestTemplate createRestTemplate(String basePath, MockMvc mockMvc) {
             RestTemplate restTemplate = new RestTemplate();
-            if (mockMvc != null) {
-                MockMvcClientHttpRequestFactory factory = new MockMvcClientHttpRequestFactory(mockMvc);
-                restTemplate.setRequestFactory((u, m) -> {
-                    u = URI.create(basePath).resolve(u);
-                    return factory.createRequest(u, m);
-                });
+            ClientHttpRequestFactory factory;
+            if (JunitExtension.getSpringBootTest().webEnvironment().isEmbedded()) {
+                factory = restTemplate.getRequestFactory();
+            } else {
+                factory = new MockMvcClientHttpRequestMultipartFactory(mockMvc);
             }
+            restTemplate.setRequestFactory((u, m) -> {
+                u = URI.create(basePath).resolve(u);
+                return factory.createRequest(u, m);
+            });
             return restTemplate;
         }
     }

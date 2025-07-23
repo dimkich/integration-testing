@@ -13,6 +13,7 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 import java.util.Set;
@@ -35,6 +36,8 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     private static List<TestRestTemplate> testRestTemplates = List.of();
     @Getter
     private static List<TestCaseStaticMock> staticMocks = List.of();
+    @Getter
+    private static SpringBootTest springBootTest;
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
@@ -57,6 +60,10 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         if (!initialized) {
             new FileOperations().clearTestsDir();
             initialized = true;
+        }
+        springBootTest = context.getRequiredTestClass().getAnnotation(SpringBootTest.class);
+        if (springBootTest == null) {
+            throw new IllegalStateException("No SpringBootTest Annotation found");
         }
     }
 
