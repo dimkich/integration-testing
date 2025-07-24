@@ -1,9 +1,8 @@
 package io.github.dimkich.integration.testing.redis;
 
-import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
+import io.github.dimkich.integration.testing.IntegrationTesting;
 import io.github.dimkich.integration.testing.redis.redisson.RedissonConfig;
 import io.github.dimkich.integration.testing.redis.spring.KeyValueOperationsMockConfig;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 
@@ -17,8 +16,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Inherited
 @Target(TYPE)
 @Retention(RUNTIME)
+@IntegrationTesting
 @Import({RedissonConfig.class, KeyValueOperationsMockConfig.class})
-@ExtendWith(JunitExtension.class)
 @TestPropertySource("classpath:${integration.testing.environment:real}-redis.properties")
 public @interface EnableTestRedis {
 }

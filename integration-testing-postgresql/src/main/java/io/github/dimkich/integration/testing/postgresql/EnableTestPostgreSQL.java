@@ -1,7 +1,6 @@
 package io.github.dimkich.integration.testing.postgresql;
 
-import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
+import io.github.dimkich.integration.testing.IntegrationTesting;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
@@ -15,7 +14,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Inherited
 @Target(TYPE)
 @Retention(RUNTIME)
-@ExtendWith(JunitExtension.class)
+@IntegrationTesting
 @TestPropertySource("classpath:postgresql.properties")
 @ImportAutoConfiguration(classes = PostgresqlDataStorageFactory.class)
 public @interface EnableTestPostgreSQL {

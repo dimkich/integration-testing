@@ -1,16 +1,18 @@
 package io.github.dimkich.integration.testing.execution;
 
-import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
+import io.github.dimkich.integration.testing.IntegrationTesting;
 
-import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@ExtendWith(JunitExtension.class)
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+@Inherited
+@Target(TYPE)
+@Retention(RUNTIME)
+@IntegrationTesting
 public @interface TestCaseBeanMocks {
     Class<?>[] mockClasses() default {};
     String[] mockNames() default {};

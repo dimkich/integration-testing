@@ -1,13 +1,19 @@
 package io.github.dimkich.integration.testing.openapi;
 
-import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
+import io.github.dimkich.integration.testing.IntegrationTesting;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@ExtendWith(JunitExtension.class)
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+@Inherited
+@Target(TYPE)
+@Retention(RUNTIME)
+@IntegrationTesting
 @Repeatable(TestOpenAPI.List.class)
 public @interface TestOpenAPI {
     Class<?> apiClass();
@@ -20,8 +26,9 @@ public @interface TestOpenAPI {
 
     String basePath() default "";
 
-    @Target(ElementType.TYPE)
-    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @Target(TYPE)
+    @Retention(RUNTIME)
     @interface List {
         TestOpenAPI[] value();
     }

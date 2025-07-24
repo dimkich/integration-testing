@@ -1,16 +1,16 @@
 package io.github.dimkich.integration.testing.execution;
 
-import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
+import io.github.dimkich.integration.testing.IntegrationTesting;
 
 import java.lang.annotation.*;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@ExtendWith(JunitExtension.class)
+@Inherited
+@Target(TYPE)
+@Retention(RUNTIME)
+@IntegrationTesting
 @Repeatable(TestCaseStaticMock.List.class)
 public @interface TestCaseStaticMock {
     String name();
@@ -21,6 +21,7 @@ public @interface TestCaseStaticMock {
 
     boolean spy() default false;
 
+    @Inherited
     @Target(TYPE)
     @Retention(RUNTIME)
     @Documented
