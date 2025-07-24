@@ -82,7 +82,6 @@ public class MockJavaTimeSetUp {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Reiterating.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .disableClassFormatChanges()
                 .ignore(none())
                 .type(namedOneOf(classes).or(nameStartsWith(Clock.class.getName())))
                 .transform((builder, td, cl, module, domain) -> builder

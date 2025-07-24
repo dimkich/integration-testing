@@ -5,6 +5,7 @@ import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
 import io.github.dimkich.integration.testing.execution.TestCaseBeanMocks;
 import io.github.dimkich.integration.testing.execution.TestCaseStaticMock;
+import io.github.dimkich.integration.testing.execution.mokito.MockitoGlobal;
 import io.github.dimkich.integration.testing.openapi.TestOpenAPI;
 import io.github.dimkich.integration.testing.web.TestRestTemplate;
 import io.github.sugarcubes.cloner.ClonerAgentSetUp;
@@ -41,6 +42,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
+        MockitoGlobal.start();
         testThread = Thread.currentThread();
         ClonerAgentSetUp.setClonerInstrumentationIfNone(ByteBuddyAgent.install());
         MockJavaTime mockJavaTime = context.getRequiredTestClass().getAnnotation(MockJavaTime.class);
@@ -69,6 +71,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
 
     @Override
     public void afterAll(ExtensionContext context) {
+        MockitoGlobal.stop();
         testThread = null;
         mockClasses = Set.of();
         mockNames = Set.of();
