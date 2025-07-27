@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing.postgresql;
 
-import io.github.dimkich.integration.testing.dbunit.TruncateCascadeTableOperation;
+import io.github.dimkich.integration.testing.dbunit.DeleteFromTableOperation;
 import io.github.dimkich.integration.testing.postgresql.dbunit.CustomPostgresqlDataTypeFactory;
 import io.github.dimkich.integration.testing.postgresql.dbunit.DisableTriggersOperation;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorage;
@@ -25,7 +25,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class PostgresqlDataStorage implements SQLDataStorage {
     private static final DatabaseOperation CLEAN_INSERT = new DisableTriggersOperation(
-            new CompositeOperation(new TruncateCascadeTableOperation(), DatabaseOperation.INSERT));
+            new CompositeOperation(new DeleteFromTableOperation(), DatabaseOperation.INSERT));
 
     @Getter
     private final String name;
@@ -34,6 +34,7 @@ public class PostgresqlDataStorage implements SQLDataStorage {
 
     private final String allowedTablesTable = "allowed_tables_" + StringUtils.randomString(16);
     private final PostgreTableRestrictionBuilder builder = new PostgreTableRestrictionBuilder();
+    private final Map<String, String> tableSequences = new HashMap<>();
 
     private Map<String, List<String>> primaryKeys;
     private IDatabaseConnection dbUnitConnection;
@@ -151,7 +152,7 @@ public class PostgresqlDataStorage implements SQLDataStorage {
 
         @Cleanup ResultSet rs = connection.getMetaData().getTables(null, null, null,
                 new String[]{"TABLE"});
-        Set<String> tables = new HashSet<>();
+        Set<String> tables = new LinkedHashSet<>();
         while (rs.next()) {
             String name = rs.getString("TABLE_NAME");
             tables.add(name);
@@ -162,6 +163,24 @@ public class PostgresqlDataStorage implements SQLDataStorage {
 
         @Cleanup Statement statement = connection.createStatement();
         statement.execute(builder.toString());
+
+        String sql = """
+                SELECT
+                    t.relname AS table,
+                    s.relname AS seq
+                FROM
+                    pg_namespace tns
+                        JOIN pg_class t ON tns.oid = t.relnamespace
+                        AND t.relkind IN ('p', 'r')
+                        JOIN pg_depend d ON t.oid = d.refobjid
+                        JOIN pg_class s ON d.objid = s.oid and s.relkind = 'S'
+                        JOIN pg_namespace sns ON s.relnamespace = sns.oid;
+                """;
+
+        @Cleanup ResultSet resultSet = statement.executeQuery(sql);
+        while (resultSet.next()) {
+            tableSequences.put(resultSet.getString("table"), resultSet.getString("seq"));
+        }
         return tables;
     }
 
@@ -177,9 +196,15 @@ public class PostgresqlDataStorage implements SQLDataStorage {
             return;
         }
         StringBuilder builder = new StringBuilder();
+        builder.append("SET session_replication_role = 'replica';\n");
         for (String table : tablesToClear) {
-            builder.append("truncate table ").append(table).append(" restart identity cascade;\n");
+            builder.append("DELETE FROM ").append(table).append(";\n");
+            String seq = tableSequences.get(table);
+            if (seq != null) {
+                builder.append("ALTER SEQUENCE ").append(seq).append(" RESTART;\n");
+            }
         }
+        builder.append("SET session_replication_role = 'origin';\n");
         clearSql = builder.toString();
     }
 
