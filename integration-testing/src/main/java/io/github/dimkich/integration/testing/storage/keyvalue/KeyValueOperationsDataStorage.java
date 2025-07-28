@@ -67,7 +67,11 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
 
     @Override
     public void clearAll() {
-        keyValueOperations.getKeyValueAdapter().clear();
+        keyValueOperations.getMappingContext().getPersistentEntities().stream()
+                .map(pe -> (KeyValuePersistentEntity<?, ?>) pe)
+                .map(KeyValuePersistentEntity::getKeySpace)
+                .filter(Objects::nonNull)
+                .forEach(ks -> keyValueOperations.getKeyValueAdapter().deleteAllOf(ks));
     }
 
     private void setNull(KeyValuePersistentEntity<?, ?> pe, String fieldName, Object o) throws InvocationTargetException,
