@@ -4,7 +4,6 @@ import io.github.dimkich.integration.testing.dbunit.DeleteFromTableOperation;
 import io.github.dimkich.integration.testing.postgresql.dbunit.CustomPostgresqlDataTypeFactory;
 import io.github.dimkich.integration.testing.postgresql.dbunit.DisableTriggersOperation;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorage;
-import io.github.dimkich.integration.testing.storage.sql.TableRestrictionBuilder;
 import io.github.dimkich.integration.testing.util.StringUtils;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -33,12 +32,10 @@ public class PostgresqlDataStorage implements SQLDataStorage {
     private final String adminUsername;
 
     private final String allowedTablesTable = "allowed_tables_" + StringUtils.randomString(16);
-    private final PostgreTableRestrictionBuilder builder = new PostgreTableRestrictionBuilder();
     private final Map<String, String> tableSequences = new HashMap<>();
 
     private Map<String, List<String>> primaryKeys;
     private IDatabaseConnection dbUnitConnection;
-    private String clearSql;
 
     @Override
     public void executeSql(Collection<String> sql) throws Exception {
@@ -185,59 +182,27 @@ public class PostgresqlDataStorage implements SQLDataStorage {
     }
 
     @Override
-    public TableRestrictionBuilder getRestrictionBuilder() {
-        return builder;
+    public String getAllowTableSql(String table) {
+        return "insert into " + allowedTablesTable + " values ('" + table + "')";
     }
 
     @Override
-    public void setTablesToClear(Collection<String> tablesToClear) {
-        if (tablesToClear == null || tablesToClear.isEmpty()) {
-            clearSql = null;
-            return;
-        }
+    public String getRestrictTableSql(String table) {
+        return "delete from " + allowedTablesTable + " where name ='" + table + "'";
+    }
+
+    @Override
+    public String getClearSql(Collection<String> tables) {
         StringBuilder builder = new StringBuilder();
         builder.append("SET session_replication_role = 'replica';\n");
-        for (String table : tablesToClear) {
+        for (String table : tables) {
             builder.append("DELETE FROM ").append(table).append(";\n");
             String seq = tableSequences.get(table);
             if (seq != null) {
                 builder.append("ALTER SEQUENCE ").append(seq).append(" RESTART;\n");
             }
         }
-        builder.append("SET session_replication_role = 'origin';\n");
-        clearSql = builder.toString();
-    }
-
-    @Override
-    public void clearTables() throws Exception {
-        if (clearSql != null) {
-            @Cleanup Statement statement = connection.createStatement();
-            statement.execute(clearSql);
-        }
-    }
-
-    private class PostgreTableRestrictionBuilder implements TableRestrictionBuilder {
-        private final StringBuilder builder = new StringBuilder();
-
-        @Override
-        public void allowTable(String table) {
-            builder.append("insert into ").append(allowedTablesTable).append(" values ('").append(table)
-                    .append("');\n");
-        }
-
-        @Override
-        public void restrictTable(String table) {
-            builder.append("delete from ").append(allowedTablesTable).append(" where name ='").append(table)
-                    .append("';\n");
-        }
-
-        @Override
-        public void finish() throws SQLException {
-            if (!builder.isEmpty()) {
-                @Cleanup Statement statement = connection.createStatement();
-                statement.execute(builder.toString());
-                builder.setLength(0);
-            }
-        }
+        builder.append("SET session_replication_role = 'origin'");
+        return builder.toString();
     }
 }

@@ -4,10 +4,10 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
 import lombok.*;
-import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 
 @Getter
 @Setter
@@ -18,14 +18,8 @@ public class DateTimeInit extends TestCaseInit {
     @JacksonXmlProperty(isAttribute = true)
     private Duration addDuration;
 
-    @Override
-    public Integer getOrder() {
-        return 0;
-    }
-
-    @Component
     @RequiredArgsConstructor
-    public static class Initializer implements TestCaseInitializer<DateTimeInit> {
+    public static class Init implements Initializer<DateTimeInit> {
         private final DateTimeService dateTimeService;
 
         @Override
@@ -34,12 +28,27 @@ public class DateTimeInit extends TestCaseInit {
         }
 
         @Override
-        public void init(DateTimeInit init) {
-            if (init.getDateTime() != null) {
-                dateTimeService.setNow(init.getDateTime());
+        public Integer getOrder() {
+            return 0;
+        }
+
+        @Override
+        public void init(Collection<DateTimeInit> inits) {
+            ZonedDateTime dateTime = null;
+            Duration duration = null;
+            for (DateTimeInit init : inits) {
+                if (init.getDateTime() != null) {
+                    dateTime = init.getDateTime();
+                }
+                if (init.getAddDuration() != null) {
+                    duration = init.getAddDuration();
+                }
             }
-            if (init.getAddDuration() != null) {
-                dateTimeService.addDuration(init.getAddDuration());
+            if (dateTime != null) {
+                dateTimeService.setNow(dateTime);
+            }
+            if (duration != null) {
+                dateTimeService.addDuration(duration);
             }
         }
     }

@@ -5,9 +5,8 @@ import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.*;
-import org.springframework.stereotype.Component;
 
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Setter
@@ -19,15 +18,10 @@ public class KeyValueStorageInit extends TestCaseInit {
     private Boolean clear;
     private Map<String, Object> map;
 
-    @Override
-    public Integer getOrder() {
-        return 3000;
-    }
-
-    @Component
     @RequiredArgsConstructor
-    public static class Initializer implements TestCaseInitializer<KeyValueStorageInit> {
+    public static class Init implements Initializer<KeyValueStorageInit> {
         private final TestDataStorages testDataStorages;
+        private final Map<String, InitState> storageInitState = new HashMap<>();
 
         @Override
         public Class<KeyValueStorageInit> getTestCaseInitClass() {
@@ -35,15 +29,45 @@ public class KeyValueStorageInit extends TestCaseInit {
         }
 
         @Override
-        public void init(KeyValueStorageInit init) throws Exception {
-            KeyValueDataStorage storage = testDataStorages.getTestDataStorage(init.getName(),
-                    KeyValueDataStorage.class);
-            if (init.getClear() != null && init.getClear()) {
-                storage.clearAll();
+        public Integer getOrder() {
+            return 3000;
+        }
+
+        @Override
+        public void init(Collection<KeyValueStorageInit> inits) throws Exception {
+            storageInitState.forEach((k, v) -> v.clear());
+            for (KeyValueStorageInit init : inits) {
+                InitState initState = storageInitState.computeIfAbsent(init.getName(), k -> new InitState());
+                if (init.getClear() != null && init.getClear()) {
+                    initState.clear = true;
+                    initState.map.clear();
+                }
+                if (init.getMap() != null) {
+                    initState.map.putAll(init.getMap());
+                }
             }
-            if (init.getMap() != null) {
-                storage.putKeysData(init.getMap());
+            for (Map.Entry<String, InitState> entry : storageInitState.entrySet()) {
+                KeyValueDataStorage storage = testDataStorages.getTestDataStorage(entry.getKey(),
+                        KeyValueDataStorage.class);
+                if (entry.getValue().clear) {
+                    storage.clearAll();
+                    testDataStorages.addAffectedStorage(storage);
+                }
+                if (!entry.getValue().map.isEmpty()) {
+                    storage.putKeysData(entry.getValue().map);
+                    testDataStorages.addAffectedStorage(storage);
+                }
             }
+        }
+    }
+
+    public static class InitState {
+        private final Map<String, Object> map = new LinkedHashMap<>();
+        private boolean clear;
+
+        public void clear() {
+            clear = false;
+            map.clear();
         }
     }
 }

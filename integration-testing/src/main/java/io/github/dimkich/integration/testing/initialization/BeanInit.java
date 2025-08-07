@@ -5,9 +5,12 @@ import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import lombok.*;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.stereotype.Component;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -23,16 +26,11 @@ public class BeanInit extends TestCaseInit {
         private String method;
     }
 
-    @Override
-    public Integer getOrder() {
-        return 10000;
-    }
-
-    @Component
     @RequiredArgsConstructor
-    public static class Initializer implements TestCaseInitializer<BeanInit> {
+    public static class Init implements Initializer<BeanInit> {
         private final BeanFactory beanFactory;
         private final TestExecutor testExecutor;
+        private final Set<BeanMethod> beanMethods = new LinkedHashSet<>();
 
         @Override
         public Class<BeanInit> getTestCaseInitClass() {
@@ -40,11 +38,19 @@ public class BeanInit extends TestCaseInit {
         }
 
         @Override
-        @SneakyThrows
-        public void init(BeanInit testCaseInit) {
+        public Integer getOrder() {
+            return 10000;
+        }
+
+        @Override
+        public void init(Collection<BeanInit> inits) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+            beanMethods.clear();
+            for (BeanInit init : inits) {
+                beanMethods.addAll(init.getBean());
+            }
             testExecutor.setExecuting(true);
             try {
-                for (BeanMethod beanMethod : testCaseInit.getBean()) {
+                for (BeanMethod beanMethod : beanMethods) {
                     Object bean = beanFactory.getBean(beanMethod.getName());
                     bean.getClass().getMethod(beanMethod.getMethod()).invoke(bean);
                 }

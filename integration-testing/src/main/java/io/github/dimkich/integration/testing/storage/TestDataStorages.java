@@ -8,9 +8,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -26,6 +24,7 @@ public class TestDataStorages {
     private final StorageProperties properties;
     private final TestExecutor testExecutor;
 
+    private final Set<TestDataStorage> affectedStorages = new HashSet<>();
     private Map<String, Map<String, Object>> currentValue = new LinkedHashMap<>();
 
     @PostConstruct
@@ -45,8 +44,9 @@ public class TestDataStorages {
     }
 
     public Object getMapDiff() {
-        Map<String, Map<String, Object>> currentValue = getCurrentValue();
+        Map<String, Map<String, Object>> currentValue = getCurrentValue(storageMap.values());
         Object diff = objectsDifference.getDifference(this.currentValue, currentValue);
+        storageMap.forEach((n, s) -> s.setDiff(null));
         if (diff instanceof Container container) {
             container.clearNullValueKeys();
         }
@@ -54,14 +54,22 @@ public class TestDataStorages {
         return diff;
     }
 
-    public void setNewCurrentValue() {
-        this.currentValue = getCurrentValue();
+    public void addAffectedStorage(TestDataStorage storage) {
+        affectedStorages.add(storage);
     }
 
-    private Map<String, Map<String, Object>> getCurrentValue() {
+    public void setNewCurrentValue() {
+        if (affectedStorages.isEmpty()) {
+            return;
+        }
+        this.currentValue.putAll(getCurrentValue(affectedStorages));
+        affectedStorages.clear();
+    }
+
+    private Map<String, Map<String, Object>> getCurrentValue(Collection<TestDataStorage> storages) {
         testExecutor.setExecuting(true);
         try {
-            return storageMap.values().stream()
+            return storages.stream()
                     .collect(Collectors.toMap(
                             TestDataStorage::getName,
                             SneakyFunction.sneaky(s -> s.getCurrentValue(properties.getExcludedFields(s.getName()))),

@@ -3,13 +3,14 @@ package io.github.dimkich.integration.testing;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import jakarta.annotation.Nonnull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Collection;
+
 @Getter
 @Setter
-public abstract class TestCaseInit implements Comparable<TestCaseInit> {
+public abstract class TestCaseInit {
     @JacksonXmlProperty(isAttribute = true)
     private Integer level;
     @JsonBackReference
@@ -20,19 +21,18 @@ public abstract class TestCaseInit implements Comparable<TestCaseInit> {
         return testCase.getLevel() + (level == null ? 0 : level);
     }
 
-    @JsonIgnore
-    public Integer getOrder() {
-        return Integer.MAX_VALUE;
-    }
-
-    @Override
-    public int compareTo(@Nonnull TestCaseInit o) {
-        return getOrder().compareTo(o.getOrder());
-    }
-
-    public interface TestCaseInitializer<T extends TestCaseInit> {
+    public interface Initializer<T extends TestCaseInit> extends Comparable<Initializer<T>> {
         Class<T> getTestCaseInitClass();
 
-        void init(T testCaseInit) throws Exception;
+        default Integer getOrder() {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        default int compareTo(Initializer<T> o) {
+            return getOrder().compareTo(o.getOrder());
+        }
+
+        void init(Collection<T> inits) throws Exception;
     }
 }

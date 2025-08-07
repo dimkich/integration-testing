@@ -3,8 +3,11 @@ package io.github.dimkich.integration.testing.storage.sql;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.dbunit.HumanReadableXmlDataSet;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
+import io.github.dimkich.integration.testing.initialization.SqlStorageInit;
 import io.github.dimkich.integration.testing.initialization.SqlStorageSetup;
-import io.github.dimkich.integration.testing.util.CollectionUtils;
+import io.github.dimkich.integration.testing.storage.sql.state.TestStorageStates;
+import io.github.dimkich.integration.testing.storage.sql.state.TablesActionVisitor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.dbunit.dataset.CompositeDataSet;
@@ -26,10 +29,14 @@ public class SQLDataStorageService implements TestDataStorage {
     private final BeanFactory beanFactory;
     private final TestExecutor testExecutor;
 
-    private Set<String> allowedTables = Set.of();
+    private final TestStorageStates testStorageStates = new TestStorageStates();
+    private final TablesActionVisitor visitor = new TablesActionVisitor();
+    private final Set<String> allowedTables = new TreeSet<>();
     private IDataSet dataSet;
+    @Getter
     private Map<String, SqlStorageSetup.TableHook> tableHooks = Map.of();
     private boolean initialized = false;
+    private Set<String> tables;
 
     @Override
     public String getName() {
@@ -56,67 +63,52 @@ public class SQLDataStorageService implements TestDataStorage {
                 .collect(Collectors.toMap(SqlStorageSetup.TableHook::getTableName, Function.identity()));
     }
 
-    public void prepareData(Collection<String> sqls, Set<String> tablesToChange,
-                            Collection<String> tablesToLoad, boolean loadAllTables, boolean disableTableHooks) throws Exception {
+    public Set<String> getTables() throws Exception {
         if (!initialized) {
-            storage.initTableRestriction();
+            tables = storage.initTableRestriction();
             initialized = true;
         }
-        boolean reloadAll = loadAllTables || sqls != null && !sqls.isEmpty();
-        Set<String> changedTables = new HashSet<>();
-        if (!reloadAll && tablesToChange != null) {
-            changedTables.addAll(tablesToChange);
-        }
+        return tables;
+    }
 
-        if (tablesToChange != null && !tablesToChange.equals(allowedTables)) {
-//            storage.clearTables();
-            TableRestrictionBuilder builder = storage.getRestrictionBuilder();
-            for (String table : CollectionUtils.setsDifference(allowedTables, tablesToChange).toList()) {
-                builder.restrictTable(table);
-                if (!reloadAll) {
-                    changedTables.add(table);
-                }
-            }
-            for (String table : CollectionUtils.setsDifference(tablesToChange, allowedTables).toList()) {
-                builder.allowTable(table);
-                if (!reloadAll) {
-                    changedTables.add(table);
-                }
-            }
-            builder.finish();
-            allowedTables = tablesToChange;
-            storage.setTablesToClear(allowedTables);
-        }
-        if (tablesToChange != null) {
-            storage.clearTables();
-        }
+    public void addInit(SqlStorageInit init) throws Exception {
+        testStorageStates.add(this, init);
+    }
 
-        if (sqls != null && !sqls.isEmpty()) {
-            storage.executeSql(sqls);
+    public boolean applyChanges() throws Exception {
+        testStorageStates.apply(visitor);
+        if (!visitor.isAnyChanges()) {
+            return false;
         }
-
-        if (loadAllTables) {
-            storage.loadDataset(dataSet);
-        } else if (tablesToLoad != null) {
-            storage.loadDataset(new FilteredDataSet(tablesToLoad.toArray(new String[0]), dataSet));
-            if (!reloadAll) {
-                changedTables.addAll(tablesToLoad);
+        if (!visitor.getTablesToClear().isEmpty()) {
+            visitor.getSqls().addFirst(storage.getClearSql(visitor.getTablesToClear()));
+        }
+        if (!visitor.getTablesToDeny().isEmpty() || !visitor.getTablesToAllow().isEmpty()) {
+            for (String table : visitor.getTablesToDeny()) {
+                allowedTables.remove(table);
+                visitor.getSqls().addFirst(storage.getRestrictTableSql(table));
+            }
+            for (String table : visitor.getTablesToAllow()) {
+                allowedTables.add(table);
+                visitor.getSqls().addFirst(storage.getAllowTableSql(table));
             }
         }
-
-        if (reloadAll) {
-            if (!disableTableHooks) {
-                for (SqlStorageSetup.TableHook table : tableHooks.values()) {
-                    this.reloadCache(table);
-                }
-            }
-        } else if (!changedTables.isEmpty()) {
-            if (!disableTableHooks) {
-                for (String table : changedTables) {
-                    this.reloadCache(table);
-                }
+        if (!visitor.getTablesToLoad().isEmpty()) {
+            storage.loadDataset(new FilteredDataSet(visitor.getTablesToLoad().toArray(new String[0]), dataSet));
+        }
+        if (!visitor.getSqls().isEmpty()) {
+            storage.executeSql(visitor.getSqls());
+        }
+        if (!visitor.getHooks().isEmpty()) {
+            for (SqlStorageSetup.TableHook hook : visitor.getHooks()) {
+                this.reloadCache(hook);
             }
         }
+        if (!visitor.getNoHookSqls().isEmpty()) {
+            storage.executeSql(visitor.getNoHookSqls());
+        }
+        visitor.clear();
+        return true;
     }
 
     @Override
@@ -125,11 +117,9 @@ public class SQLDataStorageService implements TestDataStorage {
         return storage.getTablesData(allowedTables, excludedFields);
     }
 
-    private void reloadCache(String table) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        SqlStorageSetup.TableHook reload = tableHooks.get(table);
-        if (reload != null) {
-            reloadCache(reload);
-        }
+    @Override
+    public void setDiff(Map<String, Object> diff) {
+        testStorageStates.setDirtyTables(allowedTables);
     }
 
     private void reloadCache(SqlStorageSetup.TableHook reload) throws NoSuchMethodException,

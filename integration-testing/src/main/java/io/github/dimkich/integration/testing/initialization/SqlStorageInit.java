@@ -4,14 +4,15 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import io.github.dimkich.integration.testing.TestCaseInit;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
-import lombok.*;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -27,15 +28,11 @@ public class SqlStorageInit extends TestCaseInit {
     private String tablesToLoad;
     private List<String> sql;
 
-    @Override
-    public Integer getOrder() {
-        return 2000;
-    }
-
-    @Component
     @RequiredArgsConstructor
-    public static class Initializer implements TestCaseInitializer<SqlStorageInit> {
+    public static class Init implements Initializer<SqlStorageInit> {
         private final TestDataStorages testDataStorages;
+
+        private final Set<SQLDataStorageService> set = new LinkedHashSet<>();
 
         @Override
         public Class<SqlStorageInit> getTestCaseInitClass() {
@@ -43,27 +40,24 @@ public class SqlStorageInit extends TestCaseInit {
         }
 
         @Override
-        @SneakyThrows
-        public void init(SqlStorageInit init) {
-            SQLDataStorageService storage = testDataStorages.getTestDataStorage(init.getName(), SQLDataStorageService.class);
-
-            List<String> sqls = new ArrayList<>();
-            if (init.getSql() != null) {
-                sqls.addAll(init.getSql());
-            }
-            storage.prepareData(sqls, stringToList(init.getTablesToChange()), stringToList(init.getTablesToLoad()),
-                    init.getLoadAllTables() != null && init.getLoadAllTables(),
-                    init.getDisableTableHooks() != null && init.getDisableTableHooks());
+        public Integer getOrder() {
+            return 2000;
         }
 
-        private Set<String> stringToList(String string) {
-            if (string == null || string.isEmpty()) {
-                return null;
+        @Override
+        public void init(Collection<SqlStorageInit> inits) throws Exception {
+            set.clear();
+            for (SqlStorageInit init : inits) {
+                SQLDataStorageService service = testDataStorages.getTestDataStorage(init.getName(),
+                        SQLDataStorageService.class);
+                service.addInit(init);
+                set.add(service);
             }
-            return Arrays.stream(string.split(","))
-                    .map(String::strip)
-                    .filter(StringUtils::hasText)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            for (SQLDataStorageService storage : set) {
+                if (storage.applyChanges()) {
+                    testDataStorages.addAffectedStorage(storage);
+                }
+            }
         }
     }
 }

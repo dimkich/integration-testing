@@ -1,7 +1,6 @@
 package io.github.dimkich.integration.testing.storage.keyvalue;
 
 import eu.ciechanowiec.sneakyfun.SneakyFunction;
-import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.util.TestUtils;
 import io.github.sugarcubes.cloner.Cloner;
 import io.github.sugarcubes.cloner.Cloners;

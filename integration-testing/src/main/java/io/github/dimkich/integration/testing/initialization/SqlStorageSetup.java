@@ -6,10 +6,12 @@ import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import lombok.*;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -32,14 +34,8 @@ public class SqlStorageSetup extends TestCaseInit {
         private String beanMethod;
     }
 
-    @Override
-    public Integer getOrder() {
-        return 1000;
-    }
-
-    @Component
     @RequiredArgsConstructor
-    public static class Initializer implements TestCaseInitializer<SqlStorageSetup> {
+    public static class Init implements Initializer<SqlStorageSetup> {
         private final TestDataStorages testDataStorages;
 
         @Override
@@ -48,26 +44,37 @@ public class SqlStorageSetup extends TestCaseInit {
         }
 
         @Override
-        @SneakyThrows
-        public void init(SqlStorageSetup init) {
-            SQLDataStorageService storage = testDataStorages.getTestDataStorage(init.getName(), SQLDataStorageService.class);
+        public Integer getOrder() {
+            return 1000;
+        }
 
-            List<String> sqls = new ArrayList<>();
-            if (init.getSqlFilePath() != null) {
-                for (String sqlFile : init.getSqlFilePath()) {
-                    sqls.add(new String(new ClassPathResource(sqlFile).getInputStream().readAllBytes(), StandardCharsets.UTF_8));
+        @Override
+        public void init(Collection<SqlStorageSetup> inits) throws Exception {
+            for (SqlStorageSetup init : inits) {
+                SQLDataStorageService storage = testDataStorages.getTestDataStorage(init.getName(),
+                        SQLDataStorageService.class);
+
+                List<String> sqls = new ArrayList<>();
+                if (init.getSqlFilePath() != null) {
+                    for (String sqlFile : init.getSqlFilePath()) {
+                        sqls.add(new String(new ClassPathResource(sqlFile).getInputStream().readAllBytes(),
+                                StandardCharsets.UTF_8));
+                    }
                 }
-            }
-            if (init.getSql() != null) {
-                sqls.addAll(init.getSql());
-            }
-            storage.executeSqls(sqls);
+                if (init.getSql() != null) {
+                    sqls.addAll(init.getSql());
+                }
+                if (!sqls.isEmpty()) {
+                    storage.executeSqls(sqls);
+                    testDataStorages.addAffectedStorage(storage);
+                }
 
-            if (init.getDbUnitPath() != null) {
-                storage.setDbUnitXml(init.getDbUnitPath());
-            }
-            if (init.getTableHook() != null) {
-                storage.setTableHooks(init.getTableHook());
+                if (init.getDbUnitPath() != null) {
+                    storage.setDbUnitXml(init.getDbUnitPath());
+                }
+                if (init.getTableHook() != null) {
+                    storage.setTableHooks(init.getTableHook());
+                }
             }
         }
     }

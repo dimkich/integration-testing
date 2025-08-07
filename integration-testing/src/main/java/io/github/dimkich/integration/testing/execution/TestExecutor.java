@@ -80,8 +80,8 @@ public class TestExecutor {
         testCase.getParentsAndItselfAsc()
                 .flatMap(tc -> tc.getInits().stream())
                 .filter(i -> i.getActualLevel() == testCase.getLevel())
-                .sorted(Comparator.comparing(TestCaseInit::getOrder))
-                .forEach(SneakyConsumer.sneaky(initializationService::init));
+                .forEach(SneakyConsumer.sneaky(initializationService::addInit));
+        initializationService.init();
         for (BeforeTestCase beforeTestCase : beforeTestCases) {
             beforeTestCase.before(testCase);
         }

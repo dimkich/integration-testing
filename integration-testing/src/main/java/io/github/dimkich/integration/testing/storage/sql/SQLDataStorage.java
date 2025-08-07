@@ -20,9 +20,9 @@ public interface SQLDataStorage {
 
     Set<String> initTableRestriction() throws Exception;
 
-    TableRestrictionBuilder getRestrictionBuilder();
+    String getAllowTableSql(String table);
 
-    void setTablesToClear(Collection<String> tablesToClear);
+    String getRestrictTableSql(String table);
 
-    void clearTables() throws Exception;
+    String getClearSql(Collection<String> tables);
 }

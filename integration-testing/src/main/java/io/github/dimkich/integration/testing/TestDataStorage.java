@@ -7,4 +7,7 @@ public interface TestDataStorage {
     String getName();
 
     Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) throws Exception;
+
+    default void setDiff(Map<String, Object> diff) {
+    }
 }
