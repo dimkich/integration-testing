@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.xml;
+package io.github.dimkich.integration.testing.xml.tnode;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -13,21 +13,23 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TNodeTest {
+    private static final String ls = System.lineSeparator();
 
     static Object[][] findData() {
         return new Object[][]{
-                {"<t/>", find(n -> n.findChildNode("t")), "<t/>"},
+                {"<t/>", find(n -> n.findChildNode("t")), "\n<t/>"},
                 {"<t/>", find(n -> n.getAttributeValue("a")), null},
                 {"<t/>", find(n -> n.findChildNode("t").getAttributeValue("a")), null},
                 {"<t>tx</t>", find(n -> n.findChildNode("t").getValue()), "tx"},
                 {"<t a=\"1\"/>", find(n -> n.findChildNode("t").getAttributeValue("a")), "1"},
                 {"<r><a><b/></a><b/><b/></r>", find(TNode::findNodes),
-                        "<r><a><b/></a><b/><b/></r>;<a><b/></a>;<b/>;<b/>;<b/>"},
-                {"<r><a><b/></a><b/><b/></r>", find(n -> n.findNodes("b")), "<b/>;<b/>;<b/>"},
+                        "\n<r>\n    <a>\n        <b/>\n    </a>\n    <b/>\n    <b/>\n</r>;\n<a>\n    <b/>\n</a>;\n" +
+                                "<b/>;\n<b/>;\n<b/>"},
+                {"<r><a><b/></a><b/><b/></r>", find(n -> n.findNodes("b")), "\n<b/>;\n<b/>;\n<b/>"},
                 {"<r><a><b/></a><b/><b/></r>", find(n -> n.findChildNode("r").findChildNode("b")),
-                        "<b/>"},
+                        "\n<b/>"},
                 {"<r><a><b/></a><b/><b/></r>", find(n -> n.findChildNode("r").findChildNodes("b")),
-                        "<b/>;<b/>"},
+                        "\n<b/>;\n<b/>"},
         };
     }
 
@@ -41,21 +43,27 @@ class TNodeTest {
         } else if (result instanceof Stream<?> stream) {
             result = stream.map(n -> (TNode) n).map(this::toString).collect(Collectors.joining(";"));
         }
-        assertEquals(expected, result != null ? result.toString() : null);
+        assertEquals(expected == null ? null : expected.replace("\n", ls),
+                result != null ? result.toString() : null);
     }
 
     static Object[][] changeData() {
         return new Object[][]{
                 {"<t/>", set(n -> fc(n).setAttributeValue("a", "1")), "<t a=\"1\"/>"},
+                {"<t/>", set(n -> fc(n).setAttributeValue("a", "<x>]]>>\001")), "<t a=\"&lt;x>]]>>&#x1;\"/>"},
+                {"<t/>", set(n -> fc(n).addNamespace("xsi","http://www.w3.org/2001/XMLSchema-instance")
+                        .setAttributeValue("xsi:nil", "true")),
+                        "<t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:nil=\"true\"/>"},
                 {"<t a=\"1\"/>", set(n -> fc(n).setAttributeValue("a", null)), "<t/>"},
                 {"<t/>", set(n -> fc(n).setValue("text")), "<t>text</t>"},
-                {"<t><a/>text<b/></t>", set(n -> fc(n).setValue(null)), "<t><a/><b/></t>"},
-                {"<t><a/><b/></t>", set(n -> fc(n).findChildNode("b").remove()), "<t><a/></t>"},
-                {"<t/>", set(n -> fc(n).addChild("w")), "<t><w/></t>"},
-                {"<t/>", set(n -> fc(n).addChild("w", "tx")), "<t><w>tx</w></t>"},
+                {"<t/>", set(n -> fc(n).setValue("<x>]]>>\001")), "<t>&lt;x>]]&gt;>&#x1;</t>"},
+                {"<t><a/>text<b/></t>", set(n -> fc(n).setValue(null)), "<t>\n    <a/>\n    <b/>\n</t>"},
+                {"<t><a/><b/></t>", set(n -> fc(n).findChildNode("b").remove()), "<t>\n    <a/>\n</t>"},
+                {"<t/>", set(n -> fc(n).addChild("w")), "<t>\n    <w/>\n</t>"},
+                {"<t/>", set(n -> fc(n).addChild("w", "tx")), "<t>\n    <w>tx</w>\n</t>"},
                 {"<t a1=\"e\"/>", set(n -> fc(n).setName("w")), "<w a1=\"e\"/>"},
                 {"<t/>", set(n -> fc(n).setChildNodes(fc(create("<x><a/><b/><c/></x>")).getChildNodes().toList())),
-                        "<t><a/><b/><c/></t>"},
+                        "<t>\n    <a/>\n    <b/>\n    <c/>\n</t>"},
         };
     }
 
@@ -64,7 +72,10 @@ class TNodeTest {
     void change(String xml, Consumer<TNode> consumer, String expected) {
         TNode root = create(xml);
         consumer.accept(root);
-        assertEquals(expected, toString(fc(root)));
+        assertEquals(
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + ls + expected.replace("\n", ls) + ls,
+                toString(root)
+        );
     }
 
     private static TNode fc(TNode node) {
@@ -85,7 +96,7 @@ class TNodeTest {
 
     private String toString(TNode node) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        node.save(stream, false);
+        node.save(stream);
         return stream.toString();
     }
 }

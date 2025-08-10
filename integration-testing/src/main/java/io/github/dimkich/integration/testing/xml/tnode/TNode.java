@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.xml;
+package io.github.dimkich.integration.testing.xml.tnode;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class TNode {
 
     @SneakyThrows
     public static TNode create(File file) {
-        SAXReader reader = new SAXReader();
+        SAXReader reader = new CustomSAXReader();
         Document document = reader.read(file);
         return new TNode(document);
     }
@@ -53,6 +53,11 @@ public class TNode {
         Element element = ((Element) node).addElement(tag);
         element.setText(value);
         return new TNode(element);
+    }
+
+    public TNode addNamespace(String prefix, String uri) {
+        ((Element) node).addNamespace(prefix, uri);
+        return this;
     }
 
     public void remove() {
@@ -131,22 +136,19 @@ public class TNode {
     }
 
     @SneakyThrows
-    public void save(File file, boolean prettyPrint) {
-        save(new FileOutputStream(file), prettyPrint);
+    public void save(File file) {
+        save(new FileOutputStream(file));
     }
 
     @SneakyThrows
-    public void save(OutputStream stream, boolean prettyPrint) {
-        XMLWriter writer;
-        if (prettyPrint) {
-            OutputFormat format = OutputFormat.createPrettyPrint();
-            format.setIndentSize(4);
-            format.setNewLineAfterDeclaration(false);
-            format.setLineSeparator(System.lineSeparator());
-            writer = new XMLWriter(stream, format);
-        } else {
-            writer = new XMLWriter(stream);
-        }
+    public void save(OutputStream stream) {
+        OutputFormat format = new OutputFormat();
+        format.setIndentSize(4);
+        format.setNewlines(true);
+        format.setTrimText(true);
+        format.setNewLineAfterDeclaration(false);
+        format.setLineSeparator(System.lineSeparator());
+        XMLWriter writer = new CustomXMLWriter(stream, format);
         writer.write(node);
     }
 }
