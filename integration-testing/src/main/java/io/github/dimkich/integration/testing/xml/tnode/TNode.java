@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.xml.tnode;
 
 import lombok.AccessLevel;
+import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.dom4j.*;
@@ -29,7 +30,7 @@ public class TNode {
 
     @SneakyThrows
     public static TNode create(InputStream stream) {
-        SAXReader reader = new SAXReader();
+        SAXReader reader = new CustomSAXReader();
         Document document = reader.read(stream);
         return new TNode(document);
     }
@@ -148,7 +149,17 @@ public class TNode {
         format.setTrimText(true);
         format.setNewLineAfterDeclaration(false);
         format.setLineSeparator(System.lineSeparator());
-        XMLWriter writer = new CustomXMLWriter(stream, format);
+        format.setAttributesOrderComparator((a1, a2) -> {
+            if ("type".equals(a1.getName())) {
+                return -1;
+            }
+            if ("type".equals(a2.getName())) {
+                return 1;
+            }
+            return 0;
+        });
+        @Cleanup XMLWriter writer = new CustomXMLWriter(stream, format);
         writer.write(node);
+        stream.close();
     }
 }
