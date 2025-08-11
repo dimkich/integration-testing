@@ -11,6 +11,7 @@ import io.github.dimkich.integration.testing.wait.completion.WaitCompletionConfi
 import io.github.dimkich.integration.testing.web.WebConfig;
 import io.github.dimkich.integration.testing.xml.XmlConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -20,4 +21,11 @@ import org.springframework.context.annotation.Import;
         InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class, TestClockService.class,
         WebConfig.class})
 public class IntegrationTestConfig {
+    @Bean
+    TestSetupModule integrationTestModule() {
+        return new TestSetupModule().addParentType(TestCase.class)
+                .addSubTypes(TestCase.class, "case")
+                .addSubTypes(TestContainer.class, "container")
+                .addSubTypes(TestPart.class, "part");
+    }
 }

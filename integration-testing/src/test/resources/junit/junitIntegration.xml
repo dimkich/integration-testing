@@ -1,7 +1,7 @@
-<?xml version='1.1' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!-- @formatter:off -->
-<testCase>
-    <testCase name="all">
+<test type="container">
+    <test type="case" name="all">
         <bean>launcher</bean>
         <method>execute</method>
         <request type="arrayList">
@@ -52,8 +52,8 @@
             <response type="string">after #5</response>
             <response type="string">after root</response>
         </response>
-    </testCase>
-    <testCase name="first">
+    </test>
+    <test type="case" name="first">
         <bean>launcher</bean>
         <method>execute</method>
         <request type="arrayList">
@@ -66,8 +66,8 @@
             <response type="string">after #1</response>
             <response type="string">after root</response>
         </response>
-    </testCase>
-    <testCase name="several">
+    </test>
+    <test type="case" name="several">
         <bean>launcher</bean>
         <method>execute</method>
         <request type="arrayList">
@@ -107,8 +107,8 @@
             <response type="string">after #4</response>
             <response type="string">after root</response>
         </response>
-    </testCase>
-    <testCase name="one first test in container">
+    </test>
+    <test type="case" name="one first test in container">
         <bean>launcher</bean>
         <method>execute</method>
         <request type="arrayList">
@@ -125,8 +125,8 @@
             <response type="string">after #2</response>
             <response type="string">after root</response>
         </response>
-    </testCase>
-    <testCase name="last">
+    </test>
+    <test type="case" name="last">
         <bean>launcher</bean>
         <method>execute</method>
         <request type="arrayList">
@@ -139,5 +139,5 @@
             <response type="string">after #5</response>
             <response type="string">after root</response>
         </response>
-    </testCase>
-</testCase>
+    </test>
+</test>

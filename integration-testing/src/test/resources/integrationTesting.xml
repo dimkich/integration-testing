@@ -1,7 +1,7 @@
-<?xml version='1.1' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!-- @formatter:off -->
-<testCase>
-    <testCase name="mockInvoke">
+<test type="container">
+    <test type="container" name="mockInvoke">
         <mockInvoke name="converter" method="convertToString">
             <arg type="integer">1</arg>
             <result>
@@ -21,19 +21,19 @@
                 <return type="string">4</return>
             </result>
         </mockInvoke>
-        <testCase name="1">
+        <test type="case" name="1">
             <bean>converter</bean>
             <method>convertToString</method>
             <request type="integer">1</request>
             <response type="string">1</response>
-        </testCase>
-        <testCase name="2">
+        </test>
+        <test type="case" name="2">
             <bean>converter</bean>
             <method>convertToString</method>
             <request type="integer">1</request>
             <response type="string">2</response>
-        </testCase>
-        <testCase name="3">
+        </test>
+        <test type="case" name="3">
             <bean>converter</bean>
             <method>convertToString</method>
             <request type="integer">1</request>
@@ -42,18 +42,18 @@
                 <rawStatusCode>400</rawStatusCode>
                 <message>Not supported yet.</message>
             </response>
-        </testCase>
-        <testCase name="4">
+        </test>
+        <test type="case" name="4">
             <bean>converter</bean>
             <method>convertToString</method>
             <request type="integer">1</request>
             <response type="string">4</response>
-        </testCase>
-        <testCase name="5">
+        </test>
+        <test type="case" name="5">
             <bean>converter</bean>
             <method>convertToString</method>
             <request type="integer">1</request>
             <response type="string">1</response>
-        </testCase>
-    </testCase>
-</testCase>
+        </test>
+    </test>
+</test>

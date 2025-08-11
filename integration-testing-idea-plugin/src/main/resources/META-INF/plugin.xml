@@ -24,6 +24,7 @@
     <![CDATA[
       <ul>
         <li><b>0.1.0</b> First release.</li>
+        <li><b>0.2.0</b> Fix for compatibility with library version 0.3.0</li>
       </ul>
     ]]>
   </change-notes>

@@ -79,7 +79,7 @@ public class TestExecutor {
         }
         testCase.getParentsAndItselfAsc()
                 .flatMap(tc -> tc.getInits().stream())
-                .filter(i -> i.getActualLevel() == testCase.getLevel())
+                .filter(i -> i.isApplicable(expectedTestCase))
                 .forEach(SneakyConsumer.sneaky(initializationService::addInit));
         initializationService.init();
         for (BeforeTestCase beforeTestCase : beforeTestCases) {

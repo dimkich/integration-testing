@@ -20,10 +20,12 @@ import java.util.stream.Stream;
 
 @Getter
 @Setter
-@JsonRootName(value = "testCase")
+@JsonRootName(value = "test")
 @JsonPropertyOrder({"name", "init", "bean", "method", "request", "inboundMessage", "mockInvoke", "response",
         "dataStorageDiff", "outboundMessages", "testCase"})
 public class TestCase {
+    public enum Type {TestContainer, TestCase, TestPart}
+
     @JacksonXmlProperty(isAttribute = true)
     private String name;
     @JsonProperty("init")
@@ -41,12 +43,30 @@ public class TestCase {
     @JsonBackReference
     private TestCase parentTestCase;
     @JsonManagedReference
-    @JsonProperty("testCase")
+    @JsonProperty("test")
     private List<TestCase> subTestCases = new ArrayList<>();
+
+    @JsonIgnore
+    public Type getType() {
+        return Type.TestCase;
+    }
 
     @JsonIgnore
     public boolean isContainer() {
         return !subTestCases.isEmpty();
+    }
+
+    @JsonIgnore
+    public void check() {
+        if (parentTestCase == null && getType() != Type.TestContainer) {
+            throw new RuntimeException("Root <test> must be of type=\"container\"");
+        }
+        if (getType() == Type.TestCase && parentTestCase.getType() != Type.TestContainer) {
+            throw new RuntimeException("<test type=\"case\"> can only be a child of <test type=\"container\">");
+        }
+        if (getType() == Type.TestPart && parentTestCase.getType() != Type.TestCase) {
+            throw new RuntimeException("<test type=\"part\"> can only be a child of <test type=\"case\">");
+        }
     }
 
     @JsonIgnore

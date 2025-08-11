@@ -11,14 +11,25 @@ import java.util.Collection;
 @Getter
 @Setter
 public abstract class TestCaseInit {
+    public enum Apply {All, TestContainer, TestCase, TestPart}
+
     @JacksonXmlProperty(isAttribute = true)
-    private Integer level;
+    private Apply applyTo;
     @JsonBackReference
     private TestCase testCase;
 
-    @JsonIgnore
-    public int getActualLevel() {
-        return testCase.getLevel() + (level == null ? 0 : level);
+    public boolean isApplicable(TestCase testCase) {
+        if (applyTo == null) {
+            return this.testCase == testCase;
+        }
+        if (applyTo == Apply.All) {
+            return true;
+        }
+        return switch (testCase.getType()) {
+            case TestContainer -> applyTo == Apply.TestContainer;
+            case TestCase -> applyTo == Apply.TestCase;
+            case TestPart -> applyTo == Apply.TestPart;
+        };
     }
 
     public interface Initializer<T extends TestCaseInit> extends Comparable<Initializer<T>> {

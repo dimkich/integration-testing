@@ -36,7 +36,7 @@ public class FileAssertSaver {
                 list = stream.toList();
             }
             String originalFilePath = list.get(0);
-            String itemId = list.get(1);
+            String itemId = list.get(1).replace("<testCase", "");
 
             String line;
             StringWriter stringWriter = new StringWriter();

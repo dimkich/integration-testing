@@ -26,6 +26,7 @@ public class DynamicTestBuilder {
     public Stream<DynamicNode> build(String path) throws Exception {
         testCaseMapper.setPath(path);
         TestCase testCase = testCaseMapper.readAllTestCases();
+        testCase.check();
         junitExecutable.setRootTestCase(testCase);
         junitExecutable.setExecutionListener(ExecutionListener.getLast());
         JavaTimeAdvice.setCallRealMethod(() -> !testExecutor.isExecuting());
@@ -38,6 +39,7 @@ public class DynamicTestBuilder {
 
     @SneakyThrows
     private DynamicNode toDynamicNode(TestCase testCase) {
+        testCase.check();
         if (testCase.isContainer()) {
             return DynamicContainer.dynamicContainer(testCase.getName(), testCase.getSubTestCases().stream()
                     .map(this::toDynamicNode));

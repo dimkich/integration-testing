@@ -1,67 +1,67 @@
-<?xml version='1.1' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!-- @formatter:off -->
-<testCase>
-    <testCase name="#1">
+<test type="container">
+    <test type="case" name="#1">
         <bean>consumer</bean>
         <method>accept</method>
         <request>#1</request>
-    </testCase>
-    <testCase name="#2">
-        <testCase name="#2#1">
+    </test>
+    <test type="container" name="#2">
+        <test type="case" name="#2#1">
             <bean>consumer</bean>
             <method>accept</method>
             <request>#2#1</request>
-        </testCase>
-        <testCase name="#2#2">
-            <testCase name="#2#2#1">
+        </test>
+        <test type="case" name="#2#2">
+            <test type="part" name="#2#2#1">
                 <bean>consumer</bean>
                 <method>accept</method>
                 <request>#2#2#1</request>
-            </testCase>
-            <testCase name="#2#2#2">
+            </test>
+            <test type="part" name="#2#2#2">
                 <bean>consumer</bean>
                 <method>accept</method>
                 <request>#2#2#2</request>
-            </testCase>
-        </testCase>
-        <testCase name="#2#3">
+            </test>
+        </test>
+        <test type="case" name="#2#3">
             <bean>consumer</bean>
             <method>accept</method>
             <request>#2#3</request>
-        </testCase>
-    </testCase>
-    <testCase name="#3">
+        </test>
+    </test>
+    <test type="case" name="#3">
         <bean>consumer</bean>
         <method>accept</method>
         <request>#3</request>
-    </testCase>
-    <testCase name="#4">
-        <testCase name="#4#1">
+    </test>
+    <test type="container" name="#4">
+        <test type="case" name="#4#1">
             <bean>consumer</bean>
             <method>accept</method>
             <request>#4#1</request>
-        </testCase>
-        <testCase name="#4#2">
-            <testCase name="#4#2#1">
+        </test>
+        <test type="case" name="#4#2">
+            <test type="part" name="#4#2#1">
                 <bean>consumer</bean>
                 <method>accept</method>
                 <request>#4#2#1</request>
-            </testCase>
-            <testCase name="#4#2#2">
+            </test>
+            <test type="part" name="#4#2#2">
                 <bean>consumer</bean>
                 <method>accept</method>
                 <request>#4#2#2</request>
-            </testCase>
-        </testCase>
-        <testCase name="#4#3">
+            </test>
+        </test>
+        <test type="case" name="#4#3">
             <bean>consumer</bean>
             <method>accept</method>
             <request>#4#3</request>
-        </testCase>
-    </testCase>
-    <testCase name="#5">
+        </test>
+    </test>
+    <test type="case" name="#5">
         <bean>consumer</bean>
         <method>accept</method>
         <request>#5</request>
-    </testCase>
-</testCase>
+    </test>
+</test>
