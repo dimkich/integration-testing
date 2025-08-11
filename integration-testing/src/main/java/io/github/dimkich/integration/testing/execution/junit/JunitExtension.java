@@ -22,8 +22,6 @@ import java.util.Set;
 public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     private static boolean initialized = false;
     @Getter
-    private static Thread testThread;
-    @Getter
     private static Set<Class<?>> mockClasses = Set.of();
     @Getter
     private static Set<String> mockNames = Set.of();
@@ -43,7 +41,6 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         MockitoGlobal.start();
-        testThread = Thread.currentThread();
         ClonerAgentSetUp.setClonerInstrumentationIfNone(ByteBuddyAgent.install());
         MockJavaTime mockJavaTime = context.getRequiredTestClass().getAnnotation(MockJavaTime.class);
         if (mockJavaTime != null) {
@@ -72,7 +69,6 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     @Override
     public void afterAll(ExtensionContext context) {
         MockitoGlobal.stop();
-        testThread = null;
         mockClasses = Set.of();
         mockNames = Set.of();
         spyClasses = Set.of();
@@ -84,14 +80,10 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
 
     public static boolean isMock(Class<?> cls, String beanName) {
         return mockClasses.contains(cls) || spyClasses.contains(cls) || mockNames.contains(beanName)
-               || spyNames.contains(beanName);
+                || spyNames.contains(beanName);
     }
 
     public static boolean isSpy(Class<?> cls, String beanName) {
         return spyClasses.contains(cls) || spyNames.contains(beanName);
-    }
-
-    public static boolean isRunningTestThread() {
-        return Thread.currentThread() == testThread;
     }
 }

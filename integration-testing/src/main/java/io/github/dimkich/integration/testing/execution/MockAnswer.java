@@ -24,7 +24,6 @@ public class MockAnswer implements Answer<Object> {
 
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {
-        junitExecutable.waitForStart();
         if (!junitExecutable.isTestRunning() || methods != null && !methods.contains(invocation.getMethod().getName())) {
             return invocation.callRealMethod();
         }

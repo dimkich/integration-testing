@@ -55,10 +55,6 @@ public class JunitExecutable implements Executable {
         return executionListener.getJunitTests().getLast().getTestFullName();
     }
 
-    public void waitForStart() throws InterruptedException {
-        testExecutor.waitForStart();
-    }
-
     public boolean isTestRunning() {
         return testExecutor != null && testExecutor.isExecuting();
     }

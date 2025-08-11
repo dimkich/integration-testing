@@ -24,7 +24,6 @@ import java.util.List;
 @Slf4j
 @Setter
 public class TestExecutor {
-    private volatile boolean running = false;
     private final BeanFactory beanFactory;
     private final Assertion assertion;
     private final WaitCompletionList waitCompletion;
@@ -46,21 +45,6 @@ public class TestExecutor {
     @Setter
     private boolean executing = false;
 
-    public void waitForStart() throws InterruptedException {
-        if (running) {
-            return;
-        }
-        if (JunitExtension.isRunningTestThread()) {
-            return;
-        }
-        synchronized (this) {
-            if (running) {
-                return;
-            }
-            wait();
-        }
-    }
-
     public void before(TestCase expectedTestCase) throws Exception {
         this.expectedTestCase = expectedTestCase;
         if (assertion.makeTestCaseDeepClone()) {
@@ -70,12 +54,6 @@ public class TestExecutor {
             testCase.setResponse(null);
             testCase.setDataStorageDiff(null);
             testCase.setOutboundMessages(null);
-        }
-        if (!running) {
-            synchronized (this) {
-                running = true;
-                notifyAll();
-            }
         }
         testCase.getParentsAndItselfAsc()
                 .flatMap(tc -> tc.getInits().stream())
