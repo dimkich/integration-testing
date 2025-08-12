@@ -1,17 +1,18 @@
 package io.github.dimkich.integration.testing.initialization;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import io.github.dimkich.integration.testing.TestCaseInit;
+import io.github.dimkich.integration.testing.TestInit;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
 @ToString
-public class KeyValueStorageInit extends TestCaseInit {
+public class KeyValueStorageInit extends TestInit {
     @JacksonXmlProperty(isAttribute = true)
     private String name;
     @JacksonXmlProperty(isAttribute = true)
@@ -24,7 +25,7 @@ public class KeyValueStorageInit extends TestCaseInit {
         private final Map<String, InitState> storageInitState = new HashMap<>();
 
         @Override
-        public Class<KeyValueStorageInit> getTestCaseInitClass() {
+        public Class<KeyValueStorageInit> getTestInitClass() {
             return KeyValueStorageInit.class;
         }
 
@@ -34,9 +35,9 @@ public class KeyValueStorageInit extends TestCaseInit {
         }
 
         @Override
-        public void init(Collection<KeyValueStorageInit> inits) throws Exception {
+        public void init(Stream<KeyValueStorageInit> inits) throws Exception {
             storageInitState.forEach((k, v) -> v.clear());
-            for (KeyValueStorageInit init : inits) {
+            inits.forEach(init -> {
                 InitState initState = storageInitState.computeIfAbsent(init.getName(), k -> new InitState());
                 if (init.getClear() != null && init.getClear()) {
                     initState.clear = true;
@@ -45,7 +46,7 @@ public class KeyValueStorageInit extends TestCaseInit {
                 if (init.getMap() != null) {
                     initState.map.putAll(init.getMap());
                 }
-            }
+            });
             for (Map.Entry<String, InitState> entry : storageInitState.entrySet()) {
                 KeyValueDataStorage storage = testDataStorages.getTestDataStorage(entry.getKey(),
                         KeyValueDataStorage.class);

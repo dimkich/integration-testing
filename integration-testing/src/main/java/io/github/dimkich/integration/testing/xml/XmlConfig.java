@@ -11,9 +11,9 @@ import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.github.dimkich.integration.testing.TestCase;
+import io.github.dimkich.integration.testing.Test;
 import io.github.dimkich.integration.testing.TestSetupModule;
-import io.github.dimkich.integration.testing.TestCaseInit;
+import io.github.dimkich.integration.testing.TestInit;
 import io.github.dimkich.integration.testing.initialization.*;
 import io.github.dimkich.integration.testing.openapi.FieldErrorMixIn;
 import io.github.dimkich.integration.testing.openapi.SpringErrorDto;
@@ -63,18 +63,18 @@ public class XmlConfig {
         jacksonModule.setMixInAnnotation(byte[].class, ByteArrayMixIn.class);
 
         return new TestSetupModule()
-                .addParentType(TestCaseInit.class)
+                .addParentType(TestInit.class)
                 .addSubTypes(byte[].class, "byte[]")
                 .addAlias(ByteArrayResource.class, "resource")
                 .addSubTypes(EntriesObjectKeyObjectValue.class, EntriesStringKeyObjectValue.class,
                         MapStringKeyStringValue.class, MapStringKeyObjectValue.class, DateTimeInit.class,
                         KeyValueStorageInit.class, BeanInit.class, MockInit.class, SecureRandom.class,
                         SqlStorageSetup.class, SqlStorageInit.class, SpringErrorDto.class, Resource.class)
-                .clonerFieldAction(TestCase.class, "inits", CopyAction.ORIGINAL)
-                .clonerFieldAction(TestCase.class, "parentTestCase", CopyAction.ORIGINAL)
-                .clonerFieldAction(TestCase.class, "response", CopyAction.NULL)
-                .clonerFieldAction(TestCase.class, "outboundMessages", CopyAction.NULL)
-                .clonerFieldAction(TestCase.class, "dataStorageDiff", CopyAction.NULL)
+                .clonerFieldAction(Test.class, Test.Fields.inits, CopyAction.ORIGINAL)
+                .clonerFieldAction(Test.class, Test.Fields.parentTest, CopyAction.ORIGINAL)
+                .clonerFieldAction(Test.class, Test.Fields.response, CopyAction.NULL)
+                .clonerFieldAction(Test.class, Test.Fields.outboundMessages, CopyAction.NULL)
+                .clonerFieldAction(Test.class, Test.Fields.dataStorageDiff, CopyAction.NULL)
                 .clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(Resource.class::isAssignableFrom, CopyAction.ORIGINAL)
@@ -87,7 +87,7 @@ public class XmlConfig {
     }
 
     @Bean
-    XmlTestCaseMapper testCaseMapper(List<TestSetupModule> modules) {
+    XmlTestMapper testMapper(List<TestSetupModule> modules) {
         XmlMapper.Builder builder = XmlMapper.builder();
         builder.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         builder.configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
@@ -121,6 +121,6 @@ public class XmlConfig {
         SerializerFactoryConfig config = ((BasicSerializerFactory) xmlMapper.getSerializerFactory()).getFactoryConfig();
         xmlMapper.setSerializerFactory(new FixedBeanSerializerFactory(config));
 
-        return new XmlTestCaseMapper(xmlMapper, objectToLocationStorage, modules);
+        return new XmlTestMapper(xmlMapper, objectToLocationStorage, modules);
     }
 }

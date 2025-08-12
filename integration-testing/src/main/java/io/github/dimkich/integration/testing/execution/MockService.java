@@ -30,7 +30,7 @@ public class MockService {
 
     @PostConstruct
     public void postConstruct() {
-        for (TestCaseStaticMock staticMock : JunitExtension.getStaticMocks()) {
+        for (TestStaticMock staticMock : JunitExtension.getStaticMocks()) {
             staticMocks.add(Mockito.mockStatic(staticMock.mockClass(), Mockito.withSettings().defaultAnswer(
                     createMockAnswer(staticMock.name(), staticMock.methods().length == 0 ? null : Set.of(staticMock.methods()),
                             staticMock.spy())

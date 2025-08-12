@@ -29,25 +29,25 @@ public class SimpleTest {
     @Getter
     private static SimpleTest instance;
     @Getter
-    private final List<String> executedTestCases = new ArrayList<>();
+    private final List<String> executedTests = new ArrayList<>();
     @Getter
-    private final List<String> lastTestCases = new ArrayList<>();
+    private final List<String> lastTests = new ArrayList<>();
 
     @TestFactory
     Stream<DynamicNode> tests() throws Exception {
         Mockito.doAnswer(i -> {
-                    lastTestCases.add(i.<TestCase>getArgument(1).getName());
+                    lastTests.add(i.<Test>getArgument(1).getName());
                     return null;
                 })
                 .when(assertion)
-                .afterTests(any(TestCaseMapper.class), any(TestCase.class));
+                .afterTests(any(TestMapper.class), any(Test.class));
         instance = this;
         return dynamicTestBuilder.build("junit/simple.xml");
     }
 
     public void clear() {
-        executedTestCases.clear();
-        lastTestCases.clear();
+        executedTests.clear();
+        lastTests.clear();
     }
 
     @Configuration
@@ -56,21 +56,21 @@ public class SimpleTest {
         Consumer<?> consumer() {
             return Mockito.mock(Consumer.class, Mockito.withSettings()
                     .defaultAnswer(i -> {
-                        SimpleTest.getInstance().executedTestCases.add(i.getArgument(0));
+                        SimpleTest.getInstance().executedTests.add(i.getArgument(0));
                         return null;
                     }));
         }
 
         @Bean
-        BeforeTestCase beforeTestCase() {
+        BeforeTest beforeTest() {
             return tc -> SimpleTest.getInstance()
-                    .executedTestCases.add("before " + (tc.getName() == null ? "root" : tc.getName()));
+                    .executedTests.add("before " + (tc.getName() == null ? "root" : tc.getName()));
         }
 
         @Bean
-        AfterTestCase afterTestCase() {
+        AfterTest afterTest() {
             return tc -> SimpleTest.getInstance()
-                    .executedTestCases.add("after " + (tc.getName() == null ? "root" : tc.getName()));
+                    .executedTests.add("after " + (tc.getName() == null ? "root" : tc.getName()));
         }
     }
 }

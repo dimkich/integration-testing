@@ -1,7 +1,8 @@
 package io.github.dimkich.integration.testing.initialization;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import io.github.dimkich.integration.testing.TestCaseInit;
+import eu.ciechanowiec.sneakyfun.SneakyConsumer;
+import io.github.dimkich.integration.testing.TestInit;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import lombok.*;
@@ -9,14 +10,14 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
 @ToString
-public class SqlStorageSetup extends TestCaseInit {
+public class SqlStorageSetup extends TestInit {
     @JacksonXmlProperty(isAttribute = true)
     private String name;
     private List<String> sqlFilePath;
@@ -39,7 +40,7 @@ public class SqlStorageSetup extends TestCaseInit {
         private final TestDataStorages testDataStorages;
 
         @Override
-        public Class<SqlStorageSetup> getTestCaseInitClass() {
+        public Class<SqlStorageSetup> getTestInitClass() {
             return SqlStorageSetup.class;
         }
 
@@ -49,8 +50,8 @@ public class SqlStorageSetup extends TestCaseInit {
         }
 
         @Override
-        public void init(Collection<SqlStorageSetup> inits) throws Exception {
-            for (SqlStorageSetup init : inits) {
+        public void init(Stream<SqlStorageSetup> inits) throws Exception {
+            inits.forEach(SneakyConsumer.sneaky(init -> {
                 SQLDataStorageService storage = testDataStorages.getTestDataStorage(init.getName(),
                         SQLDataStorageService.class);
 
@@ -75,7 +76,7 @@ public class SqlStorageSetup extends TestCaseInit {
                 if (init.getTableHook() != null) {
                     storage.setTableHooks(init.getTableHook());
                 }
-            }
+            }));
         }
     }
 }

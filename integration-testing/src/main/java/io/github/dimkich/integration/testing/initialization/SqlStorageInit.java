@@ -1,7 +1,8 @@
 package io.github.dimkich.integration.testing.initialization;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import io.github.dimkich.integration.testing.TestCaseInit;
+import eu.ciechanowiec.sneakyfun.SneakyConsumer;
+import io.github.dimkich.integration.testing.TestInit;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import lombok.Getter;
@@ -9,15 +10,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
 @ToString
-public class SqlStorageInit extends TestCaseInit {
+public class SqlStorageInit extends TestInit {
     @JacksonXmlProperty(isAttribute = true)
     private String name;
     @JacksonXmlProperty(isAttribute = true)
@@ -35,7 +36,7 @@ public class SqlStorageInit extends TestCaseInit {
         private final Set<SQLDataStorageService> set = new LinkedHashSet<>();
 
         @Override
-        public Class<SqlStorageInit> getTestCaseInitClass() {
+        public Class<SqlStorageInit> getTestInitClass() {
             return SqlStorageInit.class;
         }
 
@@ -45,14 +46,14 @@ public class SqlStorageInit extends TestCaseInit {
         }
 
         @Override
-        public void init(Collection<SqlStorageInit> inits) throws Exception {
+        public void init(Stream<SqlStorageInit> inits) throws Exception {
             set.clear();
-            for (SqlStorageInit init : inits) {
+            inits.forEach(SneakyConsumer.sneaky(init -> {
                 SQLDataStorageService service = testDataStorages.getTestDataStorage(init.getName(),
                         SQLDataStorageService.class);
                 service.addInit(init);
                 set.add(service);
-            }
+            }));
             for (SQLDataStorageService storage : set) {
                 if (storage.applyChanges()) {
                     testDataStorages.addAffectedStorage(storage);

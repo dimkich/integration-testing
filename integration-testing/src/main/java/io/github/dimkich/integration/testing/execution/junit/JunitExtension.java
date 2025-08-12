@@ -3,8 +3,8 @@ package io.github.dimkich.integration.testing.execution.junit;
 import io.github.dimkich.integration.testing.assertion.FileOperations;
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
-import io.github.dimkich.integration.testing.execution.TestCaseBeanMocks;
-import io.github.dimkich.integration.testing.execution.TestCaseStaticMock;
+import io.github.dimkich.integration.testing.execution.TestBeanMocks;
+import io.github.dimkich.integration.testing.execution.TestStaticMock;
 import io.github.dimkich.integration.testing.execution.mokito.MockitoGlobal;
 import io.github.dimkich.integration.testing.openapi.TestOpenAPI;
 import io.github.dimkich.integration.testing.web.TestRestTemplate;
@@ -34,7 +34,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     @Getter
     private static List<TestRestTemplate> testRestTemplates = List.of();
     @Getter
-    private static List<TestCaseStaticMock> staticMocks = List.of();
+    private static List<TestStaticMock> staticMocks = List.of();
     @Getter
     private static SpringBootTest springBootTest;
 
@@ -46,7 +46,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         if (mockJavaTime != null) {
             MockJavaTimeSetUp.setUp(mockJavaTime);
         }
-        TestCaseBeanMocks mocks = context.getRequiredTestClass().getAnnotation(TestCaseBeanMocks.class);
+        TestBeanMocks mocks = context.getRequiredTestClass().getAnnotation(TestBeanMocks.class);
         if (mocks != null) {
             mockClasses = Set.of(mocks.mockClasses());
             mockNames = Set.of(mocks.mockNames());
@@ -54,7 +54,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
             spyNames = Set.of(mocks.spyNames());
         }
         testOpenAPIS = List.of(context.getRequiredTestClass().getAnnotationsByType(TestOpenAPI.class));
-        staticMocks = List.of(context.getRequiredTestClass().getAnnotationsByType(TestCaseStaticMock.class));
+        staticMocks = List.of(context.getRequiredTestClass().getAnnotationsByType(TestStaticMock.class));
         testRestTemplates = List.of(context.getRequiredTestClass().getAnnotationsByType(TestRestTemplate.class));
         if (!initialized) {
             new FileOperations().clearTestsDir();

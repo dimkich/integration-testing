@@ -36,8 +36,8 @@ class XmlMapperTest {
     private final XmlMapper xmlMapper;
 
     @Autowired
-    public XmlMapperTest(XmlTestCaseMapper xmlTestCaseMapper) {
-        xmlMapper = (XmlMapper) (xmlTestCaseMapper.unwrap())
+    public XmlMapperTest(XmlTestMapper xmlTestMapper) {
+        xmlMapper = (XmlMapper) (xmlTestMapper.unwrap())
                 .disable(ToXmlGenerator.Feature.WRITE_XML_1_1)
                 .enable(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS)
                 .disable(SerializationFeature.INDENT_OUTPUT);

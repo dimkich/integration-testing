@@ -1,8 +1,8 @@
 package io.github.dimkich.integration.testing.assertion;
 
 import io.github.dimkich.integration.testing.Assertion;
-import io.github.dimkich.integration.testing.TestCase;
-import io.github.dimkich.integration.testing.TestCaseMapper;
+import io.github.dimkich.integration.testing.Test;
+import io.github.dimkich.integration.testing.TestMapper;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -22,17 +22,17 @@ public class SingleFileAssertion implements Assertion {
     private JunitExecutable executable;
 
     @Override
-    public boolean makeTestCaseDeepClone() {
+    public boolean makeTestDeepClone() {
         return false;
     }
 
     @Override
-    public void assertTestCaseEquals(TestCaseMapper mapper, TestCase expected, TestCase actual) {
+    public void assertTestsEquals(TestMapper mapper, Test expected, Test actual) {
     }
 
     @Override
-    public void afterTests(TestCaseMapper mapper, TestCase rootTestCase) throws Exception {
-        String actual = mapper.getRootTestCaseAsString(rootTestCase);
+    public void afterTests(TestMapper mapper, Test rootTest) throws Exception {
+        String actual = mapper.getRootTestAsString(rootTest);
         String expected = Files.readString(Path.of(mapper.getFilePath()));
         if (Objects.equals(actual, expected)) {
             return;

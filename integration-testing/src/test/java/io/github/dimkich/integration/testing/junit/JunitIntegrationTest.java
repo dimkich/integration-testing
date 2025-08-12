@@ -57,8 +57,8 @@ public class JunitIntegrationTest {
             LauncherFactory.create().execute(LauncherDiscoveryRequestBuilder.request()
                     .selectors(selectors.stream().map(Selector::toSelector).collect(Collectors.toList()))
                     .build());
-            assertEquals(1, SimpleTest.getInstance().getLastTestCases().size());
-            List<String> result = new ArrayList<>(SimpleTest.getInstance().getExecutedTestCases());
+            assertEquals(1, SimpleTest.getInstance().getLastTests().size());
+            List<String> result = new ArrayList<>(SimpleTest.getInstance().getExecutedTests());
             SimpleTest.getInstance().clear();
             return result;
         }

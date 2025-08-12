@@ -1,8 +1,8 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
 import io.github.dimkich.integration.testing.Assertion;
-import io.github.dimkich.integration.testing.TestCase;
-import io.github.dimkich.integration.testing.TestCaseMapper;
+import io.github.dimkich.integration.testing.Test;
+import io.github.dimkich.integration.testing.TestMapper;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import lombok.RequiredArgsConstructor;
@@ -16,37 +16,37 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class JunitExecutable implements Executable {
     private final TestExecutor testExecutor;
-    private final TestCaseMapper testCaseMapper;
+    private final TestMapper testMapper;
     private final Assertion assertion;
     private ExecutionListener executionListener;
-    private TestCase rootTestCase;
+    private Test rootTest;
 
     @Override
     public void execute() throws Throwable {
-        TestCase testCase = rootTestCase;
+        Test test = rootTest;
         boolean isLast = false;
 
         for (JunitTestInfo item : executionListener.getJunitTests()) {
             if (!item.isInitialized()) {
-                testExecutor.before(testCase);
+                testExecutor.before(test);
                 item.setInitialized(true);
             }
-            isLast = isLast && testCase.isLastLeaf() || item.isLast();
-            if (item.getSubTestCaseIndex() != null) {
-                testCase = testCase.getSubTestCases().get(item.getSubTestCaseIndex());
+            isLast = isLast && test.isLastLeaf() || item.isLast();
+            if (item.getSubTestIndex() != null) {
+                test = test.getSubTests().get(item.getSubTestIndex());
             }
         }
 
         try {
-            testExecutor.runTest(testCase);
+            testExecutor.runTest(test);
         } finally {
-            testExecutor.after(testCase);
-            while ((isLast || testCase.isLastLeaf()) && testCase.getParentTestCase() != null) {
-                testCase = testCase.getParentTestCase();
-                testExecutor.after(testCase);
+            testExecutor.after(test);
+            while ((isLast || test.isLastLeaf()) && test.getParentTest() != null) {
+                test = test.getParentTest();
+                testExecutor.after(test);
             }
-            if (isLast || testCase == rootTestCase) {
-                assertion.afterTests(testCaseMapper, rootTestCase);
+            if (isLast || test == rootTest) {
+                assertion.afterTests(testMapper, rootTest);
             }
         }
     }
@@ -60,7 +60,7 @@ public class JunitExecutable implements Executable {
     }
 
     public MockInvoke search(String mockName, String method, List<Object> args) {
-        return testExecutor.getTestCase().getParentsAndItselfDesc()
+        return testExecutor.getTest().getParentsAndItselfDesc()
                 .map(tc -> tc.search(mockName, method, args))
                 .filter(Objects::nonNull)
                 .findFirst()
@@ -68,6 +68,6 @@ public class JunitExecutable implements Executable {
     }
 
     public void addMockInvoke(MockInvoke invoke) {
-        testExecutor.getTestCase().getMockInvoke().add(invoke);
+        testExecutor.getTest().getMockInvoke().add(invoke);
     }
 }

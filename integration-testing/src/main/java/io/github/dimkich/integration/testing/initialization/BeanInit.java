@@ -1,21 +1,21 @@
 package io.github.dimkich.integration.testing.initialization;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import io.github.dimkich.integration.testing.TestCaseInit;
+import io.github.dimkich.integration.testing.TestInit;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import lombok.*;
 import org.springframework.beans.factory.BeanFactory;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
 @ToString
-public class BeanInit extends TestCaseInit {
+public class BeanInit extends TestInit {
     private List<BeanMethod> bean;
 
     @Data
@@ -33,7 +33,7 @@ public class BeanInit extends TestCaseInit {
         private final Set<BeanMethod> beanMethods = new LinkedHashSet<>();
 
         @Override
-        public Class<BeanInit> getTestCaseInitClass() {
+        public Class<BeanInit> getTestInitClass() {
             return BeanInit.class;
         }
 
@@ -43,11 +43,9 @@ public class BeanInit extends TestCaseInit {
         }
 
         @Override
-        public void init(Collection<BeanInit> inits) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        public void init(Stream<BeanInit> inits) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
             beanMethods.clear();
-            for (BeanInit init : inits) {
-                beanMethods.addAll(init.getBean());
-            }
+            inits.forEach(init -> beanMethods.addAll(init.getBean()));
             testExecutor.setExecuting(true);
             try {
                 for (BeanMethod beanMethod : beanMethods) {

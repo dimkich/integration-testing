@@ -58,8 +58,8 @@ public class FileAssertSaver {
                         expected.setCharset(StandardCharsets.UTF_8);
                         VfsUtil.markDirtyAndRefresh(false, false, false, expected);
                         Document document = FileDocumentManager.getInstance().getDocument(expected);
-                        BufferedReader testCase = new BufferedReader(new StringReader(document.getText()));
-                        while ((line = testCase.readLine()) != null) {
+                        BufferedReader test = new BufferedReader(new StringReader(document.getText()));
+                        while ((line = test.readLine()) != null) {
                             writer.write(spaces + line);
                             writer.newLine();
                         }

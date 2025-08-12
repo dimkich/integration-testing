@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing.xml;
 
-import io.github.dimkich.integration.testing.TestCase;
+import io.github.dimkich.integration.testing.Test;
 
 import javax.xml.stream.Location;
 import java.util.HashMap;
@@ -11,7 +11,7 @@ public class ObjectToLocationStorage {
     private boolean collect;
 
     public void put(Object object, Location location) {
-        if (collect && object instanceof TestCase) {
+        if (collect && object instanceof Test) {
             map.put(object, location);
         }
     }

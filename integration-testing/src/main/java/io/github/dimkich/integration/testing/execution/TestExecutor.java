@@ -1,8 +1,6 @@
 package io.github.dimkich.integration.testing.execution;
 
-import eu.ciechanowiec.sneakyfun.SneakyConsumer;
 import io.github.dimkich.integration.testing.*;
-import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.message.MessageDto;
 import io.github.dimkich.integration.testing.message.TestMessagePoller;
@@ -27,11 +25,11 @@ public class TestExecutor {
     private final BeanFactory beanFactory;
     private final Assertion assertion;
     private final WaitCompletionList waitCompletion;
-    private final List<BeforeTestCase> beforeTestCases;
-    private final List<TestCaseConverter> testCaseConverters;
-    private final List<AfterTestCase> afterTestCases;
+    private final List<BeforeTest> beforeTests;
+    private final List<TestConverter> testConverters;
+    private final List<AfterTest> afterTests;
     private final List<TestMessageSender> testMessageSenders;
-    private final TestCaseMapper testCaseMapper;
+    private final TestMapper testMapper;
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private InitializationService initializationService;
     @Setter(onMethod_ = {@Autowired, @Lazy})
@@ -39,42 +37,38 @@ public class TestExecutor {
     @Setter(onMethod_ = @Autowired(required = false))
     private TestMessagePoller testMessagePoller;
     @Getter
-    private TestCase testCase;
-    private TestCase expectedTestCase;
+    private Test test;
+    private Test expectedTest;
     @Getter
     @Setter
     private boolean executing = false;
 
-    public void before(TestCase expectedTestCase) throws Exception {
-        this.expectedTestCase = expectedTestCase;
-        if (assertion.makeTestCaseDeepClone()) {
-            testCase = testCaseMapper.deepClone(expectedTestCase);
+    public void before(Test expectedTest) throws Exception {
+        this.expectedTest = expectedTest;
+        if (assertion.makeTestDeepClone()) {
+            test = testMapper.deepClone(expectedTest);
         } else {
-            testCase = expectedTestCase;
-            testCase.setResponse(null);
-            testCase.setDataStorageDiff(null);
-            testCase.setOutboundMessages(null);
+            test = expectedTest;
+            test.setResponse(null);
+            test.setDataStorageDiff(null);
+            test.setOutboundMessages(null);
         }
-        testCase.getParentsAndItselfAsc()
-                .flatMap(tc -> tc.getInits().stream())
-                .filter(i -> i.isApplicable(expectedTestCase))
-                .forEach(SneakyConsumer.sneaky(initializationService::addInit));
-        initializationService.init();
-        for (BeforeTestCase beforeTestCase : beforeTestCases) {
-            beforeTestCase.before(testCase);
+        initializationService.beforeTest(test);
+        for (BeforeTest beforeTest : beforeTests) {
+            beforeTest.before(test);
         }
         if (testDataStorages != null) {
             testDataStorages.setNewCurrentValue();
         }
     }
 
-    public void runTest(TestCase tc) throws Exception {
-        log.info(">>> {}", testCase.getFullName());
-        log.info(testCaseMapper.getCurrentPathAndLocation(expectedTestCase));
+    public void runTest(Test tc) throws Exception {
+        log.info(">>> {}", test.getFullName());
+        log.info(testMapper.getCurrentPathAndLocation(expectedTest));
         waitCompletion.start();
         executing = true;
         try {
-            MessageDto<?> message = testCase.getInboundMessage();
+            MessageDto<?> message = test.getInboundMessage();
             if (message != null) {
                 testMessageSenders.stream()
                         .filter(s -> s.canSend(message))
@@ -82,7 +76,7 @@ public class TestExecutor {
                         .orElseThrow(() -> new RuntimeException("No service found for message " + message))
                         .sendInboundMessage(message);
             } else {
-                testCase.executeMethod(beanFactory, (m, r) -> testCaseMapper.deepClone(r));
+                test.executeMethod(beanFactory, (m, r) -> testMapper.deepClone(r));
             }
         } finally {
             try {
@@ -92,28 +86,29 @@ public class TestExecutor {
             }
         }
 
-        int countMessages = testCase.getOutboundMessages() == null ? 0 : testCase.getOutboundMessages().size();
+        int countMessages = test.getOutboundMessages() == null ? 0 : test.getOutboundMessages().size();
         if (testMessagePoller != null) {
             List<MessageDto<?>> messages = testMessagePoller.pollMessages(countMessages);
             messages.sort(Comparator.comparing(MessageDto::toString));
-            testCase.setOutboundMessages(messages.isEmpty() ? null : messages);
+            test.setOutboundMessages(messages.isEmpty() ? null : messages);
         }
         if (testDataStorages != null) {
-            testCase.setDataStorageDiff(testDataStorages.getMapDiff());
+            test.setDataStorageDiff(testDataStorages.getMapDiff());
         }
-        testCaseConverters.forEach(c -> c.convertNoException(testCase));
+        testConverters.forEach(c -> c.convertNoException(test));
 
-        assertion.assertTestCaseEquals(testCaseMapper, this.expectedTestCase, testCase);
+        assertion.assertTestsEquals(testMapper, this.expectedTest, test);
     }
 
-    public void after(TestCase testCase) throws Exception {
+    public void after(Test test) throws Exception {
+        initializationService.afterTest(test);
         try {
-            for (AfterTestCase afterTestCase : afterTestCases) {
-                afterTestCase.after(testCase);
+            for (AfterTest afterTest : afterTests) {
+                afterTest.after(test);
             }
         } finally {
-            this.testCase = null;
-            this.expectedTestCase = null;
+            this.test = null;
+            this.expectedTest = null;
         }
     }
 }

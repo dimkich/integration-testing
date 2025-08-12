@@ -47,12 +47,12 @@ public class ExecutionListener implements TestExecutionListener {
             UniqueId.Segment segment = segments.get(segments.size() - 1);
             switch (segment.getType()) {
                 case "test-factory":
-                    junitTests.addLast(new JunitTestInfo(id, discoveryListener.isLastTestCase(id)));
+                    junitTests.addLast(new JunitTestInfo(id, discoveryListener.isLastTest(id)));
                     break;
                 case "dynamic-container":
                 case "dynamic-test":
-                    junitTests.getLast().setSubTestCaseIndex(Integer.parseInt(segment.getValue().substring(1)) - 1);
-                    junitTests.addLast(new JunitTestInfo(id, discoveryListener.isLastTestCase(id)));
+                    junitTests.getLast().setSubTestIndex(Integer.parseInt(segment.getValue().substring(1)) - 1);
+                    junitTests.addLast(new JunitTestInfo(id, discoveryListener.isLastTest(id)));
             }
         }
     }

@@ -23,9 +23,9 @@ import org.springframework.context.annotation.Import;
 public class IntegrationTestConfig {
     @Bean
     TestSetupModule integrationTestModule() {
-        return new TestSetupModule().addParentType(TestCase.class)
-                .addSubTypes(TestCase.class, "case")
+        return new TestSetupModule().addParentType(Test.class)
                 .addSubTypes(TestContainer.class, "container")
+                .addSubTypes(TestCase.class, "case")
                 .addSubTypes(TestPart.class, "part");
     }
 }

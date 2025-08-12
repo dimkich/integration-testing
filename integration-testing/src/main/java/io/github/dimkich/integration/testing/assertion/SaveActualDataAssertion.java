@@ -1,23 +1,23 @@
 package io.github.dimkich.integration.testing.assertion;
 
 import io.github.dimkich.integration.testing.Assertion;
-import io.github.dimkich.integration.testing.TestCase;
-import io.github.dimkich.integration.testing.TestCaseMapper;
+import io.github.dimkich.integration.testing.Test;
+import io.github.dimkich.integration.testing.TestMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 @ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "saveActualData")
 public class SaveActualDataAssertion implements Assertion {
     @Override
-    public boolean makeTestCaseDeepClone() {
+    public boolean makeTestDeepClone() {
         return false;
     }
 
     @Override
-    public void assertTestCaseEquals(TestCaseMapper mapper, TestCase expected, TestCase actual) {
+    public void assertTestsEquals(TestMapper mapper, Test expected, Test actual) {
     }
 
     @Override
-    public void afterTests(TestCaseMapper mapper, TestCase rootTestCase) throws Exception {
-        mapper.writeRootTestCase(rootTestCase);
+    public void afterTests(TestMapper mapper, Test rootTest) throws Exception {
+        mapper.writeRootTest(rootTest);
     }
 }

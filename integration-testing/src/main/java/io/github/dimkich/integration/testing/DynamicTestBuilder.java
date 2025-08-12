@@ -19,31 +19,31 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class DynamicTestBuilder {
     private final JunitExecutable junitExecutable;
-    private final TestCaseMapper testCaseMapper;
+    private final TestMapper testMapper;
     private final TestExecutor testExecutor;
     private final DateTimeService dateTimeService;
 
     public Stream<DynamicNode> build(String path) throws Exception {
-        testCaseMapper.setPath(path);
-        TestCase testCase = testCaseMapper.readAllTestCases();
-        testCase.check();
-        junitExecutable.setRootTestCase(testCase);
+        testMapper.setPath(path);
+        Test test = testMapper.readAllTests();
+        test.check();
+        junitExecutable.setRootTest(test);
         junitExecutable.setExecutionListener(ExecutionListener.getLast());
         JavaTimeAdvice.setCallRealMethod(() -> !testExecutor.isExecuting());
         JavaTimeAdvice.setCurrentTimeMillis(() -> dateTimeService.getDateTime().toInstant().toEpochMilli());
         JavaTimeAdvice.setGetNanoTimeAdjustment(o -> ChronoUnit.NANOS.between(Instant.ofEpochSecond(o),
                 dateTimeService.getDateTime().toInstant()));
         JavaTimeAdvice.setGetDefaultRef(() -> TimeZone.getTimeZone(dateTimeService.getDateTime().getOffset()));
-        return testCase.getSubTestCases().stream().map(this::toDynamicNode);
+        return test.getSubTests().stream().map(this::toDynamicNode);
     }
 
     @SneakyThrows
-    private DynamicNode toDynamicNode(TestCase testCase) {
-        testCase.check();
-        if (testCase.isContainer()) {
-            return DynamicContainer.dynamicContainer(testCase.getName(), testCase.getSubTestCases().stream()
+    private DynamicNode toDynamicNode(Test test) {
+        test.check();
+        if (test.isContainer()) {
+            return DynamicContainer.dynamicContainer(test.getName(), test.getSubTests().stream()
                     .map(this::toDynamicNode));
         }
-        return DynamicTest.dynamicTest(testCase.getName(), junitExecutable);
+        return DynamicTest.dynamicTest(test.getName(), junitExecutable);
     }
 }

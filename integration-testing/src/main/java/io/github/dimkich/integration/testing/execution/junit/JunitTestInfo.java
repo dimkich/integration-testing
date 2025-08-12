@@ -14,7 +14,7 @@ public class JunitTestInfo {
     private final boolean isLast;
     @Getter
     @Setter
-    private Integer subTestCaseIndex;
+    private Integer subTestIndex;
 
     private boolean initialized;
     private String testFullName;

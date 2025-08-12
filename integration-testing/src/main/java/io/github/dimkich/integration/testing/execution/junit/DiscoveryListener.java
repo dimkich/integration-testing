@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class DiscoveryListener implements LauncherDiscoveryListener {
     private static final Deque<DiscoveryListener> instances = new ArrayDeque<>();
 
-    private final Set<UniqueId> lastTestCases = new HashSet<>();
+    private final Set<UniqueId> lastTests = new HashSet<>();
 
     public DiscoveryListener() {
         instances.addLast(this);
@@ -29,8 +29,8 @@ public class DiscoveryListener implements LauncherDiscoveryListener {
         instances.removeLast();
     }
 
-    public boolean isLastTestCase(UniqueId uniqueId) {
-        return lastTestCases.contains(uniqueId);
+    public boolean isLastTest(UniqueId uniqueId) {
+        return lastTests.contains(uniqueId);
     }
 
     @Override
@@ -40,6 +40,6 @@ public class DiscoveryListener implements LauncherDiscoveryListener {
                 .collect(Collectors.toMap(Function.identity(), Function.identity(), UniqueIdCollector::max))
                 .values().stream()
                 .map(UniqueIdCollector::getId)
-                .forEach(lastTestCases::add);
+                .forEach(lastTests::add);
     }
 }

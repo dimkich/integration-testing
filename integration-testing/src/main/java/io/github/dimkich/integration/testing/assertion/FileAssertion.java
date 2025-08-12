@@ -1,8 +1,6 @@
 package io.github.dimkich.integration.testing.assertion;
 
-import io.github.dimkich.integration.testing.Assertion;
-import io.github.dimkich.integration.testing.TestCase;
-import io.github.dimkich.integration.testing.TestCaseMapper;
+import io.github.dimkich.integration.testing.*;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -26,38 +24,42 @@ public class FileAssertion implements Assertion {
     private JunitExecutable executable;
 
     private final Set<String> initialized = new HashSet<>();
-    private final Map<TestCase, String> map = new HashMap<>();
+    private final Map<Test, String> map = new HashMap<>();
     private String name;
-    private int testCaseIndex = 0;
+    private int testIndex = 0;
 
     @Override
-    public void assertTestCaseEquals(TestCaseMapper mapper, TestCase expected, TestCase actual) throws Exception {
+    public void assertTestsEquals(TestMapper mapper, Test expected, Test actual) throws Exception {
         initialize(mapper.getFilePath());
-        String expectedStr = mapper.getSingleTestCaseAsString(expected);
-        String actualStr = mapper.getSingleTestCaseAsString(actual);
+        String expectedStr = mapper.getSingleTestAsString(expected);
+        String actualStr = mapper.getSingleTestAsString(actual);
         if (Objects.equals(expectedStr, actualStr)) {
             return;
         }
-        testCaseIndex++;
-        String fileExpected = write(expectedStr, testCaseIndex + "_expected.xml");
-        String fileActual = write(actualStr, testCaseIndex + "_actual.xml");
-        map.put(expected, name + testCaseIndex);
+        testIndex++;
+        String fileExpected = write(expectedStr, testIndex + "_expected.xml");
+        String fileActual = write(actualStr, testIndex + "_actual.xml");
+        map.put(expected, name + testIndex);
         throw new FileComparisonFailure("error message", "[]", "[]", fileExpected, fileActual);
     }
 
     @Override
-    public void afterTests(TestCaseMapper mapper, TestCase rootTestCase) throws Exception {
-        replace(rootTestCase);
-        write(mapper.getRootTestCaseAsString(rootTestCase), "template.xml");
+    public void afterTests(TestMapper mapper, Test rootTest) throws Exception {
+        replace(rootTest);
+        write(mapper.getRootTestAsString(rootTest), "template.xml");
     }
 
-    private void replace(TestCase testCase) {
-        for (int i = 0; i < testCase.getSubTestCases().size(); i++) {
-            TestCase sub = testCase.getSubTestCases().get(i);
+    private void replace(Test test) {
+        for (int i = 0; i < test.getSubTests().size(); i++) {
+            Test sub = test.getSubTests().get(i);
             if (map.containsKey(sub)) {
-                TestCase link = new TestCase();
+                Test link = switch (sub.getType()) {
+                    case TestContainer -> new TestContainer();
+                    case TestCase -> new TestCase();
+                    case TestPart -> new TestPart();
+                };
                 link.setName(map.get(sub));
-                testCase.getSubTestCases().set(i, link);
+                test.getSubTests().set(i, link);
             } else {
                 replace(sub);
             }
@@ -66,7 +68,7 @@ public class FileAssertion implements Assertion {
 
     private String write(String data, String fileNamePostfix) throws IOException {
         String fileName = AssertionConfig.resultDir + File.separator + executable.getTestFullName()
-                          + File.separator + fileNamePostfix;
+                + File.separator + fileNamePostfix;
         Files.writeString(Paths.get(fileName), data);
         return fileName;
     }
@@ -78,7 +80,7 @@ public class FileAssertion implements Assertion {
         name = RandomStringUtils.random(16, true, true) + "_";
 
         String dir = AssertionConfig.resultDir + File.separator + executable.getTestFullName()
-                     + File.separator;
+                + File.separator;
         Files.createDirectories(Paths.get(dir));
         File[] files = new File(dir).listFiles();
         Arrays.stream(files == null ? new File[0] : files)

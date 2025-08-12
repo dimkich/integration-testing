@@ -1,11 +1,11 @@
 package io.github.dimkich.integration.testing;
 
 public interface Assertion {
-    default boolean makeTestCaseDeepClone() {
+    default boolean makeTestDeepClone() {
         return true;
     }
 
-    void assertTestCaseEquals(TestCaseMapper mapper, TestCase expected, TestCase actual) throws Exception;
+    void assertTestsEquals(TestMapper mapper, Test expected, Test actual) throws Exception;
 
-    void afterTests(TestCaseMapper mapper, TestCase rootTestCase) throws Exception;
+    void afterTests(TestMapper mapper, Test rootTest) throws Exception;
 }

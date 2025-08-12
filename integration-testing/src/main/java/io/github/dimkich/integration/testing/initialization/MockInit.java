@@ -1,25 +1,25 @@
 package io.github.dimkich.integration.testing.initialization;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import io.github.dimkich.integration.testing.TestCase;
-import io.github.dimkich.integration.testing.TestCaseInit;
+import io.github.dimkich.integration.testing.Test;
+import io.github.dimkich.integration.testing.TestInit;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.Collection;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
 @ToString
-public class MockInit extends TestCaseInit {
+public class MockInit extends TestInit {
     @JacksonXmlProperty(isAttribute = true)
     private Boolean resetAll;
 
     public static class Init implements Initializer<MockInit> {
         @Override
-        public Class<MockInit> getTestCaseInitClass() {
+        public Class<MockInit> getTestInitClass() {
             return MockInit.class;
         }
 
@@ -29,16 +29,16 @@ public class MockInit extends TestCaseInit {
         }
 
         @Override
-        public void init(Collection<MockInit> inits) {
-            for (MockInit init : inits) {
+        public void init(Stream<MockInit> inits) {
+            inits.forEach(init -> {
                 if (init.getResetAll() != null && init.getResetAll()) {
-                    TestCase testCase = init.getTestCase();
-                    while (testCase != null) {
-                        testCase.getMockInvoke().forEach(MockInvoke::reset);
-                        testCase = testCase.getParentTestCase();
+                    Test test = init.getTest();
+                    while (test != null) {
+                        test.getMockInvoke().forEach(MockInvoke::reset);
+                        test = test.getParentTest();
                     }
                 }
-            }
+            });
         }
     }
 }
