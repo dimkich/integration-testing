@@ -91,17 +91,21 @@ public class SQLDataStorageService implements TestDataStorage {
             storage.clearTables();
         }
 
-        if (sqls != null && !sqls.isEmpty()) {
-            storage.executeSql(sqls);
-        }
-
-        if (loadAllTables) {
-            storage.loadDataset(dataSet);
-        } else if (tablesToLoad != null) {
-            storage.loadDataset(new FilteredDataSet(tablesToLoad.toArray(new String[0]), dataSet));
-            if (!reloadAll) {
-                changedTables.addAll(tablesToLoad);
+        testExecutor.setExecuting(true);
+        try {
+            if (sqls != null && !sqls.isEmpty()) {
+                storage.executeSql(sqls);
             }
+            if (loadAllTables) {
+                storage.loadDataset(dataSet);
+            } else if (tablesToLoad != null) {
+                storage.loadDataset(new FilteredDataSet(tablesToLoad.toArray(new String[0]), dataSet));
+                if (!reloadAll) {
+                    changedTables.addAll(tablesToLoad);
+                }
+            }
+        } finally {
+            testExecutor.setExecuting(false);
         }
 
         if (reloadAll) {
