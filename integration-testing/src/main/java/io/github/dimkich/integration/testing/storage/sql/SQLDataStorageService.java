@@ -93,19 +93,25 @@ public class SQLDataStorageService implements TestDataStorage {
                 visitor.getSqls().addFirst(storage.getAllowTableSql(table));
             }
         }
-        if (!visitor.getTablesToLoad().isEmpty()) {
-            storage.loadDataset(new FilteredDataSet(visitor.getTablesToLoad().toArray(new String[0]), dataSet));
-        }
-        if (!visitor.getSqls().isEmpty()) {
-            storage.executeSql(visitor.getSqls());
-        }
-        if (!visitor.getHooks().isEmpty()) {
-            for (SqlStorageSetup.TableHook hook : visitor.getHooks()) {
-                this.reloadCache(hook);
+        testExecutor.setExecuting(true);
+        try {
+            if (!visitor.getTablesToLoad().isEmpty()) {
+                storage.loadDataset(new FilteredDataSet(visitor.getTablesToLoad().toArray(new String[0]), dataSet));
             }
-        }
-        if (!visitor.getNoHookSqls().isEmpty()) {
-            storage.executeSql(visitor.getNoHookSqls());
+            if (!visitor.getSqls().isEmpty()) {
+                storage.executeSql(visitor.getSqls());
+            }
+            if (!visitor.getHooks().isEmpty()) {
+                for (SqlStorageSetup.TableHook hook : visitor.getHooks()) {
+                    Object bean = beanFactory.getBean(hook.getBeanName());
+                    bean.getClass().getMethod(hook.getBeanMethod()).invoke(bean);
+                }
+            }
+            if (!visitor.getNoHookSqls().isEmpty()) {
+                storage.executeSql(visitor.getNoHookSqls());
+            }
+        } finally {
+            testExecutor.setExecuting(false);
         }
         visitor.clear();
         return true;
@@ -120,16 +126,5 @@ public class SQLDataStorageService implements TestDataStorage {
     @Override
     public void setDiff(Map<String, Object> diff) {
         testStorageStates.setDirtyTables(allowedTables);
-    }
-
-    private void reloadCache(SqlStorageSetup.TableHook reload) throws NoSuchMethodException,
-            InvocationTargetException, IllegalAccessException {
-        testExecutor.setExecuting(true);
-        try {
-            Object bean = beanFactory.getBean(reload.getBeanName());
-            bean.getClass().getMethod(reload.getBeanMethod()).invoke(bean);
-        } finally {
-            testExecutor.setExecuting(false);
-        }
     }
 }
