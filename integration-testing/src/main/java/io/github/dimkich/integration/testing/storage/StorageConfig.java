@@ -4,6 +4,7 @@ import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueOperationsConfig;
+import io.github.dimkich.integration.testing.storage.mapping.StorageMappingConfig;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageFactory;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import jakarta.annotation.PostConstruct;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
 @Configuration
 @RequiredArgsConstructor
 @ConditionalOnClass(JdbcUtils.class)
-@Import({TestDataStorages.class, ObjectsDifference.class, MockInvokeConfig.class})
+@Import({TestDataStorages.class, ObjectsDifference.class, MockInvokeConfig.class, StorageMappingConfig.class})
 @EnableConfigurationProperties(StorageProperties.class)
 public class StorageConfig {
     private final ConfigurableListableBeanFactory beanFactory;

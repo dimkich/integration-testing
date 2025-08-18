@@ -4,12 +4,14 @@ import io.github.dimkich.integration.testing.assertion.AssertionConfig;
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
 import io.github.dimkich.integration.testing.date.time.TestClockService;
 import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
+import io.github.dimkich.integration.testing.format.TestFormatConfig;
 import io.github.dimkich.integration.testing.initialization.InitializationConfig;
 import io.github.dimkich.integration.testing.openapi.OpenApiConfig;
 import io.github.dimkich.integration.testing.storage.StorageConfig;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletionConfig;
 import io.github.dimkich.integration.testing.web.WebConfig;
-import io.github.dimkich.integration.testing.xml.XmlConfig;
+import io.github.dimkich.integration.testing.format.xml.XmlConfig;
+import io.github.sugarcubes.cloner.CopyAction;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,13 +21,18 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnProperty(value = "integration.testing.enabled", havingValue = "true", matchIfMissing = true)
 @Import({DynamicTestBuilder.class, XmlConfig.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeService.class,
         InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class, TestClockService.class,
-        WebConfig.class})
+        WebConfig.class, TestFormatConfig.class})
 public class IntegrationTestConfig {
     @Bean
     TestSetupModule integrationTestModule() {
         return new TestSetupModule().addParentType(Test.class)
                 .addSubTypes(TestContainer.class, "container")
                 .addSubTypes(TestCase.class, "case")
-                .addSubTypes(TestPart.class, "part");
+                .addSubTypes(TestPart.class, "part")
+                .clonerFieldAction(Test.class, Test.Fields.inits, CopyAction.ORIGINAL)
+                .clonerFieldAction(Test.class, Test.Fields.parentTest, CopyAction.ORIGINAL)
+                .clonerFieldAction(Test.class, Test.Fields.response, CopyAction.NULL)
+                .clonerFieldAction(Test.class, Test.Fields.outboundMessages, CopyAction.NULL)
+                .clonerFieldAction(Test.class, Test.Fields.dataStorageDiff, CopyAction.NULL);
     }
 }

@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.web.jackson;
+package io.github.dimkich.integration.testing.format.common.mixin;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -13,28 +13,28 @@ import org.springframework.http.HttpMethod;
 
 import java.io.IOException;
 
-@JsonSerialize(using = HttpMethodMixIn.Serializer.class)
-@JsonDeserialize(using = HttpMethodMixIn.Deserializer.class)
-public class HttpMethodMixIn {
-    public static class Serializer extends PolymorphicStdSerializer<HttpMethod> {
+@JsonSerialize(using = ByteArrayMixIn.Serializer.class)
+@JsonDeserialize(using = ByteArrayMixIn.Deserializer.class)
+public class ByteArrayMixIn {
+    static class Serializer extends PolymorphicStdSerializer<byte[]> {
         public Serializer() {
-            super(new StdSerializer<>(HttpMethod.class) {
+            super(new StdSerializer<>(byte[].class) {
                 @Override
-                public void serialize(HttpMethod value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-                    gen.writeString(value.name());
+                public void serialize(byte[] value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+                    gen.writeBinary(provider.getConfig().getBase64Variant(), value, 0, value.length);
                 }
             });
         }
     }
 
-    public static class Deserializer extends StdScalarDeserializer<HttpMethod> {
+    static class Deserializer extends StdScalarDeserializer<byte[]> {
         public Deserializer() {
             super(HttpMethod.class);
         }
 
         @Override
-        public HttpMethod deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-            return HttpMethod.valueOf(p.getText());
+        public byte[] deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            return p.getBinaryValue();
         }
     }
 }
