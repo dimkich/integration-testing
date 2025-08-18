@@ -10,16 +10,20 @@ import io.github.dimkich.integration.testing.openapi.OpenApiConfig;
 import io.github.dimkich.integration.testing.storage.StorageConfig;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletionConfig;
 import io.github.dimkich.integration.testing.web.WebConfig;
-import io.github.dimkich.integration.testing.format.xml.XmlConfig;
+import io.github.sugarcubes.cloner.Cloner;
+import io.github.sugarcubes.cloner.Cloners;
 import io.github.sugarcubes.cloner.CopyAction;
+import io.github.sugarcubes.cloner.ReflectionClonerBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import java.util.List;
+
 @Configuration
 @ConditionalOnProperty(value = "integration.testing.enabled", havingValue = "true", matchIfMissing = true)
-@Import({DynamicTestBuilder.class, XmlConfig.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeService.class,
+@Import({DynamicTestBuilder.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeService.class,
         InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class, TestClockService.class,
         WebConfig.class, TestFormatConfig.class})
 public class IntegrationTestConfig {
@@ -34,5 +38,16 @@ public class IntegrationTestConfig {
                 .clonerFieldAction(Test.class, Test.Fields.response, CopyAction.NULL)
                 .clonerFieldAction(Test.class, Test.Fields.outboundMessages, CopyAction.NULL)
                 .clonerFieldAction(Test.class, Test.Fields.dataStorageDiff, CopyAction.NULL);
+    }
+
+    @Bean
+    Cloner sugarCubesCloner(List<TestSetupModule> modules) {
+        ReflectionClonerBuilder builder = Cloners.builder();
+        for (TestSetupModule module : modules) {
+            module.getFieldActions().forEach(builder::fieldAction);
+            module.getTypeActions().forEach(builder::typeAction);
+            module.getPredicateTypeActions().forEach(builder::typeAction);
+        }
+        return builder.build();
     }
 }

@@ -83,6 +83,6 @@ public class XmlConfig {
         SerializerFactoryConfig config = ((BasicSerializerFactory) xmlMapper.getSerializerFactory()).getFactoryConfig();
         xmlMapper.setSerializerFactory(new FixedBeanSerializerFactory(config));
 
-        return new XmlTestMapper(xmlMapper, objectToLocationStorage, modules);
+        return new XmlTestMapper(xmlMapper, objectToLocationStorage);
     }
 }

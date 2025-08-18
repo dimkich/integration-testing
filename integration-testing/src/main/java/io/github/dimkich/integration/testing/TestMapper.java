@@ -15,8 +15,6 @@ public interface TestMapper {
 
     String getSingleTestAsString(Test test) throws IOException;
 
-    <T> T deepClone(T object);
-
     String getCurrentPathAndLocation(Test test) throws IOException;
 
     Object unwrap();

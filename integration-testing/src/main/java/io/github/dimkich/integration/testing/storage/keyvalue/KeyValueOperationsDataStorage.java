@@ -3,7 +3,6 @@ package io.github.dimkich.integration.testing.storage.keyvalue;
 import eu.ciechanowiec.sneakyfun.SneakyFunction;
 import io.github.dimkich.integration.testing.util.TestUtils;
 import io.github.sugarcubes.cloner.Cloner;
-import io.github.sugarcubes.cloner.Cloners;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.keyvalue.core.KeyValueOperations;
@@ -23,8 +22,7 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
     @Getter
     private final String name;
     private final KeyValueOperations keyValueOperations;
-
-    private Cloner cloner;
+    private final Cloner cloner;
 
     @Override
     public Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) {
@@ -36,7 +34,7 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
                     Iterable<?> iterable = keyValueOperations.getKeyValueAdapter().getAllOf(pe.getKeySpace());
                     Set<String> excluded = excludedFields.get(pe.getKeySpace());
                     return StreamSupport.stream(iterable.spliterator(), false)
-                            .map(o -> clone ? clone(o) : o)
+                            .map(o -> clone ? cloner.clone(o) : o)
                             .map(SneakyFunction.sneaky(o -> {
                                 if (excluded != null) {
                                     for (String field : excluded) {
@@ -93,12 +91,5 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
         }
         throw new RuntimeException(String.format("Property '%s' in keyspace '%s' is inaccessible", fieldName,
                 pe.getKeySpace()));
-    }
-
-    private Object clone(Object o) {
-        if (cloner == null) {
-            cloner = Cloners.builder().build();
-        }
-        return cloner.clone(o);
     }
 }

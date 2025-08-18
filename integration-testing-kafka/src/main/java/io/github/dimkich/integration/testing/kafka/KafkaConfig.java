@@ -8,7 +8,6 @@ import io.github.dimkich.integration.testing.message.MessageDto;
 import io.github.dimkich.integration.testing.message.TestMessagePoller;
 import io.github.dimkich.integration.testing.message.TestMessageSender;
 import io.github.sugarcubes.cloner.Cloner;
-import io.github.sugarcubes.cloner.Cloners;
 import lombok.RequiredArgsConstructor;
 import org.mockito.Answers;
 import org.mockito.ArgumentMatchers;
@@ -54,7 +53,7 @@ public class KafkaConfig {
         @Qualifier("kafkaTestMessageSender")
         private final TestMessageSender sender;
 
-        private final Cloner cloner = Cloners.builder().build();
+        private final Cloner cloner;
 
         @Bean
         KafkaTemplate<?, ?> kafkaTemplate() {

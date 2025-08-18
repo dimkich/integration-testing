@@ -7,6 +7,7 @@ import io.github.dimkich.integration.testing.message.TestMessagePoller;
 import io.github.dimkich.integration.testing.message.TestMessageSender;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletionList;
+import io.github.sugarcubes.cloner.Cloner;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -30,6 +31,7 @@ public class TestExecutor {
     private final List<AfterTest> afterTests;
     private final List<TestMessageSender> testMessageSenders;
     private final TestMapper testMapper;
+    private final Cloner cloner;
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private InitializationService initializationService;
     @Setter(onMethod_ = {@Autowired, @Lazy})
@@ -46,7 +48,7 @@ public class TestExecutor {
     public void before(Test expectedTest) throws Exception {
         this.expectedTest = expectedTest;
         if (assertion.makeTestDeepClone()) {
-            test = testMapper.deepClone(expectedTest);
+            test = cloner.clone(expectedTest);
         } else {
             test = expectedTest;
             test.setResponse(null);
@@ -76,7 +78,7 @@ public class TestExecutor {
                         .orElseThrow(() -> new RuntimeException("No service found for message " + message))
                         .sendInboundMessage(message);
             } else {
-                test.executeMethod(beanFactory, (m, r) -> testMapper.deepClone(r));
+                test.executeMethod(beanFactory, (m, r) -> cloner.clone(r));
             }
         } finally {
             try {
