@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.impl.TypeDeserializerBase;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import io.github.dimkich.integration.testing.format.common.TestTypeResolverBuilder;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Iterator;
@@ -18,7 +19,7 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 public class PolymorphicUnwrappedDeserializerModifier extends BeanDeserializerModifier {
-    private final PolymorphicUnwrappedResolverBuilder typeResolverBuilder;
+    private final TestTypeResolverBuilder typeResolverBuilder;
 
     @Override
     public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deser) {

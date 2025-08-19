@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.dimkich.integration.testing.TestSetupModule;
-import io.github.dimkich.integration.testing.format.common.mixin.*;
+import io.github.dimkich.integration.testing.format.common.mixin.ByteArrayMixIn;
+import io.github.dimkich.integration.testing.format.common.mixin.SecureRandomMixIn;
+import io.github.dimkich.integration.testing.format.common.mixin.SpringResourceMixIn;
+import io.github.dimkich.integration.testing.format.common.mixin.ThrowableMixIn;
 import io.github.dimkich.integration.testing.format.common.serializer.BigDecimalSerializer;
 import io.github.dimkich.integration.testing.openapi.FieldErrorMixIn;
 import io.github.dimkich.integration.testing.openapi.SpringErrorDto;
@@ -18,17 +21,31 @@ import org.springframework.validation.FieldError;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 @Configuration
 @ConditionalOnClass(ObjectMapper.class)
 public class CommonFormatConfig {
     @Bean
-    TestSetupModule commonFormatTestSetupModule() {
+    TestSetupModule commonFormatTestSetupModule() throws ClassNotFoundException {
         return new TestSetupModule()
+                .addParentType(Object.class).addParentType(Throwable.class)
                 .addSubTypes(byte[].class, "byte[]")
                 .addAlias(ByteArrayResource.class, "resource")
-                .addSubTypes(SecureRandom.class, SpringErrorDto.class, Resource.class)
+                .addAlias(Class.forName("java.util.ImmutableCollections$List12"), "arrayList")
+                .addAlias(Class.forName("java.util.ImmutableCollections$ListN"), "arrayList")
+                .addAlias(Class.forName("java.util.Collections$SingletonList"), "arrayList")
+                .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
+                        Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
+                        LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,
+                        LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class,
+                        SecureRandom.class, SpringErrorDto.class, Resource.class)
                 .clonerTypeAction(Throwable.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)

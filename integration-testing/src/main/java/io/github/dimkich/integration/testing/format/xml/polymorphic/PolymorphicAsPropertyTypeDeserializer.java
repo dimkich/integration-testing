@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
+import io.github.dimkich.integration.testing.format.common.TestTypeResolverBuilder;
 import io.github.dimkich.integration.testing.format.xml.token.XmlTokenBuffer;
 
 import javax.xml.namespace.QName;
@@ -19,9 +20,9 @@ import javax.xml.stream.events.XMLEvent;
 import java.io.IOException;
 
 public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeserializer {
-    private final PolymorphicUnwrappedResolverBuilder builder;
+    private final TestTypeResolverBuilder builder;
 
-    public PolymorphicAsPropertyTypeDeserializer(PolymorphicUnwrappedResolverBuilder builder,
+    public PolymorphicAsPropertyTypeDeserializer(TestTypeResolverBuilder builder,
                                                  AsPropertyTypeDeserializer src, BeanProperty property) {
         super(src, property);
         this.builder = builder;

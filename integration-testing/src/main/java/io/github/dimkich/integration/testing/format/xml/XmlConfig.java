@@ -11,11 +11,11 @@ import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter;
 import io.github.dimkich.integration.testing.TestSetupModule;
+import io.github.dimkich.integration.testing.format.common.CommonFormatConfig;
 import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributesModule;
 import io.github.dimkich.integration.testing.format.xml.config.jackson.Lf4SpacesIndenter;
-import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicUnwrappedModule;
-import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicUnwrappedResolverBuilder;
 import io.github.dimkich.integration.testing.format.xml.map.MapModule;
+import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicUnwrappedModule;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +30,11 @@ import java.util.List;
 @Configuration
 @RequiredArgsConstructor
 @ConditionalOnClass(XmlMapper.class)
-@Import({ObjectToLocationStorage.class, PolymorphicUnwrappedResolverBuilder.class})
+@Import({ObjectToLocationStorage.class, CommonFormatConfig.class, XmlTestTypeResolverBuilder.class})
 public class XmlConfig {
     private final ObjectToLocationStorage objectToLocationStorage;
     @Setter(onMethod = @__({@Autowired, @Lazy}))
-    private PolymorphicUnwrappedResolverBuilder resolverBuilder;
+    private XmlTestTypeResolverBuilder resolverBuilder;
 
     @Bean
     TestSetupModule xmlModule() {

@@ -15,13 +15,14 @@ import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import io.github.dimkich.integration.testing.format.common.TestTypeResolverBuilder;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
 @RequiredArgsConstructor
 public class PolymorphicUnwrappedSerializerModifier extends BeanSerializerModifier {
-    private final PolymorphicUnwrappedResolverBuilder typeResolverBuilder;
+    private final TestTypeResolverBuilder typeResolverBuilder;
 
     @Override
     public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
