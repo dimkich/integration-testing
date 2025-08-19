@@ -1,4 +1,6 @@
-package io.github.dimkich.integration.testing;
+package io.github.dimkich.integration.testing.format;
+
+import io.github.dimkich.integration.testing.Test;
 
 import java.io.IOException;
 

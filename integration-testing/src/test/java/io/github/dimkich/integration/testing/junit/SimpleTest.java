@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.junit;
 
 import io.github.dimkich.integration.testing.*;
+import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DynamicNode;
@@ -40,7 +41,7 @@ public class SimpleTest {
                     return null;
                 })
                 .when(assertion)
-                .afterTests(any(TestMapper.class), any(Test.class));
+                .afterTests(any(CompositeTestMapper.class), any(Test.class));
         instance = this;
         return dynamicTestBuilder.build("junit/simple.xml");
     }

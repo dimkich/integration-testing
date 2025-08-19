@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.execution;
 
 import io.github.dimkich.integration.testing.*;
+import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.message.MessageDto;
 import io.github.dimkich.integration.testing.message.TestMessagePoller;
@@ -30,7 +31,7 @@ public class TestExecutor {
     private final List<TestConverter> testConverters;
     private final List<AfterTest> afterTests;
     private final List<TestMessageSender> testMessageSenders;
-    private final TestMapper testMapper;
+    private final CompositeTestMapper testMapper;
     private final Cloner cloner;
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private InitializationService initializationService;

@@ -5,6 +5,7 @@ import io.github.dimkich.integration.testing.date.time.JavaTimeAdvice;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
+import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DynamicContainer;
@@ -19,7 +20,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class DynamicTestBuilder {
     private final JunitExecutable junitExecutable;
-    private final TestMapper testMapper;
+    private final CompositeTestMapper testMapper;
     private final TestExecutor testExecutor;
     private final DateTimeService dateTimeService;
 

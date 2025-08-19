@@ -2,9 +2,9 @@ package io.github.dimkich.integration.testing.execution.junit;
 
 import io.github.dimkich.integration.testing.Assertion;
 import io.github.dimkich.integration.testing.Test;
-import io.github.dimkich.integration.testing.TestMapper;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
+import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.junit.jupiter.api.function.Executable;
@@ -16,7 +16,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class JunitExecutable implements Executable {
     private final TestExecutor testExecutor;
-    private final TestMapper testMapper;
+    private final CompositeTestMapper testMapper;
     private final Assertion assertion;
     private ExecutionListener executionListener;
     private Test rootTest;

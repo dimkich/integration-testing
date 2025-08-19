@@ -37,19 +37,8 @@ public class XmlConfig {
     private XmlTestTypeResolverBuilder resolverBuilder;
 
     @Bean
-    TestSetupModule xmlModule() {
-        SimpleModule jacksonModule = new SimpleModule();
-        jacksonModule.setDeserializerModifier(new StoreLocationBeanDeserializerModifier(objectToLocationStorage));
-
-        return new TestSetupModule()
-                .addJacksonModule(jacksonModule)
-                .addJacksonModule(new BeanAsAttributesModule(resolverBuilder))
-                .addJacksonModule(new PolymorphicUnwrappedModule(resolverBuilder))
-                .addJacksonModule(new MapModule());
-    }
-
-    @Bean
-    XmlTestMapper testMapper(List<TestSetupModule> modules) {
+    @Lazy
+    XmlTestMapper xmlTestMapper(List<TestSetupModule> modules) {
         XmlMapper.Builder builder = XmlMapper.builder();
         builder.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         builder.configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
@@ -77,6 +66,11 @@ public class XmlConfig {
             }
         }
         builder.filterProvider(filterProvider);
+
+        builder.addModules(new SimpleModule()
+                        .setDeserializerModifier(new StoreLocationBeanDeserializerModifier(objectToLocationStorage)),
+                new BeanAsAttributesModule(resolverBuilder), new PolymorphicUnwrappedModule(resolverBuilder),
+                new MapModule());
 
         XmlMapper xmlMapper = builder.build();
 

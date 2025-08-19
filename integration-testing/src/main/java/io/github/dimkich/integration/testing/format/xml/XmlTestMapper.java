@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.format.xml;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import io.github.dimkich.integration.testing.Test;
 import io.github.dimkich.integration.testing.TestContainer;
-import io.github.dimkich.integration.testing.TestMapper;
+import io.github.dimkich.integration.testing.format.TestMapper;
 import io.github.dimkich.integration.testing.util.TestUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.assertion;
 
 import io.github.dimkich.integration.testing.*;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
+import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -29,7 +30,7 @@ public class FileAssertion implements Assertion {
     private int testIndex = 0;
 
     @Override
-    public void assertTestsEquals(TestMapper mapper, Test expected, Test actual) throws Exception {
+    public void assertTestsEquals(CompositeTestMapper mapper, Test expected, Test actual) throws Exception {
         initialize(mapper.getFilePath());
         String expectedStr = mapper.getSingleTestAsString(expected);
         String actualStr = mapper.getSingleTestAsString(actual);
@@ -44,7 +45,7 @@ public class FileAssertion implements Assertion {
     }
 
     @Override
-    public void afterTests(TestMapper mapper, Test rootTest) throws Exception {
+    public void afterTests(CompositeTestMapper mapper, Test rootTest) throws Exception {
         replace(rootTest);
         write(mapper.getRootTestAsString(rootTest), "template.xml");
     }

@@ -6,6 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import({CommonFormatConfig.class, XmlConfig.class})
+@Import({CommonFormatConfig.class, XmlConfig.class, CompositeTestMapper.class})
 public class TestFormatConfig {
 }
