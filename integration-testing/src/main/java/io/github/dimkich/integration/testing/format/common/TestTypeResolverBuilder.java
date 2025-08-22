@@ -13,10 +13,12 @@ import io.github.dimkich.integration.testing.execution.MockInvoke;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Component("testTypeResolverBuilder")
 @RequiredArgsConstructor
 public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
     private final List<TestSetupModule> modules;
@@ -57,12 +59,20 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
 
     @Override
     public TypeSerializer buildTypeSerializer(SerializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
-        return super.buildTypeSerializer(config, baseType, parentToSubTypeMap.get(baseType.getRawClass()));
+        Set<NamedType> namedTypes = parentToSubTypeMap.get(baseType.getRawClass());
+        if (namedTypes == null) {
+            return null;
+        }
+        return super.buildTypeSerializer(config, baseType, namedTypes);
     }
 
     @Override
     public TypeDeserializer buildTypeDeserializer(DeserializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
-        return super.buildTypeDeserializer(config, baseType, parentToSubTypeMap.get(baseType.getRawClass()));
+        Set<NamedType> namedTypes = parentToSubTypeMap.get(baseType.getRawClass());
+        if (namedTypes == null) {
+            return null;
+        }
+        return super.buildTypeDeserializer(config, baseType, namedTypes);
     }
 
     private void addParentType(Class<?> parent) {

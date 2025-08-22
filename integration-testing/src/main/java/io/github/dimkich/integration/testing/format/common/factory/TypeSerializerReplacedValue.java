@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.format.xml.map;
+package io.github.dimkich.integration.testing.format.common.factory;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerator;

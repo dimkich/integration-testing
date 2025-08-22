@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.format;
 
 import io.github.dimkich.integration.testing.Test;
+import io.github.dimkich.integration.testing.format.json.JsonTestMapper;
 import io.github.dimkich.integration.testing.format.xml.XmlTestMapper;
 import lombok.RequiredArgsConstructor;
 
@@ -14,6 +15,9 @@ public class CompositeTestMapper {
 
     public void setPath(String path) {
         Class<?> cls = XmlTestMapper.class;
+        if (path.endsWith("json")) {
+            cls = JsonTestMapper.class;
+        }
         for (TestMapper mapper : mappers) {
             if (mapper.getClass().equals(cls)) {
                 currentMapper = mapper;

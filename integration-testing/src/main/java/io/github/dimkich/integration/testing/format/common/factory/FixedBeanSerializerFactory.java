@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.format.xml;
+package io.github.dimkich.integration.testing.format.common.factory;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.cfg.SerializerFactoryConfig;
 import com.fasterxml.jackson.databind.ser.BeanSerializerFactory;
 import com.fasterxml.jackson.databind.ser.SerializerFactory;
 import com.fasterxml.jackson.databind.ser.std.StdDelegatingSerializer;
-import io.github.dimkich.integration.testing.format.xml.map.TypedStdDelegatingSerializer;
 import lombok.SneakyThrows;
 
 public class FixedBeanSerializerFactory extends BeanSerializerFactory {

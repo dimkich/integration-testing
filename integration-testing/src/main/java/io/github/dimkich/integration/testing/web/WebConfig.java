@@ -47,7 +47,6 @@ public class WebConfig {
         jacksonModule.setMixInAnnotation(HttpClientErrorException.class, HttpClientErrorExceptionMixIn.class);
         jacksonModule.setMixInAnnotation(HttpMethod.class, HttpMethodMixIn.class);
         jacksonModule.setMixInAnnotation(HttpEntity.class, HttpEntityMixIn.class);
-        jacksonModule.addDeserializer(LinkedMultiValueMapStringString.class, new MultiValueMapDeserializer());
         return new TestSetupModule()
                 .setHandlerInstantiator(new SpringHandlerInstantiator(beanFactory))
                 .addJacksonModule(jacksonModule)

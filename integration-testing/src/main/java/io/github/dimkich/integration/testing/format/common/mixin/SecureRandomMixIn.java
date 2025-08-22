@@ -7,9 +7,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicStdSerializer;
-import org.springframework.http.HttpMethod;
+import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -18,13 +16,14 @@ import java.security.SecureRandom;
 @JsonDeserialize(using = SecureRandomMixIn.Deserializer.class)
 public class SecureRandomMixIn {
 
-    static class Serializer extends PolymorphicStdSerializer<SecureRandom> {
+    static class Serializer extends StdScalarSerializer<SecureRandom> {
         public Serializer() {
-            super(new StdSerializer<>(SecureRandom.class) {
-                @Override
-                public void serialize(SecureRandom value, JsonGenerator gen, SerializerProvider provider) {
-                }
-            });
+            super(SecureRandom.class);
+        }
+
+        @Override
+        public void serialize(SecureRandom value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+            gen.writeString("");
         }
     }
 
@@ -32,7 +31,7 @@ public class SecureRandomMixIn {
         private static SecureRandom secureRandom;
 
         public Deserializer() {
-            super(HttpMethod.class);
+            super(SecureRandom.class);
         }
 
         @Override

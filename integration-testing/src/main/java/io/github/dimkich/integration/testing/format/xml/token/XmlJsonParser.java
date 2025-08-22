@@ -3,6 +3,8 @@ package io.github.dimkich.integration.testing.format.xml.token;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.StreamReadCapability;
+import com.fasterxml.jackson.core.util.JacksonFeatureSet;
 import com.fasterxml.jackson.core.util.JsonParserDelegate;
 import lombok.SneakyThrows;
 
@@ -12,6 +14,12 @@ import java.util.Deque;
 import java.util.Set;
 
 public class XmlJsonParser extends JsonParserDelegate {
+    protected final static JacksonFeatureSet<StreamReadCapability> XML_READ_CAPABILITIES =
+            DEFAULT_READ_CAPABILITIES
+                    .with(StreamReadCapability.DUPLICATE_PROPERTIES)
+                    .with(StreamReadCapability.SCALARS_AS_OBJECTS)
+                    .with(StreamReadCapability.UNTYPED_SCALARS);
+
     private JsonToken currentToken;
     private final Deque<JsonToken> nextToken = new ArrayDeque<>();
 
@@ -95,5 +103,10 @@ public class XmlJsonParser extends JsonParserDelegate {
     @Override
     public JsonToken getCurrentToken() {
         return currentToken;
+    }
+
+    @Override
+    public JacksonFeatureSet<StreamReadCapability> getReadCapabilities() {
+        return XML_READ_CAPABILITIES;
     }
 }

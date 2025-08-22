@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.dimkich.integration.testing.TestSetupModule;
-import io.github.dimkich.integration.testing.format.common.mixin.ByteArrayMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.SecureRandomMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.SpringResourceMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.ThrowableMixIn;
@@ -15,6 +14,7 @@ import io.github.sugarcubes.cloner.CopyAction;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.validation.FieldError;
@@ -31,6 +31,7 @@ import java.util.*;
 
 @Configuration
 @ConditionalOnClass(ObjectMapper.class)
+@Import(ObjectMapperConfigurer.class)
 public class CommonFormatConfig {
     @Bean
     TestSetupModule commonFormatTestSetupModule() throws ClassNotFoundException {
@@ -56,8 +57,7 @@ public class CommonFormatConfig {
                         .setMixInAnnotation(FieldError.class, FieldErrorMixIn.class)
                         .setMixInAnnotation(FieldError.class, FieldErrorMixIn.class)
                         .setMixInAnnotation(SecureRandom.class, SecureRandomMixIn.class)
-                        .setMixInAnnotation(Resource.class, SpringResourceMixIn.class)
-                        .setMixInAnnotation(byte[].class, ByteArrayMixIn.class))
+                        .setMixInAnnotation(Resource.class, SpringResourceMixIn.class))
                 .addJacksonModule(new JavaTimeModule());
     }
 }

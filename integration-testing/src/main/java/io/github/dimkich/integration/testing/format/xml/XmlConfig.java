@@ -2,16 +2,14 @@ package io.github.dimkich.integration.testing.format.xml;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.cfg.SerializerFactoryConfig;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.BasicSerializerFactory;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter;
-import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.common.CommonFormatConfig;
+import io.github.dimkich.integration.testing.format.common.ObjectMapperConfigurer;
+import io.github.dimkich.integration.testing.format.common.scalar.ScalarTypeModule;
 import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributesModule;
 import io.github.dimkich.integration.testing.format.xml.config.jackson.Lf4SpacesIndenter;
 import io.github.dimkich.integration.testing.format.xml.map.MapModule;
@@ -25,7 +23,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Lazy;
 
-import java.util.List;
+import java.util.Set;
 
 @Configuration
 @RequiredArgsConstructor
@@ -38,7 +36,7 @@ public class XmlConfig {
 
     @Bean
     @Lazy
-    XmlTestMapper xmlTestMapper(List<TestSetupModule> modules) {
+    XmlTestMapper xmlTestMapper(ObjectMapperConfigurer configurer) {
         XmlMapper.Builder builder = XmlMapper.builder();
         builder.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         builder.configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
@@ -57,25 +55,16 @@ public class XmlConfig {
 
         builder.setDefaultTyping(resolverBuilder);
 
-        SimpleFilterProvider filterProvider = new SimpleFilterProvider();
-        for (TestSetupModule module : modules) {
-            module.getJacksonModules().forEach(builder::addModules);
-            module.getJacksonFilters().forEach(f -> filterProvider.addFilter(f.getKey(), f.getValue()));
-            if (module.getHandlerInstantiator() != null) {
-                builder.handlerInstantiator(module.getHandlerInstantiator());
-            }
-        }
-        builder.filterProvider(filterProvider);
+        configurer.configure(builder);
 
         builder.addModules(new SimpleModule()
                         .setDeserializerModifier(new StoreLocationBeanDeserializerModifier(objectToLocationStorage)),
                 new BeanAsAttributesModule(resolverBuilder), new PolymorphicUnwrappedModule(resolverBuilder),
-                new MapModule());
+                new MapModule(), new ScalarTypeModule(Set.of(String.class, Boolean.class, Integer.class, Double.class)));
 
         XmlMapper xmlMapper = builder.build();
 
-        SerializerFactoryConfig config = ((BasicSerializerFactory) xmlMapper.getSerializerFactory()).getFactoryConfig();
-        xmlMapper.setSerializerFactory(new FixedBeanSerializerFactory(config));
+        configurer.configure(xmlMapper);
 
         return new XmlTestMapper(xmlMapper, objectToLocationStorage);
     }

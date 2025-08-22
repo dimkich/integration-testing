@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.http.HttpHeaders;
@@ -42,7 +43,15 @@ public class HttpClientErrorExceptionMixIn {
             if (headersNode != null) {
                 for (Iterator<String> iterator = headersNode.fieldNames(); iterator.hasNext(); ) {
                     String key = iterator.next();
-                    headers.add(key, headersNode.get(key).asText());
+                    JsonNode value = headersNode.get(key);
+                    if (value.isArray()) {
+                        ArrayNode arrayNode = (ArrayNode) value;
+                        for (int i = 0; i < arrayNode.size(); i++) {
+                            headers.add(key, arrayNode.get(i).asText());
+                        }
+                    } else {
+                        headers.add(key, value.asText());
+                    }
                 }
             }
             return HttpClientErrorException.create(

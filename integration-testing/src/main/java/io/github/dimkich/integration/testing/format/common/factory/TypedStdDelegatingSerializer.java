@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.format.xml.map;
+package io.github.dimkich.integration.testing.format.common.factory;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JavaType;
@@ -27,6 +27,7 @@ public class TypedStdDelegatingSerializer extends StdDelegatingSerializer {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public TypedStdDelegatingSerializer(StdDelegatingSerializer serializer) throws IllegalAccessException {
         super((Converter<Object, ?>) converterField.get(serializer),
                 (JavaType) delegateTypeField.get(serializer), serializer.getDelegatee());

@@ -7,8 +7,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicStdSerializer;
+import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 import org.springframework.http.HttpMethod;
 
 import java.io.IOException;
@@ -16,14 +15,14 @@ import java.io.IOException;
 @JsonSerialize(using = HttpMethodMixIn.Serializer.class)
 @JsonDeserialize(using = HttpMethodMixIn.Deserializer.class)
 public class HttpMethodMixIn {
-    public static class Serializer extends PolymorphicStdSerializer<HttpMethod> {
+    public static class Serializer extends StdScalarSerializer<HttpMethod> {
         public Serializer() {
-            super(new StdSerializer<>(HttpMethod.class) {
-                @Override
-                public void serialize(HttpMethod value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-                    gen.writeString(value.name());
-                }
-            });
+            super(HttpMethod.class);
+        }
+
+        @Override
+        public void serialize(HttpMethod value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+            gen.writeString(value.name());
         }
     }
 

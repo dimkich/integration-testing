@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import com.fasterxml.jackson.databind.ser.ContainerSerializer;
-import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.util.NameTransformer;
@@ -46,15 +43,6 @@ public class PolymorphicUnwrappedSerializerModifier extends BeanSerializerModifi
             }
         }
         return beanProperties;
-    }
-
-    @Override
-    public JsonSerializer<?> modifySerializer(SerializationConfig config, BeanDescription beanDesc, JsonSerializer<?> serializer) {
-        if (serializer instanceof StdSerializer<?> stdSerializer && !(serializer instanceof BeanSerializerBase)
-                && !(serializer instanceof ContainerSerializer<?>)) {
-            return new PolymorphicStdSerializer<>((StdSerializer<Object>) stdSerializer);
-        }
-        return super.modifySerializer(config, beanDesc, serializer);
     }
 
     @Override

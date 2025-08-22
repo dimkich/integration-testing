@@ -9,9 +9,16 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import io.github.dimkich.integration.testing.TestSetupModule;
+import io.github.dimkich.integration.testing.format.FormatTestUtils;
+import io.github.dimkich.integration.testing.format.dto.Value;
 import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributes;
 import io.github.dimkich.integration.testing.format.xml.map.JsonMapKey;
 import io.github.dimkich.integration.testing.format.xml.token.XmlTokenBuffer;
+import io.github.dimkich.integration.testing.storage.mapping.Container;
+import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
+import io.github.dimkich.integration.testing.web.WebConfig;
+import io.github.dimkich.integration.testing.web.jackson.LinkedMultiValueMapStringObject;
+import io.github.dimkich.integration.testing.web.jackson.LinkedMultiValueMapStringString;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -22,17 +29,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.github.dimkich.integration.testing.format.FormatTestUtils.compConfig;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = {XmlConfig.class, XmlTestMapperTest.Config.class})
+@SpringBootTest(classes = {XmlConfig.class, WebConfig.class, XmlTestMapperTest.Config.class})
 class XmlTestMapperTest {
+
     private final XmlMapper xmlMapper;
 
     @Autowired
@@ -47,6 +65,46 @@ class XmlTestMapperTest {
         return new Object[][]{
                 {1, "<Integer>1</Integer>"},
                 {"str", "<String>str</String>"},
+                {new Value("str"), "<Value><value type=\"string\">str</value></Value>"},
+                {new Value((byte) 12), "<Value><value type=\"byte\">12</value></Value>"},
+                {new Value((short) 8), "<Value><value type=\"short\">8</value></Value>"},
+                {new Value(12), "<Value><value type=\"integer\">12</value></Value>"},
+                {new Value((long) 45), "<Value><value type=\"long\">45</value></Value>"},
+                {new Value(2.4), "<Value><value type=\"double\">2.4</value></Value>"},
+                {new Value((float) 1.22), "<Value><value type=\"float\">1.22</value></Value>"},
+                {new Value((float) 1.22), "<Value><value type=\"float\">1.22</value></Value>"},
+                {new Value(true), "<Value><value type=\"boolean\">true</value></Value>"},
+                {new Value(false), "<Value><value type=\"boolean\">false</value></Value>"},
+                {new Value('2'), "<Value><value type=\"character\">2</value></Value>"},
+                {new Value(new BigDecimal("1.230000")),
+                        "<Value><value type=\"bigDecimal\">1.23</value></Value>"},
+                {new Value(new byte[]{1, 2, 3}), "<Value><value type=\"byte[]\">AQID</value></Value>"},
+                {new Value(new ByteArrayResource(new byte[]{3, 2, 1})),
+                        "<Value><value type=\"resource\">AwIB</value></Value>"},
+                {new Value(new SecureRandom()), "<Value><value type=\"secureRandom\"></value></Value>"},
+                {new Value(HttpMethod.GET), "<Value><value type=\"httpMethod\">GET</value></Value>"},
+                {new Value(new LinkedMultiValueMapStringString(Map.of("k1", List.of("v1")))),
+                        "<Value><value type=\"linkedMultiValueMapStringString\"><k1>v1</k1></value></Value>"},
+                {new Value(new LinkedMultiValueMapStringObject(Map.of("k1", List.of(1.2f)))),
+                        "<Value><value type=\"linkedMultiValueMapStringObject\"><k1 type=\"float\">1.2</k1></value></Value>"},
+                {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"),
+                        "<EntryStringKeyObjectValue key=\"k\" change=\"added\" utype=\"string\">str</EntryStringKeyObjectValue>"},
+                {HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
+                        FormatTestUtils.httpHeaders("Expires", List.of("0"), "Custom", List.of("c", "a")),
+                        new byte[]{}, null),
+                        "<BadRequest><statusCode>BAD_REQUEST</statusCode><rawStatusCode>400</rawStatusCode>" +
+                                "<responseHeaders><Expires>0</Expires><Custom>c</Custom><Custom>a</Custom></responseHeaders>" +
+                                "<message>400 Bad Request</message></BadRequest>"},
+                {new RequestEntity<>("str", FormatTestUtils.httpHeaders("Expires", List.of("0"), "Custom", List.of("c", "a")),
+                        HttpMethod.POST, URI.create("/api")), "<RequestEntity><url>/api</url><method>POST</method>" +
+                        "<headers><Expires>0</Expires><Custom>c</Custom><Custom>a</Custom></headers>" +
+                        "<body type=\"string\">str</body></RequestEntity>"},
+                {new LinkedMultiValueMapStringString(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
+                        "<LinkedMultiValueMapStringString><k1>v1</k1><k2>v2</k2></LinkedMultiValueMapStringString>"},
+                {new LinkedMultiValueMapStringObject(Map.of("k", List.of(1L, true))),
+                        "<LinkedMultiValueMapStringObject><k type=\"long\">1</k><k type=\"boolean\">true</k></LinkedMultiValueMapStringObject>"},
+                {new LinkedMultiValueMapStringObject(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
+                        "<LinkedMultiValueMapStringObject><k1 type=\"string\">v1</k1><k2 type=\"string\">v2</k2></LinkedMultiValueMapStringObject>"},
                 {new Typed(new ArrayList<>(List.of(new TypeTest(1, null, "s"),
                         new TypeTest(2, null, "t"))),
                         map(new LinkedHashMap<>(), "k1", new TypeTest(3, null, "d"))),
@@ -77,7 +135,7 @@ class XmlTestMapperTest {
     @ParameterizedTest
     @MethodSource("data")
     void deserialize(Object o, String xml) throws JsonProcessingException {
-        assertEquals(o, xmlMapper.readValue(xml, o.getClass()));
+        assertThat(o).usingRecursiveComparison(compConfig).isEqualTo(xmlMapper.readValue(xml, o.getClass()));
     }
 
     @ParameterizedTest
@@ -95,7 +153,7 @@ class XmlTestMapperTest {
         buffer.copyCurrentStructure(p);
         p = buffer.asParser();
         p.nextToken();
-        assertEquals(o, p.readValueAs(o.getClass()));
+        assertThat(o).usingRecursiveComparison(compConfig).isEqualTo(p.readValueAs(o.getClass()));
     }
 
     @Configuration

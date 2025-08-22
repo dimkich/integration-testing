@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.type.SimpleType;
 import com.fasterxml.jackson.databind.type.TypeBindings;
+import io.github.dimkich.integration.testing.format.common.factory.TypedStdDelegatingSerializer;
 
 import java.util.List;
 

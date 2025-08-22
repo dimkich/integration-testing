@@ -22,8 +22,8 @@ public class XmlTestTypeResolverBuilder extends TestTypeResolverBuilder {
 
     @Override
     public TypeSerializer buildTypeSerializer(SerializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
-        if (parentToSubTypeMap.containsKey(baseType.getRawClass())) {
-            TypeSerializer typeSerializer = super.buildTypeSerializer(config, baseType, parentToSubTypeMap.get(baseType.getRawClass()));
+        TypeSerializer typeSerializer = super.buildTypeSerializer(config, baseType, parentToSubTypeMap.get(baseType.getRawClass()));
+        if (typeSerializer != null) {
             return new PolymorphicAsPropertyTypeSerializer(typeSerializer.getTypeIdResolver(), null,
                     typeSerializer.getPropertyName());
         }
@@ -32,8 +32,8 @@ public class XmlTestTypeResolverBuilder extends TestTypeResolverBuilder {
 
     @Override
     public TypeDeserializer buildTypeDeserializer(DeserializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
-        if (parentToSubTypeMap.containsKey(baseType.getRawClass())) {
-            TypeDeserializer typeDeserializer = super.buildTypeDeserializer(config, baseType, parentToSubTypeMap.get(baseType.getRawClass()));
+        TypeDeserializer typeDeserializer = super.buildTypeDeserializer(config, baseType, parentToSubTypeMap.get(baseType.getRawClass()));
+        if (typeDeserializer != null) {
             return new PolymorphicAsPropertyTypeDeserializer(this, (AsPropertyTypeDeserializer) typeDeserializer, null);
         }
         return null;
