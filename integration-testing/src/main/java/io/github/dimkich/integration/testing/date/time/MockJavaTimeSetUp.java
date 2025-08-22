@@ -5,6 +5,7 @@ import eu.ciechanowiec.sneakyfun.SneakySupplier;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.asm.MemberSubstitution;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
@@ -14,14 +15,42 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.time.Clock;
 import java.util.*;
+import java.util.function.Function;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class MockJavaTimeSetUp {
     private static boolean isInitialized = false;
+    /**
+     * Fix a bug in the JDK which forgets reconstruction of parameter names in some builds.
+     * <a href="https://github.com/raphw/byte-buddy/issues/1562">method lost parameter names</a>
+     */
+    private static final Function<TypeDescription, AsmVisitorWrapper> parameterWritingVisitorWrapper;
+
+    static {
+        Constructor<?> constructor;
+        try {
+            Class<?> cls = Class.forName("org.mockito.internal.creation.bytebuddy.InlineBytecodeGenerator$ParameterWritingVisitorWrapper");
+            constructor = cls.getDeclaredConstructor(Class.class);
+            constructor.setAccessible(true);
+        } catch (Exception e) {
+            constructor = null;
+        }
+        Constructor<?> c = constructor;
+        parameterWritingVisitorWrapper = name -> {
+            try {
+                if (c != null && name instanceof TypeDescription.ForLoadedType) {
+                    return (AsmVisitorWrapper.AbstractBase) c.newInstance(Class.forName(name.getName()));
+                }
+            } catch (ReflectiveOperationException ignore) {
+            }
+            return AsmVisitorWrapper.NoOp.INSTANCE;
+        };
+    }
 
     public static void setUp(MockJavaTime mockJavaTime) throws Exception {
         if (!isInitialized) {
@@ -51,7 +80,8 @@ public class MockJavaTimeSetUp {
                         .visit(MemberSubstitution.relaxed()
                                 .method(is(currentTimeMillis))
                                 .replaceWith(newCurrentTimeMillis)
-                                .on(any())))
+                                .on(any()))
+                        .visit(parameterWritingVisitorWrapper.apply(td)))
                 .installOnByteBuddyAgent();
     }
 
@@ -88,20 +118,23 @@ public class MockJavaTimeSetUp {
                         .visit(MemberSubstitution.relaxed()
                                 .method(is(currentTimeMillis))
                                 .replaceWith(newCurrentTimeMillis)
-                                .on(any())))
+                                .on(any()))
+                        .visit(parameterWritingVisitorWrapper.apply(td)))
                 .type(named(Clock.class.getName()))
                 .transform((builder, td, cl, module, domain) -> builder
                         .visit(MemberSubstitution.relaxed()
                                 .method(is(getNanoTimeAdjustment))
                                 .replaceWith(newGetNanoTimeAdjustment)
-                                .on(any())))
+                                .on(any()))
+                        .visit(parameterWritingVisitorWrapper.apply(td)))
                 .type(namedOneOf(Calendar.class.getName(), Date.class.getName(), GregorianCalendar.class.getName(),
                         TimeZone.class.getName()))
                 .transform((builder, td, cl, module, domain) -> builder
                         .visit(MemberSubstitution.relaxed()
                                 .method(is(getDefaultRef))
                                 .replaceWith(newGetDefaultRef)
-                                .on(any())))
+                                .on(any()))
+                        .visit(parameterWritingVisitorWrapper.apply(td)))
                 .installOnByteBuddyAgent();
     }
 
