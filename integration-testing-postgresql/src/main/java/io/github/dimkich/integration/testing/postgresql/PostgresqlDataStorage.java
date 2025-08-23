@@ -20,6 +20,7 @@ import org.postgresql.jdbc.PgArray;
 import java.sql.Date;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class PostgresqlDataStorage implements SQLDataStorage {
@@ -197,12 +198,14 @@ public class PostgresqlDataStorage implements SQLDataStorage {
         builder.append("SET session_replication_role = 'replica';\n");
         for (String table : tables) {
             builder.append("DELETE FROM ").append(table).append(";\n");
-            String seq = tableSequences.get(table);
-            if (seq != null) {
-                builder.append("ALTER SEQUENCE ").append(seq).append(" RESTART;\n");
-            }
         }
         builder.append("SET session_replication_role = 'origin'");
         return builder.toString();
+    }
+
+    @Override
+    public String getRestartIdentitySql(Collection<String> tables) {
+        return tables.stream().map(tableSequences::get).filter(Objects::nonNull)
+                .map(s -> "ALTER SEQUENCE " + s + " RESTART").collect(Collectors.joining(";\n"));
     }
 }

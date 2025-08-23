@@ -80,6 +80,9 @@ public class SQLDataStorageService implements TestDataStorage {
         if (!visitor.isAnyChanges()) {
             return false;
         }
+        if (!visitor.getTablesToRestartIdentity().isEmpty()) {
+            visitor.getSqls().addFirst(storage.getRestartIdentitySql(visitor.getTablesToRestartIdentity()));
+        }
         if (!visitor.getTablesToClear().isEmpty()) {
             visitor.getSqls().addFirst(storage.getClearSql(visitor.getTablesToClear()));
         }

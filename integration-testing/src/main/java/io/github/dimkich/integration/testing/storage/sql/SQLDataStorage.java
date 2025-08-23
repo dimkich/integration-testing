@@ -25,4 +25,6 @@ public interface SQLDataStorage {
     String getRestrictTableSql(String table);
 
     String getClearSql(Collection<String> tables);
+
+    String getRestartIdentitySql(Collection<String> tables);
 }

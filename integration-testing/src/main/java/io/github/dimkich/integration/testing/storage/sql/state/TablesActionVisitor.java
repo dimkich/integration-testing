@@ -10,6 +10,7 @@ public class TablesActionVisitor {
     private final Set<String> tablesToAllow = new LinkedHashSet<>();
     private final Set<String> tablesToDeny = new LinkedHashSet<>();
     private final Set<String> tablesToClear = new HashSet<>();
+    private final Set<String> tablesToRestartIdentity = new HashSet<>();
     private final Set<String> tablesToLoad = new HashSet<>();
     private final Deque<String> sqls = new ArrayDeque<>();
     private final Set<String> noHookSqls = new LinkedHashSet<>();
@@ -17,13 +18,15 @@ public class TablesActionVisitor {
 
     public boolean isAnyChanges() {
         return !tablesToAllow.isEmpty() || !tablesToDeny.isEmpty() || !tablesToClear.isEmpty()
-                || !tablesToLoad.isEmpty() || !sqls.isEmpty() || !noHookSqls.isEmpty() || !hooks.isEmpty();
+                || !tablesToRestartIdentity.isEmpty() || !tablesToLoad.isEmpty() || !sqls.isEmpty()
+                || !noHookSqls.isEmpty() || !hooks.isEmpty();
     }
 
     public void clear() {
         tablesToAllow.clear();
         tablesToDeny.clear();
         tablesToClear.clear();
+        tablesToRestartIdentity.clear();
         tablesToLoad.clear();
         sqls.clear();
         noHookSqls.clear();

@@ -36,6 +36,7 @@ public class DataState {
                 if (tableHook != null) {
                     visitor.getHooks().add(tableHook);
                 }
+                visitor.getTablesToRestartIdentity().add(tableName);
                 switch (this.state) {
                     case LOADED:
                         visitor.getTablesToLoad().add(tableName);
