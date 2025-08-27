@@ -49,6 +49,9 @@ public class TestDataStorages {
         storageMap.forEach((n, s) -> s.setDiff(null));
         if (diff instanceof Container container) {
             container.clearNullValueKeys();
+            if (container.isEmpty()) {
+                diff = null;
+            }
         }
         this.currentValue = currentValue;
         return diff;
