@@ -36,6 +36,8 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
         unwrappedTypeProperty = "utype";
         for (TestSetupModule module : modules) {
             module.getParentTypes().forEach(this::addParentType);
+        }
+        for (TestSetupModule module : modules) {
             module.getAliases().forEach(p -> this.addAlias(p.getKey(), p.getValue()));
         }
         for (TestSetupModule module : modules) {

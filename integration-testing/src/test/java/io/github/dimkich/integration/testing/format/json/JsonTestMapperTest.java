@@ -15,6 +15,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
@@ -64,6 +65,7 @@ class JsonTestMapperTest {
                         "{\"value\":{\"type\":\"linkedMultiValueMapStringString\",\"k1\":[\"v1\"]}}"},
                 {new Value(new LinkedMultiValueMapStringObject(Map.of("k1", List.of(1.2f)))),
                         "{\"value\":{\"type\":\"linkedMultiValueMapStringObject\",\"k1\":[[\"float\",1.2]]}}"},
+                {new Value(FormatTestUtils.sr2(new byte[]{1, 2, 3})), "{\"value\":[\"resource\",\"AQID\"]}"},
                 {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"),
                         "{\"key\":\"k\",\"change\":\"added\",\"value\":\"str\"}"},
                 {HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
@@ -74,6 +76,8 @@ class JsonTestMapperTest {
                 {new RequestEntity<>("str", FormatTestUtils.httpHeaders("Expires", List.of("0"), "Custom", List.of("c", "a")),
                         HttpMethod.POST, URI.create("/api")), "{\"url\":\"/api\",\"method\":\"POST\"," +
                         "\"headers\":{\"Expires\":[\"0\"],\"Custom\":[\"c\",\"a\"]},\"body\":\"str\"}"},
+                {new RequestEntity<>(FormatTestUtils.sr2(new byte[]{1}), new HttpHeaders(), HttpMethod.POST,
+                        URI.create("/api")), "{\"url\":\"/api\",\"method\":\"POST\",\"body\":[\"resource\",\"AQ==\"]}"},
                 {new LinkedMultiValueMapStringString(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
                         "{\"k1\":[\"v1\"],\"k2\":[\"v2\"]}"},
                 {new LinkedMultiValueMapStringObject(Map.of("k", List.of(1L, true))), "{\"k\":[[\"long\",1],true]}"},

@@ -30,6 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
@@ -87,6 +88,7 @@ class XmlTestMapperTest {
                         "<Value><value type=\"linkedMultiValueMapStringString\"><k1>v1</k1></value></Value>"},
                 {new Value(new LinkedMultiValueMapStringObject(Map.of("k1", List.of(1.2f)))),
                         "<Value><value type=\"linkedMultiValueMapStringObject\"><k1 type=\"float\">1.2</k1></value></Value>"},
+                {new Value(FormatTestUtils.sr2(new byte[]{1, 2, 3})), "<Value><value type=\"resource\">AQID</value></Value>"},
                 {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"),
                         "<EntryStringKeyObjectValue key=\"k\" change=\"added\" utype=\"string\">str</EntryStringKeyObjectValue>"},
                 {HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
@@ -99,6 +101,8 @@ class XmlTestMapperTest {
                         HttpMethod.POST, URI.create("/api")), "<RequestEntity><url>/api</url><method>POST</method>" +
                         "<headers><Expires>0</Expires><Custom>c</Custom><Custom>a</Custom></headers>" +
                         "<body type=\"string\">str</body></RequestEntity>"},
+                {new RequestEntity<>(FormatTestUtils.sr2(new byte[]{1}), new HttpHeaders(), HttpMethod.POST,
+                        URI.create("/api")), "<RequestEntity><url>/api</url><method>POST</method><body type=\"resource\">AQ==</body></RequestEntity>"},
                 {new LinkedMultiValueMapStringString(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
                         "<LinkedMultiValueMapStringString><k1>v1</k1><k2>v2</k2></LinkedMultiValueMapStringString>"},
                 {new LinkedMultiValueMapStringObject(Map.of("k", List.of(1L, true))),
