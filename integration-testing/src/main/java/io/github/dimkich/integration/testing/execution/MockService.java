@@ -2,12 +2,12 @@ package io.github.dimkich.integration.testing.execution;
 
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
+import io.github.dimkich.integration.testing.util.ByteBuddyUtils;
 import io.github.sugarcubes.cloner.Cloner;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.bytebuddy.agent.ByteBuddyAgent;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -50,13 +50,7 @@ public class MockService {
                     )),
                     (mock, context) -> {
                         Constructor<?> constructor = context.constructor();
-                        Class<?> type = constructor.getDeclaringClass();
-                        Module module = getClass().getModule();
-                        if (!type.getModule().isOpen(type.getPackageName(), module)) {
-                            ByteBuddyAgent.install().redefineModule(type.getModule(), Set.of(), Map.of(),
-                                    Map.of(type.getPackageName(), Set.of(module)), Set.of(), Map.of());
-                        }
-                        constructor.setAccessible(true);
+                        ByteBuddyUtils.makeAccessible(constructor);
                         Object a = constructor.newInstance(context.arguments().toArray());
                         ConstructorMockAnswer ans = (ConstructorMockAnswer) MockUtil.getMockSettings(mock)
                                 .getDefaultAnswer();

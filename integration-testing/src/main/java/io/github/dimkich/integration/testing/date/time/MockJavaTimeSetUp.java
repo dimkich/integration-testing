@@ -2,8 +2,8 @@ package io.github.dimkich.integration.testing.date.time;
 
 import eu.ciechanowiec.sneakyfun.SneakyFunction;
 import eu.ciechanowiec.sneakyfun.SneakySupplier;
+import io.github.dimkich.integration.testing.util.ByteBuddyUtils;
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.asm.MemberSubstitution;
@@ -88,12 +88,12 @@ public class MockJavaTimeSetUp {
     private static void initialize() throws Exception {
         moveJavaTimeAdviceToSystemClassLoader();
 
-        Method getNanoTimeAdjustment = makeMethodAccessible(Class.forName("jdk.internal.misc.VM"),
-                t -> t.getMethod("getNanoTimeAdjustment", long.class));
+        Method getNanoTimeAdjustment = ByteBuddyUtils.makeAccessible(Class.forName("jdk.internal.misc.VM")
+                .getDeclaredMethod("getNanoTimeAdjustment", long.class));
         JavaTimeAdvice.setRealGetNanoTimeAdjustment(SneakyFunction
                 .sneaky(o -> (Long) getNanoTimeAdjustment.invoke(null, o)));
 
-        Method getDefaultRef = makeMethodAccessible(TimeZone.class, t -> t.getDeclaredMethod("getDefaultRef"));
+        Method getDefaultRef = ByteBuddyUtils.makeAccessible(TimeZone.class.getDeclaredMethod("getDefaultRef"));
         JavaTimeAdvice.setRealGetDefaultRef(SneakySupplier.sneaky(() -> (TimeZone) getDefaultRef.invoke(null)));
         Method currentTimeMillis = System.class.getMethod("currentTimeMillis");
 
@@ -147,18 +147,5 @@ public class MockJavaTimeSetUp {
                 .make()
                 .getAllTypes();
         ClassInjector.UsingUnsafe.ofBootLoader().inject(types);
-    }
-
-    private static Method makeMethodAccessible(Class<?> type, SneakyFunction<Class<?>, Method, Exception> getMethod)
-            throws Exception {
-        Module module = MockJavaTimeSetUp.class.getModule();
-        String packageName = type.getPackageName();
-        if (!type.getModule().isOpen(packageName, module)) {
-            ByteBuddyAgent.install().redefineModule(type.getModule(), Set.of(), Map.of(),
-                    Map.of(packageName, Set.of(module)), Set.of(), Map.of());
-        }
-        Method method = getMethod.apply(type);
-        method.setAccessible(true);
-        return method;
     }
 }
