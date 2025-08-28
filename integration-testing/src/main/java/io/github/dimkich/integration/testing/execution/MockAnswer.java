@@ -2,6 +2,7 @@
 package io.github.dimkich.integration.testing.execution;
 
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
+import io.github.sugarcubes.cloner.Cloner;
 import lombok.RequiredArgsConstructor;
 import org.mockito.Answers;
 import org.mockito.Mockito;
@@ -18,7 +19,9 @@ public class MockAnswer implements Answer<Object> {
     private final Set<String> methods;
     private final MockInvokeProperties properties;
     private final JunitExecutable junitExecutable;
+    private final Cloner cloner;
     private final boolean isSpy;
+    private final boolean cloneArgsAndResult;
 
     private int nestedCalls = 0;
 
@@ -36,6 +39,9 @@ public class MockAnswer implements Answer<Object> {
             mi = new MockInvoke().setName(name).setMethod(invocation.getMethod().getName()).setArg(args);
         }
         if (addMockInvoke(mockInvokeFound)) {
+            if (cloneArgsAndResult) {
+                mi.setArg(mi.getArg().stream().map(cloner::clone).toList());
+            }
             junitExecutable.addMockInvoke(mi);
         }
         if (callRealMethod(mockInvokeFound)) {
@@ -55,19 +61,18 @@ public class MockAnswer implements Answer<Object> {
                 return null;
             }
             mi.addResult(Mockito.mock(invocation.getMethod().getReturnType(), Answers.RETURNS_DEEP_STUBS));
-            return mi.getCurrentResult();
         }
-        return mi.getCurrentResult();
+        return cloneArgsAndResult ? cloner.clone(mi.getCurrentResult()) : mi.getCurrentResult();
     }
 
     private boolean callRealMethod(boolean mockInvokeFound) {
         return (isSpy && !mockInvokeFound) || properties.isMockAlwaysCallRealMethods()
-               || properties.isMockCallRealMethodsOnNoData() && !mockInvokeFound;
+                || properties.isMockCallRealMethodsOnNoData() && !mockInvokeFound;
     }
 
     private boolean addMockInvoke(boolean mockInvokeFound) {
         return nestedCalls == 0 && (!mockInvokeFound || properties.isMockAlwaysCallRealMethods())
-               && (!isSpy || properties.isSpyCreateData());
+                && (!isSpy || properties.isSpyCreateData());
     }
 
     private boolean returnMock(boolean mockInvokeFound) {

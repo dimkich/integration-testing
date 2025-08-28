@@ -21,6 +21,8 @@ public @interface TestStaticMock {
 
     boolean spy() default false;
 
+    boolean cloneArgsAndResult() default false;
+
     @Inherited
     @Target(TYPE)
     @Retention(RUNTIME)

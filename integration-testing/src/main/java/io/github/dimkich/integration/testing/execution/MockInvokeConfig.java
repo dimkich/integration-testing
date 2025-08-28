@@ -35,7 +35,7 @@ public class MockInvokeConfig implements BeanFactoryPostProcessor, SmartInstanti
             if (mockService == null) {
                 mockService = beanFactory.getBean(MockService.class);
             }
-            return mockService.createMock(bean, beanName, JunitExtension.isSpy(bean.getClass(), beanName));
+            return mockService.createMock(bean, beanName, JunitExtension.isSpy(bean.getClass(), beanName), false);
         }
         return bean;
     }

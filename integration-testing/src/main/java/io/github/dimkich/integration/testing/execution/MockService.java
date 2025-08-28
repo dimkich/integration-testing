@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.execution;
 
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
+import io.github.sugarcubes.cloner.Cloner;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,8 @@ import java.util.*;
 public class MockService {
     private final MockInvokeProperties properties;
     @Setter(onMethod_ = {@Autowired, @Lazy})
+    private Cloner cloner;
+    @Setter(onMethod_ = {@Autowired, @Lazy})
     private JunitExecutable junitExecutable;
 
     private final Set<String> mocks = new HashSet<>();
@@ -35,14 +38,15 @@ public class MockService {
         for (TestStaticMock staticMock : JunitExtension.getStaticMocks()) {
             staticMocks.add(Mockito.mockStatic(staticMock.mockClass(), Mockito.withSettings().defaultAnswer(
                     createMockAnswer(staticMock.name(), staticMock.methods().length == 0 ? null : Set.of(staticMock.methods()),
-                            staticMock.spy())
+                            staticMock.spy(), staticMock.cloneArgsAndResult())
             )));
         }
         for (TestConstructorMock constructorMock : JunitExtension.getConstructorMocks()) {
             MockedConstruction<?> mockedConstruction = Mockito.mockConstruction(constructorMock.mockClass(),
                     Mockito.withSettings().defaultAnswer(new ConstructorMockAnswer(
                             createMockAnswer(constructorMock.name(), constructorMock.methods().length == 0 ? null
-                                    : Set.of(constructorMock.methods()), constructorMock.spy())
+                                    : Set.of(constructorMock.methods()), constructorMock.spy(),
+                                    constructorMock.cloneArgsAndResult())
                     )),
                     (mock, context) -> {
                         Constructor<?> constructor = context.constructor();
@@ -62,9 +66,9 @@ public class MockService {
         }
     }
 
-    public <T> T createMock(T instance, String name, boolean isSpy) {
+    public <T> T createMock(T instance, String name, boolean isSpy, boolean cloneArgsAndResult) {
         return Mockito.mock((Class<T>) instance.getClass(), Mockito.withSettings()
-                .defaultAnswer(createMockAnswer(name, null, isSpy))
+                .defaultAnswer(createMockAnswer(name, null, isSpy, cloneArgsAndResult))
                 .spiedInstance(instance));
     }
 
@@ -74,11 +78,11 @@ public class MockService {
         constructorMocks.forEach(ScopedMock::close);
     }
 
-    private MockAnswer createMockAnswer(String name, Set<String> methods, boolean isSpy) {
+    private MockAnswer createMockAnswer(String name, Set<String> methods, boolean isSpy, boolean cloneArgsAndResult) {
         if (mocks.contains(name)) {
             throw new IllegalArgumentException(String.format("Object %s is already registered", name));
         }
         mocks.add(name);
-        return new MockAnswer(name, methods, properties, junitExecutable, isSpy);
+        return new MockAnswer(name, methods, properties, junitExecutable, cloner, isSpy, cloneArgsAndResult);
     }
 }
