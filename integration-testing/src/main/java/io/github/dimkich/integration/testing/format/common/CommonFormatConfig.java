@@ -41,6 +41,7 @@ public class CommonFormatConfig {
                 .addSubTypes(TestCase.class, "case")
                 .addSubTypes(TestPart.class, "part")
                 .addSubTypes(byte[].class, "byte[]")
+                .addSubTypes(UUID.class, "UUID")
                 .addAlias(ByteArrayResource.class, "resource")
                 .addAlias(Class.forName("java.util.ImmutableCollections$List12"), "arrayList")
                 .addAlias(Class.forName("java.util.ImmutableCollections$ListN"), "arrayList")

@@ -6,12 +6,17 @@ import com.fasterxml.jackson.databind.ser.PropertyFilter;
 import io.github.sugarcubes.cloner.CopyAction;
 import io.github.sugarcubes.cloner.ReflectionUtils;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.RegexPatternTypeFilter;
 
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 @Getter
 public class TestSetupModule {
@@ -45,6 +50,27 @@ public class TestSetupModule {
     public TestSetupModule addSubTypes(JsonSubTypes jsonSubTypes) {
         for (JsonSubTypes.Type type : jsonSubTypes.value()) {
             addSubTypes(type.value(), type.name());
+        }
+        return this;
+    }
+
+    public TestSetupModule addSubTypes(String packageName) {
+        return addSubTypes(packageName, Set.of());
+    }
+
+    public TestSetupModule addSubTypes(String packageName, Set<Class<?>> exclude) {
+        return addSubTypes(packageName, exclude, false);
+    }
+
+    @SneakyThrows
+    public TestSetupModule addSubTypes(String packageName, Set<Class<?>> exclude, boolean includeInnerClasses) {
+        ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false);
+        provider.addIncludeFilter(new RegexPatternTypeFilter(Pattern.compile(includeInnerClasses ? ".*" : "[^$]*")));
+        for (BeanDefinition bean : provider.findCandidateComponents(packageName)) {
+            Class<?> cls = Class.forName(bean.getBeanClassName());
+            if (!exclude.contains(cls)) {
+                addSubTypes(cls);
+            }
         }
         return this;
     }
