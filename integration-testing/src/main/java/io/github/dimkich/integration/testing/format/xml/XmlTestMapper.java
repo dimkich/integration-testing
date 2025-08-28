@@ -44,7 +44,7 @@ public class XmlTestMapper implements TestMapper {
 
     @Override
     public String getRootTestAsString(Test test) throws IOException {
-        String text = xmlMapper.writeValueAsString(test);
+        String text = xmlMapper.writerFor(Test.class).writeValueAsString(test);
         if (text.contains(" encoding='UTF-8'?>")) {
             text = text.replace(" encoding='UTF-8'?>", " encoding='UTF-8'?>" + System.lineSeparator() + fileHeader);
         } else {
@@ -54,7 +54,7 @@ public class XmlTestMapper implements TestMapper {
     }
 
     public String getSingleTestAsString(Test test) throws IOException {
-        return xmlMapper.writeValueAsString(test)
+        return xmlMapper.writerFor(Test.class).writeValueAsString(test)
                 .replace("<?xml version='1.1' encoding='UTF-8'?>", "")
                 .trim();
     }

@@ -39,12 +39,12 @@ public class JsonTestMapper implements TestMapper {
 
     @Override
     public String getRootTestAsString(Test test) throws IOException {
-        return fileHeader + System.lineSeparator() + objectMapper.writeValueAsString(test);
+        return fileHeader + System.lineSeparator() + objectMapper.writerFor(Test.class).writeValueAsString(test);
     }
 
     @Override
     public String getSingleTestAsString(Test test) throws IOException {
-        return objectMapper.writeValueAsString(test);
+        return objectMapper.writerFor(Test.class).writeValueAsString(test);
     }
 
     @Override

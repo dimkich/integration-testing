@@ -3,6 +3,9 @@ package io.github.dimkich.integration.testing.format.json;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.github.dimkich.integration.testing.TestCase;
+import io.github.dimkich.integration.testing.TestContainer;
+import io.github.dimkich.integration.testing.TestPart;
 import io.github.dimkich.integration.testing.format.FormatTestUtils;
 import io.github.dimkich.integration.testing.format.dto.Value;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
@@ -83,13 +86,20 @@ class JsonTestMapperTest {
                 {new LinkedMultiValueMapStringObject(Map.of("k", List.of(1L, true))), "{\"k\":[[\"long\",1],true]}"},
                 {new LinkedMultiValueMapStringObject(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
                         "{\"k1\":[\"v1\"],\"k2\":[\"v2\"]}"},
+                {new TestContainer(), "{\"type\":\"container\"}"},
+                {new TestCase(), "{\"type\":\"case\"}"},
+                {new TestPart(), "{\"type\":\"part\"}"},
         };
     }
 
     @ParameterizedTest
     @MethodSource("data")
     void serialize(Object o, String json) throws JsonProcessingException {
-        assertEquals(json, jsonMapper.writeValueAsString(o));
+        Class<?> cls = o.getClass();
+        if (o instanceof io.github.dimkich.integration.testing.Test) {
+            cls = io.github.dimkich.integration.testing.Test.class;
+        }
+        assertEquals(json, jsonMapper.writerFor(cls).writeValueAsString(o));
     }
 
     @ParameterizedTest

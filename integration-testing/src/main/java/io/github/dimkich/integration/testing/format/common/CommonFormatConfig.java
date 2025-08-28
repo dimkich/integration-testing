@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.format.common;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.github.dimkich.integration.testing.TestSetupModule;
+import io.github.dimkich.integration.testing.*;
 import io.github.dimkich.integration.testing.format.common.mixin.SecureRandomMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.SpringResourceMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.ThrowableMixIn;
@@ -36,7 +36,10 @@ public class CommonFormatConfig {
     @Bean
     TestSetupModule commonFormatTestSetupModule() throws ClassNotFoundException {
         return new TestSetupModule()
-                .addParentType(Object.class).addParentType(Throwable.class)
+                .addParentType(Object.class).addParentType(Throwable.class).addParentType(Test.class)
+                .addSubTypes(TestContainer.class, "container")
+                .addSubTypes(TestCase.class, "case")
+                .addSubTypes(TestPart.class, "part")
                 .addSubTypes(byte[].class, "byte[]")
                 .addAlias(ByteArrayResource.class, "resource")
                 .addAlias(Class.forName("java.util.ImmutableCollections$List12"), "arrayList")

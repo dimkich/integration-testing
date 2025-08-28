@@ -32,11 +32,13 @@ public abstract class Test {
     private String name;
     @JsonProperty("init")
     @JsonManagedReference
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<TestInit> inits = new ArrayList<>();
     private String bean;
     private String method;
     private List<Object> request;
     private MessageDto<?> inboundMessage;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<MockInvoke> mockInvoke = new ArrayList<>();
     private Object response;
     private Object dataStorageDiff;
@@ -46,6 +48,7 @@ public abstract class Test {
     private Test parentTest;
     @JsonManagedReference
     @JsonProperty("test")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<Test> subTests = new ArrayList<>();
 
     @JsonIgnore

@@ -8,6 +8,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
+import io.github.dimkich.integration.testing.TestCase;
+import io.github.dimkich.integration.testing.TestContainer;
+import io.github.dimkich.integration.testing.TestPart;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.FormatTestUtils;
 import io.github.dimkich.integration.testing.format.dto.Value;
@@ -109,6 +112,9 @@ class XmlTestMapperTest {
                         "<LinkedMultiValueMapStringObject><k type=\"long\">1</k><k type=\"boolean\">true</k></LinkedMultiValueMapStringObject>"},
                 {new LinkedMultiValueMapStringObject(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
                         "<LinkedMultiValueMapStringObject><k1 type=\"string\">v1</k1><k2 type=\"string\">v2</k2></LinkedMultiValueMapStringObject>"},
+                {new TestContainer(), "<test type=\"container\"/>"},
+                {new TestCase(), "<test type=\"case\"/>"},
+                {new TestPart(), "<test type=\"part\"/>"},
                 {new Typed(new ArrayList<>(List.of(new TypeTest(1, null, "s"),
                         new TypeTest(2, null, "t"))),
                         map(new LinkedHashMap<>(), "k1", new TypeTest(3, null, "d"))),
@@ -133,7 +139,11 @@ class XmlTestMapperTest {
     @ParameterizedTest
     @MethodSource("data")
     void serialize(Object o, String xml) throws JsonProcessingException {
-        assertEquals(xml, xmlMapper.writeValueAsString(o));
+        Class<?> cls = o.getClass();
+        if (o instanceof io.github.dimkich.integration.testing.Test) {
+            cls = io.github.dimkich.integration.testing.Test.class;
+        }
+        assertEquals(xml, xmlMapper.writerFor(cls).writeValueAsString(o));
     }
 
     @ParameterizedTest

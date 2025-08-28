@@ -29,10 +29,7 @@ import java.util.List;
 public class IntegrationTestConfig {
     @Bean
     TestSetupModule integrationTestModule() {
-        return new TestSetupModule().addParentType(Test.class)
-                .addSubTypes(TestContainer.class, "container")
-                .addSubTypes(TestCase.class, "case")
-                .addSubTypes(TestPart.class, "part")
+        return new TestSetupModule()
                 .clonerFieldAction(Test.class, Test.Fields.inits, CopyAction.ORIGINAL)
                 .clonerFieldAction(Test.class, Test.Fields.parentTest, CopyAction.ORIGINAL)
                 .clonerFieldAction(Test.class, Test.Fields.response, CopyAction.NULL)
