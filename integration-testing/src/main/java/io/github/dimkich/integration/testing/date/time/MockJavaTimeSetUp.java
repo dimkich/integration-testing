@@ -151,14 +151,14 @@ public class MockJavaTimeSetUp {
 
     private static Method makeMethodAccessible(Class<?> type, SneakyFunction<Class<?>, Method, Exception> getMethod)
             throws Exception {
-        Module clonerModule = MockJavaTimeSetUp.class.getModule();
+        Module module = MockJavaTimeSetUp.class.getModule();
         String packageName = type.getPackageName();
-        if (!type.getModule().isOpen(packageName, clonerModule)) {
+        if (!type.getModule().isOpen(packageName, module)) {
             ByteBuddyAgent.install().redefineModule(type.getModule(), Set.of(), Map.of(),
-                    Map.of(packageName, Set.of(clonerModule)), Set.of(), Map.of());
+                    Map.of(packageName, Set.of(module)), Set.of(), Map.of());
         }
-        Method getNanoTimeAdjustment = getMethod.apply(type);
-        getNanoTimeAdjustment.setAccessible(true);
-        return getNanoTimeAdjustment;
+        Method method = getMethod.apply(type);
+        method.setAccessible(true);
+        return method;
     }
 }
