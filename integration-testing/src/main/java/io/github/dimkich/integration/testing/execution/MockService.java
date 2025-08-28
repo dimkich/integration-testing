@@ -6,17 +6,18 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.bytebuddy.agent.ByteBuddyAgent;
+import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.ScopedMock;
+import org.mockito.internal.util.MockUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.lang.reflect.Constructor;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class MockService {
 
     private final Set<String> mocks = new HashSet<>();
     private final List<MockedStatic<?>> staticMocks = new ArrayList<>();
+    private final List<MockedConstruction<?>> constructorMocks = new ArrayList<>();
 
     @PostConstruct
     public void postConstruct() {
@@ -35,6 +37,28 @@ public class MockService {
                     createMockAnswer(staticMock.name(), staticMock.methods().length == 0 ? null : Set.of(staticMock.methods()),
                             staticMock.spy())
             )));
+        }
+        for (TestConstructorMock constructorMock : JunitExtension.getConstructorMocks()) {
+            MockedConstruction<?> mockedConstruction = Mockito.mockConstruction(constructorMock.mockClass(),
+                    Mockito.withSettings().defaultAnswer(new ConstructorMockAnswer(
+                            createMockAnswer(constructorMock.name(), constructorMock.methods().length == 0 ? null
+                                    : Set.of(constructorMock.methods()), constructorMock.spy())
+                    )),
+                    (mock, context) -> {
+                        Constructor<?> constructor = context.constructor();
+                        Class<?> type = constructor.getDeclaringClass();
+                        Module module = getClass().getModule();
+                        if (!type.getModule().isOpen(type.getPackageName(), module)) {
+                            ByteBuddyAgent.install().redefineModule(type.getModule(), Set.of(), Map.of(),
+                                    Map.of(type.getPackageName(), Set.of(module)), Set.of(), Map.of());
+                        }
+                        constructor.setAccessible(true);
+                        Object a = constructor.newInstance(context.arguments().toArray());
+                        ConstructorMockAnswer ans = (ConstructorMockAnswer) MockUtil.getMockSettings(mock)
+                                .getDefaultAnswer();
+                        ans.setObject(a);
+                    });
+            constructorMocks.add(mockedConstruction);
         }
     }
 
@@ -47,6 +71,7 @@ public class MockService {
     @PreDestroy
     public void preDestroy() {
         staticMocks.forEach(ScopedMock::close);
+        constructorMocks.forEach(ScopedMock::close);
     }
 
     private MockAnswer createMockAnswer(String name, Set<String> methods, boolean isSpy) {

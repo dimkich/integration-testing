@@ -4,6 +4,7 @@ import io.github.dimkich.integration.testing.assertion.FileOperations;
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
 import io.github.dimkich.integration.testing.execution.TestBeanMocks;
+import io.github.dimkich.integration.testing.execution.TestConstructorMock;
 import io.github.dimkich.integration.testing.execution.TestStaticMock;
 import io.github.dimkich.integration.testing.execution.mokito.MockitoGlobal;
 import io.github.dimkich.integration.testing.openapi.TestOpenAPI;
@@ -36,6 +37,8 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     @Getter
     private static List<TestStaticMock> staticMocks = List.of();
     @Getter
+    private static List<TestConstructorMock> constructorMocks = List.of();
+    @Getter
     private static SpringBootTest springBootTest;
 
     @Override
@@ -55,6 +58,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         }
         testOpenAPIS = List.of(context.getRequiredTestClass().getAnnotationsByType(TestOpenAPI.class));
         staticMocks = List.of(context.getRequiredTestClass().getAnnotationsByType(TestStaticMock.class));
+        constructorMocks = List.of(context.getRequiredTestClass().getAnnotationsByType(TestConstructorMock.class));
         testRestTemplates = List.of(context.getRequiredTestClass().getAnnotationsByType(TestRestTemplate.class));
         if (!initialized) {
             new FileOperations().clearTestsDir();
@@ -76,6 +80,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         testOpenAPIS = List.of();
         testRestTemplates = List.of();
         staticMocks = List.of();
+        constructorMocks = List.of();
     }
 
     public static boolean isMock(Class<?> cls, String beanName) {
