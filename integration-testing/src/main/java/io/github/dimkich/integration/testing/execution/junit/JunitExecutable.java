@@ -7,6 +7,7 @@ import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.function.Executable;
 
 import java.util.List;
@@ -37,8 +38,9 @@ public class JunitExecutable implements Executable {
             }
         }
 
+        boolean disabled = testExecutor.getTest() == null;
         try {
-            testExecutor.runTest(test);
+            testExecutor.runTest();
         } finally {
             testExecutor.after(test);
             while ((isLast || test.isLastLeaf()) && test.getParentTest() != null) {
@@ -47,6 +49,9 @@ public class JunitExecutable implements Executable {
             }
             if (isLast || test == rootTest) {
                 assertion.afterTests(testMapper, rootTest);
+            }
+            if (disabled) {
+                Assumptions.abort();
             }
         }
     }

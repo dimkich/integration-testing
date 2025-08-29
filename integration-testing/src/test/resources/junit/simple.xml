@@ -23,6 +23,11 @@
                 <method>accept</method>
                 <request>#2#2#2</request>
             </test>
+            <test type="part" name="#2#2#3" disabled="true">
+                <bean>consumer</bean>
+                <method>accept</method>
+                <request>#2#2#3</request>
+            </test>
         </test>
         <test type="case" name="#2#3">
             <bean>consumer</bean>
@@ -63,5 +68,22 @@
         <bean>consumer</bean>
         <method>accept</method>
         <request>#5</request>
+    </test>
+    <test type="container" name="#6" disabled="true">
+        <test type="case" name="#6#1">
+            <bean>consumer</bean>
+            <method>accept</method>
+            <request>#6#1</request>
+        </test>
+        <test type="case" name="#6#2">
+            <bean>consumer</bean>
+            <method>accept</method>
+            <request>#6#2</request>
+        </test>
+    </test>
+    <test type="case" name="#7" disabled="true">
+        <bean>consumer</bean>
+        <method>accept</method>
+        <request>#7</request>
     </test>
 </test>

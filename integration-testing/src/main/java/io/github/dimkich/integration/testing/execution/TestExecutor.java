@@ -17,7 +17,9 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
+import java.util.ArrayDeque;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -39,6 +41,8 @@ public class TestExecutor {
     private TestDataStorages testDataStorages;
     @Setter(onMethod_ = @Autowired(required = false))
     private TestMessagePoller testMessagePoller;
+
+    private final Deque<Test> testsToSkip = new ArrayDeque<>();
     @Getter
     private Test test;
     private Test expectedTest;
@@ -47,6 +51,14 @@ public class TestExecutor {
     private boolean executing = false;
 
     public void before(Test expectedTest) throws Exception {
+        log.info(">>> {}", expectedTest.getFullName());
+        log.info(testMapper.getCurrentPathAndLocation(expectedTest));
+        if (expectedTest.getDisabled() != null && expectedTest.getDisabled()) {
+            testsToSkip.add(expectedTest);
+        }
+        if (!testsToSkip.isEmpty()) {
+            return;
+        }
         this.expectedTest = expectedTest;
         if (assertion.makeTestDeepClone()) {
             test = cloner.clone(expectedTest);
@@ -65,9 +77,10 @@ public class TestExecutor {
         }
     }
 
-    public void runTest(Test tc) throws Exception {
-        log.info(">>> {}", test.getFullName());
-        log.info(testMapper.getCurrentPathAndLocation(expectedTest));
+    public void runTest() throws Exception {
+        if (!testsToSkip.isEmpty()) {
+            return;
+        }
         waitCompletion.start();
         executing = true;
         try {
@@ -104,6 +117,12 @@ public class TestExecutor {
     }
 
     public void after(Test test) throws Exception {
+        if (!testsToSkip.isEmpty()) {
+            if (testsToSkip.getLast() == test) {
+                testsToSkip.removeLast();
+            }
+            return;
+        }
         initializationService.afterTest(test);
         try {
             for (AfterTest afterTest : afterTests) {

@@ -30,6 +30,8 @@ public abstract class Test {
 
     @JacksonXmlProperty(isAttribute = true)
     private String name;
+    @JacksonXmlProperty(isAttribute = true)
+    private Boolean disabled;
     @JsonProperty("init")
     @JsonManagedReference
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
