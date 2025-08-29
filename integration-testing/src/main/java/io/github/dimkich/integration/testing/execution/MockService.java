@@ -30,53 +30,93 @@ public class MockService {
     private JunitExecutable junitExecutable;
 
     private final Set<String> mocks = new HashSet<>();
-    private final List<MockedStatic<?>> staticMocks = new ArrayList<>();
-    private final List<MockedConstruction<?>> constructorMocks = new ArrayList<>();
+    private final List<ScopedMock> scopedMocks = new ArrayList<>();
 
     @PostConstruct
-    public void postConstruct() {
-        for (TestStaticMock staticMock : JunitExtension.getStaticMocks()) {
-            staticMocks.add(Mockito.mockStatic(staticMock.mockClass(), Mockito.withSettings().defaultAnswer(
-                    createMockAnswer(staticMock.name(), staticMock.methods().length == 0 ? null : Set.of(staticMock.methods()),
-                            staticMock.spy(), staticMock.cloneArgsAndResult())
-            )));
-        }
+    public void postConstruct() throws ClassNotFoundException {
+        MockAnswerBuilder builder = new MockAnswerBuilder();
         for (TestConstructorMock constructorMock : JunitExtension.getConstructorMocks()) {
-            MockedConstruction<?> mockedConstruction = Mockito.mockConstruction(constructorMock.mockClass(),
-                    Mockito.withSettings().defaultAnswer(new ConstructorMockAnswer(
-                            createMockAnswer(constructorMock.name(), constructorMock.methods().length == 0 ? null
-                                    : Set.of(constructorMock.methods()), constructorMock.spy(),
-                                    constructorMock.cloneArgsAndResult())
-                    )),
+            builder.from(constructorMock);
+            MockedConstruction<?> mockedConstruction = Mockito.mockConstruction(builder.buildClass(),
+                    Mockito.withSettings().defaultAnswer(new ConstructorMockAnswer(builder.buildAnswer())),
                     (mock, context) -> {
                         Constructor<?> constructor = context.constructor();
                         ByteBuddyUtils.makeAccessible(constructor);
-                        Object a = constructor.newInstance(context.arguments().toArray());
                         ConstructorMockAnswer ans = (ConstructorMockAnswer) MockUtil.getMockSettings(mock)
                                 .getDefaultAnswer();
-                        ans.setObject(a);
+                        ans.setObject(constructor.newInstance(context.arguments().toArray()));
                     });
-            constructorMocks.add(mockedConstruction);
+            scopedMocks.add(mockedConstruction);
+        }
+        for (TestStaticMock staticMock : JunitExtension.getStaticMocks()) {
+            builder.from(staticMock);
+            MockedStatic<?> mockedStatic = Mockito.mockStatic(builder.buildClass(), Mockito.withSettings()
+                    .defaultAnswer(builder.buildAnswer()));
+            scopedMocks.add(mockedStatic);
         }
     }
 
-    public <T> T createMock(T instance, String name, boolean isSpy, boolean cloneArgsAndResult) {
-        return Mockito.mock((Class<T>) instance.getClass(), Mockito.withSettings()
-                .defaultAnswer(createMockAnswer(name, null, isSpy, cloneArgsAndResult))
-                .spiedInstance(instance));
+    public Object createBeanMock(TestBeanMock beanMock, Object bean, String beanName) {
+        MockAnswerBuilder builder = new MockAnswerBuilder();
+        builder.from(beanMock, beanName);
+        return Mockito.mock(bean.getClass(), Mockito.withSettings()
+                .defaultAnswer(builder.buildAnswer())
+                .spiedInstance(bean));
     }
 
     @PreDestroy
     public void preDestroy() {
-        staticMocks.forEach(ScopedMock::close);
-        constructorMocks.forEach(ScopedMock::close);
+        scopedMocks.forEach(ScopedMock::close);
     }
 
-    private MockAnswer createMockAnswer(String name, Set<String> methods, boolean isSpy, boolean cloneArgsAndResult) {
-        if (mocks.contains(name)) {
-            throw new IllegalArgumentException(String.format("Object %s is already registered", name));
+    class MockAnswerBuilder {
+        private String name;
+        private Class<?> mockClass;
+        private String mockClassName;
+        private String[] methods;
+        private boolean spy;
+        private boolean cloneArgsAndResult;
+
+        public void from(TestBeanMock mock, String beanName) {
+            name = beanName;
+            mockClass = mock.mockClass();
+            mockClassName = mock.mockClassName();
+            methods = mock.methods();
+            spy = mock.spy();
+            cloneArgsAndResult = mock.cloneArgsAndResult();
         }
-        mocks.add(name);
-        return new MockAnswer(name, methods, properties, junitExecutable, cloner, isSpy, cloneArgsAndResult);
+
+        public void from(TestConstructorMock mock) {
+            name = mock.name();
+            mockClass = mock.mockClass();
+            mockClassName = mock.mockClassName();
+            methods = mock.methods();
+            spy = mock.spy();
+            cloneArgsAndResult = mock.cloneArgsAndResult();
+        }
+
+        public void from(TestStaticMock mock) {
+            name = mock.name();
+            mockClass = mock.mockClass();
+            mockClassName = mock.mockClassName();
+            methods = mock.methods();
+            spy = mock.spy();
+            cloneArgsAndResult = mock.cloneArgsAndResult();
+        }
+
+        public Class<?> buildClass() throws ClassNotFoundException {
+            mockClass = mockClass == Null.class ? Class.forName(mockClassName) : mockClass;
+            return mockClass;
+        }
+
+        public MockAnswer buildAnswer() {
+            name = name.isEmpty() ? mockClass.getSimpleName() : name;
+            if (mocks.contains(name)) {
+                throw new IllegalArgumentException(String.format("Mock '%s' is already registered", name));
+            }
+            mocks.add(name);
+            Set<String> methods = this.methods.length == 0 ? null : Set.of(this.methods);
+            return new MockAnswer(name, methods, properties, junitExecutable, cloner, spy, cloneArgsAndResult);
+        }
     }
 }

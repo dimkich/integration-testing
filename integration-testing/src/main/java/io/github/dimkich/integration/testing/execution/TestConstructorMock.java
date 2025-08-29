@@ -13,9 +13,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @IntegrationTesting
 @Repeatable(TestConstructorMock.List.class)
 public @interface TestConstructorMock {
-    String name();
+    String name() default "";
 
-    Class<?> mockClass();
+    Class<?> mockClass() default Null.class;
+
+    String mockClassName() default "";
 
     String[] methods() default {};
 

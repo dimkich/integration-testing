@@ -11,8 +11,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target(TYPE)
 @Retention(RUNTIME)
 @IntegrationTesting
-@Repeatable(TestStaticMock.List.class)
-public @interface TestStaticMock {
+@Repeatable(TestBeanMock.List.class)
+public @interface TestBeanMock {
     String name() default "";
 
     Class<?> mockClass() default Null.class;
@@ -30,6 +30,6 @@ public @interface TestStaticMock {
     @Retention(RUNTIME)
     @Documented
     @interface List {
-        TestStaticMock[] value();
+        TestBeanMock[] value();
     }
 }

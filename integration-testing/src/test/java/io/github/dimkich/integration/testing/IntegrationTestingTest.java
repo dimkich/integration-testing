@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing;
 
-import io.github.dimkich.integration.testing.execution.TestBeanMocks;
+import io.github.dimkich.integration.testing.execution.TestBeanMock;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.TestFactory;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.stream.Stream;
 
 @SpringBootTest(classes = {IntegrationTestConfig.class, IntegrationTestingTest.Config.class})
-@TestBeanMocks(mockClasses = IntegrationTestingTest.Converter.class)
+@TestBeanMock(mockClass = IntegrationTestingTest.Converter.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class IntegrationTestingTest {
     private final DynamicTestBuilder dynamicTestBuilder;
