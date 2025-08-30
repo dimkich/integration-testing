@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing;
 
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
 import io.github.dimkich.integration.testing.date.time.JavaTimeAdvice;
+import io.github.dimkich.integration.testing.execution.MockAnswer;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
@@ -21,7 +22,6 @@ import java.util.stream.Stream;
 public class DynamicTestBuilder {
     private final JunitExecutable junitExecutable;
     private final CompositeTestMapper testMapper;
-    private final TestExecutor testExecutor;
     private final DateTimeService dateTimeService;
 
     public Stream<DynamicNode> build(String path) throws Exception {
@@ -30,7 +30,7 @@ public class DynamicTestBuilder {
         test.check();
         junitExecutable.setRootTest(test);
         junitExecutable.setExecutionListener(ExecutionListener.getLast());
-        JavaTimeAdvice.setCallRealMethod(() -> !testExecutor.isExecuting());
+        JavaTimeAdvice.setCallRealMethod(() -> !MockAnswer.isEnabled());
         JavaTimeAdvice.setCurrentTimeMillis(() -> dateTimeService.getDateTime().toInstant().toEpochMilli());
         JavaTimeAdvice.setGetNanoTimeAdjustment(o -> ChronoUnit.NANOS.between(Instant.ofEpochSecond(o),
                 dateTimeService.getDateTime().toInstant()));

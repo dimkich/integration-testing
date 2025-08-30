@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.storage;
 
 import eu.ciechanowiec.sneakyfun.SneakyFunction;
 import io.github.dimkich.integration.testing.TestDataStorage;
+import io.github.dimkich.integration.testing.execution.MockAnswer;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import jakarta.annotation.PostConstruct;
@@ -70,17 +71,12 @@ public class TestDataStorages {
     }
 
     private Map<String, Map<String, Object>> getCurrentValue(Collection<TestDataStorage> storages) {
-        testExecutor.setExecuting(true);
-        try {
-            return storages.stream()
-                    .collect(Collectors.toMap(
-                            TestDataStorage::getName,
-                            SneakyFunction.sneaky(s -> s.getCurrentValue(properties.getExcludedFields(s.getName()))),
-                            (v1, v2) -> v2,
-                            properties.getSort(0) ? sorted : ordered
-                    ));
-        } finally {
-            testExecutor.setExecuting(false);
-        }
+        return MockAnswer.enable(() -> storages.stream()
+                .collect(Collectors.toMap(
+                        TestDataStorage::getName,
+                        SneakyFunction.sneaky(s -> s.getCurrentValue(properties.getExcludedFields(s.getName()))),
+                        (v1, v2) -> v2,
+                        properties.getSort(0) ? sorted : ordered
+                )));
     }
 }

@@ -1,8 +1,11 @@
 
 package io.github.dimkich.integration.testing.execution;
 
+import eu.ciechanowiec.sneakyfun.SneakyRunnable;
+import eu.ciechanowiec.sneakyfun.SneakySupplier;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import io.github.sugarcubes.cloner.Cloner;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.mockito.Answers;
 import org.mockito.Mockito;
@@ -15,6 +18,9 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 public class MockAnswer implements Answer<Object> {
+    @Getter
+    private static boolean enabled = false;
+
     private final String name;
     private final Set<String> methods;
     private final MockInvokeProperties properties;
@@ -25,9 +31,27 @@ public class MockAnswer implements Answer<Object> {
 
     private int nestedCalls = 0;
 
+    public static <T, E extends Exception> T enable(SneakySupplier<T, E> supplier) throws E {
+        enabled = true;
+        try {
+            return supplier.get();
+        } finally {
+            enabled = false;
+        }
+    }
+
+    public static <E extends Exception> void enable(SneakyRunnable<E> runnable) throws E {
+        enabled = true;
+        try {
+            runnable.run();
+        } finally {
+            enabled = false;
+        }
+    }
+
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {
-        if (!junitExecutable.isTestRunning() || methods != null && !methods.contains(invocation.getMethod().getName())) {
+        if (!enabled || methods != null && !methods.contains(invocation.getMethod().getName())) {
             return invocation.callRealMethod();
         }
         List<Object> args = Arrays.stream(invocation.getArguments()).toList();

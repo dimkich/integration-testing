@@ -46,9 +46,6 @@ public class TestExecutor {
     @Getter
     private Test test;
     private Test expectedTest;
-    @Getter
-    @Setter
-    private boolean executing = false;
 
     public void before(Test expectedTest) throws Exception {
         log.info(">>> {}", expectedTest.getFullName());
@@ -82,25 +79,22 @@ public class TestExecutor {
             return;
         }
         waitCompletion.start();
-        executing = true;
-        try {
-            MessageDto<?> message = test.getInboundMessage();
-            if (message != null) {
-                testMessageSenders.stream()
-                        .filter(s -> s.canSend(message))
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException("No service found for message " + message))
-                        .sendInboundMessage(message);
-            } else {
-                test.executeMethod(beanFactory, (m, r) -> cloner.clone(r));
-            }
-        } finally {
+        MockAnswer.enable(() -> {
             try {
-                waitCompletion.waitCompletion();
+                MessageDto<?> message = test.getInboundMessage();
+                if (message != null) {
+                    testMessageSenders.stream()
+                            .filter(s -> s.canSend(message))
+                            .findFirst()
+                            .orElseThrow(() -> new RuntimeException("No service found for message " + message))
+                            .sendInboundMessage(message);
+                } else {
+                    test.executeMethod(beanFactory, (m, r) -> cloner.clone(r));
+                }
             } finally {
-                executing = false;
+                waitCompletion.waitCompletion();
             }
-        }
+        });
 
         int countMessages = test.getOutboundMessages() == null ? 0 : test.getOutboundMessages().size();
         if (testMessagePoller != null) {

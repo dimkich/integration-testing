@@ -60,10 +60,6 @@ public class JunitExecutable implements Executable {
         return executionListener.getJunitTests().getLast().getTestFullName();
     }
 
-    public boolean isTestRunning() {
-        return testExecutor != null && testExecutor.isExecuting();
-    }
-
     public MockInvoke search(String mockName, String method, List<Object> args) {
         return testExecutor.getTest().getParentsAndItselfDesc()
                 .map(tc -> tc.search(mockName, method, args))

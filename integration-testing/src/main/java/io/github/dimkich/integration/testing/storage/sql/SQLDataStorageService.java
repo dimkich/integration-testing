@@ -2,11 +2,12 @@ package io.github.dimkich.integration.testing.storage.sql;
 
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.dbunit.HumanReadableXmlDataSet;
+import io.github.dimkich.integration.testing.execution.MockAnswer;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.initialization.SqlStorageInit;
 import io.github.dimkich.integration.testing.initialization.SqlStorageSetup;
-import io.github.dimkich.integration.testing.storage.sql.state.TestStorageStates;
 import io.github.dimkich.integration.testing.storage.sql.state.TablesActionVisitor;
+import io.github.dimkich.integration.testing.storage.sql.state.TestStorageStates;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -18,7 +19,6 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -96,8 +96,7 @@ public class SQLDataStorageService implements TestDataStorage {
                 visitor.getSqls().addFirst(storage.getAllowTableSql(table));
             }
         }
-        testExecutor.setExecuting(true);
-        try {
+        MockAnswer.enable(() -> {
             if (!visitor.getTablesToLoad().isEmpty()) {
                 storage.loadDataset(new FilteredDataSet(visitor.getTablesToLoad().toArray(new String[0]), dataSet));
             }
@@ -113,9 +112,7 @@ public class SQLDataStorageService implements TestDataStorage {
             if (!visitor.getNoHookSqls().isEmpty()) {
                 storage.executeSql(visitor.getNoHookSqls());
             }
-        } finally {
-            testExecutor.setExecuting(false);
-        }
+        });
         visitor.clear();
         return true;
     }

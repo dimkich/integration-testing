@@ -2,11 +2,11 @@ package io.github.dimkich.integration.testing.initialization;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import io.github.dimkich.integration.testing.TestInit;
+import io.github.dimkich.integration.testing.execution.MockAnswer;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import lombok.*;
 import org.springframework.beans.factory.BeanFactory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,18 +43,15 @@ public class BeanInit extends TestInit {
         }
 
         @Override
-        public void init(Stream<BeanInit> inits) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        public void init(Stream<BeanInit> inits) throws ReflectiveOperationException {
             beanMethods.clear();
             inits.forEach(init -> beanMethods.addAll(init.getBean()));
-            testExecutor.setExecuting(true);
-            try {
+            MockAnswer.enable(() -> {
                 for (BeanMethod beanMethod : beanMethods) {
                     Object bean = beanFactory.getBean(beanMethod.getName());
                     bean.getClass().getMethod(beanMethod.getMethod()).invoke(bean);
                 }
-            } finally {
-                testExecutor.setExecuting(false);
-            }
+            });
         }
     }
 }
