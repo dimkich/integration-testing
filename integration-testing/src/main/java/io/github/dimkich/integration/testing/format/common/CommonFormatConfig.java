@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.dimkich.integration.testing.*;
+import io.github.dimkich.integration.testing.format.common.mixin.ByteArrayInputStreamMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.SecureRandomMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.SpringResourceMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.ThrowableMixIn;
@@ -50,18 +51,26 @@ public class CommonFormatConfig {
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,
                         LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class,
-                        SecureRandom.class, SpringErrorDto.class, Resource.class)
+                        SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class)
                 .clonerTypeAction(Throwable.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(Resource.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .addEqualsForType(SecureRandom.class, (sr1, sr2) -> true)
+                .addEqualsForType(ByteArrayInputStream.class, (o1, o2) -> {
+                    byte[] b1 = o1.readAllBytes();
+                    o1.reset();
+                    byte[] b2 = o2.readAllBytes();
+                    o2.reset();
+                    return Arrays.equals(b1, b2);
+                })
                 .addJacksonModule(new SimpleModule().addSerializer(BigDecimal.class, new BigDecimalSerializer())
                         .setMixInAnnotation(Throwable.class, ThrowableMixIn.class)
                         .setMixInAnnotation(FieldError.class, FieldErrorMixIn.class)
                         .setMixInAnnotation(FieldError.class, FieldErrorMixIn.class)
                         .setMixInAnnotation(SecureRandom.class, SecureRandomMixIn.class)
-                        .setMixInAnnotation(Resource.class, SpringResourceMixIn.class))
+                        .setMixInAnnotation(Resource.class, SpringResourceMixIn.class)
+                        .setMixInAnnotation(ByteArrayInputStream.class, ByteArrayInputStreamMixIn.class))
                 .addJacksonModule(new JavaTimeModule());
     }
 }
