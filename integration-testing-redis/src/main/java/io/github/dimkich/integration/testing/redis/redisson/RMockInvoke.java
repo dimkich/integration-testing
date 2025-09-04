@@ -45,12 +45,20 @@ public class RMockInvoke {
         return (RMap<K, V>) invocation.getMock();
     }
 
+    public int getArgCount() {
+        return invocation.getArguments().length;
+    }
+
     public Object getArg1() {
         return invocation.getArguments()[0];
     }
 
     public Object getArg2() {
         return invocation.getArguments()[1];
+    }
+
+    public Object getArg3() {
+        return invocation.getArguments()[2];
     }
 
     public Object proxyCall() {

@@ -7,7 +7,8 @@ import org.redisson.RedissonObject;
 import org.redisson.api.*;
 import org.redisson.jcache.JCache;
 
-import java.io.IOException;
+import javax.cache.processor.EntryProcessor;
+import javax.cache.processor.EntryProcessorResult;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -200,11 +201,35 @@ public class RedissonMockFactory {
         return mapCache;
     }
 
+    @SuppressWarnings("unchecked")
     public RedissonMock getJCache() {
         if (jCache == null) {
-            jCache = new RedissonMock(JCache.class).add("invoke", NULL).add("close", NULL)
+            jCache = new RedissonMock(JCache.class).add("invokeAll", mc -> {
+                        Map<Object, EntryProcessorResult<Object>> result = new LinkedHashMap<>();
+                        for (Object key : ((Set<?>) mc.getArg1())) {
+                            Object pr;
+                            if (mc.getArgCount() == 2) {
+                                pr = ((EntryProcessor) mc.getArg2()).process(
+                                        new MapMutableEntry<>(mc.getArg1(), mc.concurrentMap()));
+                            } else {
+                                pr = ((EntryProcessor) mc.getArg2()).process(
+                                        new MapMutableEntry<>(mc.getArg1(), mc.concurrentMap()), (Object[]) mc.getArg3());
+                            }
+                            result.put(key, () -> pr);
+                        }
+                        return result;
+                    })
+                    .add("invoke", mc -> {
+                        if (mc.getArgCount() == 2) {
+                            return ((EntryProcessor) mc.getArg2()).process(
+                                    new MapMutableEntry<>(mc.getArg1(), mc.concurrentMap()));
+                        } else {
+                            return ((EntryProcessor) mc.getArg2()).process(
+                                    new MapMutableEntry<>(mc.getArg1(), mc.concurrentMap()), (Object[]) mc.getArg3());
+                        }
+                    })
+                    .add("close", NULL).add("isClosed", FALSE)
                     .add("deregisterCacheEntryListener", NULL).add("unwrap", NULL)
-                    .add("invokeAll", NULL).add("isClosed", FALSE)
                     .add("registerCacheEntryListener", NULL).add("getCacheManager", NULL)
                     .add("getConfiguration", RMockInvoke::getConfig)
                     .add("getAndPut", mc -> mc.concurrentMap().put(mc.getArg1(), mc.getArg2()))
