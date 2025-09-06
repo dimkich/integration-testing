@@ -3,9 +3,8 @@ package io.github.dimkich.integration.testing;
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
 import io.github.dimkich.integration.testing.date.time.JavaTimeAdvice;
 import io.github.dimkich.integration.testing.execution.MockAnswer;
-import io.github.dimkich.integration.testing.execution.TestExecutor;
-import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
+import io.github.dimkich.integration.testing.execution.junit.SessionListener;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -29,7 +28,7 @@ public class DynamicTestBuilder {
         Test test = testMapper.readAllTests();
         test.check();
         junitExecutable.setRootTest(test);
-        junitExecutable.setExecutionListener(ExecutionListener.getLast());
+        junitExecutable.setExecutionListener(SessionListener.getExecutionListener());
         JavaTimeAdvice.setCallRealMethod(() -> !MockAnswer.isEnabled());
         JavaTimeAdvice.setCurrentTimeMillis(() -> dateTimeService.getDateTime().toInstant().toEpochMilli());
         JavaTimeAdvice.setGetNanoTimeAdjustment(o -> ChronoUnit.NANOS.between(Instant.ofEpochSecond(o),

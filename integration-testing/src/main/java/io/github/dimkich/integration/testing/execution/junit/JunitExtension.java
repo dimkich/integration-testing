@@ -1,6 +1,5 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
-import io.github.dimkich.integration.testing.assertion.FileOperations;
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
 import io.github.dimkich.integration.testing.execution.TestBeanMock;
@@ -20,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.List;
 
 public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
-    private static boolean initialized = false;
     @Getter
     private static List<TestOpenAPI> testOpenAPIS = List.of();
     @Getter
@@ -51,10 +49,6 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         constructorMocks = List.of(context.getRequiredTestClass().getAnnotationsByType(TestConstructorMock.class));
         staticMocks = List.of(context.getRequiredTestClass().getAnnotationsByType(TestStaticMock.class));
         testRestTemplates = List.of(context.getRequiredTestClass().getAnnotationsByType(TestRestTemplate.class));
-        if (!initialized) {
-            new FileOperations().clearTestsDir();
-            initialized = true;
-        }
     }
 
     @Override

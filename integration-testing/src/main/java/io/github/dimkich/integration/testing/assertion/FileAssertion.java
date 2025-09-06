@@ -11,10 +11,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.FileSystemUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.*;
 
 @RequiredArgsConstructor
@@ -24,30 +23,48 @@ public class FileAssertion implements Assertion {
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private JunitExecutable executable;
 
-    private final Set<String> initialized = new HashSet<>();
+    private final Set<Path> initialized = new HashSet<>();
     private final Map<Test, String> map = new HashMap<>();
     private String name;
     private int testIndex = 0;
 
     @Override
+    public boolean useTestTempDir() {
+        return true;
+    }
+
+    @Override
     public void assertTestsEquals(CompositeTestMapper mapper, Test expected, Test actual) throws Exception {
-        initialize(mapper.getFilePath());
         String expectedStr = mapper.getSingleTestAsString(expected);
         String actualStr = mapper.getSingleTestAsString(actual);
         if (Objects.equals(expectedStr, actualStr)) {
             return;
         }
         testIndex++;
-        String fileExpected = write(expectedStr, testIndex + "_expected.xml");
-        String fileActual = write(actualStr, testIndex + "_actual.xml");
+        Path dir = executable.getTestsDir();
+        if (name == null) {
+            name = RandomStringUtils.random(16, true, true) + "_";
+        }
+        if (!initialized.contains(dir)) {
+            initialized.add(dir);
+            FileSystemUtils.deleteRecursively(dir);
+            Files.createDirectories(dir);
+        }
+        String fileExpected = writeFile(dir.resolve(testIndex + "_expected.xml"), expectedStr);
+        String fileActual = writeFile(dir.resolve(testIndex + "_actual.xml"), actualStr);
         map.put(expected, name + testIndex);
         throw new FileComparisonFailure("error message", "[]", "[]", fileExpected, fileActual);
     }
 
     @Override
     public void afterTests(CompositeTestMapper mapper, Test rootTest) throws Exception {
-        replace(rootTest);
-        write(mapper.getRootTestAsString(rootTest), "template.xml");
+        if (testIndex > 0) {
+            replace(rootTest);
+            Path dir = executable.getTestsDir();
+            initialized.remove(dir);
+            writeFile(dir.resolve(SETTINGS_FILE), mapper.getFilePath() + "\n" + name);
+            writeFile(dir.resolve("template.xml"), mapper.getRootTestAsString(rootTest));
+        }
     }
 
     private void replace(Test test) {
@@ -67,27 +84,8 @@ public class FileAssertion implements Assertion {
         }
     }
 
-    private String write(String data, String fileNamePostfix) throws IOException {
-        String fileName = AssertionConfig.resultDir + File.separator + executable.getTestFullName()
-                + File.separator + fileNamePostfix;
-        Files.writeString(Paths.get(fileName), data);
-        return fileName;
-    }
-
-    private void initialize(String path) throws IOException {
-        if (initialized.contains(path)) {
-            return;
-        }
-        name = RandomStringUtils.random(16, true, true) + "_";
-
-        String dir = AssertionConfig.resultDir + File.separator + executable.getTestFullName()
-                + File.separator;
-        Files.createDirectories(Paths.get(dir));
-        File[] files = new File(dir).listFiles();
-        Arrays.stream(files == null ? new File[0] : files)
-                .forEach(FileSystemUtils::deleteRecursively);
-        Files.writeString(Paths.get(dir + SETTINGS_FILE),
-                path + "\n" + "<testCase name=\"" + name);
-        initialized.add(path);
+    private String writeFile(Path fileName, String data) throws IOException {
+        Files.writeString(fileName, data);
+        return fileName.toString();
     }
 }

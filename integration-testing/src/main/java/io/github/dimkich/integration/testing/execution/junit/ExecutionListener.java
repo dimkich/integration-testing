@@ -4,63 +4,44 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.discovery.UniqueIdSelector;
+import org.junit.platform.launcher.LauncherDiscoveryListener;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class ExecutionListener implements TestExecutionListener {
-    private static final Deque<ExecutionListener> instances = new ArrayDeque<>();
+public class ExecutionListener implements TestExecutionListener, LauncherDiscoveryListener {
     @Getter
     private final Deque<JunitTestInfo> junitTests = new ArrayDeque<>();
-    private DiscoveryListener discoveryListener;
-
-    public ExecutionListener() {
-        instances.addLast(this);
-    }
-
-    public static ExecutionListener getLast() {
-        return instances.getLast();
-    }
+    private final Set<UniqueId> lastTests = new HashSet<>();
 
     @Override
-    public void testPlanExecutionStarted(TestPlan testPlan) {
-        discoveryListener = DiscoveryListener.getLast();
-    }
-
-    @Override
-    public void testPlanExecutionFinished(TestPlan testPlan) {
-        discoveryListener = null;
-        DiscoveryListener.removeLast();
-        instances.removeLast();
+    public void launcherDiscoveryFinished(LauncherDiscoveryRequest request) {
+        request.getSelectorsByType(UniqueIdSelector.class).stream()
+                .map(UniqueIdCollector::new)
+                .collect(Collectors.toMap(Function.identity(), Function.identity(), UniqueIdCollector::max))
+                .values().stream()
+                .map(UniqueIdCollector::getId)
+                .forEach(lastTests::add);
     }
 
     @Override
     @SneakyThrows
     public void executionStarted(TestIdentifier testIdentifier) {
         UniqueId id = testIdentifier.getUniqueIdObject();
-        List<UniqueId.Segment> segments = id.getSegments();
-        if (segments.size() > 2) {
-            UniqueId.Segment segment = segments.get(segments.size() - 1);
-            switch (segment.getType()) {
-                case "test-factory":
-                    junitTests.addLast(new JunitTestInfo(id, discoveryListener.isLastTest(id)));
-                    break;
-                case "dynamic-container":
-                case "dynamic-test":
-                    junitTests.getLast().setSubTestIndex(Integer.parseInt(segment.getValue().substring(1)) - 1);
-                    junitTests.addLast(new JunitTestInfo(id, discoveryListener.isLastTest(id)));
-            }
+        if (id.getSegments().size() > 2) {
+            junitTests.addLast(new JunitTestInfo(id, lastTests.contains(id)));
         }
     }
 
     @Override
     @SneakyThrows
     public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-        if (testIdentifier.getUniqueIdObject().getSegments().size() > 2 && !junitTests.isEmpty()) {
+        if (testIdentifier.getUniqueIdObject().getSegments().size() > 2) {
             junitTests.removeLast();
         }
     }

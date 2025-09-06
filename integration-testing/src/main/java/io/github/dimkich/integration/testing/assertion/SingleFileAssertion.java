@@ -9,10 +9,10 @@ import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.util.FileSystemUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 
 @RequiredArgsConstructor
@@ -27,6 +27,11 @@ public class SingleFileAssertion implements Assertion {
     }
 
     @Override
+    public boolean useTestTempDir() {
+        return true;
+    }
+
+    @Override
     public void assertTestsEquals(CompositeTestMapper mapper, Test expected, Test actual) {
     }
 
@@ -37,9 +42,12 @@ public class SingleFileAssertion implements Assertion {
         if (Objects.equals(actual, expected)) {
             return;
         }
-        Files.createDirectories(Paths.get(AssertionConfig.resultDir));
-        String fileName = AssertionConfig.resultDir + executable.getTestFullName() + ".xml";
-        Files.writeString(Paths.get(fileName), actual);
-        throw new FileComparisonFailure("error message", "[]", "[]", mapper.getFilePath(), fileName);
+        Path dir = executable.getTestsDir();
+        FileSystemUtils.deleteRecursively(dir);
+        Files.createDirectories(dir);
+        Path actualFile = dir.resolve("actual.xml");
+        Files.writeString(actualFile, actual);
+        throw new FileComparisonFailure("error message", "[]", "[]", mapper.getFilePath(),
+                actualFile.toString());
     }
 }

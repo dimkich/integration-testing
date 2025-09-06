@@ -7,6 +7,10 @@ public interface Assertion {
         return true;
     }
 
+    default boolean useTestTempDir() {
+        return false;
+    }
+
     void assertTestsEquals(CompositeTestMapper mapper, Test expected, Test actual) throws Exception;
 
     void afterTests(CompositeTestMapper mapper, Test rootTest) throws Exception;
