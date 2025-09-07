@@ -1,6 +1,8 @@
 package io.github.dimkich.integration.testing.execution;
 
 import io.github.dimkich.integration.testing.*;
+import io.github.dimkich.integration.testing.assertion.AssertionConfig;
+import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.message.MessageDto;
@@ -13,19 +15,24 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assumptions;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.util.FileSystemUtils;
 
-import java.util.ArrayDeque;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Slf4j
 @Setter
 public class TestExecutor {
+    private static boolean testsTempDirCleared = false;
+
     private final BeanFactory beanFactory;
     private final Assertion assertion;
     private final WaitCompletionList waitCompletion;
@@ -42,18 +49,20 @@ public class TestExecutor {
     @Setter(onMethod_ = @Autowired(required = false))
     private TestMessagePoller testMessagePoller;
 
-    private final Deque<Test> testsToSkip = new ArrayDeque<>();
+    @Getter
+    private Path testsDir;
     @Getter
     private Test test;
+    @Setter
+    private ExecutionListener executionListener;
     private Test expectedTest;
+    @Getter
+    private Test lastTest;
 
     public void before(Test expectedTest) throws Exception {
         log.info(">>> {}", expectedTest.getFullName());
         log.info(testMapper.getCurrentPathAndLocation(expectedTest));
-        if (expectedTest.getDisabled() != null && expectedTest.getDisabled()) {
-            testsToSkip.add(expectedTest);
-        }
-        if (!testsToSkip.isEmpty()) {
+        if (expectedTest.getCalculatedDisabled()) {
             return;
         }
         this.expectedTest = expectedTest;
@@ -65,17 +74,33 @@ public class TestExecutor {
             test.setDataStorageDiff(null);
             test.setOutboundMessages(null);
         }
-        initializationService.beforeTest(test);
-        for (BeforeTest beforeTest : beforeTests) {
-            beforeTest.before(test);
-        }
+
+        test.before((t) -> {
+            if (t.getParentTest() == null) {
+                lastTest = executionListener.findLastTest(t);
+                testsDir = null;
+                if (assertion.useTestTempDir()) {
+                    testsDir = Path.of(AssertionConfig.resultDir).resolve(executionListener.getTestFilePath());
+                    if (!testsTempDirCleared) {
+                        for (File file : Objects.requireNonNull(new File(AssertionConfig.resultDir).listFiles())) {
+                            FileSystemUtils.deleteRecursively(file);
+                        }
+                        testsTempDirCleared = true;
+                    }
+                }
+            }
+            initializationService.beforeTest(t);
+            for (BeforeTest beforeTest : beforeTests) {
+                beforeTest.before(t);
+            }
+        });
         if (testDataStorages != null) {
             testDataStorages.setNewCurrentValue();
         }
     }
 
     public void runTest() throws Exception {
-        if (!testsToSkip.isEmpty()) {
+        if (expectedTest.getCalculatedDisabled()) {
             return;
         }
         waitCompletion.start();
@@ -111,20 +136,36 @@ public class TestExecutor {
     }
 
     public void after(Test test) throws Exception {
-        if (!testsToSkip.isEmpty()) {
-            if (testsToSkip.getLast() == test) {
-                testsToSkip.removeLast();
-            }
-            return;
-        }
-        initializationService.afterTest(test);
         try {
-            for (AfterTest afterTest : afterTests) {
-                afterTest.after(test);
+            test.after((t) -> {
+                if (!t.getCalculatedDisabled()) {
+                    initializationService.afterTest(t);
+                    for (AfterTest afterTest : afterTests) {
+                        afterTest.after(t);
+                    }
+                }
+                if (t.getParentTest() == null) {
+                    assertion.afterTests(testMapper, t);
+                }
+            }, lastTest);
+            if (test.getCalculatedDisabled()) {
+                Assumptions.abort();
             }
         } finally {
             this.test = null;
             this.expectedTest = null;
         }
+    }
+
+    public MockInvoke search(String mockName, String method, List<Object> args) {
+        return test.getParentsAndItselfDesc()
+                .map(tc -> tc.search(mockName, method, args))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public void addMockInvoke(MockInvoke invoke) {
+        test.getMockInvoke().add(invoke);
     }
 }

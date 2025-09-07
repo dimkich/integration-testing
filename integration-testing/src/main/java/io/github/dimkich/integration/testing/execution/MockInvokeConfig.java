@@ -1,6 +1,5 @@
 package io.github.dimkich.integration.testing.execution;
 
-import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
 import lombok.SneakyThrows;
 import org.springframework.beans.BeansException;
@@ -17,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@Import({MockService.class, JunitExecutable.class, TestExecutor.class})
+@Import({MockService.class, TestExecutor.class})
 @EnableConfigurationProperties(MockInvokeProperties.class)
 public class MockInvokeConfig implements BeanFactoryPostProcessor, SmartInstantiationAwareBeanPostProcessor, PriorityOrdered {
     private MockService mockService;

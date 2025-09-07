@@ -2,7 +2,7 @@ package io.github.dimkich.integration.testing.assertion;
 
 import io.github.dimkich.integration.testing.Assertion;
 import io.github.dimkich.integration.testing.Test;
-import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
+import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -19,7 +19,7 @@ import java.util.Objects;
 @ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "singleFile")
 public class SingleFileAssertion implements Assertion {
     @Setter(onMethod_ = {@Autowired, @Lazy})
-    private JunitExecutable executable;
+    private TestExecutor testExecutor;
 
     @Override
     public boolean makeTestDeepClone() {
@@ -42,7 +42,7 @@ public class SingleFileAssertion implements Assertion {
         if (Objects.equals(actual, expected)) {
             return;
         }
-        Path dir = executable.getTestsDir();
+        Path dir = testExecutor.getTestsDir();
         FileSystemUtils.deleteRecursively(dir);
         Files.createDirectories(dir);
         Path actualFile = dir.resolve("actual.xml");

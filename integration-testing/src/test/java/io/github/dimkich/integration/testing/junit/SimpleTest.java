@@ -31,13 +31,12 @@ public class SimpleTest {
     private static SimpleTest instance;
     @Getter
     private final List<String> executedTests = new ArrayList<>();
-    @Getter
-    private final List<String> lastTests = new ArrayList<>();
 
     @TestFactory
     Stream<DynamicNode> tests() throws Exception {
         Mockito.doAnswer(i -> {
-                    lastTests.add(i.<Test>getArgument(1).getName());
+                    Test tc = i.getArgument(1, Test.class);
+                    executedTests.add("afterTests " + (tc.getName() == null ? "root" : tc.getName()));
                     return null;
                 })
                 .when(assertion)
@@ -48,7 +47,6 @@ public class SimpleTest {
 
     public void clear() {
         executedTests.clear();
-        lastTests.clear();
     }
 
     @Configuration

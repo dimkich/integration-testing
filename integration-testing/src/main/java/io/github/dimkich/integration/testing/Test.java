@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import eu.ciechanowiec.sneakyfun.SneakyConsumer;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import io.github.dimkich.integration.testing.message.MessageDto;
 import lombok.Getter;
@@ -52,6 +53,10 @@ public abstract class Test {
     @JsonProperty("test")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<Test> subTests = new ArrayList<>();
+    @JsonIgnore
+    private boolean initialized;
+    @JsonIgnore
+    private Boolean calculatedDisabled;
 
     @JsonIgnore
     public abstract Type getType();
@@ -72,6 +77,31 @@ public abstract class Test {
         if (getType() == Type.TestPart && parentTest.getType() != Type.TestCase) {
             throw new RuntimeException("<test type=\"part\"> can only be a child of <test type=\"case\">");
         }
+    }
+
+    public void before(SneakyConsumer<Test, Exception> consumer) throws Exception {
+        if (!initialized) {
+            if (parentTest != null && !parentTest.initialized) {
+                parentTest.before(consumer);
+            }
+            check();
+            consumer.accept(this);
+            initialized = true;
+        }
+    }
+
+    public void after(SneakyConsumer<Test, Exception> consumer, Test lastTest) throws Exception {
+        consumer.accept(this);
+        if ((lastTest == this || isLastLeaf()) && parentTest != null) {
+            parentTest.after(consumer, lastTest == this ? parentTest : lastTest);
+        }
+    }
+
+    public Boolean getCalculatedDisabled() {
+        if (calculatedDisabled == null) {
+            calculatedDisabled = disabled != null ? disabled : parentTest != null && parentTest.getCalculatedDisabled();
+        }
+        return calculatedDisabled;
     }
 
     @JsonIgnore

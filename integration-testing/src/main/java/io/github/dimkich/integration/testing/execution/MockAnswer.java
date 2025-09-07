@@ -3,7 +3,6 @@ package io.github.dimkich.integration.testing.execution;
 
 import eu.ciechanowiec.sneakyfun.SneakyRunnable;
 import eu.ciechanowiec.sneakyfun.SneakySupplier;
-import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import io.github.sugarcubes.cloner.Cloner;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ public class MockAnswer implements Answer<Object> {
     private final String name;
     private final Set<String> methods;
     private final MockInvokeProperties properties;
-    private final JunitExecutable junitExecutable;
+    private final TestExecutor testExecutor;
     private final Cloner cloner;
     private final boolean isSpy;
     private final boolean cloneArgsAndResult;
@@ -56,7 +55,7 @@ public class MockAnswer implements Answer<Object> {
         }
         List<Object> args = Arrays.stream(invocation.getArguments()).toList();
         args = args.isEmpty() ? null : args;
-        MockInvoke mi = junitExecutable.search(name, invocation.getMethod().getName(), args);
+        MockInvoke mi = testExecutor.search(name, invocation.getMethod().getName(), args);
 
         boolean mockInvokeFound = mi != null;
         if (mi == null) {
@@ -66,7 +65,7 @@ public class MockAnswer implements Answer<Object> {
             if (cloneArgsAndResult) {
                 mi.setArg(mi.getArg().stream().map(cloner::clone).toList());
             }
-            junitExecutable.addMockInvoke(mi);
+            testExecutor.addMockInvoke(mi);
         }
         if (callRealMethod(mockInvokeFound)) {
             nestedCalls++;

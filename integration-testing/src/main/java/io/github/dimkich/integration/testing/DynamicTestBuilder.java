@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing;
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
 import io.github.dimkich.integration.testing.date.time.JavaTimeAdvice;
 import io.github.dimkich.integration.testing.execution.MockAnswer;
+import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import io.github.dimkich.integration.testing.execution.junit.SessionListener;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
@@ -19,16 +20,14 @@ import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public class DynamicTestBuilder {
-    private final JunitExecutable junitExecutable;
+    private final TestExecutor testExecutor;
     private final CompositeTestMapper testMapper;
     private final DateTimeService dateTimeService;
 
     public Stream<DynamicNode> build(String path) throws Exception {
         testMapper.setPath(path);
         Test test = testMapper.readAllTests();
-        test.check();
-        junitExecutable.setRootTest(test);
-        junitExecutable.setExecutionListener(SessionListener.getExecutionListener());
+        testExecutor.setExecutionListener(SessionListener.getExecutionListener());
         JavaTimeAdvice.setCallRealMethod(() -> !MockAnswer.isEnabled());
         JavaTimeAdvice.setCurrentTimeMillis(() -> dateTimeService.getDateTime().toInstant().toEpochMilli());
         JavaTimeAdvice.setGetNanoTimeAdjustment(o -> ChronoUnit.NANOS.between(Instant.ofEpochSecond(o),
@@ -39,11 +38,10 @@ public class DynamicTestBuilder {
 
     @SneakyThrows
     private DynamicNode toDynamicNode(Test test) {
-        test.check();
         if (test.isContainer()) {
             return DynamicContainer.dynamicContainer(test.getName(), test.getSubTests().stream()
                     .map(this::toDynamicNode));
         }
-        return DynamicTest.dynamicTest(test.getName(), junitExecutable);
+        return DynamicTest.dynamicTest(test.getName(), new JunitExecutable(test, testExecutor));
     }
 }

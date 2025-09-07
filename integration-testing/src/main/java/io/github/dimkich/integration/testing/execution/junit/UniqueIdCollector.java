@@ -9,20 +9,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-@EqualsAndHashCode(of = {"segments"})
+@EqualsAndHashCode(of = {"id"})
 class UniqueIdCollector {
     private UniqueId id;
-    private List<UniqueId.Segment> segments = new ArrayList<>();
     private List<Integer> indexes = new ArrayList<>();
 
     public UniqueIdCollector(UniqueIdSelector selector) {
-        id = selector.getUniqueId();
         List<UniqueId.Segment> segments = selector.getUniqueId().getSegments();
-        for (int i = 0; i < segments.size(); i++) {
+        id = UniqueId.root(segments.get(0).getType(), segments.get(0).getValue());
+        for (int i = 1; i < segments.size(); i++) {
             if (i < 3) {
-                this.segments.add(segments.get(i));
+                id = id.append(segments.get(i));
             } else {
-                indexes.add(Integer.valueOf(segments.get(i).getValue().substring(1)));
+                indexes.add(Integer.parseInt(segments.get(i).getValue().substring(1)) - 1);
             }
         }
     }

@@ -1,6 +1,5 @@
 package io.github.dimkich.integration.testing.execution;
 
-import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
 import io.github.dimkich.integration.testing.util.ByteBuddyUtils;
 import io.github.sugarcubes.cloner.Cloner;
@@ -18,7 +17,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +29,7 @@ public class MockService {
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private Cloner cloner;
     @Setter(onMethod_ = {@Autowired, @Lazy})
-    private JunitExecutable junitExecutable;
+    private TestExecutor testExecutor;
 
     private final Set<String> mocks = new HashSet<>();
     private final List<ScopedMock> scopedMocks = new ArrayList<>();
@@ -116,7 +118,7 @@ public class MockService {
             }
             mocks.add(name);
             Set<String> methods = this.methods.length == 0 ? null : Set.of(this.methods);
-            return new MockAnswer(name, methods, properties, junitExecutable, cloner, spy, cloneArgsAndResult);
+            return new MockAnswer(name, methods, properties, testExecutor, cloner, spy, cloneArgsAndResult);
         }
     }
 }

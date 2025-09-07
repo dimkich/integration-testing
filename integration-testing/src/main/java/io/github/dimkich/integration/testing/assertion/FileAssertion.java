@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.assertion;
 
 import io.github.dimkich.integration.testing.*;
-import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
+import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -21,7 +21,7 @@ import java.util.*;
 public class FileAssertion implements Assertion {
     private static final String SETTINGS_FILE = "settings.txt";
     @Setter(onMethod_ = {@Autowired, @Lazy})
-    private JunitExecutable executable;
+    private TestExecutor executor;
 
     private final Set<Path> initialized = new HashSet<>();
     private final Map<Test, String> map = new HashMap<>();
@@ -41,7 +41,7 @@ public class FileAssertion implements Assertion {
             return;
         }
         testIndex++;
-        Path dir = executable.getTestsDir();
+        Path dir = executor.getTestsDir();
         if (name == null) {
             name = RandomStringUtils.random(16, true, true) + "_";
         }
@@ -60,7 +60,7 @@ public class FileAssertion implements Assertion {
     public void afterTests(CompositeTestMapper mapper, Test rootTest) throws Exception {
         if (testIndex > 0) {
             replace(rootTest);
-            Path dir = executable.getTestsDir();
+            Path dir = executor.getTestsDir();
             initialized.remove(dir);
             writeFile(dir.resolve(SETTINGS_FILE), mapper.getFilePath() + "\n" + name);
             writeFile(dir.resolve("template.xml"), mapper.getRootTestAsString(rootTest));

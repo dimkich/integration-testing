@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectUniqueId;
 
@@ -57,7 +56,6 @@ public class JunitIntegrationTest {
             LauncherFactory.create().execute(LauncherDiscoveryRequestBuilder.request()
                     .selectors(selectors.stream().map(Selector::toSelector).collect(Collectors.toList()))
                     .build());
-            assertEquals(1, SimpleTest.getInstance().getLastTests().size());
             List<String> result = new ArrayList<>(SimpleTest.getInstance().getExecutedTests());
             SimpleTest.getInstance().clear();
             return result;
