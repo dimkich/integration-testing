@@ -40,7 +40,7 @@ class JsonTestMapperTest {
 
     @Autowired
     public JsonTestMapperTest(JsonTestMapper jsonTestMapper) {
-        jsonMapper = (JsonMapper) (jsonTestMapper.unwrap());
+        jsonMapper = jsonTestMapper.unwrap();
         jsonMapper.disable(SerializationFeature.INDENT_OUTPUT);
     }
 
