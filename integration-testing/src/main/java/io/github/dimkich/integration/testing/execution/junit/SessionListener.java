@@ -1,28 +1,26 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
+import lombok.Getter;
 import org.junit.platform.launcher.LauncherSession;
 import org.junit.platform.launcher.LauncherSessionListener;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SessionListener implements LauncherSessionListener {
-    private final static Deque<ExecutionListener> executions = new ArrayDeque<>();
-
-    public static ExecutionListener getExecutionListener() {
-        return executions.getLast();
-    }
+    @Getter
+    private static ExecutionListener executionListener;
+    private static final Map<SessionListener, ExecutionListener> listenerMap = new HashMap<>();
 
     @Override
     public void launcherSessionOpened(LauncherSession session) {
-        ExecutionListener executionListener = new ExecutionListener();
-        session.getLauncher().registerLauncherDiscoveryListeners(executionListener);
-        session.getLauncher().registerTestExecutionListeners(executionListener);
-        executions.addLast(executionListener);
-    }
-
-    @Override
-    public void launcherSessionClosed(LauncherSession session) {
-        executions.removeLast();
+        ExecutionListener listener = listenerMap.get(this);
+        if (listener == null) {
+            listener = new ExecutionListener();
+            session.getLauncher().registerLauncherDiscoveryListeners(listener);
+            session.getLauncher().registerTestExecutionListeners(listener);
+            listenerMap.put(this, listener);
+        }
+        executionListener = listener;
     }
 }
