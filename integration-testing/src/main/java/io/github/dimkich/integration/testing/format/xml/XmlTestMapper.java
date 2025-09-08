@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.core.io.ClassPathResource;
 
-import javax.xml.stream.Location;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -17,7 +16,6 @@ import java.io.IOException;
 public class XmlTestMapper implements TestMapper {
     private final static String fileHeader = "<!-- @" + "formatter:off -->";
     private final XmlMapper xmlMapper;
-    private final ObjectToLocationStorage objectToLocationStorage;
 
     @Setter
     private String path;
@@ -28,12 +26,7 @@ public class XmlTestMapper implements TestMapper {
     }
 
     public Test readAllTests() throws IOException {
-        objectToLocationStorage.start();
-        try {
-            return xmlMapper.readValue(new ClassPathResource(path).getInputStream(), TestContainer.class);
-        } finally {
-            objectToLocationStorage.end();
-        }
+        return xmlMapper.readValue(new ClassPathResource(path).getInputStream(), TestContainer.class);
     }
 
     public void writeRootTest(Test test) throws IOException {
@@ -60,12 +53,8 @@ public class XmlTestMapper implements TestMapper {
     }
 
     public String getCurrentPathAndLocation(Test test) throws IOException {
-        String result = TestUtils.getTestResourceFile(path).getCanonicalPath().replace("\\", "/");
-        Location location = objectToLocationStorage.getLocation(test);
-        if (location != null) {
-            result += ":" + location.getLineNumber() + ":" + location.getColumnNumber();
-        }
-        return result;
+        return TestUtils.getTestResourceFile(path).getCanonicalPath().replace("\\", "/")
+                + ":" + test.getLineNumber() + ":" + test.getColumnNumber();
     }
 
     @Override

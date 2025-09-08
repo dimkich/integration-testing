@@ -1,5 +1,8 @@
 package io.github.dimkich.integration.testing.format;
 
+import io.github.dimkich.integration.testing.TestCase;
+import io.github.dimkich.integration.testing.TestContainer;
+import io.github.dimkich.integration.testing.TestPart;
 import lombok.SneakyThrows;
 import org.assertj.core.api.recursive.comparison.ComparisonDifference;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
@@ -17,6 +20,7 @@ import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 public class FormatTestUtils {
@@ -31,32 +35,17 @@ public class FormatTestUtils {
 
             compConfig.registerEqualsForType((o1, o2) -> true, SecureRandom.class);
             compConfig.registerEqualsForType((o1, o2) -> Arrays.equals(((ByteArrayResource) o1).getByteArray(),
-                    ((ByteArrayResource)o2).getByteArray()), sr2Class);
+                    ((ByteArrayResource) o2).getByteArray()), sr2Class);
             compConfig.registerEqualsForType((o1, o2) -> o1.stripTrailingZeros().equals(o2.stripTrailingZeros()),
                     BigDecimal.class);
             compConfig.compareOnlyFieldsOfTypes();
 
-            RecursiveComparisonConfiguration exceptionConfig = new RecursiveComparisonConfiguration();
-            exceptionConfig.ignoreFields("backtrace", "statusText");
-            compConfig.registerEqualsForType((o1, o2) -> {
-                        List<ComparisonDifference> diff = compCalculator.determineDifferences(o1, o2, exceptionConfig);
-                        if (!diff.isEmpty()) {
-                            System.out.println(diff.stream().map(Objects::toString).collect(Collectors.joining("\n")));
-                        }
-                        return diff.isEmpty();
-                    },
+            compConfig.registerEqualsForType(equalsIgnoreFields("backtrace", "statusText"),
                     HttpClientErrorException.BadRequest.class);
-
-            RecursiveComparisonConfiguration requestEntityConfig = new RecursiveComparisonConfiguration();
-            requestEntityConfig.ignoreFields("type");
-            compConfig.registerEqualsForType((o1, o2) -> {
-                        List<ComparisonDifference> diff = compCalculator.determineDifferences(o1, o2, requestEntityConfig);
-                        if (!diff.isEmpty()) {
-                            System.out.println(diff.stream().map(Objects::toString).collect(Collectors.joining("\n")));
-                        }
-                        return diff.isEmpty();
-                    },
-                    RequestEntity.class);
+            compConfig.registerEqualsForType(equalsIgnoreFields("type"), RequestEntity.class);
+            compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber"), TestContainer.class);
+            compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber"), TestCase.class);
+            compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber"), TestPart.class);
 
             sr2 = sr2Class.getDeclaredConstructor(ResourceHttpMessageConverter.class, byte[].class,
                     HttpInputMessage.class);
@@ -89,5 +78,17 @@ public class FormatTestUtils {
             map.put((K) keyValues[i], (V) keyValues[i + 1]);
         }
         return map;
+    }
+
+    public static <T> BiPredicate<? super T, ? super T> equalsIgnoreFields(String... fields) {
+        RecursiveComparisonConfiguration config = new RecursiveComparisonConfiguration();
+        config.ignoreFields(fields);
+        return (o1, o2) -> {
+            List<ComparisonDifference> diff = compCalculator.determineDifferences(o1, o2, config);
+            if (!diff.isEmpty()) {
+                System.out.println(diff.stream().map(Objects::toString).collect(Collectors.joining("\n")));
+            }
+            return diff.isEmpty();
+        };
     }
 }

@@ -1,23 +1,21 @@
-package io.github.dimkich.integration.testing.format.xml;
+package io.github.dimkich.integration.testing.format.common.location;
 
+import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.deser.std.DelegatingDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.util.NameTransformer;
-import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import eu.ciechanowiec.sneakyfun.SneakySupplier;
+import io.github.dimkich.integration.testing.Test;
 
-import javax.xml.stream.Location;
 import java.io.IOException;
 
-public class StoreLocationSerializer extends DelegatingDeserializer {
-    private final ObjectToLocationStorage objectToLocationStorage;
+public class StoreLocationDeserializer extends DelegatingDeserializer {
 
-    public StoreLocationSerializer(JsonDeserializer<?> d, ObjectToLocationStorage objectToLocationStorage) {
+    public StoreLocationDeserializer(JsonDeserializer<?> d) {
         super(d);
-        this.objectToLocationStorage = objectToLocationStorage;
     }
 
     @Override
@@ -41,12 +39,13 @@ public class StoreLocationSerializer extends DelegatingDeserializer {
     }
 
     private Object deserialize(JsonParser p, SneakySupplier<Object, IOException> objectSupplier) throws IOException {
-        Location location = null;
-        if (p instanceof FromXmlParser parser) {
-            location = parser.getStaxReader().getLocation();
-        }
+        JsonLocation location = p.currentLocation();
         Object object = objectSupplier.get();
-        objectToLocationStorage.put(object, location);
+        if (location != null) {
+            Test test = (Test) object;
+            test.setLineNumber(location.getLineNr());
+            test.setColumnNumber(location.getColumnNr());
+        }
         return object;
     }
 
@@ -62,6 +61,6 @@ public class StoreLocationSerializer extends DelegatingDeserializer {
 
     @Override
     protected JsonDeserializer<?> newDelegatingInstance(JsonDeserializer<?> newDelegatee) {
-        return new StoreLocationSerializer(newDelegatee, objectToLocationStorage);
+        return new StoreLocationDeserializer(newDelegatee);
     }
 }

@@ -28,9 +28,8 @@ import java.util.Set;
 @Configuration
 @RequiredArgsConstructor
 @ConditionalOnClass(XmlMapper.class)
-@Import({ObjectToLocationStorage.class, CommonFormatConfig.class, XmlTestTypeResolverBuilder.class})
+@Import({CommonFormatConfig.class, XmlTestTypeResolverBuilder.class})
 public class XmlConfig {
-    private final ObjectToLocationStorage objectToLocationStorage;
     @Setter(onMethod = @__({@Autowired, @Lazy}))
     private XmlTestTypeResolverBuilder resolverBuilder;
 
@@ -58,7 +57,7 @@ public class XmlConfig {
         configurer.configure(builder);
 
         builder.addModules(new SimpleModule()
-                        .setDeserializerModifier(new StoreLocationBeanDeserializerModifier(objectToLocationStorage)),
+                        .setDeserializerModifier(new WrapperHandlingModifier()),
                 new BeanAsAttributesModule(resolverBuilder), new PolymorphicUnwrappedModule(resolverBuilder),
                 new MapModule(), new ScalarTypeModule(Set.of(String.class, Boolean.class, Integer.class, Double.class)));
 
@@ -66,6 +65,6 @@ public class XmlConfig {
 
         configurer.configure(xmlMapper);
 
-        return new XmlTestMapper(xmlMapper, objectToLocationStorage);
+        return new XmlTestMapper(xmlMapper);
     }
 }

@@ -16,7 +16,6 @@ import java.io.IOException;
 public class JsonTestMapper implements TestMapper {
     private final ObjectMapper objectMapper;
     private final static String fileHeader = "/* @" + "formatter:off */";
-    //    private final ObjectToLocationStorage objectToLocationStorage;
     @Setter
     private String path;
 
@@ -49,12 +48,8 @@ public class JsonTestMapper implements TestMapper {
 
     @Override
     public String getCurrentPathAndLocation(Test test) throws IOException {
-        String result = TestUtils.getTestResourceFile(path).getCanonicalPath();
-//        Location location = objectToLocationStorage.getLocation(test);
-//        if (location != null) {
-//            result += ":" + location.getLineNumber() + ":" + location.getColumnNumber();
-//        }
-        return result;
+        return TestUtils.getTestResourceFile(path).getCanonicalPath().replace("\\", "/")
+                + ":" + test.getLineNumber() + ":" + test.getColumnNumber();
     }
 
     @Override

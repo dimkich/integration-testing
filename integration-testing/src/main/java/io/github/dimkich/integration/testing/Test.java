@@ -57,6 +57,10 @@ public abstract class Test {
     private boolean initialized;
     @JsonIgnore
     private Boolean calculatedDisabled;
+    @JsonIgnore
+    private int lineNumber;
+    @JsonIgnore
+    private int columnNumber;
 
     @JsonIgnore
     public abstract Type getType();

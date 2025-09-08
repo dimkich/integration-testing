@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.dimkich.integration.testing.*;
+import io.github.dimkich.integration.testing.format.common.location.StoreLocationModule;
 import io.github.dimkich.integration.testing.format.common.mixin.ByteArrayInputStreamMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.SecureRandomMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.SpringResourceMixIn;
@@ -71,6 +72,7 @@ public class CommonFormatConfig {
                         .setMixInAnnotation(SecureRandom.class, SecureRandomMixIn.class)
                         .setMixInAnnotation(Resource.class, SpringResourceMixIn.class)
                         .setMixInAnnotation(ByteArrayInputStream.class, ByteArrayInputStreamMixIn.class))
-                .addJacksonModule(new JavaTimeModule());
+                .addJacksonModule(new JavaTimeModule())
+                .addJacksonModule(new StoreLocationModule());
     }
 }
