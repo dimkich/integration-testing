@@ -24,7 +24,11 @@ public class XmlTestMapper extends TestMapper {
     }
 
     private String removeFirstLine(String text) {
-        return text.substring(text.indexOf('\n'));
+        int i = text.indexOf('\n');
+        while (Character.isWhitespace(text.charAt(i))) {
+            i++;
+        }
+        return text.substring(i);
     }
 
     @Override
