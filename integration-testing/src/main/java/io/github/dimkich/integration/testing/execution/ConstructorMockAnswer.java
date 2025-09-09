@@ -46,7 +46,7 @@ public class ConstructorMockAnswer implements Answer<Object> {
 
             @Override
             public Object callRealMethod() throws Throwable {
-                return invocation.getMethod().invoke(object, invocation.getArguments());
+                return invocation.getMethod().invoke(object, invocation.getRawArguments());
             }
         });
     }
