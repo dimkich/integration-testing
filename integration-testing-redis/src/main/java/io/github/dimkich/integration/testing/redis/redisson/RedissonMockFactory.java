@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import org.redisson.RedissonObject;
 import org.redisson.api.*;
 import org.redisson.jcache.JCache;
+import org.redisson.jcache.JCacheEntry;
 
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorResult;
@@ -235,8 +236,10 @@ public class RedissonMockFactory {
                     .add("getAndPut", mc -> mc.concurrentMap().put(mc.getArg1(), mc.getArg2()))
                     .add("getAndReplace", mc -> mc.concurrentMap().put(mc.getArg1(), mc.getArg2()))
                     .add("getAndRemove", mc -> mc.concurrentMap().remove(mc.getArg1()))
-                    .add("iterator", mc -> mc.concurrentMap().entrySet().iterator())
-                    .add("spliterator", mc -> mc.concurrentMap().entrySet().spliterator())
+                    .add("iterator", mc -> mc.concurrentMap().entrySet().stream()
+                            .map(e -> new JCacheEntry<>(e.getKey(), e.getValue())).iterator())
+                    .add("spliterator", mc -> mc.concurrentMap().entrySet().stream()
+                            .map(e -> new JCacheEntry<>(e.getKey(), e.getValue())).spliterator())
                     .add("removeAll",
                             mc -> {
                                 ((Collection<?>) mc.getArg1()).forEach(v -> mc.concurrentMap().remove(v));
