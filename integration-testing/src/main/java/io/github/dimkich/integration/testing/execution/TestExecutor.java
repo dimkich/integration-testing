@@ -88,6 +88,9 @@ public class TestExecutor {
                         testsTempDirCleared = true;
                     }
                 }
+                if (testDataStorages != null) {
+                    testDataStorages.affectAllStorages();
+                }
             }
             initializationService.beforeTest(t);
             for (BeforeTest beforeTest : beforeTests) {

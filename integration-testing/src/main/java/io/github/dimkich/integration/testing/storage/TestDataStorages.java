@@ -3,7 +3,6 @@ package io.github.dimkich.integration.testing.storage;
 import eu.ciechanowiec.sneakyfun.SneakyFunction;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.execution.MockAnswer;
-import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ public class TestDataStorages {
     private final Map<String, TestDataStorage> storageMap;
     private final ObjectsDifference objectsDifference;
     private final StorageProperties properties;
-    private final TestExecutor testExecutor;
 
     private final Set<TestDataStorage> affectedStorages = new HashSet<>();
     private Map<String, Map<String, Object>> currentValue = new LinkedHashMap<>();
@@ -60,6 +58,10 @@ public class TestDataStorages {
 
     public void addAffectedStorage(TestDataStorage storage) {
         affectedStorages.add(storage);
+    }
+
+    public void affectAllStorages() {
+        affectedStorages.addAll(storageMap.values());
     }
 
     public void setNewCurrentValue() {
