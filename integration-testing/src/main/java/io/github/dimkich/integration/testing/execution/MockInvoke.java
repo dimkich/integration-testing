@@ -3,14 +3,12 @@ package io.github.dimkich.integration.testing.execution;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import io.github.dimkich.integration.testing.TestSetupModule;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonDifferenceCalculator;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +31,9 @@ public class MockInvoke {
     private String name;
     @JacksonXmlProperty(isAttribute = true)
     private String method;
+    @JacksonXmlProperty(isAttribute = true)
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private boolean disabled;
     private List<Object> arg;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<MockInvokeResult> result;
@@ -41,7 +42,7 @@ public class MockInvoke {
 
     @SuppressWarnings("unchecked")
     public static void addEqualsForType(Class<?> type, BiPredicate<?, ?> equals) {
-        compConfig.registerEqualsForType((BiPredicate<Object, Object>)equals, (Class<Object>)type);
+        compConfig.registerEqualsForType((BiPredicate<Object, Object>) equals, (Class<Object>) type);
     }
 
     public void addResult(Object result) {
@@ -89,6 +90,9 @@ public class MockInvoke {
     public boolean equalsTo(String name, String method, List<Object> arg) {
         if (!Objects.equals(this.name, name) || !Objects.equals(this.method, method)) {
             return false;
+        }
+        if (disabled) {
+            return true;
         }
         if (this.arg == null || arg == null) {
             return this.arg == arg;

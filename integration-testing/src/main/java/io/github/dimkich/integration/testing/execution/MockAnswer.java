@@ -56,6 +56,9 @@ public class MockAnswer implements Answer<Object> {
         List<Object> args = Arrays.stream(invocation.getArguments()).toList();
         args = args.isEmpty() ? null : args;
         MockInvoke mi = testExecutor.search(name, invocation.getMethod().getName(), args);
+        if (mi != null && mi.isDisabled()) {
+            return invocation.callRealMethod();
+        }
 
         boolean mockInvokeFound = mi != null;
         if (mi == null) {
