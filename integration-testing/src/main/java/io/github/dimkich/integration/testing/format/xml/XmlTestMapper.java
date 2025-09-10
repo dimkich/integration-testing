@@ -15,7 +15,7 @@ public class XmlTestMapper extends TestMapper {
 
     @Override
     public String getRootTestAsString(Test test) throws IOException {
-        return "<?xml version='1.1' encoding='UTF-8'?>" + System.lineSeparator() + fileHeader
+        return "<?xml version='1.1' encoding='UTF-8'?>" + System.lineSeparator() + fileHeader + System.lineSeparator()
                 + removeFirstLine(super.getRootTestAsString(test));
     }
 
