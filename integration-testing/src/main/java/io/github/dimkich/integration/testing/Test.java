@@ -32,7 +32,8 @@ public abstract class Test {
     @JacksonXmlProperty(isAttribute = true)
     private String name;
     @JacksonXmlProperty(isAttribute = true)
-    private Boolean disabled;
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private boolean disabled;
     @JsonProperty("init")
     @JsonManagedReference
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -103,7 +104,7 @@ public abstract class Test {
 
     public Boolean getCalculatedDisabled() {
         if (calculatedDisabled == null) {
-            calculatedDisabled = disabled != null ? disabled : parentTest != null && parentTest.getCalculatedDisabled();
+            calculatedDisabled = disabled ? disabled : parentTest != null && parentTest.getCalculatedDisabled();
         }
         return calculatedDisabled;
     }
