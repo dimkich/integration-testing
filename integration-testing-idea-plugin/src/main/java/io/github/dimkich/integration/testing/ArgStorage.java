@@ -15,13 +15,17 @@ import java.util.stream.Stream;
 @State(name = "org.intellij.sdk.settings.AppSettings", storages = @Storage("IntegrationTestsSettingsPlugin.xml"))
 public class ArgStorage implements PersistentStateComponent<PluginState> {
     private final Map<String, Arg> args = Stream.of(
-            new ArgComboBox("assertion", "-Dintegration.testing.assertion=", "string - assert test cases as strings;<br /><br />saveActualData - no actual assertion is performed. Saving actual data from code;<br /><br />file - assert test cases as files, what allows transfer changes in convenient file compare dialog. After all transfers are done, press 'Save file assertion' button;<br /><br />singleFile - all test cases are compared in a single file compare dialog",
-                    "string", "saveActualData", "file", "singleFile"),
+            new ArgComboBox("assertion", "-Dintegration.testing.assertion=",
+                    "string - assert test cases as strings;<br /><br />saveActualData - no actual assertion is performed. Saving actual data from code;<br /><br />file - assert test cases as files, what allows transfer changes in convenient file compare dialog. After all transfers are done, press 'Save file assertion' button;<br /><br />singleFile - all test cases are compared in a single file compare dialog",
+                    "String", "SaveActualData", "File", "SingleFile"),
+            new ArgComboBox("repeat    ", "-Dintegration.testing.repeat=",
+                    "Once - run tests ones;<br /><br />Until Stopped - repeat tests execution until tests are stopped manually",
+                    "Once", "UntilStopped"),
             new ArgCheckBox("useMocks", "-Dintegration.testing.environment=mock", "Try to use less services started with docker. Speed up tests for local development."),
-            new ArgCheckBox("mockAlwaysCallRealMethods", "-Dintegration.testing.mock.mockAlwaysCallRealMethods=true", "Allways calls real methods of mocks declared with @TestBeanMocks. Used to fill test data from real service calls."),
-            new ArgCheckBox("mockCallRealMethodsOnNoData", "-Dintegration.testing.mock.mockCallRealMethodsOnNoData=true", "Calls real method of mocks declared with @TestBeanMocks, only when data for mock is not filled. Used to fill test data from real service calls."),
-            new ArgCheckBox("mockReturnMockOnNoData", "-Dintegration.testing.mock.mockReturnMockOnNoData=true", "Returns Mokito deep mock when calling method of mock declared with @TestBeanMocks, only when data for mock is not filled. Used to fill initial data."),
-            new ArgCheckBox("spyCreateData", "-Dintegration.testing.mock.spyCreateData=true", "Allways fill data of spy method calls declared with @TestBeanMocks. Used to fill initial data."),
+            new ArgCheckBox("mockAlwaysCallRealMethods", "-Dintegration.testing.mock.mockAlwaysCallRealMethods=true", "Allways calls real methods of mocks declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock. Used to fill test data from real service calls."),
+            new ArgCheckBox("mockCallRealMethodsOnNoData", "-Dintegration.testing.mock.mockCallRealMethodsOnNoData=true", "Calls real method of mocks declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock, only when data for mock is not filled. Used to fill test data from real service calls."),
+            new ArgCheckBox("mockReturnMockOnNoData", "-Dintegration.testing.mock.mockReturnMockOnNoData=true", "Returns Mokito deep mock when calling method of mock declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock, only when data for mock is not filled. Used to fill initial data."),
+            new ArgCheckBox("spyCreateData", "-Dintegration.testing.mock.spyCreateData=true", "Allways fill data of spy method calls declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock. Used to fill initial data."),
             new ArgLabel("Hibernate"),
             new ArgCheckBox("hibernateShowSql", "-Dspring.jpa.properties.hibernate.show_sql=true", "Show hibernate sql"),
             new ArgCheckBox("hibernateUseSqlComments", "-Dspring.jpa.properties.hibernate.use_sql_comments=true", "Show hibernate sql comments"),

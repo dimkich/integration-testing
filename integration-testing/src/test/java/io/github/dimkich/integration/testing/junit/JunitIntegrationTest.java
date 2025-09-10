@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,6 +56,16 @@ public class JunitIntegrationTest {
         public List<String> execute(List<Selector> selectors) {
             LauncherFactory.create().execute(LauncherDiscoveryRequestBuilder.request()
                     .selectors(selectors.stream().map(Selector::toSelector).collect(Collectors.toList()))
+                    .build());
+            List<String> result = new ArrayList<>(SimpleTest.getInstance().getExecutedTests());
+            SimpleTest.getInstance().clear();
+            return result;
+        }
+
+        public List<String> filter(Set<String> names) throws ClassNotFoundException {
+            SimpleTest.setFilter(t -> names.contains(t.getName()));
+            LauncherFactory.create().execute(LauncherDiscoveryRequestBuilder.request()
+                    .selectors(new ClassSelector(SimpleTest.class.getName()).toSelector())
                     .build());
             List<String> result = new ArrayList<>(SimpleTest.getInstance().getExecutedTests());
             SimpleTest.getInstance().clear();
@@ -98,8 +109,8 @@ public class JunitIntegrationTest {
         @Override
         public DiscoverySelector toSelector() {
             return selectUniqueId("[engine:junit-jupiter]/" +
-                                  "[class:" + SimpleTest.class.getName() + "]" +
-                                  "/[test-factory:tests()]/" + selector);
+                    "[class:" + SimpleTest.class.getName() + "]" +
+                    "/[test-factory:tests()]/" + selector);
         }
     }
 }

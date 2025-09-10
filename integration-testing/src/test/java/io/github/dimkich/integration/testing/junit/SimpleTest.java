@@ -4,6 +4,7 @@ import io.github.dimkich.integration.testing.*;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.TestFactory;
 import org.mockito.Mockito;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -31,6 +33,8 @@ public class SimpleTest {
     private static SimpleTest instance;
     @Getter
     private final List<String> executedTests = new ArrayList<>();
+    @Setter
+    private static Predicate<Test> filter;
 
     @TestFactory
     Stream<DynamicNode> tests() throws Exception {
@@ -42,11 +46,16 @@ public class SimpleTest {
                 .when(assertion)
                 .afterTests(any(CompositeTestMapper.class), any(Test.class));
         instance = this;
-        return dynamicTestBuilder.build("junit/simple.xml");
+        if (filter == null) {
+            return dynamicTestBuilder.build("junit/simple.xml");
+        } else {
+            return dynamicTestBuilder.build("junit/simple.xml", filter);
+        }
     }
 
     public void clear() {
         executedTests.clear();
+        filter = null;
     }
 
     @Configuration

@@ -12,10 +12,10 @@ public class ArgComboBox extends JPanel implements Arg {
 
     public ArgComboBox(String text, String arg, String tip, String... values) {
         super(new FlowLayout(FlowLayout.LEFT));
-        comboBox = new ComboBox<>(values);
-        add(comboBox);
         label = new JLabel(text);
         add(label);
+        comboBox = new ComboBox<>(values);
+        add(comboBox);
         this.arg = arg;
         setToolTipText("<html><p width=\"200\">" + tip + "</p></html>");
         comboBox.setToolTipText(getToolTipText());

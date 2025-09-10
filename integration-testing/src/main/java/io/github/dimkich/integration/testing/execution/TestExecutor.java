@@ -57,6 +57,7 @@ public class TestExecutor {
     private ExecutionListener executionListener;
     private Test expectedTest;
     @Getter
+    @Setter
     private Test lastTest;
 
     public void before(Test expectedTest) throws Exception {
@@ -141,11 +142,9 @@ public class TestExecutor {
     public void after(Test test) throws Exception {
         try {
             test.after((t) -> {
-                if (!t.getCalculatedDisabled()) {
-                    initializationService.afterTest(t);
-                    for (AfterTest afterTest : afterTests) {
-                        afterTest.after(t);
-                    }
+                initializationService.afterTest(t);
+                for (AfterTest afterTest : afterTests) {
+                    afterTest.after(t);
                 }
                 if (t.getParentTest() == null) {
                     assertion.afterTests(testMapper, t);

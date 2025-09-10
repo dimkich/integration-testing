@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "file")
+@ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "File")
 public class FileAssertion implements Assertion {
     private static final String SETTINGS_FILE = "settings.txt";
     @Setter(onMethod_ = {@Autowired, @Lazy})

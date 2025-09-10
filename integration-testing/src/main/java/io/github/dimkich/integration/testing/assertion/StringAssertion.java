@@ -6,7 +6,7 @@ import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "string")
+@ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "String")
 public class StringAssertion implements Assertion {
 
     @Override

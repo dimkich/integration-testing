@@ -5,7 +5,7 @@ import io.github.dimkich.integration.testing.Test;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "saveActualData")
+@ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "SaveActualData")
 public class SaveActualDataAssertion implements Assertion {
     @Override
     public boolean makeTestDeepClone() {

@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "singleFile")
+@ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "SingleFile")
 public class SingleFileAssertion implements Assertion {
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private TestExecutor testExecutor;

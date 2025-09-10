@@ -96,7 +96,10 @@ public abstract class Test {
     }
 
     public void after(SneakyConsumer<Test, Exception> consumer, Test lastTest) throws Exception {
-        consumer.accept(this);
+        if (initialized) {
+            consumer.accept(this);
+            initialized = false;
+        }
         if ((lastTest == this || isLastLeaf()) && parentTest != null) {
             parentTest.after(consumer, lastTest == this ? parentTest : lastTest);
         }

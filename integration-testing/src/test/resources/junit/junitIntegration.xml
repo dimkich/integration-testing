@@ -145,4 +145,106 @@
             <response type="string">afterTests root</response>
         </response>
     </test>
+    <test type="case" name="filter first">
+        <bean>launcher</bean>
+        <method>filter</method>
+        <request type="treeSet">
+            <item type="string">#1</item>
+        </request>
+        <response type="arrayList">
+            <response type="string">before root</response>
+            <response type="string">before #1</response>
+            <response type="string">#1</response>
+            <response type="string">after #1</response>
+            <response type="string">after root</response>
+            <response type="string">afterTests root</response>
+        </response>
+    </test>
+    <test type="case" name="filter several">
+        <bean>launcher</bean>
+        <method>filter</method>
+        <request type="treeSet">
+            <item type="string">#1</item>
+            <item type="string">#2</item>
+            <item type="string">#2#2</item>
+            <item type="string">#2#2#1</item>
+            <item type="string">#2#2#2</item>
+            <item type="string">#4</item>
+            <item type="string">#4#1</item>
+            <item type="string">#4#2</item>
+            <item type="string">#4#2#1</item>
+            <item type="string">#4#2#2</item>
+            <item type="string">#4#3</item>
+        </request>
+        <response type="arrayList">
+            <response type="string">before root</response>
+            <response type="string">before #1</response>
+            <response type="string">#1</response>
+            <response type="string">after #1</response>
+            <response type="string">before #2</response>
+            <response type="string">before #2#2</response>
+            <response type="string">before #2#2#1</response>
+            <response type="string">#2#2#1</response>
+            <response type="string">after #2#2#1</response>
+            <response type="string">before #2#2#2</response>
+            <response type="string">#2#2#2</response>
+            <response type="string">after #2#2#2</response>
+            <response type="string">after #2#2</response>
+            <response type="string">after #2</response>
+            <response type="string">before #4</response>
+            <response type="string">before #4#1</response>
+            <response type="string">#4#1</response>
+            <response type="string">after #4#1</response>
+            <response type="string">before #4#2</response>
+            <response type="string">before #4#2#1</response>
+            <response type="string">#4#2#1</response>
+            <response type="string">after #4#2#1</response>
+            <response type="string">before #4#2#2</response>
+            <response type="string">#4#2#2</response>
+            <response type="string">after #4#2#2</response>
+            <response type="string">after #4#2</response>
+            <response type="string">before #4#3</response>
+            <response type="string">#4#3</response>
+            <response type="string">after #4#3</response>
+            <response type="string">after #4</response>
+            <response type="string">after root</response>
+            <response type="string">afterTests root</response>
+        </response>
+    </test>
+    <test type="case" name="filter one first test in container">
+        <bean>launcher</bean>
+        <method>filter</method>
+        <request type="treeSet">
+            <item type="string">#2</item>
+            <item type="string">#2#2</item>
+            <item type="string">#2#2#1</item>
+        </request>
+        <response type="arrayList">
+            <response type="string">before root</response>
+            <response type="string">before #2</response>
+            <response type="string">before #2#2</response>
+            <response type="string">before #2#2#1</response>
+            <response type="string">#2#2#1</response>
+            <response type="string">after #2#2#1</response>
+            <response type="string">after #2#2</response>
+            <response type="string">after #2</response>
+            <response type="string">after root</response>
+            <response type="string">afterTests root</response>
+        </response>
+    </test>
+    <test type="case" name="filter last">
+        <bean>launcher</bean>
+        <method>filter</method>
+        <request type="treeSet">
+            <item type="string">#5</item>
+        </request>
+        <response type="arrayList">
+            <response type="string">before root</response>
+            <response type="string">before #5</response>
+            <response type="string">#5</response>
+            <response type="string">after #5</response>
+            <response type="string">after root</response>
+            <response type="string">afterTests root</response>
+        </response>
+    </test>
 </test>
