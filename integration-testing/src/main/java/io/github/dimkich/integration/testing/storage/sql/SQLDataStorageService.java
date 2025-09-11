@@ -3,7 +3,6 @@ package io.github.dimkich.integration.testing.storage.sql;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.dbunit.HumanReadableXmlDataSet;
 import io.github.dimkich.integration.testing.execution.MockAnswer;
-import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.initialization.SqlStorageInit;
 import io.github.dimkich.integration.testing.initialization.SqlStorageSetup;
 import io.github.dimkich.integration.testing.storage.sql.state.TablesActionVisitor;
@@ -27,7 +26,6 @@ import java.util.stream.Collectors;
 public class SQLDataStorageService implements TestDataStorage {
     private final SQLDataStorage storage;
     private final BeanFactory beanFactory;
-    private final TestExecutor testExecutor;
 
     private final TestStorageStates testStorageStates = new TestStorageStates();
     private final TablesActionVisitor visitor = new TablesActionVisitor();
@@ -36,11 +34,20 @@ public class SQLDataStorageService implements TestDataStorage {
     @Getter
     private Map<String, SqlStorageSetup.TableHook> tableHooks = Map.of();
     private boolean initialized = false;
+    @Getter
     private Set<String> tables;
 
     @Override
     public String getName() {
         return storage.getName();
+    }
+
+    public void init() throws Exception {
+        if (!initialized) {
+            tables = storage.initTableRestriction();
+            initialized = true;
+        }
+        testStorageStates.init(this);
     }
 
     public void executeSqls(Collection<String> sqls) throws Exception {
@@ -61,14 +68,6 @@ public class SQLDataStorageService implements TestDataStorage {
     public void setTableHooks(Collection<SqlStorageSetup.TableHook> tableHooks) {
         this.tableHooks = tableHooks.stream()
                 .collect(Collectors.toMap(SqlStorageSetup.TableHook::getTableName, Function.identity()));
-    }
-
-    public Set<String> getTables() throws Exception {
-        if (!initialized) {
-            tables = storage.initTableRestriction();
-            initialized = true;
-        }
-        return tables;
     }
 
     public void addInit(SqlStorageInit init) throws Exception {

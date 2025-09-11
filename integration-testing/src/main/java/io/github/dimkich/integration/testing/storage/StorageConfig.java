@@ -2,7 +2,6 @@ package io.github.dimkich.integration.testing.storage;
 
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
-import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueOperationsConfig;
 import io.github.dimkich.integration.testing.storage.mapping.StorageMappingConfig;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageFactory;
@@ -42,7 +41,6 @@ import java.util.stream.Collectors;
 @EnableConfigurationProperties(StorageProperties.class)
 public class StorageConfig {
     private final ConfigurableListableBeanFactory beanFactory;
-    private final TestExecutor testExecutor;
     @Autowired(required = false)
     private final LiquibaseProperties liquibaseProperties;
     @Autowired(required = false)
@@ -88,8 +86,7 @@ public class StorageConfig {
         if (newUser.equals(username)) {
             throw new SQLException("Cannot use one username in admin and regular connections");
         }
-        return new SQLDataStorageService(factory.createStorage(name, adminConnection, newUser), beanFactory,
-                testExecutor);
+        return new SQLDataStorageService(factory.createStorage(name, adminConnection, newUser), beanFactory);
     }
 
     @Configuration

@@ -68,6 +68,19 @@ public class TableStates {
         return tableStates;
     }
 
+    public void init(Map<String, SqlStorageSetup.TableHook> tableHooks) {
+        tableStates.forEach((tableName, state) -> {
+            if (state.getData().getState() == LOADED) {
+                state.getData().setDirty(true);
+            }
+            SqlStorageSetup.TableHook tableHook = tableHooks.get(tableName);
+            if (Objects.equals(tableHook, state.getData().getTableHook())) {
+                state.getData().setTableHook(tableHook);
+                state.getData().setDirty(true);
+            }
+        });
+    }
+
     public void merge(TableStates tableStates) {
         merge(tableStates, null);
     }

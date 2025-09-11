@@ -13,10 +13,16 @@ public class TestStorageStates {
     private final TableStates newStates = new TableStates();
     private final Map<SqlStorageInit, TableStates> statesCache = new LinkedHashMap<>();
 
-    public void add(SQLDataStorageService storage, SqlStorageInit init) throws Exception {
+    public void init(SQLDataStorageService storage) {
         if (currentStates == null) {
             currentStates = TableStates.createDefault(storage.getTables(), storage.getTableHooks());
+        } else {
+            currentStates.init(storage.getTableHooks());
         }
+        newStates.clear();
+    }
+
+    public void add(SQLDataStorageService storage, SqlStorageInit init) throws Exception {
         TableStates transition = statesCache.computeIfAbsent(init,
                 SneakyFunction.sneaky(i -> TableStates.createFromInit(storage.getTables(), i)));
         newStates.merge(transition);
