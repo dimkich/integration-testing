@@ -20,7 +20,7 @@ public class XmlTestMapper extends TestMapper {
     }
 
     public String getSingleTestAsString(Test test) throws IOException {
-        return removeFirstLine(super.getRootTestAsString(test));
+        return removeFirstLine(super.getSingleTestAsString(test));
     }
 
     private String removeFirstLine(String text) {
