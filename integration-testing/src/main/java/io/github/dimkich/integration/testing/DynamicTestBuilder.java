@@ -16,10 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -34,6 +31,24 @@ public class DynamicTestBuilder {
 
     public Stream<DynamicNode> build(String path) throws Exception {
         return build(path, t -> true);
+    }
+
+    public Stream<DynamicNode> build(String path, List<String> allowedTestNames) throws Exception {
+        return build(path, t -> {
+            int i = 0;
+            Iterator<Test> iterator = t.getParentsAndItselfAsc().iterator();
+            while (iterator.hasNext() && i < allowedTestNames.size()) {
+                Test test = iterator.next();
+                if (test.getParentTest() == null) {
+                    continue;
+                }
+                if (!allowedTestNames.get(i).equals(test.getName())) {
+                    return false;
+                }
+                i++;
+            }
+            return true;
+        });
     }
 
     public Stream<DynamicNode> build(String path, Predicate<Test> filter) throws Exception {
