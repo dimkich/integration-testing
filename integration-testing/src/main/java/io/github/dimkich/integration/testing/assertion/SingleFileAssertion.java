@@ -18,13 +18,9 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "SingleFile")
 public class SingleFileAssertion implements Assertion {
+    private final CompositeTestMapper mapper;
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private TestExecutor testExecutor;
-
-    @Override
-    public boolean makeTestDeepClone() {
-        return false;
-    }
 
     @Override
     public boolean useTestTempDir() {
@@ -32,11 +28,15 @@ public class SingleFileAssertion implements Assertion {
     }
 
     @Override
-    public void assertTestsEquals(CompositeTestMapper mapper, Test expected, Test actual) {
+    public void setExpected(Test expected) {
     }
 
     @Override
-    public void afterTests(CompositeTestMapper mapper, Test rootTest) throws Exception {
+    public void assertTestsEquals(Test actual) {
+    }
+
+    @Override
+    public void afterTests(Test rootTest) throws Exception {
         String actual = mapper.getRootTestAsString(rootTest);
         String expected = Files.readString(Path.of(mapper.getFilePath()));
         if (Objects.equals(actual, expected)) {

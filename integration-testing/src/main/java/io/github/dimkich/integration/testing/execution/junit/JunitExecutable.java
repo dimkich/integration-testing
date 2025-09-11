@@ -16,7 +16,7 @@ public class JunitExecutable implements Executable {
         try {
             testExecutor.runTest();
         } finally {
-            testExecutor.after(test);
+            testExecutor.after();
         }
     }
 }

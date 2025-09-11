@@ -1,7 +1,6 @@
 package io.github.dimkich.integration.testing.junit;
 
 import io.github.dimkich.integration.testing.*;
-import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -39,12 +38,12 @@ public class SimpleTest {
     @TestFactory
     Stream<DynamicNode> tests() throws Exception {
         Mockito.doAnswer(i -> {
-                    Test tc = i.getArgument(1, Test.class);
+                    Test tc = i.getArgument(0, Test.class);
                     executedTests.add("afterTests " + (tc.getName() == null ? "root" : tc.getName()));
                     return null;
                 })
                 .when(assertion)
-                .afterTests(any(CompositeTestMapper.class), any(Test.class));
+                .afterTests(any(Test.class));
         instance = this;
         if (filter == null) {
             return dynamicTestBuilder.build("junit/simple.xml");

@@ -1,17 +1,13 @@
 package io.github.dimkich.integration.testing;
 
-import io.github.dimkich.integration.testing.format.CompositeTestMapper;
-
 public interface Assertion {
-    default boolean makeTestDeepClone() {
-        return true;
-    }
-
     default boolean useTestTempDir() {
         return false;
     }
 
-    void assertTestsEquals(CompositeTestMapper mapper, Test expected, Test actual) throws Exception;
+    void setExpected(Test expected) throws Exception;
 
-    void afterTests(CompositeTestMapper mapper, Test rootTest) throws Exception;
+    void assertTestsEquals(Test actual) throws Exception;
+
+    void afterTests(Test rootTest) throws Exception;
 }

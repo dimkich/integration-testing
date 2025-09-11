@@ -20,8 +20,11 @@ import java.util.*;
 @ConditionalOnProperty(value = AssertionConfig.ASSERTION_PROPERTY, havingValue = "File")
 public class FileAssertion implements Assertion {
     private static final String SETTINGS_FILE = "settings.txt";
+    private final CompositeTestMapper mapper;
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private TestExecutor executor;
+    private Test expected;
+    private String expectedStr;
 
     private final Set<Path> initialized = new HashSet<>();
     private final Map<Test, String> map = new HashMap<>();
@@ -34,8 +37,13 @@ public class FileAssertion implements Assertion {
     }
 
     @Override
-    public void assertTestsEquals(CompositeTestMapper mapper, Test expected, Test actual) throws Exception {
-        String expectedStr = mapper.getSingleTestAsString(expected);
+    public void setExpected(Test expected) throws Exception {
+        this.expected = expected;
+        this.expectedStr = mapper.getSingleTestAsString(expected);
+    }
+
+    @Override
+    public void assertTestsEquals(Test actual) throws Exception {
         String actualStr = mapper.getSingleTestAsString(actual);
         if (Objects.equals(expectedStr, actualStr)) {
             return;
@@ -57,7 +65,7 @@ public class FileAssertion implements Assertion {
     }
 
     @Override
-    public void afterTests(CompositeTestMapper mapper, Test rootTest) throws Exception {
+    public void afterTests(Test rootTest) throws Exception {
         if (testIndex > 0) {
             replace(rootTest);
             Path dir = executor.getTestsDir();

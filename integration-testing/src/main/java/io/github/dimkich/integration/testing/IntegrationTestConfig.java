@@ -12,7 +12,6 @@ import io.github.dimkich.integration.testing.wait.completion.WaitCompletionConfi
 import io.github.dimkich.integration.testing.web.WebConfig;
 import io.github.sugarcubes.cloner.Cloner;
 import io.github.sugarcubes.cloner.Cloners;
-import io.github.sugarcubes.cloner.CopyAction;
 import io.github.sugarcubes.cloner.ReflectionClonerBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -27,16 +26,6 @@ import java.util.List;
         InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class, TestClockService.class,
         WebConfig.class, TestFormatConfig.class})
 public class IntegrationTestConfig {
-    @Bean
-    TestSetupModule integrationTestModule() {
-        return new TestSetupModule()
-                .clonerFieldAction(Test.class, Test.Fields.inits, CopyAction.ORIGINAL)
-                .clonerFieldAction(Test.class, Test.Fields.parentTest, CopyAction.ORIGINAL)
-                .clonerFieldAction(Test.class, Test.Fields.response, CopyAction.NULL)
-                .clonerFieldAction(Test.class, Test.Fields.outboundMessages, CopyAction.NULL)
-                .clonerFieldAction(Test.class, Test.Fields.dataStorageDiff, CopyAction.NULL);
-    }
-
     @Bean
     Cloner sugarCubesCloner(List<TestSetupModule> modules) {
         ReflectionClonerBuilder builder = Cloners.builder();

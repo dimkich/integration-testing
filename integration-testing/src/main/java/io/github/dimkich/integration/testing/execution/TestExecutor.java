@@ -55,28 +55,22 @@ public class TestExecutor {
     private Test test;
     @Setter
     private ExecutionListener executionListener;
-    private Test expectedTest;
     @Getter
     @Setter
     private Test lastTest;
 
     public void before(Test expectedTest) throws Exception {
-        log.info(">>> {}", expectedTest.getFullName());
-        log.info(testMapper.getCurrentPathAndLocation(expectedTest));
-        if (expectedTest.getCalculatedDisabled()) {
+        test = expectedTest;
+        log.info(">>> {}", test.getFullName());
+        log.info(testMapper.getCurrentPathAndLocation(test));
+        if (test.getCalculatedDisabled()) {
             return;
         }
-        this.expectedTest = expectedTest;
-        if (assertion.makeTestDeepClone()) {
-            test = cloner.clone(expectedTest);
-        } else {
-            test = expectedTest;
-            test.setResponse(null);
-            test.setDataStorageDiff(null);
-            test.setOutboundMessages(null);
-        }
-
-        test.before((t) -> {
+        assertion.setExpected(test);
+        test.setResponse(null);
+        test.setDataStorageDiff(null);
+        test.setOutboundMessages(null);
+        this.test.before((t) -> {
             if (t.getParentTest() == null) {
                 lastTest = executionListener.findLastTest(t);
                 testsDir = null;
@@ -104,7 +98,7 @@ public class TestExecutor {
     }
 
     public void runTest() throws Exception {
-        if (expectedTest.getCalculatedDisabled()) {
+        if (test.getCalculatedDisabled()) {
             return;
         }
         waitCompletion.start();
@@ -136,10 +130,10 @@ public class TestExecutor {
         }
         testConverters.forEach(c -> c.convertNoException(test));
 
-        assertion.assertTestsEquals(testMapper, this.expectedTest, test);
+        assertion.assertTestsEquals(test);
     }
 
-    public void after(Test test) throws Exception {
+    public void after() throws Exception {
         try {
             test.after((t) -> {
                 initializationService.afterTest(t);
@@ -147,7 +141,7 @@ public class TestExecutor {
                     afterTest.after(t);
                 }
                 if (t.getParentTest() == null) {
-                    assertion.afterTests(testMapper, t);
+                    assertion.afterTests(t);
                 }
             }, lastTest);
             if (test.getCalculatedDisabled()) {
@@ -155,7 +149,6 @@ public class TestExecutor {
             }
         } finally {
             this.test = null;
-            this.expectedTest = null;
         }
     }
 
