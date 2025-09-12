@@ -162,7 +162,8 @@ public abstract class Test {
         return getParentsAndItselfAsc()
                 .map(Test::getName)
                 .filter(Objects::nonNull)
-                .collect(Collectors.joining(" - "));
+                .map(n -> '"' + n + '"')
+                .collect(Collectors.joining(", "));
     }
 
     @JsonIgnore
