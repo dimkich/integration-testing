@@ -1,18 +1,11 @@
 package io.github.dimkich.integration.testing.format.xml;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.util.JsonParserDelegate;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
 import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
-import com.fasterxml.jackson.databind.deser.std.StdDelegatingDeserializer;
-import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.dataformat.xml.deser.WrapperHandlingDeserializer;
 import com.fasterxml.jackson.dataformat.xml.util.TypeUtil;
-import io.github.dimkich.integration.testing.format.xml.token.XmlJsonParser;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -24,44 +17,6 @@ public class WrapperHandlingDeserializerFixed extends WrapperHandlingDeserialize
 
     public WrapperHandlingDeserializerFixed(BeanDeserializerBase delegate, Set<String> namesToWrap) {
         super(delegate, namesToWrap);
-    }
-
-    @Override
-    public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        _configureParser(p);
-        configureTokenParser(p);
-        return _delegatee.deserialize(p, ctxt);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Object deserialize(JsonParser p, DeserializationContext ctxt,
-                              Object intoValue) throws IOException {
-        _configureParser(p);
-        configureTokenParser(p);
-        return ((JsonDeserializer<Object>) _delegatee).deserialize(p, ctxt, intoValue);
-    }
-
-    @Override
-    public Object deserializeWithType(JsonParser p, DeserializationContext ctxt,
-                                      TypeDeserializer typeDeserializer) throws IOException {
-        _configureParser(p);
-        configureTokenParser(p);
-        return _delegatee.deserializeWithType(p, ctxt, typeDeserializer);
-    }
-
-    private void configureTokenParser(JsonParser p) {
-        while (p instanceof JsonParserDelegate) {
-            if (p instanceof XmlJsonParser xmlJsonParser) {
-                JsonToken t = p.currentToken();
-                if (t == JsonToken.START_OBJECT || t == JsonToken.START_ARRAY
-                        || t == JsonToken.FIELD_NAME) {
-                    xmlJsonParser.addVirtualWrapping(_namesToWrap, _caseInsensitive);
-                }
-                return;
-            }
-            p = ((JsonParserDelegate) p).delegate();
-        }
     }
 
     @Override
@@ -78,15 +33,8 @@ public class WrapperHandlingDeserializerFixed extends WrapperHandlingDeserialize
         HashSet<String> unwrappedNames = null;
         while (it.hasNext()) {
             SettableBeanProperty prop = it.next();
-            // First things first: only consider array/Collection types
-            // (not perfect check, but simplest reasonable check)
-            JavaType type = prop.getType();
             JsonDeserializer<Object> valueDeserializer = prop.getValueDeserializer();
-            JavaType convertedType = null;
-            if (valueDeserializer instanceof StdDelegatingDeserializer<Object> delegatingDeserializer) {
-                convertedType = delegatingDeserializer.getValueType();
-            }
-            if (!TypeUtil.isIndexedType(type) && (convertedType == null || !TypeUtil.isIndexedType(convertedType))) {
+            if (valueDeserializer.handledType() == null || !TypeUtil.isIndexedType(valueDeserializer.handledType())) {
                 continue;
             }
             PropertyName wrapperName = prop.getWrapperName();

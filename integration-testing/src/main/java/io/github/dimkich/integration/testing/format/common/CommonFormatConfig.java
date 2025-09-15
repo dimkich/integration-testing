@@ -43,11 +43,19 @@ public class CommonFormatConfig {
                 .addSubTypes(TestCase.class, "case")
                 .addSubTypes(TestPart.class, "part")
                 .addSubTypes(byte[].class, "byte[]")
+                .addSubTypes(short[].class, "short[]")
+                .addSubTypes(int[].class, "int[]")
+                .addSubTypes(long[].class, "long[]")
+                .addSubTypes(double[].class, "double[]")
+                .addSubTypes(boolean[].class, "boolean[]")
+                .addSubTypes(char[].class, "char[]")
+                .addSubTypes(Object[].class, "object[]")
                 .addSubTypes(UUID.class, "UUID")
                 .addAlias(ByteArrayResource.class, "resource")
                 .addAlias(Class.forName("java.util.ImmutableCollections$List12"), "arrayList")
                 .addAlias(Class.forName("java.util.ImmutableCollections$ListN"), "arrayList")
                 .addAlias(Class.forName("java.util.Collections$SingletonList"), "arrayList")
+                .addAlias(Class.forName("java.util.Arrays$ArrayList"), "arrayList")
                 .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,

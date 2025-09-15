@@ -2,14 +2,21 @@ package io.github.dimkich.integration.testing.format.xml.token;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.io.ContentReference;
 import com.fasterxml.jackson.databind.util.TokenBufferReadContext;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Set;
 
+@Setter
+@NoArgsConstructor
 public class XmlTokenBufferReadContext extends TokenBufferReadContext {
-    private Set<String> _namesToWrap;
+    private Set<String> namesToWrap;
 
-    public XmlTokenBufferReadContext() {
+    protected XmlTokenBufferReadContext(JsonStreamContext base, ContentReference srcRef) {
+        super(base, srcRef);
     }
 
     protected XmlTokenBufferReadContext(JsonStreamContext base, JsonLocation startLoc) {
@@ -20,34 +27,45 @@ public class XmlTokenBufferReadContext extends TokenBufferReadContext {
         super(parent, type, index);
     }
 
-    public void setNamesToWrap(Set<String> namesToWrap) {
-        _namesToWrap = namesToWrap;
+    public static XmlTokenBufferReadContext createRootContext(JsonToken firstToken, JsonStreamContext origContext) {
+        if (origContext == null) {
+            return new XmlTokenBufferReadContext();
+        }
+        if (origContext.getParent() != null
+                && (firstToken == JsonToken.START_OBJECT || firstToken == JsonToken.START_ARRAY)) {
+            origContext = origContext.getParent();
+        }
+        return new XmlTokenBufferReadContext(origContext, ContentReference.unknown());
     }
 
     public boolean shouldWrap(String localName) {
-        return (_namesToWrap != null) && _namesToWrap.contains(localName);
+        return (namesToWrap != null) && namesToWrap.contains(localName);
+    }
+
+    public void convertToArray() {
+        _type = TYPE_ARRAY;
     }
 
     @Override
-    public TokenBufferReadContext parentOrCopy() {
-        if (_parent instanceof TokenBufferReadContext) {
-            return (TokenBufferReadContext) _parent;
+    public XmlTokenBufferReadContext createChildArrayContext() {
+        ++_index;
+        return new XmlTokenBufferReadContext(this, TYPE_ARRAY, -1);
+    }
+
+    @Override
+    public XmlTokenBufferReadContext createChildObjectContext() {
+        ++_index;
+        return new XmlTokenBufferReadContext(this, TYPE_OBJECT, -1);
+    }
+
+    @Override
+    public XmlTokenBufferReadContext parentOrCopy() {
+        if (_parent instanceof XmlTokenBufferReadContext) {
+            return (XmlTokenBufferReadContext) _parent;
         }
         if (_parent == null) {
             return new XmlTokenBufferReadContext();
         }
         return new XmlTokenBufferReadContext(_parent, _startLocation);
-    }
-
-    @Override
-    public TokenBufferReadContext createChildArrayContext() {
-        ++_index;
-        return new XmlTokenBufferReadContext(this, JsonStreamContext.TYPE_ARRAY, -1);
-    }
-
-    @Override
-    public TokenBufferReadContext createChildObjectContext() {
-        ++_index;
-        return new XmlTokenBufferReadContext(this, JsonStreamContext.TYPE_OBJECT, -1);
     }
 }

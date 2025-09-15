@@ -8,50 +8,50 @@
             <item type="selClass">io.github.dimkich.integration.testing.junit.SimpleTest</item>
         </request>
         <response type="arrayList">
-            <response type="string">before root</response>
-            <response type="string">before #1</response>
-            <response type="string">#1</response>
-            <response type="string">after #1</response>
-            <response type="string">before #2</response>
-            <response type="string">before #2#1</response>
-            <response type="string">#2#1</response>
-            <response type="string">after #2#1</response>
-            <response type="string">before #2#2</response>
-            <response type="string">before #2#2#1</response>
-            <response type="string">#2#2#1</response>
-            <response type="string">after #2#2#1</response>
-            <response type="string">before #2#2#2</response>
-            <response type="string">#2#2#2</response>
-            <response type="string">after #2#2#2</response>
-            <response type="string">after #2#2</response>
-            <response type="string">before #2#3</response>
-            <response type="string">#2#3</response>
-            <response type="string">after #2#3</response>
-            <response type="string">after #2</response>
-            <response type="string">before #3</response>
-            <response type="string">#3</response>
-            <response type="string">after #3</response>
-            <response type="string">before #4</response>
-            <response type="string">before #4#1</response>
-            <response type="string">#4#1</response>
-            <response type="string">after #4#1</response>
-            <response type="string">before #4#2</response>
-            <response type="string">before #4#2#1</response>
-            <response type="string">#4#2#1</response>
-            <response type="string">after #4#2#1</response>
-            <response type="string">before #4#2#2</response>
-            <response type="string">#4#2#2</response>
-            <response type="string">after #4#2#2</response>
-            <response type="string">after #4#2</response>
-            <response type="string">before #4#3</response>
-            <response type="string">#4#3</response>
-            <response type="string">after #4#3</response>
-            <response type="string">after #4</response>
-            <response type="string">before #5</response>
-            <response type="string">#5</response>
-            <response type="string">after #5</response>
-            <response type="string">after root</response>
-            <response type="string">afterTests root</response>
+            <response>before root</response>
+            <response>before #1</response>
+            <response>#1</response>
+            <response>after #1</response>
+            <response>before #2</response>
+            <response>before #2#1</response>
+            <response>#2#1</response>
+            <response>after #2#1</response>
+            <response>before #2#2</response>
+            <response>before #2#2#1</response>
+            <response>#2#2#1</response>
+            <response>after #2#2#1</response>
+            <response>before #2#2#2</response>
+            <response>#2#2#2</response>
+            <response>after #2#2#2</response>
+            <response>after #2#2</response>
+            <response>before #2#3</response>
+            <response>#2#3</response>
+            <response>after #2#3</response>
+            <response>after #2</response>
+            <response>before #3</response>
+            <response>#3</response>
+            <response>after #3</response>
+            <response>before #4</response>
+            <response>before #4#1</response>
+            <response>#4#1</response>
+            <response>after #4#1</response>
+            <response>before #4#2</response>
+            <response>before #4#2#1</response>
+            <response>#4#2#1</response>
+            <response>after #4#2#1</response>
+            <response>before #4#2#2</response>
+            <response>#4#2#2</response>
+            <response>after #4#2#2</response>
+            <response>after #4#2</response>
+            <response>before #4#3</response>
+            <response>#4#3</response>
+            <response>after #4#3</response>
+            <response>after #4</response>
+            <response>before #5</response>
+            <response>#5</response>
+            <response>after #5</response>
+            <response>after root</response>
+            <response>afterTests root</response>
         </response>
     </test>
     <test type="case" name="first">
@@ -61,12 +61,12 @@
             <item type="selUniqueId">[dynamic-test:#1]</item>
         </request>
         <response type="arrayList">
-            <response type="string">before root</response>
-            <response type="string">before #1</response>
-            <response type="string">#1</response>
-            <response type="string">after #1</response>
-            <response type="string">after root</response>
-            <response type="string">afterTests root</response>
+            <response>before root</response>
+            <response>before #1</response>
+            <response>#1</response>
+            <response>after #1</response>
+            <response>after root</response>
+            <response>afterTests root</response>
         </response>
     </test>
     <test type="case" name="several">
@@ -78,37 +78,37 @@
             <item type="selUniqueId">[dynamic-container:#4]</item>
         </request>
         <response type="arrayList">
-            <response type="string">before root</response>
-            <response type="string">before #1</response>
-            <response type="string">#1</response>
-            <response type="string">after #1</response>
-            <response type="string">before #2</response>
-            <response type="string">before #2#2</response>
-            <response type="string">before #2#2#1</response>
-            <response type="string">#2#2#1</response>
-            <response type="string">after #2#2#1</response>
-            <response type="string">before #2#2#2</response>
-            <response type="string">#2#2#2</response>
-            <response type="string">after #2#2#2</response>
-            <response type="string">after #2#2</response>
-            <response type="string">before #4</response>
-            <response type="string">before #4#1</response>
-            <response type="string">#4#1</response>
-            <response type="string">after #4#1</response>
-            <response type="string">before #4#2</response>
-            <response type="string">before #4#2#1</response>
-            <response type="string">#4#2#1</response>
-            <response type="string">after #4#2#1</response>
-            <response type="string">before #4#2#2</response>
-            <response type="string">#4#2#2</response>
-            <response type="string">after #4#2#2</response>
-            <response type="string">after #4#2</response>
-            <response type="string">before #4#3</response>
-            <response type="string">#4#3</response>
-            <response type="string">after #4#3</response>
-            <response type="string">after #4</response>
-            <response type="string">after root</response>
-            <response type="string">afterTests root</response>
+            <response>before root</response>
+            <response>before #1</response>
+            <response>#1</response>
+            <response>after #1</response>
+            <response>before #2</response>
+            <response>before #2#2</response>
+            <response>before #2#2#1</response>
+            <response>#2#2#1</response>
+            <response>after #2#2#1</response>
+            <response>before #2#2#2</response>
+            <response>#2#2#2</response>
+            <response>after #2#2#2</response>
+            <response>after #2#2</response>
+            <response>before #4</response>
+            <response>before #4#1</response>
+            <response>#4#1</response>
+            <response>after #4#1</response>
+            <response>before #4#2</response>
+            <response>before #4#2#1</response>
+            <response>#4#2#1</response>
+            <response>after #4#2#1</response>
+            <response>before #4#2#2</response>
+            <response>#4#2#2</response>
+            <response>after #4#2#2</response>
+            <response>after #4#2</response>
+            <response>before #4#3</response>
+            <response>#4#3</response>
+            <response>after #4#3</response>
+            <response>after #4</response>
+            <response>after root</response>
+            <response>afterTests root</response>
         </response>
     </test>
     <test type="case" name="one first test in container">
@@ -118,16 +118,16 @@
             <item type="selUniqueId">[dynamic-container:#2]/[dynamic-container:#2]/[dynamic-test:#1]</item>
         </request>
         <response type="arrayList">
-            <response type="string">before root</response>
-            <response type="string">before #2</response>
-            <response type="string">before #2#2</response>
-            <response type="string">before #2#2#1</response>
-            <response type="string">#2#2#1</response>
-            <response type="string">after #2#2#1</response>
-            <response type="string">after #2#2</response>
-            <response type="string">after #2</response>
-            <response type="string">after root</response>
-            <response type="string">afterTests root</response>
+            <response>before root</response>
+            <response>before #2</response>
+            <response>before #2#2</response>
+            <response>before #2#2#1</response>
+            <response>#2#2#1</response>
+            <response>after #2#2#1</response>
+            <response>after #2#2</response>
+            <response>after #2</response>
+            <response>after root</response>
+            <response>afterTests root</response>
         </response>
     </test>
     <test type="case" name="last">
@@ -137,114 +137,114 @@
             <item type="selUniqueId">[dynamic-test:#5]</item>
         </request>
         <response type="arrayList">
-            <response type="string">before root</response>
-            <response type="string">before #5</response>
-            <response type="string">#5</response>
-            <response type="string">after #5</response>
-            <response type="string">after root</response>
-            <response type="string">afterTests root</response>
+            <response>before root</response>
+            <response>before #5</response>
+            <response>#5</response>
+            <response>after #5</response>
+            <response>after root</response>
+            <response>afterTests root</response>
         </response>
     </test>
     <test type="case" name="filter first">
         <bean>launcher</bean>
         <method>filter</method>
         <request type="treeSet">
-            <item type="string">#1</item>
+            <item>#1</item>
         </request>
         <response type="arrayList">
-            <response type="string">before root</response>
-            <response type="string">before #1</response>
-            <response type="string">#1</response>
-            <response type="string">after #1</response>
-            <response type="string">after root</response>
-            <response type="string">afterTests root</response>
+            <response>before root</response>
+            <response>before #1</response>
+            <response>#1</response>
+            <response>after #1</response>
+            <response>after root</response>
+            <response>afterTests root</response>
         </response>
     </test>
     <test type="case" name="filter several">
         <bean>launcher</bean>
         <method>filter</method>
         <request type="treeSet">
-            <item type="string">#1</item>
-            <item type="string">#2</item>
-            <item type="string">#2#2</item>
-            <item type="string">#2#2#1</item>
-            <item type="string">#2#2#2</item>
-            <item type="string">#4</item>
-            <item type="string">#4#1</item>
-            <item type="string">#4#2</item>
-            <item type="string">#4#2#1</item>
-            <item type="string">#4#2#2</item>
-            <item type="string">#4#3</item>
+            <item>#1</item>
+            <item>#2</item>
+            <item>#2#2</item>
+            <item>#2#2#1</item>
+            <item>#2#2#2</item>
+            <item>#4</item>
+            <item>#4#1</item>
+            <item>#4#2</item>
+            <item>#4#2#1</item>
+            <item>#4#2#2</item>
+            <item>#4#3</item>
         </request>
         <response type="arrayList">
-            <response type="string">before root</response>
-            <response type="string">before #1</response>
-            <response type="string">#1</response>
-            <response type="string">after #1</response>
-            <response type="string">before #2</response>
-            <response type="string">before #2#2</response>
-            <response type="string">before #2#2#1</response>
-            <response type="string">#2#2#1</response>
-            <response type="string">after #2#2#1</response>
-            <response type="string">before #2#2#2</response>
-            <response type="string">#2#2#2</response>
-            <response type="string">after #2#2#2</response>
-            <response type="string">after #2#2</response>
-            <response type="string">after #2</response>
-            <response type="string">before #4</response>
-            <response type="string">before #4#1</response>
-            <response type="string">#4#1</response>
-            <response type="string">after #4#1</response>
-            <response type="string">before #4#2</response>
-            <response type="string">before #4#2#1</response>
-            <response type="string">#4#2#1</response>
-            <response type="string">after #4#2#1</response>
-            <response type="string">before #4#2#2</response>
-            <response type="string">#4#2#2</response>
-            <response type="string">after #4#2#2</response>
-            <response type="string">after #4#2</response>
-            <response type="string">before #4#3</response>
-            <response type="string">#4#3</response>
-            <response type="string">after #4#3</response>
-            <response type="string">after #4</response>
-            <response type="string">after root</response>
-            <response type="string">afterTests root</response>
+            <response>before root</response>
+            <response>before #1</response>
+            <response>#1</response>
+            <response>after #1</response>
+            <response>before #2</response>
+            <response>before #2#2</response>
+            <response>before #2#2#1</response>
+            <response>#2#2#1</response>
+            <response>after #2#2#1</response>
+            <response>before #2#2#2</response>
+            <response>#2#2#2</response>
+            <response>after #2#2#2</response>
+            <response>after #2#2</response>
+            <response>after #2</response>
+            <response>before #4</response>
+            <response>before #4#1</response>
+            <response>#4#1</response>
+            <response>after #4#1</response>
+            <response>before #4#2</response>
+            <response>before #4#2#1</response>
+            <response>#4#2#1</response>
+            <response>after #4#2#1</response>
+            <response>before #4#2#2</response>
+            <response>#4#2#2</response>
+            <response>after #4#2#2</response>
+            <response>after #4#2</response>
+            <response>before #4#3</response>
+            <response>#4#3</response>
+            <response>after #4#3</response>
+            <response>after #4</response>
+            <response>after root</response>
+            <response>afterTests root</response>
         </response>
     </test>
     <test type="case" name="filter one first test in container">
         <bean>launcher</bean>
         <method>filter</method>
         <request type="treeSet">
-            <item type="string">#2</item>
-            <item type="string">#2#2</item>
-            <item type="string">#2#2#1</item>
+            <item>#2</item>
+            <item>#2#2</item>
+            <item>#2#2#1</item>
         </request>
         <response type="arrayList">
-            <response type="string">before root</response>
-            <response type="string">before #2</response>
-            <response type="string">before #2#2</response>
-            <response type="string">before #2#2#1</response>
-            <response type="string">#2#2#1</response>
-            <response type="string">after #2#2#1</response>
-            <response type="string">after #2#2</response>
-            <response type="string">after #2</response>
-            <response type="string">after root</response>
-            <response type="string">afterTests root</response>
+            <response>before root</response>
+            <response>before #2</response>
+            <response>before #2#2</response>
+            <response>before #2#2#1</response>
+            <response>#2#2#1</response>
+            <response>after #2#2#1</response>
+            <response>after #2#2</response>
+            <response>after #2</response>
+            <response>after root</response>
+            <response>afterTests root</response>
         </response>
     </test>
     <test type="case" name="filter last">
         <bean>launcher</bean>
         <method>filter</method>
         <request type="treeSet">
-            <item type="string">#5</item>
+            <item>#5</item>
         </request>
         <response type="arrayList">
-            <response type="string">before root</response>
-            <response type="string">before #5</response>
-            <response type="string">#5</response>
-            <response type="string">after #5</response>
-            <response type="string">after root</response>
-            <response type="string">afterTests root</response>
+            <response>before root</response>
+            <response>before #5</response>
+            <response>#5</response>
+            <response>after #5</response>
+            <response>after root</response>
+            <response>afterTests root</response>
         </response>
     </test>
 </test>

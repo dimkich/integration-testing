@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import io.github.dimkich.integration.testing.TestCase;
@@ -11,10 +12,9 @@ import io.github.dimkich.integration.testing.TestContainer;
 import io.github.dimkich.integration.testing.TestPart;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.FormatTestUtils;
-import io.github.dimkich.integration.testing.format.dto.Value;
+import io.github.dimkich.integration.testing.format.dto.*;
 import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributes;
 import io.github.dimkich.integration.testing.format.xml.map.JsonMapKey;
-import io.github.dimkich.integration.testing.format.xml.token.XmlTokenBuffer;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
 import io.github.dimkich.integration.testing.web.WebConfig;
@@ -41,10 +41,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static io.github.dimkich.integration.testing.format.FormatTestUtils.compConfig;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -64,9 +61,22 @@ class XmlTestMapperTest {
         return new Object[][]{
                 {1, "\n<Integer>1</Integer>"},
                 {"str", "\n<String>str</String>"},
-                {new Value("str"), """
+                {new Value(null, null), """
+<Value/>
+"""},
+                {new Value(null, "str"), """
 <Value>
-    <value type="string">str</value>
+    <value>str</value>
+</Value>
+"""},
+                {new Value(null, ""), """
+<Value>
+    <value></value>
+</Value>
+"""},
+                {new Value(null, " "), """
+<Value>
+    <value> </value>
 </Value>
 """},
                 {new Value((byte) 12), """
@@ -119,6 +129,11 @@ class XmlTestMapperTest {
     <value type="character">2</value>
 </Value>
 """},
+                {new Value(' '), """
+<Value>
+    <value type="character"> </value>
+</Value>
+"""},
                 {new Value(new BigDecimal("1.230000")), """
 <Value>
     <value type="bigDecimal">1.23</value>
@@ -163,6 +178,134 @@ class XmlTestMapperTest {
     <value type="resource">AQID</value>
 </Value>
 """},
+                {new Value(Arrays.asList(
+                        null, List.of(),
+                        List.of(List.of(1L, 2), Arrays.asList("s", null, false, null)),
+                        List.of(List.of(5.0, 6.0f), Arrays.asList(null, 7, 8)))), """
+<Value>
+    <value type="arrayList">
+        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        <value type="arrayList"/>
+        <value type="arrayList">
+            <item type="arrayList">
+                <item type="long">1</item>
+                <item type="integer">2</item>
+            </item>
+            <item type="arrayList">
+                <item>s</item>
+                <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                <item type="boolean">false</item>
+                <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            </item>
+        </value>
+        <value type="arrayList">
+            <item type="arrayList">
+                <item type="double">5.0</item>
+                <item type="float">6.0</item>
+            </item>
+            <item type="arrayList">
+                <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                <item type="integer">7</item>
+                <item type="integer">8</item>
+            </item>
+        </value>
+    </value>
+</Value>
+"""},
+                {new Value(new Object[]{null, List.of(), true, "s", new int[]{1, 2}}), """
+<Value>
+    <value type="object[]">
+        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        <value type="arrayList"/>
+        <value type="boolean">true</value>
+        <value>s</value>
+        <value type="int[]">
+            <item>1</item>
+            <item>2</item>
+        </value>
+    </value>
+</Value>
+"""},
+                {new Value(new Value("a", 1)), """
+<Value>
+    <value type="value" attr="a">
+        <value type="integer">1</value>
+    </value>
+</Value>
+"""},
+                {new ListOfListOfListOfInt(Collections.singletonList(null)),
+                        """
+<root>
+    <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+</root>
+"""},
+                {new ListOfListOfListOfInt(Arrays.asList(null, null)),
+                        """
+<root>
+    <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+</root>
+"""},
+                {new ListOfListOfListOfInt(Arrays.asList(null, List.of())),
+                        """
+<root>
+    <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <data/>
+</root>
+"""},
+                {new ListOfListOfListOfInt(List.of(
+                        List.of(List.of(1, 2), List.of(3, 4)),
+                        List.of(List.of(5, 6), List.of(7, 8)))),
+                        """
+<root>
+    <data>
+        <data>
+            <data>1</data>
+            <data>2</data>
+        </data>
+        <data>
+            <data>3</data>
+            <data>4</data>
+        </data>
+    </data>
+    <data>
+        <data>
+            <data>5</data>
+            <data>6</data>
+        </data>
+        <data>
+            <data>7</data>
+            <data>8</data>
+        </data>
+    </data>
+</root>
+"""},
+                {new ListOfListOfObject(Arrays.asList(null, Arrays.asList(null, List.of(), null))), """
+<root>
+    <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <data>
+        <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        <data type="arrayList"/>
+        <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    </data>
+</root>
+"""},
+                {new ListOfListOfObject(List.of(List.of(false, 2), List.of((byte) 3,
+                        new TypeTest(1, true, null)))), """
+<root>
+    <data>
+        <data type="boolean">false</data>
+        <data type="integer">2</data>
+    </data>
+    <data>
+        <data type="byte">3</data>
+        <data type="typeTest">
+            <id>1</id>
+            <data type="boolean">true</data>
+        </data>
+    </data>
+</root>
+"""},
                 {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"), """
 <EntryStringKeyObjectValue key="k" change="added" utype="string">str</EntryStringKeyObjectValue>
 """},
@@ -190,7 +333,7 @@ class XmlTestMapperTest {
         <Custom>c</Custom>
         <Custom>a</Custom>
     </headers>
-    <body type="string">str</body>
+    <body>str</body>
 </RequestEntity>
 """},
                 {new RequestEntity<>(FormatTestUtils.sr2(new byte[]{1}), new HttpHeaders(), HttpMethod.POST,
@@ -218,13 +361,31 @@ class XmlTestMapperTest {
                 {new LinkedMultiValueMapStringObject(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
                         """
 <LinkedMultiValueMapStringObject>
-    <k1 type="string">v1</k1>
-    <k2 type="string">v2</k2>
+    <k1>v1</k1>
+    <k2>v2</k2>
 </LinkedMultiValueMapStringObject>
 """},
                 {new TestContainer(), "<test type=\"container\"/>\n"},
                 {new TestCase(), "<test type=\"case\"/>\n"},
                 {new TestPart(), "<test type=\"part\"/>\n"},
+                {new Value(new ConverterToList("1", "2", "3")), """
+<Value>
+    <value type="converterToList">
+        <value>1</value>
+        <value>2</value>
+        <value>3</value>
+    </value>
+</Value>
+"""},
+                {new ConverterOnField("all", "a,b,c, "), """
+<root>
+    <name>all</name>
+    <list>a</list>
+    <list>b</list>
+    <list>c</list>
+    <list> </list>
+</root>
+"""},
                 {new Typed(new ArrayList<>(List.of(new TypeTest(1, null, "s"),
                         new TypeTest(2, null, "t"))),
                         map(new LinkedHashMap<>(), "k1", new TypeTest(3, null, "d"))), """
@@ -255,9 +416,9 @@ class XmlTestMapperTest {
 """},
                 {new ArrayList<>(List.of("1", "2", "3")), """
 <ArrayList>
-    <item type="string">1</item>
-    <item type="string">2</item>
-    <item type="string">3</item>
+    <item>1</item>
+    <item>2</item>
+    <item>3</item>
 </ArrayList>
 """},
                 {new TypeTest(1, map(new LinkedHashMap<>(), "k1", 1, "k2", "s"), "s"), """
@@ -265,7 +426,7 @@ class XmlTestMapperTest {
     <id>1</id>
     <data type="linkedHashMap">
         <k1 type="integer">1</k1>
-        <k2 type="string">s</k2>
+        <k2>s</k2>
     </data>
     <name>s</name>
 </TypeTest>
@@ -274,7 +435,7 @@ class XmlTestMapperTest {
 <TypeTest>
     <id>1</id>
     <data type="arrayList">
-        <data type="string">1</data>
+        <data>1</data>
         <data type="integer">2</data>
         <data type="double">3.0</data>
     </data>
@@ -292,15 +453,25 @@ class XmlTestMapperTest {
     <id>1</id>
     <data type="mapKeyWrapped">
         <entry>
-            <key type="string">k1</key>
+            <key>k1</key>
             <value type="integer">1</value>
         </entry>
         <entry>
-            <key type="string">k2</key>
-            <value type="string">s</value>
+            <key>k2</key>
+            <value>s</value>
         </entry>
     </data>
     <name>s</name>
+</TypeTest>
+"""},
+                {new TypeTest(null, null, ""), """
+<TypeTest>
+    <name></name>
+</TypeTest>
+"""},
+                {new TypeTest(null, null, " "), """
+<TypeTest>
+    <name> </name>
 </TypeTest>
 """},
                 {new TypeTest(1, map(new MapAttrWrapped<>(), "k1", 1, "k2", "s"), "s"), """
@@ -339,15 +510,11 @@ class XmlTestMapperTest {
         if (o instanceof BeanAsAttr) {
             return;
         }
-        if (o instanceof TypeTest t && (t.getData() instanceof MapKeyWrapped || t.data instanceof MapAttrWrapped)) {
-            return;
-        }
         JsonParser p = xmlMapper.createParser(xml);
         p.nextToken();
-        XmlTokenBuffer buffer = new XmlTokenBuffer(p, null);
+        TokenBuffer buffer = xmlMapper.getDeserializationContext().bufferForInputBuffering(p);
         buffer.copyCurrentStructure(p);
-        p = buffer.asParser();
-        p.nextToken();
+        p = buffer.asParserOnFirstToken();
         assertThat(o).usingRecursiveComparison(compConfig).isEqualTo(p.readValueAs(o.getClass()));
     }
 
@@ -356,16 +523,9 @@ class XmlTestMapperTest {
         @Bean
         TestSetupModule testModule() {
             return new TestSetupModule().addSubTypes(MapKeyNotWrapped.class, MapKeyWrapped.class,
-                    MapAttrNotWrapped.class, MapAttrWrapped.class, TypeTest.class);
+                    MapAttrNotWrapped.class, MapAttrWrapped.class, TypeTest.class, Value.class,
+                    ConverterToList.class);
         }
-    }
-
-    @Data
-    @AllArgsConstructor
-    static class TypeTest {
-        private Integer id;
-        private Object data;
-        private String name;
     }
 
 

@@ -6,13 +6,12 @@ import com.fasterxml.jackson.core.util.JsonParserSequence;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
+import com.fasterxml.jackson.dataformat.xml.util.TypeUtil;
 import io.github.dimkich.integration.testing.format.common.TestTypeResolverBuilder;
-import io.github.dimkich.integration.testing.format.xml.token.XmlTokenBuffer;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
@@ -30,13 +29,10 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
 
     @Override
     public Object deserializeTypedFromAny(JsonParser p, DeserializationContext ctxt) throws IOException {
-        String type = findType(p);
-        boolean isUntypedArray = _baseType.getRawClass() == Object.class && builder.isCollection(type);
-        if (p.hasToken(JsonToken.START_OBJECT) && isUntypedArray) {
-            return deserializeTypedFromArray(p, ctxt, type);
-        }
-        if (p.hasToken(JsonToken.START_ARRAY)) {
-            return deserializeTypedFromArray(p, ctxt);
+        String typeId = findType(p);
+        if (p.hasToken(JsonToken.START_OBJECT) && builder.isCollection(typeId)) {
+            JsonDeserializer<Object> deser = _findDeserializer(ctxt, typeId);
+            return deser.deserialize(p, ctxt);
         }
         return deserializeTypedFromObject(p, ctxt);
     }
@@ -57,14 +53,6 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
         return null;
     }
 
-    public Object deserializeTypedFromArray(JsonParser p, DeserializationContext ctxt, String type) throws IOException {
-        JsonDeserializer<Object> deser = _findDeserializer(ctxt, type);
-        if (p.currentToken() == JsonToken.END_ARRAY) {
-            return deser.getNullValue(ctxt);
-        }
-        return deser.deserialize(p, ctxt);
-    }
-
     @Override
     protected Object _deserializeTypedForId(JsonParser p, DeserializationContext ctxt, TokenBuffer tb, String typeId) throws IOException {
         JsonDeserializer<Object> deser = _findDeserializer(ctxt, typeId);
@@ -75,14 +63,15 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
             tb.writeFieldName(p.currentName());
             tb.writeString(typeId);
         }
-        if (((JsonDeserializer<?>) deser) instanceof CollectionDeserializer) {
-            tb = new XmlTokenBuffer(p, ctxt);
-            tb.writeStartObject();
+        if (deser.handledType() != null && TypeUtil.isIndexedType(deser.handledType())) {
+            tb = ctxt.bufferForInputBuffering(p);
             p.nextToken();
-            while (p.nextToken() != JsonToken.END_OBJECT) {
+            tb.writeStartObject();
+            while (p.currentToken() != JsonToken.END_OBJECT) {
                 tb.copyCurrentStructure(p);
+                p.nextToken();
             }
-            tb.copyCurrentStructure(p);
+            tb.writeEndObject();
         }
         if (tb != null) {
             p.clearCurrentToken();
@@ -95,19 +84,14 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
         if (isWrapped) {
             p.nextToken();
         }
+        if (p.currentToken() == JsonToken.END_OBJECT && "character".equals(typeId)) {
+            return ' ';
+        }
         Object bean = deser.deserialize(p, ctxt);
         if (isWrapped && p.currentToken() != JsonToken.END_OBJECT) {
             p.nextToken();
         }
         return bean;
-    }
-
-    @Override
-    protected Object _deserializeTypedUsingDefaultImpl(JsonParser p, DeserializationContext ctxt, TokenBuffer tb, String priorFailureMsg) throws IOException {
-        if (p.currentToken() == JsonToken.END_OBJECT && tb == null) {
-            return null;
-        }
-        return super._deserializeTypedUsingDefaultImpl(p, ctxt, tb, priorFailureMsg);
     }
 
     @Override

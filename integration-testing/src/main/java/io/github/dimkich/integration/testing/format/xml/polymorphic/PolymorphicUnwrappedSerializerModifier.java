@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
-import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
@@ -34,12 +33,6 @@ public class PolymorphicUnwrappedSerializerModifier extends BeanSerializerModifi
                 propertyWriter = new PolymorphicUnwrappedBeanPropertyWriter(propertyWriter, NameTransformer.NOP,
                         unwrappedTypeSerializer, typeResolverBuilder.getUnwrappedTypeProperty());
                 beanProperties.set(i, propertyWriter);
-            }
-            if (property.getType().isCollectionLikeType()) {
-                CollectionLikeType collectionType = (CollectionLikeType)property.getType();
-                if (collectionType.getContentType().isCollectionLikeType()) {
-                    beanProperties.set(i, new BeanPropertyWriterAsObject(property));
-                }
             }
         }
         return beanProperties;

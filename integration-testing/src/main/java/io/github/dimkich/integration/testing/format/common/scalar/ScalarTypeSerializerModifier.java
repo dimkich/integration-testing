@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import io.github.dimkich.integration.testing.format.util.JacksonUtil;
+import io.github.dimkich.integration.testing.format.util.JacksonUtils;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Set;
@@ -18,7 +18,7 @@ public class ScalarTypeSerializerModifier extends BeanSerializerModifier {
     @SuppressWarnings("unchecked")
     public JsonSerializer<?> modifySerializer(SerializationConfig config, BeanDescription beanDesc,
                                               JsonSerializer<?> serializer) {
-        serializer = JacksonUtil.decorate(serializer, s -> {
+        serializer = JacksonUtils.decorate(serializer, s -> {
             if (s instanceof StdSerializer<?>) {
                 StdSerializer<Object> stdSerializer = (StdSerializer<Object>) s;
                 if (classes.contains(stdSerializer.handledType())) {

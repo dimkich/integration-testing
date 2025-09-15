@@ -12,6 +12,9 @@ import io.github.dimkich.integration.testing.format.common.ObjectMapperConfigure
 import io.github.dimkich.integration.testing.format.common.scalar.ScalarTypeModule;
 import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributesModule;
 import io.github.dimkich.integration.testing.format.xml.config.jackson.Lf4SpacesIndenter;
+import io.github.dimkich.integration.testing.format.xml.fixed.DefaultXmlPrettyPrinterFixed;
+import io.github.dimkich.integration.testing.format.xml.fixed.XmlFactoryFixed;
+import io.github.dimkich.integration.testing.format.xml.fixed.XmlMapperFixed;
 import io.github.dimkich.integration.testing.format.xml.map.MapModule;
 import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicUnwrappedModule;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +39,7 @@ public class XmlConfig {
     @Bean
     @Lazy
     XmlTestMapper xmlTestMapper(ObjectMapperConfigurer configurer) {
-        XmlMapper.Builder builder = XmlMapper.builder();
+        XmlMapper.Builder builder = new XmlMapper.Builder(new XmlMapperFixed(new XmlFactoryFixed()));
         builder.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         builder.configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
         builder.enable(SerializationFeature.INDENT_OUTPUT);
@@ -47,7 +50,7 @@ public class XmlConfig {
         builder.defaultUseWrapper(false);
 
         DefaultXmlPrettyPrinter.Indenter indenter = new Lf4SpacesIndenter();
-        DefaultXmlPrettyPrinter printer = new DefaultXmlPrettyPrinter();
+        DefaultXmlPrettyPrinter printer = new DefaultXmlPrettyPrinterFixed();
         printer.indentObjectsWith(indenter);
         printer.indentArraysWith(indenter);
         builder.defaultPrettyPrinter(printer);
@@ -59,7 +62,7 @@ public class XmlConfig {
         builder.addModules(new SimpleModule()
                         .setDeserializerModifier(new WrapperHandlingModifier()),
                 new BeanAsAttributesModule(resolverBuilder), new PolymorphicUnwrappedModule(resolverBuilder),
-                new MapModule(), new ScalarTypeModule(Set.of(String.class, Boolean.class, Integer.class, Double.class)));
+                new MapModule(), new ScalarTypeModule(Set.of(Boolean.class, Integer.class, Double.class)));
 
         XmlMapper xmlMapper = builder.build();
 

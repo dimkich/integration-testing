@@ -5,10 +5,10 @@
         <mockInvoke name="converter" method="convertToString">
             <arg type="integer">1</arg>
             <result>
-                <return type="string">1</return>
+                <return>1</return>
             </result>
             <result>
-                <return type="string">2</return>
+                <return>2</return>
             </result>
             <result>
                 <throw type="httpClientErrorException.BadRequest">
@@ -18,20 +18,20 @@
                 </throw>
             </result>
             <result>
-                <return type="string">4</return>
+                <return>4</return>
             </result>
         </mockInvoke>
         <test type="case" name="1">
             <bean>converter</bean>
             <method>convertToString</method>
             <request type="integer">1</request>
-            <response type="string">1</response>
+            <response>1</response>
         </test>
         <test type="case" name="2">
             <bean>converter</bean>
             <method>convertToString</method>
             <request type="integer">1</request>
-            <response type="string">2</response>
+            <response>2</response>
         </test>
         <test type="case" name="3">
             <bean>converter</bean>
@@ -47,13 +47,13 @@
             <bean>converter</bean>
             <method>convertToString</method>
             <request type="integer">1</request>
-            <response type="string">4</response>
+            <response>4</response>
         </test>
         <test type="case" name="5">
             <bean>converter</bean>
             <method>convertToString</method>
             <request type="integer">1</request>
-            <response type="string">1</response>
+            <response>1</response>
         </test>
     </test>
 </test>

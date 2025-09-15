@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
 import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
-import io.github.dimkich.integration.testing.format.xml.token.XmlTokenBuffer;
 
 import java.io.IOException;
 import java.util.Set;
@@ -83,7 +82,7 @@ public class PolymorphicUnwrappedDeserializer extends BeanDeserializer {
     private TokenBuffer getTokenBuffer(JsonParser p, DeserializationContext ctxt) {
         TokenBuffer tokenBuffer = (TokenBuffer) ctxt.getAttribute(tokenBufferKey);
         if (tokenBuffer == null) {
-            tokenBuffer = new XmlTokenBuffer(p, ctxt);
+            tokenBuffer = ctxt.bufferForInputBuffering(p);
             ctxt.setAttribute(tokenBufferKey, tokenBuffer);
         }
         return tokenBuffer;

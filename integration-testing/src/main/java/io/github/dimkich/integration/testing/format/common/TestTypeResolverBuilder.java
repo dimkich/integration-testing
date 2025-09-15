@@ -54,7 +54,8 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
     public boolean isCollection(String type) {
         NamedType namedType = subTypes.get(type);
         if (namedType != null) {
-            return Collection.class.isAssignableFrom(namedType.getType());
+            Class<?> cls = namedType.getType();
+            return (cls.isArray() && cls != byte[].class) || Collection.class.isAssignableFrom(cls);
         }
         return false;
     }
