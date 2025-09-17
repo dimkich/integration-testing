@@ -20,6 +20,7 @@ public class TestStorageStates {
             currentStates.init(storage.getTableHooks());
         }
         newStates.clear();
+        statesCache.clear();
     }
 
     public void add(SQLDataStorageService storage, SqlStorageInit init) throws Exception {
