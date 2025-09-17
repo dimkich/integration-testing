@@ -59,7 +59,7 @@ public class RedissonConfig implements BeanPostProcessor, BeanFactoryPostProcess
                             Object o = i.callRealMethod();
                             storage.tryPut(o);
                             return o;
-                        }).spiedInstance(bean));
+                        }).spiedInstance(bean).stubOnly());
             }
         }
         return bean;
@@ -76,7 +76,7 @@ public class RedissonConfig implements BeanPostProcessor, BeanFactoryPostProcess
                 jCacheMock.close();
             }
             jCacheMock = Mockito.mockConstruction(JCache.class,
-                    Mockito.withSettings().defaultAnswer(new RedissonAnswer()),
+                    Mockito.withSettings().defaultAnswer(new RedissonAnswer()).stubOnly(),
                     (mock, context) -> {
                         Constructor<?> constructor = context.constructor();
                         ByteBuddyUtils.makeAccessible(constructor);
@@ -122,7 +122,7 @@ public class RedissonConfig implements BeanPostProcessor, BeanFactoryPostProcess
             if (redissonStatic != null) {
                 redissonStatic.close();
             }
-            redissonStatic = Mockito.mockStatic(Redisson.class);
+            redissonStatic = Mockito.mockStatic(Redisson.class, Mockito.withSettings().stubOnly());
             RedissonAnswer answer = new RedissonAnswer();
             redissonStatic.when(Redisson::create).thenAnswer(answer);
             redissonStatic.when(() -> Redisson.create(Mockito.any())).thenAnswer(answer);
@@ -131,7 +131,7 @@ public class RedissonConfig implements BeanPostProcessor, BeanFactoryPostProcess
                 jCacheMock.close();
             }
             jCacheMock = Mockito.mockConstruction(JCache.class,
-                    Mockito.withSettings().defaultAnswer(new RedissonObjectAnswer()),
+                    Mockito.withSettings().defaultAnswer(new RedissonObjectAnswer()).stubOnly(),
                     (mock, context) -> {
                         RedissonObjectAnswer ans = (RedissonObjectAnswer) MockUtil.getMockSettings(mock)
                                 .getDefaultAnswer();
@@ -167,7 +167,7 @@ public class RedissonConfig implements BeanPostProcessor, BeanFactoryPostProcess
                     return (RedissonClient) invocation.callRealMethod();
                 }
                 Config config = (Config) invocation.getArguments()[0];
-                return Mockito.mock(Redisson.class, Mockito.withSettings()
+                return Mockito.mock(Redisson.class, Mockito.withSettings().stubOnly()
                         .defaultAnswer(new RedissonClientAnswer(config)));
             }
         }

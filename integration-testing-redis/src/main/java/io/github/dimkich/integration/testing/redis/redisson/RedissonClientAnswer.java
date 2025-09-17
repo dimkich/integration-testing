@@ -32,8 +32,10 @@ public class RedissonClientAnswer implements Answer<Object> {
         if (invocation.getArguments().length == 0) {
             return switch (invocation.getMethod().getName()) {
                 case "getConfig" -> config;
-                case "getCommandExecutor" -> Mockito.mock(CommandAsyncService.class, Answers.RETURNS_DEEP_STUBS);
-                case "getEvictionScheduler" -> Mockito.mock(EvictionScheduler.class, Answers.RETURNS_DEEP_STUBS);
+                case "getCommandExecutor" -> Mockito.mock(CommandAsyncService.class, Mockito.withSettings()
+                        .defaultAnswer(Answers.RETURNS_DEEP_STUBS).stubOnly());
+                case "getEvictionScheduler" -> Mockito.mock(EvictionScheduler.class, Mockito.withSettings()
+                        .defaultAnswer(Answers.RETURNS_DEEP_STUBS).stubOnly());
                 default -> throw new IllegalStateException("Unexpected invocation: " + invocation.getMethod());
             };
         }
@@ -63,7 +65,7 @@ public class RedissonClientAnswer implements Answer<Object> {
 
         Class<? extends RObject> mc = mockClass;
         RObject object = rObjectMap.computeIfAbsent(Pair.of(mockClass, name),
-                p -> Mockito.mock(mc, Mockito.withSettings().defaultAnswer(answer)));
+                p -> Mockito.mock(mc, Mockito.withSettings().defaultAnswer(answer).stubOnly()));
         if (storage != null) {
             storage.tryPut(object);
         }

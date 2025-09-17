@@ -57,8 +57,9 @@ public class KafkaConfig {
 
         @Bean
         KafkaTemplate<?, ?> kafkaTemplate() {
-            CompletableFuture<?> completableFuture = Mockito.mock(CompletableFuture.class);
-            KafkaTemplate<?, ?> kafkaTemplate = Mockito.mock(KafkaTemplate.class);
+            CompletableFuture<?> completableFuture = Mockito.mock(CompletableFuture.class,
+                    Mockito.withSettings().stubOnly());
+            KafkaTemplate<?, ?> kafkaTemplate = Mockito.mock(KafkaTemplate.class, Mockito.withSettings().stubOnly());
             Mockito.when(kafkaTemplate.send(ArgumentMatchers.any(org.springframework.messaging.Message.class))).thenAnswer(invocation -> {
                 org.springframework.messaging.Message<Object> message = invocation.getArgument(0);
                 MessageDto<Object> messageDto = KafkaMessageMapper.toMessageDto(message);
@@ -86,7 +87,8 @@ public class KafkaConfig {
 
         @Bean(name = KafkaListenerConfigUtils.KAFKA_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)
         KafkaListenerAnnotationBeanPostProcessor<?, ?> kafkaListenerAnnotationBeanPostProcessor() {
-            KafkaListenerAnnotationBeanPostProcessor<?, ?> processor = Mockito.mock(KafkaListenerAnnotationBeanPostProcessor.class);
+            KafkaListenerAnnotationBeanPostProcessor<?, ?> processor = Mockito.mock(KafkaListenerAnnotationBeanPostProcessor.class,
+                    Mockito.withSettings().stubOnly());
             Mockito.doAnswer(invocation -> invocation.getArgument(0)).when(processor).postProcessBeforeInitialization(ArgumentMatchers.any(), ArgumentMatchers.any());
             Mockito.doAnswer(invocation -> invocation.getArgument(0)).when(processor).postProcessAfterInitialization(ArgumentMatchers.any(), ArgumentMatchers.any());
             return processor;
@@ -94,7 +96,8 @@ public class KafkaConfig {
 
         @Bean(name = KafkaListenerConfigUtils.KAFKA_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME)
         KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry() {
-            return Mockito.mock(KafkaListenerEndpointRegistry.class, Mockito.withSettings().defaultAnswer(Answers.RETURNS_MOCKS));
+            return Mockito.mock(KafkaListenerEndpointRegistry.class, Mockito.withSettings()
+                    .defaultAnswer(Answers.RETURNS_MOCKS).stubOnly());
         }
 
         private void handleMessage(MessageDto<?> message) {
@@ -107,8 +110,10 @@ public class KafkaConfig {
         @Bean
         @ConditionalOnProperty(name = "spring.kafka.producer.transaction-id-prefix")
         public KafkaTransactionManager<?, ?> kafkaTransactionManager() {
-            KafkaTransactionManager<?, ?> kafkaTransactionManager = Mockito.mock(KafkaTransactionManager.class);
-            ProducerFactory<?, ?> producerFactory = Mockito.mock(ProducerFactory.class);
+            KafkaTransactionManager<?, ?> kafkaTransactionManager = Mockito.mock(KafkaTransactionManager.class,
+                    Mockito.withSettings().stubOnly());
+            ProducerFactory<?, ?> producerFactory = Mockito.mock(ProducerFactory.class,
+                    Mockito.withSettings().stubOnly());
             Mockito.doReturn(producerFactory).when(kafkaTransactionManager).getProducerFactory();
             return kafkaTransactionManager;
         }

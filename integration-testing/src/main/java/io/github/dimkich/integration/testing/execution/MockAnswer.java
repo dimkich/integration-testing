@@ -86,7 +86,8 @@ public class MockAnswer implements Answer<Object> {
             if (invocation.getMethod().getReturnType().equals(Void.TYPE)) {
                 return null;
             }
-            mi.addResult(Mockito.mock(invocation.getMethod().getReturnType(), Answers.RETURNS_DEEP_STUBS));
+            mi.addResult(Mockito.mock(invocation.getMethod().getReturnType(), Mockito.withSettings()
+                    .defaultAnswer(Answers.RETURNS_DEEP_STUBS).stubOnly()));
         }
         return cloneArgsAndResult ? cloner.clone(mi.getCurrentResult()) : mi.getCurrentResult();
     }

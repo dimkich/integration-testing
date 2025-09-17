@@ -40,7 +40,7 @@ public class MockService {
         for (TestConstructorMock constructorMock : JunitExtension.getConstructorMocks()) {
             builder.from(constructorMock);
             MockedConstruction<?> mockedConstruction = Mockito.mockConstruction(builder.buildClass(),
-                    Mockito.withSettings().defaultAnswer(new ConstructorMockAnswer(builder.buildAnswer())),
+                    Mockito.withSettings().defaultAnswer(new ConstructorMockAnswer(builder.buildAnswer())).stubOnly(),
                     (mock, context) -> {
                         Constructor<?> constructor = context.constructor();
                         ByteBuddyUtils.makeAccessible(constructor);
@@ -53,7 +53,7 @@ public class MockService {
         for (TestStaticMock staticMock : JunitExtension.getStaticMocks()) {
             builder.from(staticMock);
             MockedStatic<?> mockedStatic = Mockito.mockStatic(builder.buildClass(), Mockito.withSettings()
-                    .defaultAnswer(builder.buildAnswer()));
+                    .defaultAnswer(builder.buildAnswer()).stubOnly());
             scopedMocks.add(mockedStatic);
         }
     }
@@ -61,9 +61,8 @@ public class MockService {
     public Object createBeanMock(TestBeanMock beanMock, Object bean, String beanName) {
         MockAnswerBuilder builder = new MockAnswerBuilder();
         builder.from(beanMock, beanName);
-        return Mockito.mock(bean.getClass(), Mockito.withSettings()
-                .defaultAnswer(builder.buildAnswer())
-                .spiedInstance(bean));
+        return Mockito.mock(bean.getClass(), Mockito.withSettings().defaultAnswer(builder.buildAnswer())
+                .spiedInstance(bean).stubOnly());
     }
 
     @PreDestroy

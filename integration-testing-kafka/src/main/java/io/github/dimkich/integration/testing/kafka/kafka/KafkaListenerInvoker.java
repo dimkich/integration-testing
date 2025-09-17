@@ -13,8 +13,8 @@ import java.util.List;
 
 public class KafkaListenerInvoker {
     private final BatchMessagingMessageListenerAdapter<Object, Object> batchListener;
-    private final Acknowledgment acknowledgment = Mockito.mock(Acknowledgment.class);
-    private final Consumer<Object, Object> consumer = Mockito.mock(Consumer.class);
+    private final Acknowledgment acknowledgment = Mockito.mock(Acknowledgment.class, Mockito.withSettings().stubOnly());
+    private final Consumer<Object, Object> consumer = Mockito.mock(Consumer.class, Mockito.withSettings().stubOnly());
 
     public KafkaListenerInvoker(Object bean, Method method) {
         batchListener = new BatchMessagingMessageListenerAdapter<>(bean, method);
