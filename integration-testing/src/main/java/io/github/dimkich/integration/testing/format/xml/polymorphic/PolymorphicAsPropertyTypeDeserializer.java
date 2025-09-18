@@ -10,8 +10,8 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
-import com.fasterxml.jackson.dataformat.xml.util.TypeUtil;
 import io.github.dimkich.integration.testing.format.common.TestTypeResolverBuilder;
+import io.github.dimkich.integration.testing.format.util.JacksonUtils;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
@@ -63,7 +63,7 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
             tb.writeFieldName(p.currentName());
             tb.writeString(typeId);
         }
-        if (deser.handledType() != null && TypeUtil.isIndexedType(deser.handledType())) {
+        if (deser.handledType() != null && JacksonUtils.isIndexedType(deser.handledType())) {
             tb = ctxt.bufferForInputBuffering(p);
             p.nextToken();
             tb.writeStartObject();

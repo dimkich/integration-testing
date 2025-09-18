@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
 import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
 import com.fasterxml.jackson.dataformat.xml.deser.WrapperHandlingDeserializer;
-import com.fasterxml.jackson.dataformat.xml.util.TypeUtil;
+import io.github.dimkich.integration.testing.format.util.JacksonUtils;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,7 +34,7 @@ public class WrapperHandlingDeserializerFixed extends WrapperHandlingDeserialize
         while (it.hasNext()) {
             SettableBeanProperty prop = it.next();
             JsonDeserializer<Object> valueDeserializer = prop.getValueDeserializer();
-            if (valueDeserializer.handledType() == null || !TypeUtil.isIndexedType(valueDeserializer.handledType())) {
+            if (valueDeserializer.handledType() == null || !JacksonUtils.isIndexedType(valueDeserializer.handledType())) {
                 continue;
             }
             PropertyName wrapperName = prop.getWrapperName();

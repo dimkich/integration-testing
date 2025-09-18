@@ -7,7 +7,11 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import lombok.SneakyThrows;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.function.Function;
+import java.util.stream.BaseStream;
+import java.util.stream.Stream;
 
 public class JacksonUtils {
     public static String getCurrentName(JsonGenerator gen) {
@@ -38,6 +42,13 @@ public class JacksonUtils {
             }
         }
         return result;
+    }
+
+    public static boolean isIndexedType(Class<?> cls) {
+        return (cls.isArray() && cls != byte[].class && cls != char[].class)
+                || Collection.class.isAssignableFrom(cls) || Iterable.class.isAssignableFrom(cls)
+                || Stream.class.isAssignableFrom(cls) || BaseStream.class.isAssignableFrom(cls)
+                || Iterator.class.isAssignableFrom(cls);
     }
 
     // for debug purpose
