@@ -87,6 +87,7 @@ public class TestExecutor {
                     testDataStorages.affectAllStorages();
                 }
             }
+            t.clearCustom();
             initializationService.beforeTest(t);
             for (BeforeTest beforeTest : beforeTests) {
                 beforeTest.before(t);
