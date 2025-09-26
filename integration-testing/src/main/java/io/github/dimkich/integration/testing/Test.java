@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import eu.ciechanowiec.sneakyfun.SneakyConsumer;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import io.github.dimkich.integration.testing.message.MessageDto;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldNameConstants;
@@ -25,7 +26,7 @@ import java.util.stream.Stream;
 @FieldNameConstants
 @JsonRootName(value = "test")
 @JsonPropertyOrder({"name", "init", "bean", "method", "request", "inboundMessage", "mockInvoke", "response",
-        "dataStorageDiff", "outboundMessages", "test"})
+        "custom", "dataStorageDiff", "outboundMessages", "test"})
 public abstract class Test {
     public enum Type {TestContainer, TestCase, TestPart}
 
@@ -45,6 +46,10 @@ public abstract class Test {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<MockInvoke> mockInvoke = new ArrayList<>();
     private Object response;
+    @Getter(value = AccessLevel.PACKAGE, onMethod_ = @JsonProperty)
+    @Setter(value = AccessLevel.PACKAGE, onMethod_ = @JsonProperty)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private Map<String, Object> custom;
     private Object dataStorageDiff;
     @JsonProperty("outboundMessage")
     private List<MessageDto<?>> outboundMessages;
@@ -118,6 +123,23 @@ public abstract class Test {
             return true;
         }
         return parentTest.getSubTests().get(parentTest.getSubTests().size() - 1) == this;
+    }
+
+    public void addCustom(String key, Object value) {
+        if (custom == null) {
+            custom = new TreeMap<>();
+        }
+        custom.put(key, value);
+    }
+
+    public Object getCustom(String key) {
+        return custom == null ? null : custom.get(key);
+    }
+
+    public void clearCustom() {
+        if (custom != null) {
+            custom.clear();
+        }
     }
 
     public void executeMethod(BeanFactory beanFactory, BiFunction<String, Object, Object> responseConverter) throws IllegalAccessException {
