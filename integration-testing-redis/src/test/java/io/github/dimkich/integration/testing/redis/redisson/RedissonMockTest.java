@@ -215,6 +215,7 @@ class RedissonMockTest {
                 {RMap.class, factory.getMap()},
                 {RMapCache.class, factory.getMapCache()},
                 {JCache.class, factory.getJCache()},
+                {RLock.class, factory.getLock()},
         };
     }
 

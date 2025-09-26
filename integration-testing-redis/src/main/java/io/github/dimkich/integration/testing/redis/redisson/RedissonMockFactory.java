@@ -32,6 +32,7 @@ public class RedissonMockFactory {
     private RedissonMock map;
     private RedissonMock mapCache;
     private RedissonMock jCache;
+    private RedissonMock lock;
     private RedissonMock concurrentMap;
 
     public RedissonMock getObject() {
@@ -248,6 +249,33 @@ public class RedissonMockFactory {
                     .add(getRedissonObject()).add(getMap());
         }
         return jCache;
+    }
+
+    public RedissonMock getLock() {
+        if (lock == null) {
+            lock = new RedissonMock(RLock.class).add("getName", RMockInvoke::getName)
+                    .add("isLocked", mc -> mc.lock().isLocked()).add("isHeldByThread", FALSE)
+                    .add("isHeldByCurrentThread", mc -> mc.lock().isHeldByCurrentThread())
+                    .add("getHoldCount", mc -> mc.lock().getHoldCount())
+                    .add("remainTimeToLive", mc -> -1).add("newCondition", mc -> mc.lock().newCondition())
+                    .add("lockInterruptibly", mc -> {
+                        mc.lock().lock();
+                        return null;
+                    }).add("tryLock", mc -> {
+                        mc.lock().lock();
+                        return null;
+                    }).add("lock", mc -> {
+                        mc.lock().lock();
+                        return null;
+                    }).add("forceUnlock", mc -> {
+                        mc.lock().unlock();
+                        return null;
+                    }).add("unlock", mc -> {
+                        mc.lock().unlock();
+                        return null;
+                    });
+        }
+        return lock;
     }
 
     RedissonMock getConcurrentMap() {

@@ -8,9 +8,9 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.redisson.api.RBucket;
+import org.redisson.api.RLock;
 import org.redisson.api.RMap;
 import org.redisson.api.RMapCache;
-import org.redisson.api.RObject;
 import org.redisson.client.codec.Codec;
 import org.redisson.command.CommandAsyncService;
 import org.redisson.config.Config;
@@ -18,12 +18,13 @@ import org.redisson.eviction.EvictionScheduler;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @RequiredArgsConstructor
 public class RedissonClientAnswer implements Answer<Object> {
     private final Config config;
     public static final RedissonMockFactory redissonMockFactory = new RedissonMockFactory();
-    private final Map<Pair<Class<? extends RObject>, String>, RObject> rObjectMap = new ConcurrentHashMap<>();
+    private final Map<Pair<Class<?>, String>, Object> rObjectMap = new ConcurrentHashMap<>();
     @Setter
     private RedissonDataStorage storage;
 
@@ -43,7 +44,7 @@ public class RedissonClientAnswer implements Answer<Object> {
                 ? (Codec) invocation.getArguments()[1] : null;
         String name = (String) invocation.getArguments()[0];
 
-        Class<? extends RObject> mockClass;
+        Class<?> mockClass;
         RedissonObjectAnswer answer = switch (invocation.getMethod().getName()) {
             case "getMap" -> {
                 mockClass = RMap.class;
@@ -59,12 +60,16 @@ public class RedissonClientAnswer implements Answer<Object> {
                 mockClass = RBucket.class;
                 yield new RedissonObjectAnswer(new ValueHolder(), name, codec, redissonMockFactory.getBucket(), null);
             }
+            case "getLock", "getSpinLock", "getFairLock" -> {
+                mockClass = RLock.class;
+                yield new RedissonObjectAnswer(new ReentrantLock(), name, codec, redissonMockFactory.getLock(), null);
+            }
             default -> throw new RuntimeException("RedissonClient method " + invocation.getMethod().getName()
                     + " not supported");
         };
 
-        Class<? extends RObject> mc = mockClass;
-        RObject object = rObjectMap.computeIfAbsent(Pair.of(mockClass, name),
+        Class<?> mc = mockClass;
+        Object object = rObjectMap.computeIfAbsent(Pair.of(mockClass, name),
                 p -> Mockito.mock(mc, Mockito.withSettings().defaultAnswer(answer).stubOnly()));
         if (storage != null) {
             storage.tryPut(object);

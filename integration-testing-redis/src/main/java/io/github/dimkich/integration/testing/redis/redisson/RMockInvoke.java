@@ -11,6 +11,7 @@ import org.redisson.client.codec.Codec;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 @Data
@@ -33,6 +34,10 @@ public class RMockInvoke {
 
     public ValueHolder valueHolder() {
         return (ValueHolder) targetObject;
+    }
+
+    public ReentrantLock lock() {
+        return (ReentrantLock) targetObject;
     }
 
     @SuppressWarnings("unchecked")
