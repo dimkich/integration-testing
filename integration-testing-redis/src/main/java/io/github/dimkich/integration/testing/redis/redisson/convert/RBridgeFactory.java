@@ -6,6 +6,7 @@ import org.redisson.api.RObject;
 import javax.cache.Cache;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 public class RBridgeFactory {
     @SuppressWarnings("unchecked")
@@ -18,6 +19,8 @@ public class RBridgeFactory {
             return new MultimapBridge((RMultimap<Object, Object>) multimap);
         } else if (rObject instanceof Cache<?, ?> cache) {
             return new CacheBridge((Cache<Object, Object>) cache);
+        } else if (rObject instanceof Lock) {
+            return new LockBridge();
         }
         return new CommonBridge(rObject);
     }

@@ -5,6 +5,7 @@ import io.github.dimkich.integration.testing.redis.redisson.convert.RBridgeFacto
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.redisson.api.RObject;
 
 import java.util.LinkedHashMap;
@@ -21,15 +22,15 @@ public class RedissonDataStorage implements KeyValueDataStorage {
     @Override
     public Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) {
         return redissonObjects.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                        e -> {
-                            Set<String> fields = excludedFields.get(e.getKey());
-                            if (fields != null) {
-                                e.getValue().excludeFields(fields);
-                            }
-                            return e.getValue().get();
-                        },
-                        (a, b) -> a, LinkedHashMap::new));
+                .map(e -> {
+                    Set<String> fields = excludedFields.get(e.getKey());
+                    if (fields != null) {
+                        e.getValue().excludeFields(fields);
+                    }
+                    return Pair.of(e.getKey(), e.getValue().get());
+                })
+                .filter(p -> p.getValue() != null)
+                .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (a, b) -> a, LinkedHashMap::new));
     }
 
     @Override
