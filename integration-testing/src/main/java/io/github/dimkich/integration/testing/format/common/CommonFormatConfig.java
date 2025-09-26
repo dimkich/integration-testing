@@ -56,6 +56,7 @@ public class CommonFormatConfig {
                 .addAlias(Class.forName("java.util.ImmutableCollections$ListN"), "arrayList")
                 .addAlias(Class.forName("java.util.Collections$SingletonList"), "arrayList")
                 .addAlias(Class.forName("java.util.Arrays$ArrayList"), "arrayList")
+                .addAlias(Class.forName("java.util.Collections$UnmodifiableMap"), "linkedHashMap")
                 .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,
