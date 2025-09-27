@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing;
 
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
 import io.github.dimkich.integration.testing.date.time.JavaTimeAdvice;
+import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
 import io.github.dimkich.integration.testing.execution.MockAnswer;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
@@ -54,11 +55,13 @@ public class DynamicTestBuilder {
     public Stream<DynamicNode> build(String path, Predicate<Test> filter) throws Exception {
         testMapper.setPath(path);
         testExecutor.setExecutionListener(SessionListener.getExecutionListener());
-        JavaTimeAdvice.setCallRealMethod(() -> !MockAnswer.isEnabled());
-        JavaTimeAdvice.setCurrentTimeMillis(() -> dateTimeService.getDateTime().toInstant().toEpochMilli());
-        JavaTimeAdvice.setGetNanoTimeAdjustment(o -> ChronoUnit.NANOS.between(Instant.ofEpochSecond(o),
-                dateTimeService.getDateTime().toInstant()));
-        JavaTimeAdvice.setGetDefaultRef(() -> TimeZone.getTimeZone(dateTimeService.getDateTime().getOffset()));
+        if (MockJavaTimeSetUp.isInitialized()) {
+            JavaTimeAdvice.setCallRealMethod(() -> !MockAnswer.isEnabled());
+            JavaTimeAdvice.setCurrentTimeMillis(() -> dateTimeService.getDateTime().toInstant().toEpochMilli());
+            JavaTimeAdvice.setGetNanoTimeAdjustment(o -> ChronoUnit.NANOS.between(Instant.ofEpochSecond(o),
+                    dateTimeService.getDateTime().toInstant()));
+            JavaTimeAdvice.setGetDefaultRef(() -> TimeZone.getTimeZone(dateTimeService.getDateTime().getOffset()));
+        }
 
         Spliterator<DynamicNode> spliterator = Spliterators.spliteratorUnknownSize(
                 new InfiniteTestIterator("UntilStopped".equals(repeat), filter), Spliterator.ORDERED);

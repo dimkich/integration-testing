@@ -40,6 +40,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         }
         MockitoGlobal.start();
         ClonerAgentSetUp.setClonerInstrumentationIfNone(ByteBuddyAgent.install());
+        MockJavaTimeSetUp.moveJavaTimeAdviceToSystemClassLoader();
         MockJavaTime mockJavaTime = context.getRequiredTestClass().getAnnotation(MockJavaTime.class);
         if (mockJavaTime != null) {
             MockJavaTimeSetUp.setUp(mockJavaTime);
@@ -54,6 +55,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     @Override
     public void afterAll(ExtensionContext context) {
         MockitoGlobal.stop();
+        MockJavaTimeSetUp.shutDown();
         testOpenAPIS = List.of();
         testRestTemplates = List.of();
         beanMocks = List.of();

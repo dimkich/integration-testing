@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.date.time;
 import eu.ciechanowiec.sneakyfun.SneakyFunction;
 import eu.ciechanowiec.sneakyfun.SneakySupplier;
 import io.github.dimkich.integration.testing.util.ByteBuddyUtils;
+import lombok.Getter;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.AsmVisitorWrapper;
@@ -24,7 +25,9 @@ import java.util.function.Function;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class MockJavaTimeSetUp {
-    private static boolean isInitialized = false;
+    @Getter
+    private static boolean initialized = false;
+    private static boolean javaTimeAdviceToSystemClassLoader = false;
     /**
      * Fix a bug in the JDK which forgets reconstruction of parameter names in some builds.
      * <a href="https://github.com/raphw/byte-buddy/issues/1562">method lost parameter names</a>
@@ -52,10 +55,25 @@ public class MockJavaTimeSetUp {
         };
     }
 
+    public static void moveJavaTimeAdviceToSystemClassLoader() {
+        if (javaTimeAdviceToSystemClassLoader) {
+            return;
+        }
+        TypePool typePool = TypePool.Default.ofSystemLoader();
+        Map<TypeDescription, byte[]> types = new ByteBuddy()
+                .redefine(
+                        typePool.describe("io.github.dimkich.integration.testing.date.time.JavaTimeAdvice").resolve(),
+                        ClassFileLocator.ForClassLoader.ofSystemLoader())
+                .make()
+                .getAllTypes();
+        ClassInjector.UsingUnsafe.ofBootLoader().inject(types);
+        javaTimeAdviceToSystemClassLoader = true;
+    }
+
     public static void setUp(MockJavaTime mockJavaTime) throws Exception {
-        if (!isInitialized) {
+        if (!initialized) {
             initialize();
-            isInitialized = true;
+            initialized = true;
         }
         if (mockJavaTime.value().length == 0) {
             return;
@@ -85,9 +103,17 @@ public class MockJavaTimeSetUp {
                 .installOnByteBuddyAgent();
     }
 
-    private static void initialize() throws Exception {
-        moveJavaTimeAdviceToSystemClassLoader();
+    public static void shutDown() {
+        if (initialized) {
+            JavaTimeAdvice.setCallRealMethod(null);
+            JavaTimeAdvice.setCurrentTimeMillis(null);
+            JavaTimeAdvice.setGetNanoTimeAdjustment(null);
+            JavaTimeAdvice.setGetDefaultRef(null);
+            initialized = false;
+        }
+    }
 
+    private static void initialize() throws Exception {
         Method getNanoTimeAdjustment = ByteBuddyUtils.makeAccessible(Class.forName("jdk.internal.misc.VM")
                 .getDeclaredMethod("getNanoTimeAdjustment", long.class));
         JavaTimeAdvice.setRealGetNanoTimeAdjustment(SneakyFunction
@@ -136,16 +162,5 @@ public class MockJavaTimeSetUp {
                                 .on(any()))
                         .visit(parameterWritingVisitorWrapper.apply(td)))
                 .installOnByteBuddyAgent();
-    }
-
-    private static void moveJavaTimeAdviceToSystemClassLoader() {
-        TypePool typePool = TypePool.Default.ofSystemLoader();
-        Map<TypeDescription, byte[]> types = new ByteBuddy()
-                .redefine(
-                        typePool.describe("io.github.dimkich.integration.testing.date.time.JavaTimeAdvice").resolve(),
-                        ClassFileLocator.ForClassLoader.ofSystemLoader())
-                .make()
-                .getAllTypes();
-        ClassInjector.UsingUnsafe.ofBootLoader().inject(types);
     }
 }
