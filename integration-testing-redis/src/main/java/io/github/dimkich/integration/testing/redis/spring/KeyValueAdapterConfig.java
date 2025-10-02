@@ -23,7 +23,7 @@ public class KeyValueAdapterConfig implements BeanPostProcessor, BeanFactoryPost
 
     @Override
     public Object postProcessAfterInitialization(@Nonnull Object bean, @Nonnull String beanName) throws BeansException {
-        if (bean instanceof KeyValueAdapter keyValueAdapter) {
+        if (bean instanceof KeyValueAdapter keyValueAdapter && beanName.contains("redis")) {
             ProxyFactory factory = new ProxyFactory();
             factory.setTarget(bean);
             TtlEntityService service = new TtlEntityService(keyValueAdapter);
