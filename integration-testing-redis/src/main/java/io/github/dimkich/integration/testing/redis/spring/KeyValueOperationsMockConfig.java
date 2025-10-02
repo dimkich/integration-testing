@@ -16,7 +16,6 @@ import org.springframework.data.keyvalue.core.mapping.context.KeyValueMappingCon
 import org.springframework.data.keyvalue.repository.query.KeyValuePartTreeQuery;
 import org.springframework.data.keyvalue.repository.query.SpelQueryCreator;
 import org.springframework.data.keyvalue.repository.support.KeyValueRepositoryFactoryBean;
-import org.springframework.data.map.MapKeyValueAdapter;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.redis.core.RedisKeyValueTemplate;
 import org.springframework.data.redis.core.convert.MappingRedisConverter;
@@ -47,7 +46,7 @@ public class KeyValueOperationsMockConfig implements BeanFactoryPostProcessor {
                     BeanDefinition argDefinition = registry.getBeanDefinition(reference.getBeanName());
                     Class<?> argClass = Class.forName(argDefinition.getBeanClassName());
                     if (KeyValueAdapter.class.isAssignableFrom(argClass)) {
-                        argDefinition.setBeanClassName(MapKeyValueAdapter.class.getName());
+                        argDefinition.setBeanClassName(LinkedMapKeyValueAdapter.class.getName());
                         argDefinition.getConstructorArgumentValues().clear();
                         argDefinition.getPropertyValues().getPropertyValueList().clear();
                     } else if (MappingContext.class.isAssignableFrom(argClass)) {

@@ -51,11 +51,12 @@ public class KeyValueOperationsDataStorage implements KeyValueDataStorage {
 
     @Override
     public void putKeysData(Map<String, Object> map) {
+        boolean clone = keyValueOperations.getKeyValueAdapter() instanceof MapKeyValueAdapter;
         map.forEach((k, v) -> {
             if (v instanceof Map<?, ?> m) {
-                m.values().forEach(keyValueOperations::update);
+                m.values().stream().map(o -> clone ? cloner.clone(o) : o).forEach(keyValueOperations::update);
             } else if (v instanceof Collection<?> c) {
-                c.forEach(keyValueOperations::update);
+                c.stream().map(o -> clone ? cloner.clone(o) : o).forEach(keyValueOperations::update);
             } else {
                 throw new RuntimeException("Unsupported type: " + v.getClass());
             }
