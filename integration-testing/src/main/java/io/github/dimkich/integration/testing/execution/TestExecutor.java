@@ -70,31 +70,37 @@ public class TestExecutor {
         test.setResponse(null);
         test.setDataStorageDiff(null);
         test.setOutboundMessages(null);
-        this.test.before((t) -> {
-            if (t.getParentTest() == null) {
-                lastTest = executionListener.findLastTest(t);
-                testsDir = null;
-                if (assertion.useTestTempDir()) {
-                    testsDir = Path.of(AssertionConfig.resultDir).resolve(executionListener.getTestFilePath());
-                    if (!testsTempDirCleared) {
-                        for (File file : Objects.requireNonNull(new File(AssertionConfig.resultDir).listFiles())) {
-                            FileSystemUtils.deleteRecursively(file);
-                        }
-                        testsTempDirCleared = true;
-                    }
-                }
-                if (testDataStorages != null) {
-                    testDataStorages.affectAllStorages();
-                }
-            }
-            t.clearCustom();
-            initializationService.beforeTest(t);
-            for (BeforeTest beforeTest : beforeTests) {
-                beforeTest.before(t);
-            }
-        });
+        this.test.before(this::beforeConsumer, this::afterConsumer);
         if (testDataStorages != null) {
             testDataStorages.setNewCurrentValue();
+        }
+    }
+
+    private void beforeConsumer(Test t) throws Exception {
+        if (t.getParentTest() == null) {
+            lastTest = executionListener.findLastTest(t);
+            testsDir = null;
+            if (assertion.useTestTempDir()) {
+                testsDir = Path.of(AssertionConfig.resultDir).resolve(executionListener.getTestFilePath());
+                if (!testsTempDirCleared) {
+                    File dir = new File(AssertionConfig.resultDir);
+                    if (!dir.exists() && !dir.mkdirs()) {
+                        throw new RuntimeException("Failed to create directory " + dir.getAbsolutePath());
+                    }
+                    for (File file : Objects.requireNonNull(dir.listFiles())) {
+                        FileSystemUtils.deleteRecursively(file);
+                    }
+                    testsTempDirCleared = true;
+                }
+            }
+            if (testDataStorages != null) {
+                testDataStorages.affectAllStorages();
+            }
+        }
+        t.clearCustom();
+        initializationService.beforeTest(t);
+        for (BeforeTest beforeTest : beforeTests) {
+            beforeTest.before(t);
         }
     }
 
@@ -136,20 +142,22 @@ public class TestExecutor {
 
     public void after() throws Exception {
         try {
-            test.after((t) -> {
-                initializationService.afterTest(t);
-                for (AfterTest afterTest : afterTests) {
-                    afterTest.after(t);
-                }
-                if (t.getParentTest() == null) {
-                    assertion.afterTests(t);
-                }
-            }, lastTest);
+            test.after(this::afterConsumer, lastTest);
             if (test.getCalculatedDisabled()) {
                 Assumptions.abort();
             }
         } finally {
             this.test = null;
+        }
+    }
+
+    private void afterConsumer(Test t) throws Exception {
+        initializationService.afterTest(t);
+        for (AfterTest afterTest : afterTests) {
+            afterTest.after(t);
+        }
+        if (t.getParentTest() == null) {
+            assertion.afterTests(t);
         }
     }
 

@@ -89,24 +89,37 @@ public abstract class Test {
         }
     }
 
-    public void before(SneakyConsumer<Test, Exception> consumer) throws Exception {
-        if (!initialized) {
-            if (parentTest != null && !parentTest.initialized) {
-                parentTest.before(consumer);
+    public void before(SneakyConsumer<Test, Exception> before, SneakyConsumer<Test, Exception> after) throws Exception {
+        if (initialized) {
+            fixAfter(after);
+        } else {
+            if (parentTest != null) {
+                parentTest.before(before, after);
             }
             check();
-            consumer.accept(this);
+            before.accept(this);
             initialized = true;
         }
     }
 
-    public void after(SneakyConsumer<Test, Exception> consumer, Test lastTest) throws Exception {
+    private void fixAfter(SneakyConsumer<Test, Exception> after) throws Exception {
+        for (Test test : subTests) {
+            if (test.initialized) {
+                test.fixAfter(after);
+                if (test.initialized) {
+                    test.after(after, null);
+                }
+            }
+        }
+    }
+
+    public void after(SneakyConsumer<Test, Exception> after, Test lastTest) throws Exception {
         if (initialized) {
-            consumer.accept(this);
+            after.accept(this);
             initialized = false;
         }
         if ((lastTest == this || isLastLeaf()) && parentTest != null) {
-            parentTest.after(consumer, lastTest == this ? parentTest : lastTest);
+            parentTest.after(after, lastTest == this ? parentTest : lastTest);
         }
     }
 
