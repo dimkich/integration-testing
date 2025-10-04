@@ -91,6 +91,7 @@
             <response type="string">#2#2#2</response>
             <response type="string">after #2#2#2</response>
             <response type="string">after #2#2</response>
+            <response type="string">after #2</response>
             <response type="string">before #4</response>
             <response type="string">before #4#1</response>
             <response type="string">#4#1</response>
