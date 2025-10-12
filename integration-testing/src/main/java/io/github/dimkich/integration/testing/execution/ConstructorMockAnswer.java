@@ -5,11 +5,13 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 @Data
 public class ConstructorMockAnswer implements Answer<Object> {
     private final Answer<Object> answer;
-    private Object object;
+    private final Map<Object, Object> mockToObject = new WeakHashMap<>();
 
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -46,7 +48,8 @@ public class ConstructorMockAnswer implements Answer<Object> {
 
             @Override
             public Object callRealMethod() throws Throwable {
-                return invocation.getMethod().invoke(object, invocation.getRawArguments());
+                return invocation.getMethod().invoke(mockToObject.get(invocation.getMock()),
+                        invocation.getRawArguments());
             }
         });
     }

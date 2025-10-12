@@ -46,7 +46,7 @@ public class MockService {
                         ByteBuddyUtils.makeAccessible(constructor);
                         ConstructorMockAnswer ans = (ConstructorMockAnswer) MockUtil.getMockSettings(mock)
                                 .getDefaultAnswer();
-                        ans.setObject(constructor.newInstance(context.arguments().toArray()));
+                        ans.getMockToObject().put(mock, constructor.newInstance(context.arguments().toArray()));
                     });
             scopedMocks.add(mockedConstruction);
         }
