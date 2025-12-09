@@ -4,6 +4,7 @@ import io.github.dimkich.integration.testing.message.MessageDto;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,7 +13,7 @@ import static io.github.dimkich.integration.testing.message.MessageDto.TEST_INBO
 public class KafkaMessageMapper {
     private static final Set<String> kafkaIgnoredHeaders = Set.of("id", "timestamp", "kafka_consumer", "kafka_timestampType",
             "kafka_receivedPartitionId", "kafka_receivedTimestamp", "__TypeId__", "kafka_groupId", "kafka_offset",
-            "kafka_acknowledgment");
+            "kafka_acknowledgment", "kafka_batchConvertedHeaders");
 
     public static <T> MessageDto<T> toMessageDto(Message<T> message) {
         MessageDto<T> messageDto = new MessageDto<>();
@@ -20,12 +21,18 @@ public class KafkaMessageMapper {
             if (kafkaIgnoredHeaders.contains(entry.getKey())) {
                 continue;
             }
+            Object value = entry.getValue();
+            if (value instanceof ArrayList<?> list) {
+                value = list.isEmpty() ? null : list.get(list.size() - 1);
+            }
+            if (value == null) {
+                continue;
+            }
             switch (entry.getKey()) {
-                case KafkaHeaders.TOPIC, KafkaHeaders.RECEIVED_TOPIC ->
-                        messageDto.getHeaders().setTopic(entry.getValue());
-                case KafkaHeaders.KEY, KafkaHeaders.RECEIVED_KEY -> messageDto.getHeaders().setKey(entry.getValue());
-                case TEST_INBOUND_MESSAGE -> messageDto.setTestInboundMessage((Boolean) entry.getValue());
-                default -> messageDto.getHeaders().put(entry.getKey(), entry.getValue());
+                case KafkaHeaders.TOPIC, KafkaHeaders.RECEIVED_TOPIC -> messageDto.getHeaders().setTopic(value);
+                case KafkaHeaders.KEY, KafkaHeaders.RECEIVED_KEY -> messageDto.getHeaders().setKey(value);
+                case TEST_INBOUND_MESSAGE -> messageDto.setTestInboundMessage((Boolean) value);
+                default -> messageDto.getHeaders().put(entry.getKey(), value);
             }
         }
         messageDto.setPayload(message.getPayload());

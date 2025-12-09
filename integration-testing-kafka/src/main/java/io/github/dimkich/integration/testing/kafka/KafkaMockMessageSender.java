@@ -61,6 +61,9 @@ public class KafkaMockMessageSender implements TestMessageSender {
             }
             recordHeaders.add(new HeaderWithObject(entry.getKey(), entry.getValue()));
         }
+        if (message.isTestInboundMessage()) {
+            recordHeaders.add(new HeaderWithObject(MessageDto.TEST_INBOUND_MESSAGE, true));
+        }
         return new ConsumerRecord<>((String) message.getHeaders().getTopic(), 0, 0, RecordBatch.NO_TIMESTAMP,
                 TimestampType.NO_TIMESTAMP_TYPE, ConsumerRecord.NULL_SIZE, ConsumerRecord.NULL_SIZE,
                 message.getHeaders().getKey(), message.getPayload(), recordHeaders, Optional.empty());

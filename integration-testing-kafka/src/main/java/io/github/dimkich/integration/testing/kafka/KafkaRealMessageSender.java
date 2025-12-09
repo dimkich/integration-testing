@@ -10,7 +10,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -46,13 +45,14 @@ public class KafkaRealMessageSender implements TestMessageSender {
             status = transactionManager.getTransaction(new DefaultTransactionDefinition());
         }
         try {
-            Message<?> kafkaMessage = MessageBuilder
+            MessageBuilder<?> builder = MessageBuilder
                     .withPayload(messageDto.getPayload())
                     .setHeader(KafkaHeaders.TOPIC, messageDto.getHeaders().getTopic())
-                    .setHeader(KafkaHeaders.KEY, messageDto.getHeaders().getKey())
-                    .setHeader(MessageDto.TEST_INBOUND_MESSAGE, true)
-                    .build();
-            kafkaTemplate.send(kafkaMessage);
+                    .setHeader(KafkaHeaders.KEY, messageDto.getHeaders().getKey());
+            if (messageDto.isTestInboundMessage()) {
+                builder.setHeader(MessageDto.TEST_INBOUND_MESSAGE, true);
+            }
+            kafkaTemplate.send(builder.build());
             if (transactionManager != null) {
                 transactionManager.commit(status);
             }
