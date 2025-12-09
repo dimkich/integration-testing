@@ -113,6 +113,7 @@ public class TestExecutor {
             try {
                 MessageDto<?> message = test.getInboundMessage();
                 if (message != null) {
+                    message.setTestInboundMessage(true);
                     testMessageSenders.stream()
                             .filter(s -> s.canSend(message))
                             .findFirst()
