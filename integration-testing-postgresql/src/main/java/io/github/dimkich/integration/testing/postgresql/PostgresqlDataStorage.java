@@ -16,6 +16,7 @@ import org.dbunit.dataset.IDataSet;
 import org.dbunit.operation.CompositeOperation;
 import org.dbunit.operation.DatabaseOperation;
 import org.postgresql.jdbc.PgArray;
+import org.postgresql.util.PGobject;
 
 import java.sql.Date;
 import java.sql.*;
@@ -65,6 +66,8 @@ public class PostgresqlDataStorage implements SQLDataStorage {
                         object = date.toLocalDate();
                     } else if (object instanceof PgArray pgArray) {
                         object = pgArray.toString();
+                    } else if (object instanceof PGobject pgObject) {
+                        object = pgObject.toString();
                     }
                     record.put(metaData.getColumnName(i), object);
                 }
