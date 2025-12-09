@@ -16,7 +16,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
@@ -36,7 +35,6 @@ import java.util.stream.Collectors;
 
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnClass(JdbcUtils.class)
 @Import({TestDataStorages.class, ObjectsDifference.class, MockInvokeConfig.class, StorageMappingConfig.class})
 @EnableConfigurationProperties(StorageProperties.class)
 public class StorageConfig {
