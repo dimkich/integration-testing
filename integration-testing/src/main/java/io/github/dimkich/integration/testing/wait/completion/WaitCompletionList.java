@@ -5,9 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
+@Getter
 @RequiredArgsConstructor
 public class WaitCompletionList {
-    @Getter
     private final List<WaitCompletion> tasks;
 
     public void start() {
@@ -20,8 +20,9 @@ public class WaitCompletionList {
             rerun = false;
             for (WaitCompletion waitCompletion : tasks) {
                 waitCompletion.waitCompletion();
+            }
+            for (WaitCompletion waitCompletion : tasks) {
                 if (waitCompletion.isAnyTaskStarted()) {
-                    waitCompletion.start();
                     rerun = true;
                 }
             }

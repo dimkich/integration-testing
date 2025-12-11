@@ -11,11 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -25,7 +21,7 @@ public class MockKafkaWaitCompletion implements WaitCompletion {
     private final TestMessagePoller poller;
     private final Cloner cloner;
 
-    private final List<MessageDto<?>> messages;
+    private final BlockingQueue<MessageDto<?>> messages = new ArrayBlockingQueue<>(100);
     @Value("${integration.testing.kafka.mock.use.poller:true}")
     private boolean usePoller;
 
@@ -46,6 +42,7 @@ public class MockKafkaWaitCompletion implements WaitCompletion {
 
     @Override
     public void start() {
+        messages.clear();
     }
 
     @Override
@@ -58,9 +55,8 @@ public class MockKafkaWaitCompletion implements WaitCompletion {
     public void waitCompletion() {
         if (!messages.isEmpty()) {
             Future<?> future = executor.submit(() -> {
-                List<MessageDto<?>> messages = new ArrayList<>(this.messages);
-                this.messages.clear();
-                for (MessageDto<?> message : messages) {
+                MessageDto<?> message;
+                while ((message = this.messages.poll()) != null) {
                     if (sender.canSend(message)) {
                         sender.sendInboundMessage(message);
                     }
