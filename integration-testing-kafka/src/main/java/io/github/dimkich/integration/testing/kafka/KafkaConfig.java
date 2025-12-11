@@ -5,6 +5,7 @@ import io.github.dimkich.integration.testing.ConditionalOnRealServices;
 import io.github.dimkich.integration.testing.kafka.kafka.KafkaTopicToHandlersConfig;
 import io.github.dimkich.integration.testing.kafka.wait.completion.KafkaWaitCompletionConfig;
 import io.github.dimkich.integration.testing.message.MessageDto;
+import io.github.sugarcubes.cloner.Cloner;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -65,22 +66,24 @@ public class KafkaConfig {
                         Mockito.when(kafkaTemplate.send(ArgumentMatchers.any(org.springframework.messaging.Message.class))).thenAnswer(invocation -> {
                             org.springframework.messaging.Message<Object> message = invocation.getArgument(0);
                             MessageDto<Object> messageDto = KafkaMessageMapper.toMessageDto(message);
-                            messageDto.setPayload(messageDto.getPayload());
+                            messageDto.setPayload(beanFactory.getBean(Cloner.class).clone(messageDto.getPayload()));
                             beanFactory.getBean(MockKafkaWaitCompletion.class).addMessage(messageDto);
                             return completableFuture;
                         });
                         Mockito.when(kafkaTemplate.send(ArgumentMatchers.any(String.class), ArgumentMatchers.any(), ArgumentMatchers.any())).thenAnswer(invocation -> {
+                            Cloner cloner = beanFactory.getBean(Cloner.class);
                             MessageDto<Object> message = new MessageDto<>();
                             message.getHeaders().setTopic(invocation.getArgument(0));
-                            message.getHeaders().setKey(invocation.getArgument(1));
-                            message.setPayload(invocation.getArgument(2));
+                            message.getHeaders().setKey(cloner.clone(invocation.getArgument(1)));
+                            message.setPayload(cloner.clone(invocation.getArgument(2)));
                             beanFactory.getBean(MockKafkaWaitCompletion.class).addMessage(message);
                             return completableFuture;
                         });
                         Mockito.when(kafkaTemplate.send(ArgumentMatchers.any(String.class), ArgumentMatchers.any())).thenAnswer(invocation -> {
+                            Cloner cloner = beanFactory.getBean(Cloner.class);
                             MessageDto<Object> message = new MessageDto<>();
-                            message.getHeaders().setTopic(invocation.getArgument(0));
-                            message.setPayload(invocation.getArgument(1));
+                            message.getHeaders().setTopic(cloner.clone(invocation.getArgument(0)));
+                            message.setPayload(cloner.clone(invocation.getArgument(1)));
                             beanFactory.getBean(MockKafkaWaitCompletion.class).addMessage(message);
                             return completableFuture;
                         });
