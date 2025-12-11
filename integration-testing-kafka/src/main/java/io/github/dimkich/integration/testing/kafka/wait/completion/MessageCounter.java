@@ -18,24 +18,27 @@ public class MessageCounter {
     public synchronized void messageSent(String topic) {
         int count = topicListeners.getOrDefault(topic, 0);
         topicToCount.compute(topic, (t, c) -> c == null ? count : c + count);
-        log.trace("Message(count = {}) send to to topic {}", topicToCount.get(topic), topic);
+        log.trace("Message send to to topic {} (messages = {})", topic, topicToCount);
     }
 
     public synchronized void messageReceived(String topic) {
-        topicToCount.compute(topic, (t, c) -> c == null ? 0 : c - 1);
-        log.trace("Message received from topic {} (left messages = {})", topic, topicToCount.get(topic));
-        if (isAllMessagesReceived()) {
+        Integer newValue = topicToCount.compute(topic, (t, c) -> c == null ? 0 : c - 1);
+        if (newValue <= 0) {
+            topicToCount.remove(topic);
+        }
+        log.trace("Message received from topic {} (messages = {})", topic, topicToCount);
+        if (topicToCount.isEmpty()) {
             notifyAll();
         }
     }
 
     @SneakyThrows
     public synchronized void waitAllMessageToReceive() {
-        log.trace("Wait all message to receive (topic to messages to receive {})", topicToCount);
-        if (!isAllMessagesReceived()) {
+        log.trace("Wait all message to receive (messages = {})", topicToCount);
+        if (!topicToCount.isEmpty()) {
             wait(30_000);
         }
-        log.trace("Messages received (topic to messages to receive {})", topicToCount);
+        log.trace("Stop waiting all message to received (messages = {})", topicToCount);
     }
 
     public synchronized boolean isAnyTaskStarted() {
@@ -44,9 +47,5 @@ public class MessageCounter {
 
     public synchronized void clear() {
         topicToCount.clear();
-    }
-
-    private boolean isAllMessagesReceived() {
-        return topicToCount.values().stream().filter(i -> i > 0).findFirst().orElse(null) == null;
     }
 }
