@@ -3,14 +3,11 @@ package io.github.dimkich.integration.testing.execution.mokito;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.asm.MemberSubstitution;
+import net.bytebuddy.asm.Advice;
 import net.bytebuddy.implementation.Implementation;
-import org.mockito.internal.util.concurrent.DetachedThreadLocal;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 public class MockitoGlobal {
     private static boolean initialized = false;
@@ -18,8 +15,6 @@ public class MockitoGlobal {
     public static void start() throws ClassNotFoundException, NoSuchMethodException {
         if (!initialized) {
             ByteBuddyAgent.install();
-            Constructor<?> constructor = DetachedThreadLocal.class.getConstructor(DetachedThreadLocal.Cleaner.class);
-            Method method = DetachedThreadLocalOrGlobal.class.getMethod("create", DetachedThreadLocal.Cleaner.class);
             new AgentBuilder.Default()
                     .disableClassFormatChanges()
                     .with(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE))
@@ -28,19 +23,19 @@ public class MockitoGlobal {
                     .with(AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Reiterating.INSTANCE)
                     .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                     .ignore(none())
-                    .type(named("org.mockito.internal.creation.bytebuddy.InlineDelegateByteBuddyMockMaker"))
-                    .transform((builder, td, cl, module, domain) -> builder
-                            .visit(MemberSubstitution.relaxed()
-                                    .constructor(is(constructor))
-                                    .replaceWith(method)
-                                    .on(any())))
+                    .type(named("org.mockito.internal.util.concurrent.DetachedThreadLocal"))
+                    .transform((builder, typeDescription, classLoader, module, domain) ->
+                            builder.visit(Advice.to(DetachedThreadLocalAdvice.class).on(named("get")
+                                    .or(named("set").or(named("clear")).or(named("pushTo")).or(named("fetchFrom"))
+                                            .or(named("define")).or(named("initialValue")))))
+                    )
                     .installOnByteBuddyAgent();
             initialized = true;
         }
-        DetachedThreadLocalOrGlobal.setGlobal(true);
+        DetachedThreadLocalAdvice.setGlobal(true);
     }
 
     public static void stop() {
-        DetachedThreadLocalOrGlobal.setGlobal(false);
+        DetachedThreadLocalAdvice.setGlobal(false);
     }
 }
