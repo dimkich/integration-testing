@@ -33,7 +33,7 @@ public class PostgresqlDataStorage implements SQLDataStorage {
     private final Connection connection;
     private final String adminUsername;
 
-    private final String allowedTablesTable = "allowed_tables_" + StringUtils.randomString(16);
+    private final String allowedTablesTable = "allowed_tables_" + StringUtils.randomString(16).toLowerCase();
     private final Map<String, String> tableSequences = new HashMap<>();
 
     private Map<String, List<String>> primaryKeys;
@@ -120,7 +120,39 @@ public class PostgresqlDataStorage implements SQLDataStorage {
     }
 
     @Override
-    public Set<String> initTableRestriction() throws Exception {
+    public Set<String> getTables() throws SQLException {
+        @Cleanup ResultSet rs = connection.getMetaData().getTables(null, null, null,
+                new String[]{"TABLE"});
+        Set<String> tables = new LinkedHashSet<>();
+        while (rs.next()) {
+            String tableName = rs.getString("TABLE_NAME");
+            if (!tableName.equals(allowedTablesTable)) {
+                tables.add(tableName);
+            }
+        }
+        tableSequences.clear();
+        String sql = """
+                SELECT
+                    t.relname AS table,
+                    s.relname AS seq
+                FROM
+                    pg_namespace tns
+                        JOIN pg_class t ON tns.oid = t.relnamespace
+                        AND t.relkind IN ('p', 'r')
+                        JOIN pg_depend d ON t.oid = d.refobjid
+                        JOIN pg_class s ON d.objid = s.oid and s.relkind = 'S'
+                        JOIN pg_namespace sns ON s.relnamespace = sns.oid;
+                """;
+        @Cleanup Statement statement = connection.createStatement();
+        @Cleanup ResultSet resultSet = statement.executeQuery(sql);
+        while (resultSet.next()) {
+            tableSequences.put(resultSet.getString("table"), resultSet.getString("seq"));
+        }
+        return tables;
+    }
+
+    @Override
+    public void initTablesRestriction(Collection<String> tables) throws SQLException {
         StringBuilder builder = new StringBuilder("""
                 create table if not exists :tableName
                 (
@@ -151,12 +183,7 @@ public class PostgresqlDataStorage implements SQLDataStorage {
                 .replace(":adminUsername", adminUsername)
         );
 
-        @Cleanup ResultSet rs = connection.getMetaData().getTables(null, null, null,
-                new String[]{"TABLE"});
-        Set<String> tables = new LinkedHashSet<>();
-        while (rs.next()) {
-            String name = rs.getString("TABLE_NAME");
-            tables.add(name);
+        for (String name : tables) {
             builder.append("create trigger ").append(name).append("_tests_restricted\n")
                     .append("before insert or update or truncate or delete on ").append(name).append("\n")
                     .append("for each statement execute function testsRestrictedTableChanges();\n");
@@ -164,25 +191,6 @@ public class PostgresqlDataStorage implements SQLDataStorage {
 
         @Cleanup Statement statement = connection.createStatement();
         statement.execute(builder.toString());
-
-        String sql = """
-                SELECT
-                    t.relname AS table,
-                    s.relname AS seq
-                FROM
-                    pg_namespace tns
-                        JOIN pg_class t ON tns.oid = t.relnamespace
-                        AND t.relkind IN ('p', 'r')
-                        JOIN pg_depend d ON t.oid = d.refobjid
-                        JOIN pg_class s ON d.objid = s.oid and s.relkind = 'S'
-                        JOIN pg_namespace sns ON s.relnamespace = sns.oid;
-                """;
-
-        @Cleanup ResultSet resultSet = statement.executeQuery(sql);
-        while (resultSet.next()) {
-            tableSequences.put(resultSet.getString("table"), resultSet.getString("seq"));
-        }
-        return tables;
     }
 
     @Override

@@ -18,7 +18,9 @@ public interface SQLDataStorage {
 
     DatabaseConfig getDbunitConfig() throws Exception;
 
-    Set<String> initTableRestriction() throws Exception;
+    Set<String> getTables() throws Exception;
+
+    void initTablesRestriction(Collection<String> tables) throws Exception;
 
     String getAllowTableSql(String table);
 

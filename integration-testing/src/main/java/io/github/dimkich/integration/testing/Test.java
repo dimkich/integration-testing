@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import eu.ciechanowiec.sneakyfun.SneakyConsumer;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
+import io.github.dimkich.integration.testing.initialization.TestInit;
 import io.github.dimkich.integration.testing.message.MessageDto;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -128,6 +129,14 @@ public abstract class Test {
             calculatedDisabled = disabled ? disabled : parentTest != null && parentTest.getCalculatedDisabled();
         }
         return calculatedDisabled;
+    }
+
+    @JsonIgnore
+    public boolean isFirstLeaf() {
+        if (parentTest == null) {
+            return true;
+        }
+        return parentTest.getSubTests().get(0) == this;
     }
 
     @JsonIgnore

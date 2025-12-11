@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
@@ -40,6 +41,10 @@ public class TestDataStorages {
             throw new RuntimeException(String.format("TestDataStorage '%s' not found", name));
         }
         return cls.cast(storage);
+    }
+
+    public <T extends TestDataStorage> Stream<T> getTestDataStorages(Class<T> cls) {
+        return storageMap.values().stream().filter(s -> s.getClass().isAssignableFrom(cls)).map(cls::cast);
     }
 
     public Object getMapDiff() {

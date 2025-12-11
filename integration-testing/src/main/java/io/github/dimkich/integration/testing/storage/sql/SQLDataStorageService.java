@@ -3,13 +3,13 @@ package io.github.dimkich.integration.testing.storage.sql;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.dbunit.HumanReadableXmlDataSet;
 import io.github.dimkich.integration.testing.execution.MockAnswer;
-import io.github.dimkich.integration.testing.initialization.SqlStorageInit;
-import io.github.dimkich.integration.testing.initialization.SqlStorageSetup;
+import io.github.dimkich.integration.testing.initialization.sql.SqlStorageSetup;
+import io.github.dimkich.integration.testing.storage.sql.state.TableStates;
 import io.github.dimkich.integration.testing.storage.sql.state.TablesActionVisitor;
-import io.github.dimkich.integration.testing.storage.sql.state.TestStorageStates;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.dbunit.dataset.CompositeDataSet;
 import org.dbunit.dataset.DataSetException;
 import org.dbunit.dataset.FilteredDataSet;
@@ -22,20 +22,20 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 public class SQLDataStorageService implements TestDataStorage {
     private final SQLDataStorage storage;
     private final BeanFactory beanFactory;
 
-    private final TestStorageStates testStorageStates = new TestStorageStates();
     private final TablesActionVisitor visitor = new TablesActionVisitor();
     private final Set<String> allowedTables = new TreeSet<>();
     private IDataSet dataSet;
     @Getter
     private Map<String, SqlStorageSetup.TableHook> tableHooks = Map.of();
-    private boolean initialized = false;
     @Getter
-    private Set<String> tables;
+    private Set<String> tables = Set.of();
+    private TableStates currentState;
 
     @Override
     public String getName() {
@@ -43,17 +43,27 @@ public class SQLDataStorageService implements TestDataStorage {
     }
 
     public void init() throws Exception {
-        if (!initialized) {
-            tables = storage.initTableRestriction();
-            initialized = true;
+        Set<String> newTables = storage.getTables();
+        List<String> toRestrict = newTables.stream()
+                .filter(t -> !tables.contains(t))
+                .toList();
+        if (!toRestrict.isEmpty()) {
+            storage.initTablesRestriction(toRestrict);
         }
-        testStorageStates.init(this);
+        tables = newTables;
     }
 
     public void executeSqls(Collection<String> sqls) throws Exception {
         if (sqls != null && !sqls.isEmpty()) {
             storage.executeSql(sqls);
         }
+    }
+
+    public Collection<String> getLoadableTables() throws DataSetException {
+        if (dataSet == null) {
+            return List.of();
+        }
+        return Arrays.asList(dataSet.getTableNames());
     }
 
     public void setDbUnitXml(Collection<String> paths) throws DataSetException, IOException {
@@ -70,12 +80,11 @@ public class SQLDataStorageService implements TestDataStorage {
                 .collect(Collectors.toMap(SqlStorageSetup.TableHook::getTableName, Function.identity()));
     }
 
-    public void addInit(SqlStorageInit init) throws Exception {
-        testStorageStates.add(this, init);
-    }
+    public boolean applyChanges(TableStates oldState, TableStates newState, boolean checkDirty) throws Exception {
+        visitor.setCheckDirty(checkDirty);
+        oldState.compare(newState, visitor);
+        currentState = newState;
 
-    public boolean applyChanges() throws Exception {
-        testStorageStates.apply(visitor);
         if (!visitor.isAnyChanges()) {
             return false;
         }
@@ -97,23 +106,31 @@ public class SQLDataStorageService implements TestDataStorage {
         }
         MockAnswer.enable(() -> {
             if (!visitor.getTablesToLoad().isEmpty()) {
+                log.debug("Init '{}' load tables: {}", storage.getName(), visitor.getTablesToLoad());
                 storage.loadDataset(new FilteredDataSet(visitor.getTablesToLoad().toArray(new String[0]), dataSet));
             }
             if (!visitor.getSqls().isEmpty()) {
+                log.debug("Init '{}' SQL: {}", storage.getName(), visitor.getSqls());
                 storage.executeSql(visitor.getSqls());
             }
             if (!visitor.getHooks().isEmpty()) {
+                log.debug("Init '{}' table hooks: {}", storage.getName(), visitor.getHooks());
                 for (SqlStorageSetup.TableHook hook : visitor.getHooks()) {
                     Object bean = beanFactory.getBean(hook.getBeanName());
                     bean.getClass().getMethod(hook.getBeanMethod()).invoke(bean);
                 }
             }
             if (!visitor.getNoHookSqls().isEmpty()) {
+                log.debug("Init '{}' no hook SQL: {}", storage.getName(), visitor.getNoHookSqls());
                 storage.executeSql(visitor.getNoHookSqls());
             }
         });
         visitor.clear();
         return true;
+    }
+
+    public void clearTables(Collection<String> tableNames) throws Exception {
+        storage.executeSql(List.of(storage.getRestartIdentitySql(tableNames), storage.getClearSql(tableNames)));
     }
 
     @Override
@@ -124,6 +141,8 @@ public class SQLDataStorageService implements TestDataStorage {
 
     @Override
     public void setDiff(Map<String, Object> diff) {
-        testStorageStates.setDirtyTables(allowedTables);
+        if (currentState != null) {
+            currentState.setDirtyTables(allowedTables);
+        }
     }
 }

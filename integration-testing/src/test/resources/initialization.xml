@@ -1,0 +1,437 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="container">
+    <test type="container" name="beanInit">
+        <test type="container" name="do not rollback beanInit after test case">
+            <init type="beanInit">
+                <bean name="bean1" method="init"/>
+            </init>
+            <test type="case" name="{bean1=1, bean2=0}">
+                <bean>beanInitCount</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <bean1 type="integer">1</bean1>
+                    <bean2 type="integer">0</bean2>
+                </response>
+            </test>
+            <test type="case" name="{bean1=0, bean2=1}">
+                <init type="beanInit">
+                    <bean name="bean2" method="init"/>
+                </init>
+                <bean>beanInitCount</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <bean1 type="integer">0</bean1>
+                    <bean2 type="integer">1</bean2>
+                </response>
+            </test>
+            <test type="case" name="{bean1=0, bean2=0}">
+                <bean>beanInitCount</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <bean1 type="integer">0</bean1>
+                    <bean2 type="integer">0</bean2>
+                </response>
+            </test>
+        </test>
+        <test type="case" name="do not rollback beanInit after test part">
+            <init type="beanInit">
+                <bean name="bean1" method="init"/>
+            </init>
+            <test type="part" name="{bean1=1, bean2=0}">
+                <bean>beanInitCount</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <bean1 type="integer">1</bean1>
+                    <bean2 type="integer">0</bean2>
+                </response>
+            </test>
+            <test type="part" name="{bean1=0, bean2=1}">
+                <init type="beanInit">
+                    <bean name="bean2" method="init"/>
+                </init>
+                <bean>beanInitCount</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <bean1 type="integer">0</bean1>
+                    <bean2 type="integer">1</bean2>
+                </response>
+            </test>
+            <test type="part" name="{bean1=0, bean2=0}">
+                <bean>beanInitCount</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <bean1 type="integer">0</bean1>
+                    <bean2 type="integer">0</bean2>
+                </response>
+            </test>
+        </test>
+        <test type="container" name="beanInit init priority">
+            <init type="beanInit" applyTo="TestCase">
+                <bean name="bean1" method="init"/>
+            </init>
+            <init type="beanInit" applyTo="TestPart">
+                <bean name="bean2" method="init"/>
+            </init>
+            <test type="case" name="{bean1=1, bean2=0}">
+                <bean>beanInitCount</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <bean1 type="integer">1</bean1>
+                    <bean2 type="integer">0</bean2>
+                </response>
+            </test>
+            <test type="case" name="{bean1=1, bean2=1}">
+                <init type="beanInit">
+                    <bean name="bean2" method="init"/>
+                </init>
+                <bean>beanInitCount</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <bean1 type="integer">1</bean1>
+                    <bean2 type="integer">1</bean2>
+                </response>
+            </test>
+            <test type="case" name="beanInit test part priority">
+                <test type="part" name="{bean1=1, bean2=1}">
+                    <bean>beanInitCount</bean>
+                    <method>count</method>
+                    <response type="linkedHashMap">
+                        <bean1 type="integer">1</bean1>
+                        <bean2 type="integer">1</bean2>
+                    </response>
+                </test>
+                <test type="part" name="{bean1=1, bean2=1}">
+                    <init type="beanInit">
+                        <bean name="bean1" method="init"/>
+                    </init>
+                    <bean>beanInitCount</bean>
+                    <method>count</method>
+                    <response type="linkedHashMap">
+                        <bean1 type="integer">1</bean1>
+                        <bean2 type="integer">1</bean2>
+                    </response>
+                </test>
+                <test type="part" name="{bean1=0, bean2=1}">
+                    <bean>beanInitCount</bean>
+                    <method>count</method>
+                    <response type="linkedHashMap">
+                        <bean1 type="integer">0</bean1>
+                        <bean2 type="integer">1</bean2>
+                    </response>
+                </test>
+            </test>
+        </test>
+    </test>
+    <test type="container" name="dateTimeInit">
+        <test type="container" name="rollback dateTime after test case">
+            <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+            <test type="case" name="2025-01-01T00:00Z[UTC]">
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="zonedDateTime">2025-01-01T00:00:00Z</response>
+            </test>
+            <test type="case" name="2025-02-02T00:00Z[UTC]">
+                <init type="dateTimeInit" dateTime="2025-02-02T00:00:00Z"/>
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="zonedDateTime">2025-02-02T00:00:00Z</response>
+            </test>
+            <test type="case" name="2025-01-01T00:00Z[UTC]">
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="zonedDateTime">2025-01-01T00:00:00Z</response>
+            </test>
+        </test>
+        <test type="case" name="do not rollback dateTime after test part">
+            <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+            <test type="part" name="2025-01-01T00:00Z[UTC]">
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="zonedDateTime">2025-01-01T00:00:00Z</response>
+            </test>
+            <test type="part" name="2025-02-02T00:00Z[UTC]">
+                <init type="dateTimeInit" dateTime="2025-02-02T00:00:00Z"/>
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="zonedDateTime">2025-02-02T00:00:00Z</response>
+            </test>
+            <test type="part" name="2025-02-02T00:00Z[UTC]">
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="zonedDateTime">2025-02-02T00:00:00Z</response>
+            </test>
+        </test>
+        <test type="container" name="dateTime init priority">
+            <init type="dateTimeInit" applyTo="TestCase" dateTime="2025-01-01T00:00:00Z"/>
+            <init type="dateTimeInit" applyTo="TestPart" dateTime="2025-02-02T00:00:00Z"/>
+            <test type="case" name="2025-01-01T00:00Z[UTC]">
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="zonedDateTime">2025-01-01T00:00:00Z</response>
+            </test>
+            <test type="case" name="2025-01-01T11:00Z[UTC]">
+                <init type="dateTimeInit" dateTime="2025-01-01T11:00:00Z"/>
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="zonedDateTime">2025-01-01T11:00:00Z</response>
+            </test>
+            <test type="case" name="dateTime init test part priority">
+                <test type="part" name="2025-02-02T00:00Z[UTC]">
+                    <bean>dateTime</bean>
+                    <method>getDateTime</method>
+                    <response type="zonedDateTime">2025-02-02T00:00:00Z</response>
+                </test>
+                <test type="part" name="2025-02-02T00:00:11Z[UTC]">
+                    <init type="dateTimeInit" dateTime="2025-02-02T00:00:11Z"/>
+                    <bean>dateTime</bean>
+                    <method>getDateTime</method>
+                    <response type="zonedDateTime">2025-02-02T00:00:11Z</response>
+                </test>
+                <test type="part" name="2025-02-02T00:00Z[UTC]">
+                    <bean>dateTime</bean>
+                    <method>getDateTime</method>
+                    <response type="zonedDateTime">2025-02-02T00:00:00Z</response>
+                </test>
+            </test>
+        </test>
+        <test type="container" name="dateTime addDuration">
+            <init type="dateTimeInit" applyTo="TestCase" dateTime="2025-01-01T00:00:00Z"/>
+            <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
+            <test type="case" name="simple increment">
+                <test type="part" name="2025-01-01T00:01Z[UTC]">
+                    <bean>dateTime</bean>
+                    <method>getDateTime</method>
+                    <response type="zonedDateTime">2025-01-01T00:01:00Z</response>
+                </test>
+                <test type="part" name="2025-01-01T00:02Z[UTC]">
+                    <bean>dateTime</bean>
+                    <method>getDateTime</method>
+                    <response type="zonedDateTime">2025-01-01T00:02:00Z</response>
+                </test>
+                <test type="part" name="2025-01-01T00:03Z[UTC]">
+                    <bean>dateTime</bean>
+                    <method>getDateTime</method>
+                    <response type="zonedDateTime">2025-01-01T00:03:00Z</response>
+                </test>
+            </test>
+            <test type="case" name="increment with additional init">
+                <test type="part" name="2025-01-01T00:01Z[UTC]">
+                    <bean>dateTime</bean>
+                    <method>getDateTime</method>
+                    <response type="zonedDateTime">2025-01-01T00:01:00Z</response>
+                </test>
+                <test type="part" name="2025-02-02T00:00Z[UTC]">
+                    <init type="dateTimeInit" dateTime="2025-02-02T00:00:00Z"/>
+                    <bean>dateTime</bean>
+                    <method>getDateTime</method>
+                    <response type="zonedDateTime">2025-02-02T00:00:00Z</response>
+                </test>
+                <test type="part" name="2025-02-02T00:01Z[UTC]">
+                    <bean>dateTime</bean>
+                    <method>getDateTime</method>
+                    <response type="zonedDateTime">2025-02-02T00:01:00Z</response>
+                </test>
+            </test>
+        </test>
+    </test>
+    <test type="container" name="mockInit">
+        <mockInvoke name="mock11" method="name"/>
+        <test type="container" name="accumulate two mocks">
+            <init type="mockInit" resetAll="true"/>
+            <mockInvoke name="mock21" method="name"/>
+            <test type="case" name="{mock21=1, mock11=1}">
+                <bean>mockResetCounter</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <mock21 type="integer">1</mock21>
+                    <mock11 type="integer">1</mock11>
+                </response>
+            </test>
+        </test>
+        <test type="container" name="reset one mock">
+            <init type="mockInit" resetAll="true"/>
+            <test type="case" name="{mock11=1}">
+                <bean>mockResetCounter</bean>
+                <method>count</method>
+                <response type="linkedHashMap">
+                    <mock11 type="integer">1</mock11>
+                </response>
+            </test>
+        </test>
+    </test>
+    <test type="container" name="sqlStorageInit">
+        <init type="sqlStorageSetup" name="dataSource">
+            <dbUnitPath>initializationData.xml</dbUnitPath>
+            <tableHook tableName="t1" beanName="testSQLDataStorage" beanMethod="reloadT1"/>
+        </init>
+        <test type="container" name="case;allow t1, t2;allow t2, t3;restrict all">
+            <test type="case" name="[allow t2, allow t1]">
+                <init type="sqlStorageInit" name="dataSource">
+                    <tablesToChange>t1,t2</tablesToChange>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>allow t2</response>
+                    <response>allow t1</response>
+                </response>
+            </test>
+            <test type="case" name="[allow t3, restrict t1, clear [t1, t2], restart identity [t1, t2], reloaded t1]">
+                <init type="sqlStorageInit" name="dataSource">
+                    <tablesToChange>t2,t3</tablesToChange>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>allow t3</response>
+                    <response>restrict t1</response>
+                    <response>clear [t1, t2]</response>
+                    <response>restart identity [t1, t2]</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+            <test type="case" name="[restrict t3, restrict t2, clear [t2, t3], restart identity [t2, t3]]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>restrict t3</response>
+                    <response>restrict t2</response>
+                    <response>clear [t2, t3]</response>
+                    <response>restart identity [t2, t3]</response>
+                </response>
+            </test>
+        </test>
+        <test type="case" name="part;allow t1, t2;allow t2, t3;restrict all">
+            <test type="part" name="[allow t2, allow t1]">
+                <init type="sqlStorageInit" name="dataSource">
+                    <tablesToChange>t1,t2</tablesToChange>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>allow t2</response>
+                    <response>allow t1</response>
+                </response>
+            </test>
+            <test type="part" name="[allow t3]">
+                <init type="sqlStorageInit" name="dataSource">
+                    <tablesToChange>t2,t3</tablesToChange>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>allow t3</response>
+                </response>
+            </test>
+            <test type="part" name="[]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList"/>
+            </test>
+        </test>
+        <test type="container" name="case;loadAllTables">
+            <init type="sqlStorageInit" name="dataSource" loadAllTables="true"/>
+            <test type="case" name="[Load t1, Load t2, restrict t3, restrict t2, restrict t1, clear [t3], restart identity [t1, t2, t3], reloaded t1]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>Load t1</response>
+                    <response>Load t2</response>
+                    <response>restrict t3</response>
+                    <response>restrict t2</response>
+                    <response>restrict t1</response>
+                    <response>clear [t3]</response>
+                    <response>restart identity [t1, t2, t3]</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+            <test type="case" name="[]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList"/>
+            </test>
+        </test>
+        <test type="case" name="part;loadAllTables">
+            <init type="sqlStorageInit" name="dataSource" loadAllTables="true"/>
+            <test type="part" name="[]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList"/>
+            </test>
+            <test type="part" name="[]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList"/>
+            </test>
+        </test>
+        <test type="container" name="case;allow and load t1">
+            <init type="sqlStorageInit" name="dataSource">
+                <tablesToChange>t1</tablesToChange>
+                <tablesToLoad>t1</tablesToLoad>
+            </init>
+            <test type="case" name="[allow t1, clear [t2], restart identity [t2]]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>allow t1</response>
+                    <response>clear [t2]</response>
+                    <response>restart identity [t2]</response>
+                </response>
+            </test>
+            <test type="case" name="[Load t1, restart identity [t1], update t1 set column = 1, reloaded t1]">
+                <init type="sqlStorageInit" name="dataSource">
+                    <sql>update t1 set column = 1</sql>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>Load t1</response>
+                    <response>restart identity [t1]</response>
+                    <response>update t1 set column = 1</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+            <test type="case" name="[Load t1, restart identity [t1], reloaded t1]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>Load t1</response>
+                    <response>restart identity [t1]</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+        </test>
+        <test type="case" name="part;allow and load t1">
+            <init type="sqlStorageInit" name="dataSource">
+                <tablesToChange>t1</tablesToChange>
+                <tablesToLoad>t1</tablesToLoad>
+            </init>
+            <test type="part" name="[Load t1, restart identity [t1], reloaded t1]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>Load t1</response>
+                    <response>restart identity [t1]</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+            <test type="part" name="[update t1 set column = 1, reloaded t1]">
+                <init type="sqlStorageInit" name="dataSource">
+                    <sql>update t1 set column = 1</sql>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList">
+                    <response>update t1 set column = 1</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+            <test type="part" name="[]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="arrayList"/>
+            </test>
+        </test>
+    </test>
+</test>
