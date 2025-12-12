@@ -50,13 +50,13 @@ public class TableStates {
      * @return a new TableStates instance with default states for all specified tables
      */
     public static TableStates createDefault(Collection<String> tables,
-                                            Map<String, SqlStorageSetup.TableHook> tableHooks) {
+                                            Map<String, List<SqlStorageSetup.TableHook>> tableHooks) {
         TableStates tableStates = new TableStates();
         for (String name : tables) {
             TableState state = new TableState();
             state.setAccess(RESTRICTED);
             state.getData().setState(CLEARED);
-            state.getData().setTableHook(tableHooks.get(name));
+            state.getData().setTableHooks(tableHooks.get(name));
             tableStates.tableStates.put(name, state);
         }
         return tableStates;
@@ -114,31 +114,6 @@ public class TableStates {
             }
         }
         return tableStates;
-    }
-
-    /**
-     * Initializes table states with table hooks and marks appropriate tables as dirty.
-     * <p>
-     * This method:
-     * <ul>
-     *   <li>Marks tables with LOADED state as dirty (requiring reload)</li>
-     *   <li>Updates table hooks if they differ from the current state</li>
-     *   <li>Marks tables as dirty when their hooks are updated</li>
-     * </ul>
-     *
-     * @param tableHooks a map of table names to their corresponding table hooks (can be null or empty)
-     */
-    public void init(Map<String, SqlStorageSetup.TableHook> tableHooks) {
-        tableStates.forEach((tableName, state) -> {
-            if (state.getData().getState() == LOADED) {
-                state.getData().setDirty(true);
-            }
-            SqlStorageSetup.TableHook tableHook = tableHooks.get(tableName);
-            if (!Objects.equals(tableHook, state.getData().getTableHook())) {
-                state.getData().setTableHook(tableHook);
-                state.getData().setDirty(true);
-            }
-        });
     }
 
     /**

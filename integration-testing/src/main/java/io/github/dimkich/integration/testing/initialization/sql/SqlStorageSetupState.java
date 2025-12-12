@@ -34,6 +34,6 @@ public class SqlStorageSetupState implements TestInitState<SqlStorageSetupState>
     static class InitData {
         private List<String> sql = new ArrayList<>();
         private Set<String> dbUnitPath = new HashSet<>();
-        private Set<SqlStorageSetup.TableHook> tableHook = new HashSet<>();
+        private Set<SqlStorageSetup.TableHook> tableHook = new LinkedHashSet<>();
     }
 }

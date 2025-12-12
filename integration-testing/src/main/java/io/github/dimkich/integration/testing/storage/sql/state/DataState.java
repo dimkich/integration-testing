@@ -22,7 +22,7 @@ public class DataState {
 
     private List<String> sqls = new ArrayList<>();
     private List<String> noHookSqls = new ArrayList<>();
-    private SqlStorageSetup.TableHook tableHook;
+    private List<SqlStorageSetup.TableHook> tableHooks;
 
     private boolean dirty;
 
@@ -61,8 +61,8 @@ public class DataState {
      */
     public void compare(DataState state, String tableName, TablesActionVisitor visitor) {
         if (shouldTriggerStateChange(state, visitor)) {
-            if (tableHook != null) {
-                visitor.getHooks().add(tableHook);
+            if (tableHooks != null) {
+                visitor.getHooks().addAll(tableHooks);
             }
             visitor.getTablesToRestartIdentity().add(tableName);
             State targetState = state.state != null ? state.state : this.state;
@@ -78,8 +78,8 @@ public class DataState {
 
         int sqlStartIndex = findOverlappingSuffixLength(this.sqls, state.sqls);
         for (int i = sqlStartIndex; i < state.sqls.size(); i++) {
-            if (tableHook != null) {
-                visitor.getHooks().add(tableHook);
+            if (tableHooks != null) {
+                visitor.getHooks().addAll(tableHooks);
             }
             visitor.getSqls().add(state.sqls.get(i));
         }
@@ -100,7 +100,7 @@ public class DataState {
         state.state = this.state;
         state.sqls = new ArrayList<>(sqls);
         state.noHookSqls = new ArrayList<>(noHookSqls);
-        state.tableHook = tableHook;
+        state.tableHooks = tableHooks;
         state.dirty = dirty;
         return state;
     }

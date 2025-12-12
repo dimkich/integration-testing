@@ -19,7 +19,6 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -32,7 +31,7 @@ public class SQLDataStorageService implements TestDataStorage {
     private final Set<String> allowedTables = new TreeSet<>();
     private IDataSet dataSet;
     @Getter
-    private Map<String, SqlStorageSetup.TableHook> tableHooks = Map.of();
+    private Map<String, List<SqlStorageSetup.TableHook>> tableHooks = Map.of();
     @Getter
     private Set<String> tables = Set.of();
     private TableStates currentState;
@@ -77,7 +76,7 @@ public class SQLDataStorageService implements TestDataStorage {
 
     public void setTableHooks(Collection<SqlStorageSetup.TableHook> tableHooks) {
         this.tableHooks = tableHooks.stream()
-                .collect(Collectors.toMap(SqlStorageSetup.TableHook::getTableName, Function.identity()));
+                .collect(Collectors.groupingBy(SqlStorageSetup.TableHook::getTableName));
     }
 
     public boolean applyChanges(TableStates oldState, TableStates newState, boolean checkDirty) throws Exception {

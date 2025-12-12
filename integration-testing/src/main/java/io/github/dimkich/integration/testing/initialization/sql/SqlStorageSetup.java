@@ -19,7 +19,7 @@ public class SqlStorageSetup extends TestInit {
     private List<String> sqlFilePath;
     private List<String> sql;
     private Set<String> dbUnitPath;
-    private Set<TableHook> tableHook;
+    private List<TableHook> tableHook;
 
     @Data
     public static class TableHook {
