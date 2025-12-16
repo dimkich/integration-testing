@@ -58,17 +58,6 @@ public interface InitSetup<T extends TestInit, S extends TestInitState<S>> exten
     }
 
     /**
-     * Determines whether the state should be applied immediately.
-     * By default, this is the inverse of saveState() - if state is not saved,
-     * it should be applied immediately.
-     *
-     * @return true if the state should be applied immediately, false otherwise
-     */
-    default boolean applyImmediately() {
-        return !saveState();
-    }
-
-    /**
      * Returns the order in which this setup should be executed relative to other setups.
      * Lower values are executed first. The default order is Integer.MAX_VALUE,
      * meaning setups without a specific order will be executed last.

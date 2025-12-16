@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing;
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.execution.ConstructorMockAnswer;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
+import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorage;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import lombok.RequiredArgsConstructor;
@@ -15,11 +16,11 @@ import org.junit.jupiter.api.TestFactory;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.mockito.internal.util.MockUtil;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -93,8 +94,8 @@ public class InitializationTest {
         }
 
         @Bean
-        SQLDataStorageService sqlDataStorageService(BeanFactory beanFactory) {
-            return new SQLDataStorageService(testSQLDataStorage(), beanFactory);
+        SQLDataStorageService sqlDataStorageService(@Lazy InitializationService initializationService) {
+            return new SQLDataStorageService(testSQLDataStorage(), initializationService);
         }
 
         @Bean

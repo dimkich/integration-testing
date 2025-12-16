@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.storage;
 
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
+import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueOperationsConfig;
 import io.github.dimkich.integration.testing.storage.mapping.StorageMappingConfig;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageFactory;
@@ -9,6 +10,7 @@ import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import jakarta.annotation.PostConstruct;
 import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -23,6 +25,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.jdbc.DatabaseDriver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.jdbc.support.JdbcUtils;
 
 import javax.sql.DataSource;
@@ -38,7 +41,8 @@ import java.util.stream.Collectors;
 @Import({TestDataStorages.class, ObjectsDifference.class, MockInvokeConfig.class, StorageMappingConfig.class})
 @EnableConfigurationProperties(StorageProperties.class)
 public class StorageConfig {
-    private final ConfigurableListableBeanFactory beanFactory;
+    @Setter(onMethod_ = {@Autowired, @Lazy})
+    private InitializationService initializationService;
     @Autowired(required = false)
     private final LiquibaseProperties liquibaseProperties;
     @Autowired(required = false)
@@ -84,7 +88,7 @@ public class StorageConfig {
         if (newUser.equals(username)) {
             throw new SQLException("Cannot use one username in admin and regular connections");
         }
-        return new SQLDataStorageService(factory.createStorage(name, adminConnection, newUser), beanFactory);
+        return new SQLDataStorageService(factory.createStorage(name, adminConnection, newUser), initializationService);
     }
 
     @Configuration

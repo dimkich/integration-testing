@@ -3,6 +3,8 @@ package io.github.dimkich.integration.testing.storage.sql;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.dbunit.HumanReadableXmlDataSet;
 import io.github.dimkich.integration.testing.execution.MockAnswer;
+import io.github.dimkich.integration.testing.initialization.InitializationService;
+import io.github.dimkich.integration.testing.initialization.bean.BeanInit;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageSetup;
 import io.github.dimkich.integration.testing.storage.sql.state.TableStates;
 import io.github.dimkich.integration.testing.storage.sql.state.TablesActionVisitor;
@@ -14,7 +16,6 @@ import org.dbunit.dataset.CompositeDataSet;
 import org.dbunit.dataset.DataSetException;
 import org.dbunit.dataset.FilteredDataSet;
 import org.dbunit.dataset.IDataSet;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SQLDataStorageService implements TestDataStorage {
     private final SQLDataStorage storage;
-    private final BeanFactory beanFactory;
+    private final InitializationService initializationService;
 
     private final TablesActionVisitor visitor = new TablesActionVisitor();
     private final Set<String> allowedTables = new TreeSet<>();
@@ -114,10 +115,16 @@ public class SQLDataStorageService implements TestDataStorage {
             }
             if (!visitor.getHooks().isEmpty()) {
                 log.debug("Init '{}' table hooks: {}", storage.getName(), visitor.getHooks());
-                for (SqlStorageSetup.TableHook hook : visitor.getHooks()) {
-                    Object bean = beanFactory.getBean(hook.getBeanName());
-                    bean.getClass().getMethod(hook.getBeanMethod()).invoke(bean);
-                }
+                List<BeanInit.BeanMethod> list = visitor.getHooks().stream()
+                        .map(th -> {
+                            BeanInit.BeanMethod beanMethod = new BeanInit.BeanMethod();
+                            beanMethod.setName(th.getBeanName());
+                            beanMethod.setMethod(th.getBeanMethod());
+                            return beanMethod;
+                        }).toList();
+                BeanInit beanInit = new BeanInit();
+                beanInit.setBean(list);
+                initializationService.addTransientInit(beanInit);
             }
             if (!visitor.getNoHookSqls().isEmpty()) {
                 log.debug("Init '{}' no hook SQL: {}", storage.getName(), visitor.getNoHookSqls());

@@ -67,11 +67,6 @@ public class SqlStorageSetupSetup implements InitSetup<SqlStorageSetup, SqlStora
     }
 
     @Override
-    public boolean applyImmediately() {
-        return true;
-    }
-
-    @Override
     public Integer getOrder() {
         return 1000;
     }
