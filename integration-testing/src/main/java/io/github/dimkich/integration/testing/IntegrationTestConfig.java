@@ -2,7 +2,6 @@ package io.github.dimkich.integration.testing;
 
 import io.github.dimkich.integration.testing.assertion.AssertionConfig;
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
-import io.github.dimkich.integration.testing.date.time.TestClockService;
 import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
 import io.github.dimkich.integration.testing.format.TestFormatConfig;
 import io.github.dimkich.integration.testing.initialization.InitializationConfig;
@@ -23,7 +22,7 @@ import java.util.List;
 @Configuration
 @ConditionalOnProperty(value = "integration.testing.enabled", havingValue = "true", matchIfMissing = true)
 @Import({DynamicTestBuilder.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeService.class,
-        InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class, TestClockService.class,
+        InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class,
         WebConfig.class, TestFormatConfig.class})
 public class IntegrationTestConfig {
     @Bean

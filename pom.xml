@@ -57,7 +57,6 @@
 
     <modules>
         <module>integration-testing</module>
-        <module>integration-testing-compile</module>
         <module>integration-testing-postgresql</module>
         <module>integration-testing-redis</module>
         <module>integration-testing-kafka</module>
@@ -98,11 +97,6 @@
             <dependency>
                 <groupId>io.github.dimkich.integration.testing</groupId>
                 <artifactId>integration-testing</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.dimkich.integration.testing</groupId>
-                <artifactId>integration-testing-compile</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
