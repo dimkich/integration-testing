@@ -9,17 +9,14 @@ import io.github.dimkich.integration.testing.initialization.key.value.KeyValueSt
 import io.github.dimkich.integration.testing.initialization.key.value.KeyValueStorageInitSetup;
 import io.github.dimkich.integration.testing.initialization.mock.MockInit;
 import io.github.dimkich.integration.testing.initialization.mock.MockInitSetup;
-import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInit;
-import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInitSetup;
-import io.github.dimkich.integration.testing.initialization.sql.SqlStorageSetup;
-import io.github.dimkich.integration.testing.initialization.sql.SqlStorageSetupSetup;
+import io.github.dimkich.integration.testing.initialization.sql.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
 @Import({InitializationService.class, BeanInitSetup.class, DateTimeInitSetup.class, KeyValueStorageInitSetup.class,
-        MockInitSetup.class, SqlStorageInitSetup.class, SqlStorageSetupSetup.class})
+        MockInitSetup.class, SqlStorageInitSetup.class, SqlStorageSetupSetup.class, SqlStorageNoHookInitSetup.class})
 public class InitializationConfig {
     @Bean
     TestSetupModule initializationTestSetupModule() {

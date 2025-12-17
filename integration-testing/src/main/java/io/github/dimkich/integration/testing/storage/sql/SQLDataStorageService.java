@@ -5,6 +5,7 @@ import io.github.dimkich.integration.testing.dbunit.HumanReadableXmlDataSet;
 import io.github.dimkich.integration.testing.execution.MockAnswer;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.initialization.bean.BeanInit;
+import io.github.dimkich.integration.testing.initialization.sql.SqlStorageNoHookInit;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageSetup;
 import io.github.dimkich.integration.testing.storage.sql.state.TableStates;
 import io.github.dimkich.integration.testing.storage.sql.state.TablesActionVisitor;
@@ -114,7 +115,6 @@ public class SQLDataStorageService implements TestDataStorage {
                 storage.executeSql(visitor.getSqls());
             }
             if (!visitor.getHooks().isEmpty()) {
-                log.debug("Init '{}' table hooks: {}", storage.getName(), visitor.getHooks());
                 List<BeanInit.BeanMethod> list = visitor.getHooks().stream()
                         .map(th -> {
                             BeanInit.BeanMethod beanMethod = new BeanInit.BeanMethod();
@@ -127,8 +127,10 @@ public class SQLDataStorageService implements TestDataStorage {
                 initializationService.addTransientInit(beanInit);
             }
             if (!visitor.getNoHookSqls().isEmpty()) {
-                log.debug("Init '{}' no hook SQL: {}", storage.getName(), visitor.getNoHookSqls());
-                storage.executeSql(visitor.getNoHookSqls());
+                SqlStorageNoHookInit init = new SqlStorageNoHookInit();
+                init.setName(storage.getName());
+                init.setSql(new ArrayList<>(visitor.getNoHookSqls()));
+                initializationService.addTransientInit(init);
             }
         });
         visitor.clear();
