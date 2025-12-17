@@ -119,6 +119,10 @@ class JsonTestMapperTest {
                         "{\"value\":[\"converterToList\",[\"1\",\"2\",\"3\"]]}"},
                 {new ConverterOnField("all", "a,b,c, "),
                         "{\"name\":\"all\",\"list\":[\"a\",\"b\",\"c\",\" \"]}"},
+                {new IncludeAlways(null, null, null, null),
+                        "{\"id\":null,\"code\":null,\"attributes\":null,\"map\":null}"},
+                {new IncludeAlways(1, "c", Collections.singletonList(null), Map.of("a", 1)),
+                        "{\"id\":1,\"code\":\"c\",\"attributes\":[null],\"map\":{\"a\":1}}"},
         };
     }
 

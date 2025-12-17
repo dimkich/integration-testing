@@ -17,6 +17,7 @@ import io.github.dimkich.integration.testing.format.xml.fixed.XmlFactoryFixed;
 import io.github.dimkich.integration.testing.format.xml.fixed.XmlMapperFixed;
 import io.github.dimkich.integration.testing.format.xml.map.MapModule;
 import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicUnwrappedModule;
+import io.github.dimkich.integration.testing.format.xml.wrapper.WrapperModule;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,8 @@ public class XmlConfig {
         builder.addModules(new SimpleModule()
                         .setDeserializerModifier(new WrapperHandlingModifier()),
                 new BeanAsAttributesModule(resolverBuilder), new PolymorphicUnwrappedModule(resolverBuilder),
-                new MapModule(), new ScalarTypeModule(Set.of(Boolean.class, Integer.class, Double.class)));
+                new MapModule(), new ScalarTypeModule(Set.of(Boolean.class, Integer.class, Double.class)),
+                new WrapperModule());
 
         XmlMapper xmlMapper = builder.build();
 

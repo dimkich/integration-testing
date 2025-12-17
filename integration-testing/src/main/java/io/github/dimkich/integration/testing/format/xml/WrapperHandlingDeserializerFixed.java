@@ -1,5 +1,6 @@
 package io.github.dimkich.integration.testing.format.xml;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
 import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
@@ -35,6 +36,10 @@ public class WrapperHandlingDeserializerFixed extends WrapperHandlingDeserialize
             SettableBeanProperty prop = it.next();
             JsonDeserializer<Object> valueDeserializer = prop.getValueDeserializer();
             if (valueDeserializer.handledType() == null || !JacksonUtils.isIndexedType(valueDeserializer.handledType())) {
+                continue;
+            }
+            JsonInclude include = prop.getAnnotation(JsonInclude.class);
+            if (include != null && include.value() == JsonInclude.Include.ALWAYS) {
                 continue;
             }
             PropertyName wrapperName = prop.getWrapperName();

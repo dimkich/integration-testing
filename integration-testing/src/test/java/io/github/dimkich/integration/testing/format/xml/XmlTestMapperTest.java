@@ -386,6 +386,27 @@ class XmlTestMapperTest {
     <list> </list>
 </root>
 """},
+                {new IncludeAlways(null, null, null, null), """
+<root>
+    <id xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <code xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <attributes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <map xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+</root>
+"""},
+                {new IncludeAlways(1, "c", Collections.singletonList(null), Map.of("a", 1)), """
+<root>
+    <id>1</id>
+    <code>c</code>
+    <attributes>
+        <attributes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    </attributes>
+    <map>
+        <a type="integer">1</a>
+    </map>
+</root>
+"""},
+
                 {new Typed(new ArrayList<>(List.of(new TypeTest(1, null, "s"),
                         new TypeTest(2, null, "t"))),
                         map(new LinkedHashMap<>(), "k1", new TypeTest(3, null, "d"))), """
