@@ -38,6 +38,15 @@ public class InitializationService {
         inits.get(init.getClass()).getAddBuilder().add(init);
     }
 
+    @SuppressWarnings("unchecked")
+    public <T extends TestInitState<?>> T changeCurrentStatus(Class<? extends TestInit> testInitClass) {
+        InitStateBuilder<TestInit, ? extends TestInitState<?>> builder = inits.get(testInitClass);
+        if (builder != null) {
+            return (T) builder.changeCurrentStatus();
+        }
+        return null;
+    }
+
     public void afterTest(Test test) {
         removeInits(transientInits);
         removeInits(test.getInits());

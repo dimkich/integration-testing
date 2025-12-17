@@ -5,10 +5,12 @@ import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.*;
 
 @Getter
+@ToString
 @NoArgsConstructor
 public class SqlStorageSetupState implements TestInitState<SqlStorageSetupState> {
     private final Map<SQLDataStorageService, InitData> initData = new HashMap<>();

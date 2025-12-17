@@ -43,6 +43,10 @@ public class SegmentedList<T, D> {
      * @throws IllegalStateException if called when no elements have been added since the last segment
      */
     public void finishSegment(D data) {
+        int currentSegmentStart = segmentEnds.isEmpty() ? 0 : segmentEnds.get(segmentEnds.size() - 1);
+        if (elements.size() <= currentSegmentStart) {
+            return;
+        }
         segmentEnds.add(elements.size());
         segmentData.add(data);
     }

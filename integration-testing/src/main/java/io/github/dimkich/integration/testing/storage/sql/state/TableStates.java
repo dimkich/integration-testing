@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.storage.sql.state;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInit;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageSetup;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
+import lombok.ToString;
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.parser.ParseException;
 import net.sf.jsqlparser.statement.Statement;
@@ -34,6 +35,7 @@ import static io.github.dimkich.integration.testing.storage.sql.state.TableState
  *   <li>Tracking dirty tables that need to be reloaded</li>
  * </ul>
  */
+@ToString
 public class TableStates {
     /**
      * Map of table names to their corresponding table states.

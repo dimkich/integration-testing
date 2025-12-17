@@ -4,12 +4,14 @@ import io.github.dimkich.integration.testing.initialization.TestInitState;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import io.github.dimkich.integration.testing.storage.sql.state.TableStates;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@ToString
 @NoArgsConstructor
 public class SqlStorageInitState implements TestInitState<SqlStorageInitState> {
     private SQLDataStorageService storage;

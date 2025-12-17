@@ -5,9 +5,11 @@ import io.github.dimkich.integration.testing.Test;
 import io.github.dimkich.integration.testing.TestContainer;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+@Slf4j
 @RequiredArgsConstructor
 public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
     private final static TestContainer TEST = new TestContainer();
@@ -31,6 +33,13 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
         stateStack.clear();
         testStack.clear();
         initsToStatesCache.clear();
+    }
+
+    public S changeCurrentStatus() {
+        if (!stateStack.isEmpty() && currentState == stateStack.getLast()) {
+            currentState = currentState.copy();
+        }
+        return currentState;
     }
 
     private CursorStack<T> getInits(Test.Type type) {
@@ -66,6 +75,7 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
                     if (currentState == null) {
                         currentState = stateStack.getLast();
                     }
+                    log.debug("init state initialized, current state {}", currentState);
                 }
 
                 if (initSetup.saveState()) {
@@ -82,6 +92,11 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
                                         SneakyFunction.sneaky(initSetup::convert)));
                             }
                         }
+                        if (log.isDebugEnabled()) {
+                            log.debug("init state added");
+                            log.debug("test = {}", testInits.getSegmentData(i).getName());
+                            log.debug("state = {}", state);
+                        }
                         stateStack.add(state);
                         testStack.add(testInits.getSegmentData(i));
                     }
@@ -91,6 +106,11 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
                         state = state.merge(initsToStatesCache.computeIfAbsent(init,
                                 SneakyFunction.sneaky(initSetup::convert)));
                     }
+                    if (log.isDebugEnabled()) {
+                        log.debug("init state added");
+                        log.debug("test = {}", test.getName());
+                        log.debug("state = {}", state);
+                    }
                     stateStack.add(state);
                     testStack.add(test);
                 }
@@ -98,13 +118,14 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
                 testContainerInits.resetCursor();
                 testCaseInits.resetCursor();
                 testPartInits.resetCursor();
-            } else if (test.getType() == Test.Type.TestPart) {
+            } else if (test.getType() == Test.Type.TestPart && !test.isFirstLeaf()) {
                 return;
             }
 
             if (currentState != null && !stateStack.isEmpty() && currentState != stateStack.getLast()) {
                 initSetup.apply(currentState, stateStack.getLast(), test);
                 currentState = stateStack.getLast();
+                log.debug("init state applied, current state {}", currentState);
             }
         }
     }
@@ -119,7 +140,8 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
 
         public void build(Test test) {
             if (!testStack.isEmpty() && test == testStack.getLast()) {
-                stateStack.removeLast();
+                S state = stateStack.removeLast();
+                log.debug("init state removed {}", state);
                 testStack.removeLast();
             }
         }

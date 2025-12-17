@@ -5,6 +5,8 @@ import io.github.dimkich.integration.testing.dbunit.HumanReadableXmlDataSet;
 import io.github.dimkich.integration.testing.execution.MockAnswer;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.initialization.bean.BeanInit;
+import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInit;
+import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInitState;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageNoHookInit;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageSetup;
 import io.github.dimkich.integration.testing.storage.sql.state.TableStates;
@@ -12,6 +14,7 @@ import io.github.dimkich.integration.testing.storage.sql.state.TablesActionVisit
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.dbunit.dataset.CompositeDataSet;
 import org.dbunit.dataset.DataSetException;
@@ -24,6 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
+@ToString(onlyExplicitlyIncluded = true)
 @RequiredArgsConstructor
 public class SQLDataStorageService implements TestDataStorage {
     private final SQLDataStorage storage;
@@ -36,9 +40,9 @@ public class SQLDataStorageService implements TestDataStorage {
     private Map<String, List<SqlStorageSetup.TableHook>> tableHooks = Map.of();
     @Getter
     private Set<String> tables = Set.of();
-    private TableStates currentState;
 
     @Override
+    @ToString.Include(name = "name")
     public String getName() {
         return storage.getName();
     }
@@ -84,7 +88,6 @@ public class SQLDataStorageService implements TestDataStorage {
     public boolean applyChanges(TableStates oldState, TableStates newState, boolean checkDirty) throws Exception {
         visitor.setCheckDirty(checkDirty);
         oldState.compare(newState, visitor);
-        currentState = newState;
 
         if (!visitor.isAnyChanges()) {
             return false;
@@ -149,8 +152,10 @@ public class SQLDataStorageService implements TestDataStorage {
 
     @Override
     public void setDiff(Map<String, Object> diff) {
+        SqlStorageInitState currentState = initializationService.changeCurrentStatus(SqlStorageInit.class);
         if (currentState != null) {
-            currentState.setDirtyTables(allowedTables);
+            currentState.getTableStates(this)
+                    .setDirtyTables(allowedTables);
         }
     }
 }

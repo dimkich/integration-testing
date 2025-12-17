@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.initialization.bean;
 
 import io.github.dimkich.integration.testing.initialization.TestInitState;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -25,6 +26,7 @@ import java.util.Set;
  * @see BeanInitSetup
  */
 @Getter
+@ToString
 public class BeanInitState implements TestInitState<BeanInitState> {
     /**
      * Set of bean methods to be invoked during test initialization.

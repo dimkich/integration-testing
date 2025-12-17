@@ -3,12 +3,14 @@ package io.github.dimkich.integration.testing.initialization.key.value;
 import io.github.dimkich.integration.testing.initialization.TestInitState;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Getter
+@ToString
 public class KeyValueStorageInitState implements TestInitState<KeyValueStorageInitState> {
     private final Map<KeyValueDataStorage, StorageState> storageStates = new HashMap<>();
 

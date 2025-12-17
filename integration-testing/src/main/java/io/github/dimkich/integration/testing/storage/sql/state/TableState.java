@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.storage.sql.state;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Represents the state of a database table, including access permissions and data state.
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
  * need to be taken to synchronize database tables.
  */
 @Data
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class TableState {

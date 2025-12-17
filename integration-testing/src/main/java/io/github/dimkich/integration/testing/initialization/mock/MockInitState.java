@@ -5,6 +5,7 @@ import io.github.dimkich.integration.testing.initialization.TestInitState;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Represents the initialization state for mock reset operations in integration tests.
@@ -27,6 +28,7 @@ import lombok.NoArgsConstructor;
  * @see MockInvoke
  */
 @Getter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class MockInitState implements TestInitState<MockInitState> {

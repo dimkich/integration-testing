@@ -3,12 +3,14 @@ package io.github.dimkich.integration.testing.initialization.sql;
 import io.github.dimkich.integration.testing.initialization.TestInitState;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+@ToString
 @NoArgsConstructor
 public class SqlStorageNoHookInitState implements TestInitState<SqlStorageNoHookInitState> {
     private final Map<SQLDataStorageService, List<String>> map = new LinkedHashMap<>();

@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.initialization.date.time;
 import io.github.dimkich.integration.testing.initialization.TestInitState;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -30,6 +31,7 @@ import java.time.ZonedDateTime;
  * @see DateTimeInitSetup
  */
 @Getter
+@ToString
 @AllArgsConstructor
 public class DateTimeInitState implements TestInitState<DateTimeInitState> {
     /**
