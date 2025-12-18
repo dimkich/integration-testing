@@ -8,6 +8,14 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+/**
+ * {@link Answer} implementation that delegates calls to a wrapped {@link Answer}
+ * while allowing real method invocations on the original object instance that
+ * corresponds to a given mock.
+ * <p>
+ * The mapping between mock instances and the corresponding original objects is
+ * stored in a {@link WeakHashMap} to avoid memory leaks.
+ */
 @Data
 public class ConstructorMockAnswer implements Answer<Object> {
     private final Answer<Object> answer;

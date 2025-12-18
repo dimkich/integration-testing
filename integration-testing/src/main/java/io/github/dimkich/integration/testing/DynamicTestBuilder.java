@@ -22,6 +22,16 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * Builds a JUnit 5 dynamic test tree from integration test descriptions.
+ * <p>
+ * The builder delegates to {@link CompositeTestMapper} to read tests from a path
+ * and to {@link TestExecutor} to execute individual tests. It also configures
+ * time-related behavior when {@link MockJavaTimeSetUp} is initialized and
+ * supports repeated execution controlled by the {@code integration.testing.repeat}
+ * property (e.g. {@code Once}, {@code UntilStopped}).
+ */
+
 @RequiredArgsConstructor
 public class DynamicTestBuilder {
     private final TestExecutor testExecutor;
@@ -30,10 +40,29 @@ public class DynamicTestBuilder {
     @Value("${integration.testing.repeat:Once}")
     private String repeat;
 
+    /**
+     * Builds a stream of dynamic test nodes from the given path without any additional filtering.
+     *
+     * @param path path to the test description resource (for example, a file or classpath location)
+     * @return stream of {@link DynamicNode} representing the root tests and containers
+     * @throws Exception if reading or mapping tests fails
+     */
     public Stream<DynamicNode> build(String path) throws Exception {
         return build(path, t -> true);
     }
 
+    /**
+     * Builds a stream of dynamic test nodes from the given path and filters the tree
+     * by a list of allowed test names along the parent chain.
+     * <p>
+     * Only tests whose ancestor names match the {@code allowedTestNames} sequence (from
+     * top parent to child) are included.
+     *
+     * @param path             path to the test description resource
+     * @param allowedTestNames ordered list of test names that must match parents and the test itself
+     * @return stream of {@link DynamicNode} that satisfy the name filter
+     * @throws Exception if reading or mapping tests fails
+     */
     public Stream<DynamicNode> build(String path, List<String> allowedTestNames) throws Exception {
         return build(path, t -> {
             int i = 0;
@@ -52,6 +81,18 @@ public class DynamicTestBuilder {
         });
     }
 
+    /**
+     * Builds a stream of dynamic test nodes from the given path using the provided filter.
+     * <p>
+     * The test tree is read once per iteration cycle and wrapped in an {@link InfiniteTestIterator}
+     * that can either terminate after a single pass or reinitialize and continue indefinitely
+     * depending on the {@code integration.testing.repeat} property.
+     *
+     * @param path   path to the test description resource
+     * @param filter predicate used to enable or disable tests dynamically
+     * @return stream of {@link DynamicNode} backed by an {@link InfiniteTestIterator}
+     * @throws Exception if reading or mapping tests fails
+     */
     public Stream<DynamicNode> build(String path, Predicate<Test> filter) throws Exception {
         testMapper.setPath(path);
         testExecutor.setExecutionListener(SessionListener.getExecutionListener());
@@ -68,6 +109,15 @@ public class DynamicTestBuilder {
         return StreamSupport.stream(spliterator, false);
     }
 
+    /**
+     * Converts a {@link Test} description into a corresponding JUnit {@link DynamicNode}.
+     * <p>
+     * Containers are mapped to {@link DynamicContainer} and leaf tests to {@link DynamicTest}.
+     *
+     * @param test   integration test description
+     * @param filter predicate used to determine whether the test should be disabled
+     * @return a dynamic container or test node
+     */
     @SneakyThrows
     private DynamicNode toDynamicNode(Test test, Predicate<Test> filter) {
         if (!test.getCalculatedDisabled()) {
@@ -80,11 +130,22 @@ public class DynamicTestBuilder {
         return DynamicTest.dynamicTest(test.getName(), new JunitExecutable(test, testExecutor));
     }
 
+    /**
+     * Iterator that yields dynamic nodes over the current test tree and can optionally
+     * restart from the beginning when the end is reached.
+     */
     class InfiniteTestIterator implements Iterator<DynamicNode> {
         private final boolean infinite;
         private final Predicate<Test> filter;
         private Iterator<Test> iterator;
 
+        /**
+         * Creates a new iterator.
+         *
+         * @param infinite if {@code true}, iteration restarts from the beginning when exhausted;
+         *                 otherwise iteration ends once all tests have been visited
+         * @param filter   predicate used to filter tests when converting to {@link DynamicNode}
+         */
         public InfiniteTestIterator(boolean infinite, Predicate<Test> filter) {
             this.infinite = infinite;
             this.filter = filter;
@@ -106,6 +167,10 @@ public class DynamicTestBuilder {
             return toDynamicNode(iterator.next(), filter);
         }
 
+        /**
+         * (Re)initializes the underlying iterator by reading the full test tree
+         * and setting the iterator to its immediate subtests.
+         */
         @SneakyThrows
         private void init() {
             Test test = testMapper.readAllTests();

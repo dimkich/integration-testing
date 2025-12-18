@@ -15,8 +15,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Mockito {@link Answer} implementation used by integration-testing to intercept method invocations,
+ * record {@link MockInvoke} metadata and optionally call real methods or return mocked results.
+ * <p>
+ * Interception is globally controlled by the static {@link #enabled} flag which is switched on only
+ * within the {@link #enable(SneakySupplier)} and {@link #enable(SneakyRunnable)} scopes.
+ * Outside of these scopes the answer delegates directly to {@link InvocationOnMock#callRealMethod()}.
+ */
 @RequiredArgsConstructor
 public class MockAnswer implements Answer<Object> {
+    /**
+     * Global flag that enables interception when {@code true}.
+     * It is managed only by {@link #enable(SneakySupplier)} and {@link #enable(SneakyRunnable)}.
+     */
     @Getter
     private static boolean enabled = false;
 
@@ -28,8 +40,22 @@ public class MockAnswer implements Answer<Object> {
     private final boolean isSpy;
     private final boolean cloneArgsAndResult;
 
+    /**
+     * Counter for nested calls to avoid recording internal recursive invocations.
+     */
     private int nestedCalls = 0;
 
+    /**
+     * Executes the supplied code with interception globally enabled.
+     * <p>
+     * The {@link #enabled} flag is always reset back to {@code false} after execution.
+     *
+     * @param supplier code to execute while interception is enabled
+     * @param <T>      result type
+     * @param <E>      checked exception type that the supplier may throw
+     * @return value returned by the supplied code
+     * @throws E any exception thrown by the supplier
+     */
     public static <T, E extends Exception> T enable(SneakySupplier<T, E> supplier) throws E {
         enabled = true;
         try {
@@ -39,6 +65,15 @@ public class MockAnswer implements Answer<Object> {
         }
     }
 
+    /**
+     * Executes the given runnable with interception globally enabled.
+     * <p>
+     * The {@link #enabled} flag is always reset back to {@code false} after execution.
+     *
+     * @param runnable code to execute while interception is enabled
+     * @param <E>      checked exception type that the runnable may throw
+     * @throws E any exception thrown by the runnable
+     */
     public static <E extends Exception> void enable(SneakyRunnable<E> runnable) throws E {
         enabled = true;
         try {
@@ -48,6 +83,14 @@ public class MockAnswer implements Answer<Object> {
         }
     }
 
+    /**
+     * Handles a Mockito invocation, optionally delegating to the real method and/or storing
+     * invocation data in {@link MockInvoke} instances according to {@link MockInvokeProperties}.
+     *
+     * @param invocation current mock invocation
+     * @return value to be returned from the mocked method
+     * @throws Throwable any error thrown by the real method
+     */
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {
         if (!enabled || methods != null && !methods.contains(invocation.getMethod().getName())) {
