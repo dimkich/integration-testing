@@ -32,6 +32,10 @@ public class SqlStorageSetupState implements TestInitState<SqlStorageSetupState>
         return copy;
     }
 
+    InitData getInitData(SQLDataStorageService service) {
+        return initData.get(service);
+    }
+
     @Data
     static class InitData {
         private List<String> sql = new ArrayList<>();

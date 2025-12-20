@@ -52,16 +52,21 @@ public class SqlStorageSetupSetup implements InitSetup<SqlStorageSetup, SqlStora
 
     @Override
     public void apply(SqlStorageSetupState oldState, SqlStorageSetupState newState, Test test) throws Exception {
-        newState.getInitData().forEach(SneakyBiConsumer.sneaky((s, data) -> {
-            if (!data.getSql().isEmpty()) {
-                log.debug("Slq setup '{}', sqls {}", s.getName(), data.getSql());
-                s.executeSqls(data.getSql());
+        newState.getInitData().forEach(SneakyBiConsumer.sneaky((s, newData) -> {
+            SqlStorageSetupState.InitData oldData = oldState.getInitData(s);
+            if (!newData.getSql().isEmpty() && (oldData == null || !oldData.getSql().equals(newData.getSql()))) {
+                log.debug("Slq setup '{}', sqls {}", s.getName(), newData.getSql());
+                s.executeSqls(newData.getSql());
                 testDataStorages.addAffectedStorage(s);
             }
-            log.debug("Slq setup '{}', dbunit {}", s.getName(), data.getDbUnitPath());
-            s.setDbUnitXml(data.getDbUnitPath());
-            log.debug("Slq setup '{}', table hooks {}", s.getName(), data.getTableHook());
-            s.setTableHooks(data.getTableHook());
+            if (oldData == null || !oldData.getDbUnitPath().equals(newData.getDbUnitPath())) {
+                log.debug("Slq setup '{}', dbunit {}", s.getName(), newData.getDbUnitPath());
+                s.setDbUnitXml(newData.getDbUnitPath());
+            }
+            if (oldData == null || !oldData.getTableHook().equals(newData.getTableHook())) {
+                log.debug("Slq setup '{}', table hooks {}", s.getName(), newData.getTableHook());
+                s.setTableHooks(newData.getTableHook());
+            }
             s.init();
         }));
     }
