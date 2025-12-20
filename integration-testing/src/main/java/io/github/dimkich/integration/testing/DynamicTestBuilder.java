@@ -10,6 +10,7 @@ import io.github.dimkich.integration.testing.execution.junit.SessionListener;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
@@ -31,7 +32,7 @@ import java.util.stream.StreamSupport;
  * supports repeated execution controlled by the {@code integration.testing.repeat}
  * property (e.g. {@code Once}, {@code UntilStopped}).
  */
-
+@Slf4j
 @RequiredArgsConstructor
 public class DynamicTestBuilder {
     private final TestExecutor testExecutor;
@@ -161,7 +162,7 @@ public class DynamicTestBuilder {
         @Override
         @SneakyThrows
         public DynamicNode next() {
-            if (infinite && !iterator.hasNext()) {
+            while (infinite && !iterator.hasNext()) {
                 init();
             }
             return toDynamicNode(iterator.next(), filter);
@@ -173,8 +174,13 @@ public class DynamicTestBuilder {
          */
         @SneakyThrows
         private void init() {
-            Test test = testMapper.readAllTests();
-            iterator = test.getSubTests().iterator();
+            try {
+                Test test = testMapper.readAllTests();
+                iterator = test.getSubTests().iterator();
+            } catch (Exception e) {
+                log.error("", e);
+                iterator = Collections.emptyIterator();
+            }
         }
     }
 }
