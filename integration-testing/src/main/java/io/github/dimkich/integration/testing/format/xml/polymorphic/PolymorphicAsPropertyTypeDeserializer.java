@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
-import io.github.dimkich.integration.testing.format.common.TestTypeResolverBuilder;
+import io.github.dimkich.integration.testing.format.common.type.TestTypeResolverBuilder;
 import io.github.dimkich.integration.testing.format.util.JacksonUtils;
 
 import javax.xml.namespace.QName;

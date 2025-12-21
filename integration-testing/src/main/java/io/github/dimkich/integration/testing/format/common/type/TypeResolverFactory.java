@@ -1,39 +1,30 @@
-package io.github.dimkich.integration.testing.format.common;
+package io.github.dimkich.integration.testing.format.common.type;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
-import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
-import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
-import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder;
+import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-@Component("testTypeResolverBuilder")
 @RequiredArgsConstructor
-public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
+public class TypeResolverFactory {
     private final List<TestSetupModule> modules;
 
-    protected final Map<Class<?>, Set<NamedType>> parentToSubTypeMap = new HashMap<>();
-    protected final Map<String, NamedType> subTypes = new HashMap<>();
-    @Getter
-    private String unwrappedTypeProperty;
+    private final Map<Class<?>, Set<NamedType>> parentToSubTypeMap = new HashMap<>();
+    private final Map<String, NamedType> subTypes = new HashMap<>();
+    private final Map<JavaType, TypeIdResolver> resolverCache = new ConcurrentHashMap<>();
+    private final Map<Class<?>, MapperConfig<?>> configCache = new ConcurrentHashMap<>();
+
 
     @PostConstruct
     void init() {
-        init(JsonTypeInfo.Id.NAME, null);
-        inclusion(JsonTypeInfo.As.PROPERTY);
-        typeProperty("type");
-        unwrappedTypeProperty = "utype";
         for (TestSetupModule module : modules) {
             module.getParentTypes().forEach(this::addParentType);
         }
@@ -47,8 +38,8 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
         }
     }
 
-    public Set<String> getTypeAttributes() {
-        return Set.of(getTypeProperty(), getUnwrappedTypeProperty());
+    public TypeIdResolver createTypeIdResolver(MapperConfig<?> config, JavaType baseType) {
+        return getResolver(config, baseType);
     }
 
     public boolean isCollection(String type) {
@@ -60,22 +51,28 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
         return false;
     }
 
-    @Override
-    public TypeSerializer buildTypeSerializer(SerializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
-        Set<NamedType> namedTypes = parentToSubTypeMap.get(baseType.getRawClass());
-        if (namedTypes == null) {
-            return null;
+    private TypeIdResolver getResolver(MapperConfig<?> config, JavaType baseType) {
+        if (!configCache.containsKey(config.getClass())) {
+            configCache.put(config.getClass(), config);
+        } else if (configCache.get(config.getClass()) != config) {
+            configCache.clear();
+            configCache.put(config.getClass(), config);
+            resolverCache.clear();
         }
-        return super.buildTypeSerializer(config, baseType, namedTypes);
-    }
+        return resolverCache.computeIfAbsent(baseType, bt -> {
+            Set<NamedType> subtypes = parentToSubTypeMap.get(bt.getRawClass());
+            if (subtypes == null) {
+                return null;
+            }
+            ConcurrentHashMap<String, String> typeToId = new ConcurrentHashMap<>();
+            HashMap<String, JavaType> idToType = new HashMap<>();
 
-    @Override
-    public TypeDeserializer buildTypeDeserializer(DeserializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
-        Set<NamedType> namedTypes = parentToSubTypeMap.get(baseType.getRawClass());
-        if (namedTypes == null) {
-            return null;
-        }
-        return super.buildTypeDeserializer(config, baseType, namedTypes);
+            for (NamedType t : subtypes) {
+                idToType.put(t.getName(), config.constructType(t.getType()));
+                typeToId.put(t.getType().getName(), t.getName());
+            }
+            return new SharedTypeNameIdResolver(config, bt, typeToId, idToType);
+        });
     }
 
     private void addParentType(Class<?> parent) {

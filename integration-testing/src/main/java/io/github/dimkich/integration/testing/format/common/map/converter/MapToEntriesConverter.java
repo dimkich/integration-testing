@@ -1,6 +1,7 @@
-package io.github.dimkich.integration.testing.format.xml.map;
+package io.github.dimkich.integration.testing.format.common.map.converter;
 
 import com.fasterxml.jackson.databind.util.StdConverter;
+import io.github.dimkich.integration.testing.format.common.map.dto.MapEntry;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public class MapToEntriesConverter<K, V> extends StdConverter<Map<K, V>, List<MapEntry<K, V>>> {
-    private final Class<? extends MapEntry> mapEntryClass;
+    private final Class<? extends MapEntry<K, V>> mapEntryClass;
 
     @Override
     @SneakyThrows

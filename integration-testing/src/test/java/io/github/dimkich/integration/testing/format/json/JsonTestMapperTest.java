@@ -8,6 +8,8 @@ import io.github.dimkich.integration.testing.TestContainer;
 import io.github.dimkich.integration.testing.TestPart;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.FormatTestUtils;
+import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
+import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
 import io.github.dimkich.integration.testing.format.dto.*;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
@@ -30,10 +32,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static io.github.dimkich.integration.testing.format.FormatTestUtils.compConfig;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -123,6 +122,28 @@ class JsonTestMapperTest {
                         "{\"id\":null,\"code\":null,\"attributes\":null,\"map\":null}"},
                 {new IncludeAlways(1, "c", Collections.singletonList(null), Map.of("a", 1)),
                         "{\"id\":1,\"code\":\"c\",\"attributes\":[null],\"map\":{\"a\":1}}"},
+                {map(new LinkedHashMapObjectObject<>(), new TypeTest(1, null, "1"), new Value("a", 12L),
+                        new TypeTest(2, null, "2"), null),
+                        "{\"entry\":[{\"key\":{\"type\":\"typeTest\",\"id\":1,\"name\":\"1\"},\"value\":{\"type\":\"value\",\"attr\":\"a\",\"value\":[\"long\",12]}},{\"key\":{\"type\":\"typeTest\",\"id\":2,\"name\":\"2\"}}]}"},
+                {new TypeTest(1, map(new LinkedHashMapObjectObject<>(), "k1", 1, "k2", "s"), "s"),
+                        "{\"id\":1,\"data\":{\"type\":\"linkedHashMapObjectObject\",\"entry\":[{\"key\":\"k1\",\"value\":1},{\"key\":\"k2\",\"value\":\"s\"}]},\"name\":\"s\"}"},
+                {new TypeTest(1, map(new LinkedHashMapStringObject<>(), "k1", 1, "k2", "s", "k3", null), ""),
+                        "{\"id\":1,\"data\":{\"type\":\"linkedHashMapStringObject\",\"entry\":[{\"key\":\"k1\",\"value\":1},{\"key\":\"k2\",\"value\":\"s\"},{\"key\":\"k3\"}]},\"name\":\"\"}"},
+                {new TypeTest(1, map(new MapAttrNotWrapped<>(), "k1", 1, "k2", "s", "k3", null), "s"),
+                        "{\"id\":1,\"data\":[\"mapAttrNotWrapped\",[{\"key\":\"k1\",\"value\":1},{\"key\":\"k2\",\"value\":\"s\"},{\"key\":\"k3\"}]],\"name\":\"s\"}"},
+                {new TypeTest(2, map(new MapElemNotWrapped<>(), new TypeTest(1, null, "1"),
+                        new Value("a", 12L), "k1", 1, "k2", "s", "k3", null), "t"),
+                        "{\"id\":2,\"data\":[\"mapElemNotWrapped\",[{\"key\":{\"type\":\"typeTest\",\"id\":1,\"name\":\"1\"},\"value\":{\"type\":\"value\",\"attr\":\"a\",\"value\":[\"long\",12]}},{\"key\":\"k1\",\"value\":1},{\"key\":\"k2\",\"value\":\"s\"},{\"key\":\"k3\"}]],\"name\":\"t\"}"},
+                {new OrderBook(new TreeMap<>(Map.of(BigDecimal.valueOf(1.2), BigDecimal.valueOf(12.3),
+                        BigDecimal.valueOf(1.33), BigDecimal.valueOf(16.3))),
+                        new TreeMap<>(Map.of(BigDecimal.valueOf(11.2), BigDecimal.valueOf(122.32),
+                                BigDecimal.valueOf(13.2), BigDecimal.valueOf(145.94)))),
+                        "{\"bid\":[{\"key\":\"1.2\",\"value\":\"12.3\"},{\"key\":\"1.33\",\"value\":\"16.3\"}],\"offer\":[{\"key\":\"11.2\",\"value\":\"122.32\"},{\"key\":\"13.2\",\"value\":\"145.94\"}]}"},
+                {new OrderBookWrapped(new TreeMap<>(Map.of(BigDecimal.valueOf(1.2), BigDecimal.valueOf(12.3),
+                        BigDecimal.valueOf(1.33), BigDecimal.valueOf(16.3))),
+                        new TreeMap<>(Map.of(BigDecimal.valueOf(11.2), BigDecimal.valueOf(122.32),
+                                BigDecimal.valueOf(13.2), BigDecimal.valueOf(145.94)))),
+                        "{\"bids\":{\"entry\":[{\"key\":\"1.2\",\"value\":\"12.3\"},{\"key\":\"1.33\",\"value\":\"16.3\"}]},\"offers\":{\"entry\":[{\"key\":\"11.2\",\"value\":\"122.32\"},{\"key\":\"13.2\",\"value\":\"145.94\"}]}}"},
         };
     }
 
@@ -146,7 +167,16 @@ class JsonTestMapperTest {
     static class Config {
         @Bean
         TestSetupModule testModule() {
-            return new TestSetupModule().addSubTypes(TypeTest.class, Value.class, ConverterToList.class);
+            return new TestSetupModule().addSubTypes(MapElemNotWrapped.class, MapAttrNotWrapped.class,
+                    TypeTest.class, Value.class, ConverterToList.class);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    static <K, V> Map<K, V> map(Map<K, V> map, Object... keyValues) {
+        for (int i = 0; i < keyValues.length; i += 2) {
+            map.put((K) keyValues[i], (V) keyValues[i + 1]);
+        }
+        return map;
     }
 }

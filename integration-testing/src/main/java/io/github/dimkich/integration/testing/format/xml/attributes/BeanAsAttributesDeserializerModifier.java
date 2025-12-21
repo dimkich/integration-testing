@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.deser.BeanDeserializer;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
-import io.github.dimkich.integration.testing.format.common.TestTypeResolverBuilder;
+import io.github.dimkich.integration.testing.format.common.type.TestTypeResolverBuilder;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Iterator;

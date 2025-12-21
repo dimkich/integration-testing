@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ser.std.MapSerializer;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
-import io.github.dimkich.integration.testing.format.common.TestTypeResolverBuilder;
+import io.github.dimkich.integration.testing.format.common.type.TestTypeResolverBuilder;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;

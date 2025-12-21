@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.format.xml.map;
+package io.github.dimkich.integration.testing.format.common.map.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

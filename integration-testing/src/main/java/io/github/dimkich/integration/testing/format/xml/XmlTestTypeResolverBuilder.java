@@ -7,22 +7,21 @@ import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
-import io.github.dimkich.integration.testing.TestSetupModule;
-import io.github.dimkich.integration.testing.format.common.TestTypeResolverBuilder;
+import io.github.dimkich.integration.testing.format.common.type.TestTypeResolverBuilder;
+import io.github.dimkich.integration.testing.format.common.type.TypeResolverFactory;
 import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicAsPropertyTypeDeserializer;
 import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicAsPropertyTypeSerializer;
 
 import java.util.Collection;
-import java.util.List;
 
 public class XmlTestTypeResolverBuilder extends TestTypeResolverBuilder {
-    public XmlTestTypeResolverBuilder(List<TestSetupModule> modules) {
-        super(modules);
+    public XmlTestTypeResolverBuilder(TypeResolverFactory factory) {
+        super(factory);
     }
 
     @Override
     public TypeSerializer buildTypeSerializer(SerializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
-        TypeSerializer typeSerializer = super.buildTypeSerializer(config, baseType, parentToSubTypeMap.get(baseType.getRawClass()));
+        TypeSerializer typeSerializer = super.buildTypeSerializer(config, baseType, null);
         if (typeSerializer != null) {
             return new PolymorphicAsPropertyTypeSerializer(typeSerializer.getTypeIdResolver(), null,
                     typeSerializer.getPropertyName());
@@ -32,7 +31,7 @@ public class XmlTestTypeResolverBuilder extends TestTypeResolverBuilder {
 
     @Override
     public TypeDeserializer buildTypeDeserializer(DeserializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
-        TypeDeserializer typeDeserializer = super.buildTypeDeserializer(config, baseType, parentToSubTypeMap.get(baseType.getRawClass()));
+        TypeDeserializer typeDeserializer = super.buildTypeDeserializer(config, baseType, null);
         if (typeDeserializer != null) {
             return new PolymorphicAsPropertyTypeDeserializer(this, (AsPropertyTypeDeserializer) typeDeserializer, null);
         }

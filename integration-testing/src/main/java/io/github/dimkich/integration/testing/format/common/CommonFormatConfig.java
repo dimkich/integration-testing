@@ -5,11 +5,15 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.dimkich.integration.testing.*;
 import io.github.dimkich.integration.testing.format.common.location.StoreLocationModule;
+import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
+import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
+import io.github.dimkich.integration.testing.format.common.map.MapAsEntriesModule;
 import io.github.dimkich.integration.testing.format.common.mixin.ByteArrayInputStreamMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.SecureRandomMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.SpringResourceMixIn;
 import io.github.dimkich.integration.testing.format.common.mixin.ThrowableMixIn;
 import io.github.dimkich.integration.testing.format.common.serializer.BigDecimalSerializer;
+import io.github.dimkich.integration.testing.format.common.type.TypeResolverFactory;
 import io.github.dimkich.integration.testing.openapi.FieldErrorMixIn;
 import io.github.dimkich.integration.testing.openapi.SpringErrorDto;
 import io.github.sugarcubes.cloner.CopyAction;
@@ -33,7 +37,7 @@ import java.util.*;
 
 @Configuration
 @ConditionalOnClass(ObjectMapper.class)
-@Import(ObjectMapperConfigurer.class)
+@Import({ObjectMapperConfigurer.class, TypeResolverFactory.class})
 public class CommonFormatConfig {
     @Bean
     TestSetupModule commonFormatTestSetupModule() throws ClassNotFoundException {
@@ -61,7 +65,8 @@ public class CommonFormatConfig {
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,
                         LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class,
-                        SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class)
+                        SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class,
+                        LinkedHashMapObjectObject.class, LinkedHashMapStringObject.class)
                 .clonerTypeAction(Throwable.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
@@ -82,6 +87,7 @@ public class CommonFormatConfig {
                         .setMixInAnnotation(Resource.class, SpringResourceMixIn.class)
                         .setMixInAnnotation(ByteArrayInputStream.class, ByteArrayInputStreamMixIn.class))
                 .addJacksonModule(new JavaTimeModule())
-                .addJacksonModule(new StoreLocationModule());
+                .addJacksonModule(new StoreLocationModule())
+                .addJacksonModule(new MapAsEntriesModule());
     }
 }

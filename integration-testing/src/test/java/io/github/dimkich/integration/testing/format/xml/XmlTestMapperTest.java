@@ -12,9 +12,10 @@ import io.github.dimkich.integration.testing.TestContainer;
 import io.github.dimkich.integration.testing.TestPart;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.FormatTestUtils;
+import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
+import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
 import io.github.dimkich.integration.testing.format.dto.*;
 import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributes;
-import io.github.dimkich.integration.testing.format.xml.map.JsonMapKey;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
 import io.github.dimkich.integration.testing.web.WebConfig;
@@ -406,6 +407,119 @@ class XmlTestMapperTest {
     </map>
 </root>
 """},
+                {map(new LinkedHashMapObjectObject<>(), new TypeTest(1, null, "1"), new Value("a", 12L),
+                        new TypeTest(2, null, "2"), null), """
+<LinkedHashMapObjectObject>
+    <entry>
+        <key type="typeTest">
+            <id>1</id>
+            <name>1</name>
+        </key>
+        <value type="value" attr="a">
+            <value type="long">12</value>
+        </value>
+    </entry>
+    <entry>
+        <key type="typeTest">
+            <id>2</id>
+            <name>2</name>
+        </key>
+    </entry>
+</LinkedHashMapObjectObject>
+"""},
+                {new TypeTest(1, map(new LinkedHashMapObjectObject<>(), "k1", 1, "k2", "s"), "s"), """
+<TypeTest>
+    <id>1</id>
+    <data type="linkedHashMapObjectObject">
+        <entry>
+            <key>k1</key>
+            <value type="integer">1</value>
+        </entry>
+        <entry>
+            <key>k2</key>
+            <value>s</value>
+        </entry>
+    </data>
+    <name>s</name>
+</TypeTest>
+"""},
+                {new TypeTest(1, map(new LinkedHashMapStringObject<>(), "k1", 1, "k2", "s", "k3", null), "s"), """
+<TypeTest>
+    <id>1</id>
+    <data type="linkedHashMapStringObject">
+        <entry key="k1" utype="integer">1</entry>
+        <entry key="k2" utype="string">s</entry>
+        <entry key="k3"/>
+    </data>
+    <name>s</name>
+</TypeTest>
+"""},
+                {new TypeTest(1, map(new MapAttrNotWrapped<>(), "k1", 1, "k2", "s", "k3", null), "s"), """
+<TypeTest>
+    <id>1</id>
+    <data type="mapAttrNotWrapped">
+        <data key="k1" utype="integer">1</data>
+        <data key="k2" utype="string">s</data>
+        <data key="k3"/>
+    </data>
+    <name>s</name>
+</TypeTest>
+"""},
+                {new TypeTest(2, map(new MapElemNotWrapped<>(), new TypeTest(1, null, "1"),
+                        new Value("a", 12L), "k1", 1, "k2", "s", "k3", null), "t"), """
+<TypeTest>
+    <id>2</id>
+    <data type="mapElemNotWrapped">
+        <data>
+            <key type="typeTest">
+                <id>1</id>
+                <name>1</name>
+            </key>
+            <value type="value" attr="a">
+                <value type="long">12</value>
+            </value>
+        </data>
+        <data>
+            <key>k1</key>
+            <value type="integer">1</value>
+        </data>
+        <data>
+            <key>k2</key>
+            <value>s</value>
+        </data>
+        <data>
+            <key>k3</key>
+        </data>
+    </data>
+    <name>t</name>
+</TypeTest>
+"""},
+                {new OrderBook(new TreeMap<>(Map.of(BigDecimal.valueOf(1.2), BigDecimal.valueOf(12.3),
+                        BigDecimal.valueOf(1.33), BigDecimal.valueOf(16.3))),
+                        new TreeMap<>(Map.of(BigDecimal.valueOf(11.2), BigDecimal.valueOf(122.32),
+                                BigDecimal.valueOf(13.2), BigDecimal.valueOf(145.94)))), """
+<OrderBook>
+    <bid key="1.2">12.3</bid>
+    <bid key="1.33">16.3</bid>
+    <offer key="11.2">122.32</offer>
+    <offer key="13.2">145.94</offer>
+</OrderBook>
+"""},
+                {new OrderBookWrapped(new TreeMap<>(Map.of(BigDecimal.valueOf(1.2), BigDecimal.valueOf(12.3),
+                        BigDecimal.valueOf(1.33), BigDecimal.valueOf(16.3))),
+                        new TreeMap<>(Map.of(BigDecimal.valueOf(11.2), BigDecimal.valueOf(122.32),
+                                BigDecimal.valueOf(13.2), BigDecimal.valueOf(145.94)))), """
+<OrderBookWrapped>
+    <bids>
+        <entry key="1.2">12.3</entry>
+        <entry key="1.33">16.3</entry>
+    </bids>
+    <offers>
+        <entry key="11.2">122.32</entry>
+        <entry key="13.2">145.94</entry>
+    </offers>
+</OrderBookWrapped>
+"""},
 
                 {new Typed(new ArrayList<>(List.of(new TypeTest(1, null, "s"),
                         new TypeTest(2, null, "t"))),
@@ -469,22 +583,6 @@ class XmlTestMapperTest {
     <id>12</id>
 </BeanAsAttr>
 """},
-                {new TypeTest(1, map(new MapKeyWrapped<>(), "k1", 1, "k2", "s"), "s"), """
-<TypeTest>
-    <id>1</id>
-    <data type="mapKeyWrapped">
-        <entry>
-            <key>k1</key>
-            <value type="integer">1</value>
-        </entry>
-        <entry>
-            <key>k2</key>
-            <value>s</value>
-        </entry>
-    </data>
-    <name>s</name>
-</TypeTest>
-"""},
                 {new TypeTest(null, null, ""), """
 <TypeTest>
     <name></name>
@@ -493,16 +591,6 @@ class XmlTestMapperTest {
                 {new TypeTest(null, null, " "), """
 <TypeTest>
     <name> </name>
-</TypeTest>
-"""},
-                {new TypeTest(1, map(new MapAttrWrapped<>(), "k1", 1, "k2", "s"), "s"), """
-<TypeTest>
-    <id>1</id>
-    <data type="mapAttrWrapped">
-        <entry key="k1" utype="integer">1</entry>
-        <entry key="k2" utype="string">s</entry>
-    </data>
-    <name>s</name>
 </TypeTest>
 """},
         };
@@ -522,7 +610,7 @@ class XmlTestMapperTest {
     @ParameterizedTest
     @MethodSource("data")
     void deserialize(Object o, String xml) throws JsonProcessingException {
-        assertThat(o).usingRecursiveComparison(compConfig).isEqualTo(xmlMapper.readValue(xml, o.getClass()));
+        assertThat(xmlMapper.readValue(xml, o.getClass())).usingRecursiveComparison(compConfig).isEqualTo(o);
     }
 
     @ParameterizedTest
@@ -543,12 +631,10 @@ class XmlTestMapperTest {
     static class Config {
         @Bean
         TestSetupModule testModule() {
-            return new TestSetupModule().addSubTypes(MapKeyNotWrapped.class, MapKeyWrapped.class,
-                    MapAttrNotWrapped.class, MapAttrWrapped.class, TypeTest.class, Value.class,
-                    ConverterToList.class);
+            return new TestSetupModule().addSubTypes(MapElemNotWrapped.class, MapAttrNotWrapped.class,
+                    TypeTest.class, Value.class, ConverterToList.class);
         }
     }
-
 
     @Data
     @AllArgsConstructor
@@ -556,22 +642,6 @@ class XmlTestMapperTest {
     static class Typed {
         private List<TypeTest> list = new ArrayList<>();
         private Map<String, TypeTest> map = new LinkedHashMap<>();
-    }
-
-    @JsonMapKey(JsonMapKey.Type.AS_KEY_TAG)
-    public static class MapKeyNotWrapped<K, V> extends LinkedHashMap<K, V> {
-    }
-
-    @JsonMapKey(value = JsonMapKey.Type.AS_KEY_TAG, wrapped = true)
-    public static class MapKeyWrapped<K, V> extends LinkedHashMap<K, V> {
-    }
-
-    @JsonMapKey(JsonMapKey.Type.AS_ATTRIBUTE)
-    public static class MapAttrNotWrapped<K, V> extends LinkedHashMap<K, V> {
-    }
-
-    @JsonMapKey(value = JsonMapKey.Type.AS_ATTRIBUTE, wrapped = true)
-    public static class MapAttrWrapped<K, V> extends LinkedHashMap<K, V> {
     }
 
     @Data
@@ -597,6 +667,7 @@ class XmlTestMapperTest {
     }
 
 
+    @SuppressWarnings("unchecked")
     static <K, V> Map<K, V> map(Map<K, V> map, Object... keyValues) {
         for (int i = 0; i < keyValues.length; i += 2) {
             map.put((K) keyValues[i], (V) keyValues[i + 1]);
