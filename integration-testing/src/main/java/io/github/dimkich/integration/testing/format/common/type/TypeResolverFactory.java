@@ -82,7 +82,7 @@ public class TypeResolverFactory {
     }
 
     private void addSubType(Class<?> subType) {
-        addSubType(subType, subType.getSimpleName().substring(0, 1).toLowerCase() + subType.getSimpleName().substring(1));
+        addSubType(subType, subType.getSimpleName());
     }
 
     private void addSubTypes(Class<?>... subType) {

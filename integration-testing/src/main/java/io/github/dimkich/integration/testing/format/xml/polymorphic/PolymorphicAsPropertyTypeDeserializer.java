@@ -84,7 +84,7 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
         if (isWrapped) {
             p.nextToken();
         }
-        if (p.currentToken() == JsonToken.END_OBJECT && "character".equals(typeId)) {
+        if (p.currentToken() == JsonToken.END_OBJECT && "Character".equals(typeId)) {
             return ' ';
         }
         Object bean = deser.deserialize(p, ctxt);

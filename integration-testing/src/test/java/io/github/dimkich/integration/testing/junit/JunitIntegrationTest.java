@@ -75,8 +75,8 @@ public class JunitIntegrationTest {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     @JsonSubTypes({
-            @JsonSubTypes.Type(value = ClassSelector.class, name = "selClass"),
-            @JsonSubTypes.Type(value = UniqueIdSelector.class, name = "selUniqueId"),
+            @JsonSubTypes.Type(value = ClassSelector.class, name = "SelClass"),
+            @JsonSubTypes.Type(value = UniqueIdSelector.class, name = "SelUniqueId"),
     })
     public interface Selector {
         DiscoverySelector toSelector();

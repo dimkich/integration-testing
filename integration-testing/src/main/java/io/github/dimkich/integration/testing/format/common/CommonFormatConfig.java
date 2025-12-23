@@ -43,9 +43,9 @@ public class CommonFormatConfig {
     TestSetupModule commonFormatTestSetupModule() throws ClassNotFoundException {
         return new TestSetupModule()
                 .addParentType(Object.class).addParentType(Throwable.class).addParentType(Test.class)
-                .addSubTypes(TestContainer.class, "container")
-                .addSubTypes(TestCase.class, "case")
-                .addSubTypes(TestPart.class, "part")
+                .addSubTypes(TestContainer.class, "Container")
+                .addSubTypes(TestCase.class, "Case")
+                .addSubTypes(TestPart.class, "Part")
                 .addSubTypes(byte[].class, "byte[]")
                 .addSubTypes(short[].class, "short[]")
                 .addSubTypes(int[].class, "int[]")
@@ -53,18 +53,19 @@ public class CommonFormatConfig {
                 .addSubTypes(double[].class, "double[]")
                 .addSubTypes(boolean[].class, "boolean[]")
                 .addSubTypes(char[].class, "char[]")
-                .addSubTypes(Object[].class, "object[]")
+                .addSubTypes(Object[].class, "Object[]")
                 .addSubTypes(UUID.class, "UUID")
-                .addAlias(ByteArrayResource.class, "resource")
-                .addAlias(Class.forName("java.util.ImmutableCollections$List12"), "arrayList")
-                .addAlias(Class.forName("java.util.ImmutableCollections$ListN"), "arrayList")
-                .addAlias(Class.forName("java.util.Collections$SingletonList"), "arrayList")
-                .addAlias(Class.forName("java.util.Arrays$ArrayList"), "arrayList")
-                .addAlias(Class.forName("java.util.Collections$UnmodifiableMap"), "linkedHashMap")
+                .addAlias(ByteArrayResource.class, "Resource")
+                .addAlias(Class.forName("java.util.ImmutableCollections$List12"), "ArrayList")
+                .addAlias(Class.forName("java.util.ImmutableCollections$ListN"), "ArrayList")
+                .addAlias(Class.forName("java.util.Collections$SingletonList"), "ArrayList")
+                .addAlias(Class.forName("java.util.Arrays$ArrayList"), "ArrayList")
+                .addAlias(Class.forName("java.util.Collections$UnmodifiableMap"), "LinkedHashMap")
                 .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,
-                        LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class,
+                        LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, boolean.class,
+                        char.class, byte.class, short.class, int.class, long.class, double.class, float.class,
                         SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class,
                         LinkedHashMapObjectObject.class, LinkedHashMapStringObject.class)
                 .clonerTypeAction(Throwable.class::isAssignableFrom, CopyAction.ORIGINAL)

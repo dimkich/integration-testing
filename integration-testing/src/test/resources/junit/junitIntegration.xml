@@ -1,13 +1,13 @@
 <?xml version='1.1' encoding='UTF-8'?>
 <!-- @formatter:off -->
-<test type="container">
-    <test type="case" name="all">
+<test type="Container">
+    <test type="Case" name="all">
         <bean>launcher</bean>
         <method>execute</method>
-        <request type="arrayList">
-            <item type="selClass">io.github.dimkich.integration.testing.junit.SimpleTest</item>
+        <request type="ArrayList">
+            <item type="SelClass">io.github.dimkich.integration.testing.junit.SimpleTest</item>
         </request>
-        <response type="arrayList">
+        <response type="ArrayList">
             <response>before root</response>
             <response>before #1</response>
             <response>#1</response>
@@ -54,13 +54,13 @@
             <response>afterTests root</response>
         </response>
     </test>
-    <test type="case" name="first">
+    <test type="Case" name="first">
         <bean>launcher</bean>
         <method>execute</method>
-        <request type="arrayList">
-            <item type="selUniqueId">[dynamic-test:#1]</item>
+        <request type="ArrayList">
+            <item type="SelUniqueId">[dynamic-test:#1]</item>
         </request>
-        <response type="arrayList">
+        <response type="ArrayList">
             <response>before root</response>
             <response>before #1</response>
             <response>#1</response>
@@ -69,15 +69,15 @@
             <response>afterTests root</response>
         </response>
     </test>
-    <test type="case" name="several">
+    <test type="Case" name="several">
         <bean>launcher</bean>
         <method>execute</method>
-        <request type="arrayList">
-            <item type="selUniqueId">[dynamic-test:#1]</item>
-            <item type="selUniqueId">[dynamic-container:#2]/[dynamic-container:#2]</item>
-            <item type="selUniqueId">[dynamic-container:#4]</item>
+        <request type="ArrayList">
+            <item type="SelUniqueId">[dynamic-test:#1]</item>
+            <item type="SelUniqueId">[dynamic-container:#2]/[dynamic-container:#2]</item>
+            <item type="SelUniqueId">[dynamic-container:#4]</item>
         </request>
-        <response type="arrayList">
+        <response type="ArrayList">
             <response>before root</response>
             <response>before #1</response>
             <response>#1</response>
@@ -112,13 +112,13 @@
             <response>afterTests root</response>
         </response>
     </test>
-    <test type="case" name="one first test in container">
+    <test type="Case" name="one first test in container">
         <bean>launcher</bean>
         <method>execute</method>
-        <request type="arrayList">
-            <item type="selUniqueId">[dynamic-container:#2]/[dynamic-container:#2]/[dynamic-test:#1]</item>
+        <request type="ArrayList">
+            <item type="SelUniqueId">[dynamic-container:#2]/[dynamic-container:#2]/[dynamic-test:#1]</item>
         </request>
-        <response type="arrayList">
+        <response type="ArrayList">
             <response>before root</response>
             <response>before #2</response>
             <response>before #2#2</response>
@@ -131,13 +131,13 @@
             <response>afterTests root</response>
         </response>
     </test>
-    <test type="case" name="last">
+    <test type="Case" name="last">
         <bean>launcher</bean>
         <method>execute</method>
-        <request type="arrayList">
-            <item type="selUniqueId">[dynamic-test:#5]</item>
+        <request type="ArrayList">
+            <item type="SelUniqueId">[dynamic-test:#5]</item>
         </request>
-        <response type="arrayList">
+        <response type="ArrayList">
             <response>before root</response>
             <response>before #5</response>
             <response>#5</response>
@@ -146,13 +146,13 @@
             <response>afterTests root</response>
         </response>
     </test>
-    <test type="case" name="filter first">
+    <test type="Case" name="filter first">
         <bean>launcher</bean>
         <method>filter</method>
-        <request type="treeSet">
+        <request type="TreeSet">
             <item>#1</item>
         </request>
-        <response type="arrayList">
+        <response type="ArrayList">
             <response>before root</response>
             <response>before #1</response>
             <response>#1</response>
@@ -161,10 +161,10 @@
             <response>afterTests root</response>
         </response>
     </test>
-    <test type="case" name="filter several">
+    <test type="Case" name="filter several">
         <bean>launcher</bean>
         <method>filter</method>
-        <request type="treeSet">
+        <request type="TreeSet">
             <item>#1</item>
             <item>#2</item>
             <item>#2#2</item>
@@ -177,7 +177,7 @@
             <item>#4#2#2</item>
             <item>#4#3</item>
         </request>
-        <response type="arrayList">
+        <response type="ArrayList">
             <response>before root</response>
             <response>before #1</response>
             <response>#1</response>
@@ -212,15 +212,15 @@
             <response>afterTests root</response>
         </response>
     </test>
-    <test type="case" name="filter one first test in container">
+    <test type="Case" name="filter one first test in container">
         <bean>launcher</bean>
         <method>filter</method>
-        <request type="treeSet">
+        <request type="TreeSet">
             <item>#2</item>
             <item>#2#2</item>
             <item>#2#2#1</item>
         </request>
-        <response type="arrayList">
+        <response type="ArrayList">
             <response>before root</response>
             <response>before #2</response>
             <response>before #2#2</response>
@@ -233,13 +233,13 @@
             <response>afterTests root</response>
         </response>
     </test>
-    <test type="case" name="filter last">
+    <test type="Case" name="filter last">
         <bean>launcher</bean>
         <method>filter</method>
-        <request type="treeSet">
+        <request type="TreeSet">
             <item>#5</item>
         </request>
-        <response type="arrayList">
+        <response type="ArrayList">
             <response>before root</response>
             <response>before #5</response>
             <response>#5</response>

@@ -82,62 +82,62 @@ class XmlTestMapperTest {
 """},
                 {new Value((byte) 12), """
 <Value>
-    <value type="byte">12</value>
+    <value type="Byte">12</value>
 </Value>
 """},
                 {new Value((short) 8), """
 <Value>
-    <value type="short">8</value>
+    <value type="Short">8</value>
 </Value>
 """},
                 {new Value(12), """
 <Value>
-    <value type="integer">12</value>
+    <value type="Integer">12</value>
 </Value>
 """},
                 {new Value((long) 45), """
 <Value>
-    <value type="long">45</value>
+    <value type="Long">45</value>
 </Value>
 """},
                 {new Value(2.4), """
 <Value>
-    <value type="double">2.4</value>
+    <value type="Double">2.4</value>
 </Value>
 """},
                 {new Value((float) 1.22), """
 <Value>
-    <value type="float">1.22</value>
+    <value type="Float">1.22</value>
 </Value>
 """},
                 {new Value((float) 1.22), """
 <Value>
-    <value type="float">1.22</value>
+    <value type="Float">1.22</value>
 </Value>
 """},
                 {new Value(true), """
 <Value>
-    <value type="boolean">true</value>
+    <value type="Boolean">true</value>
 </Value>
 """},
                 {new Value(false), """
 <Value>
-    <value type="boolean">false</value>
+    <value type="Boolean">false</value>
 </Value>
 """},
                 {new Value('2'), """
 <Value>
-    <value type="character">2</value>
+    <value type="Character">2</value>
 </Value>
 """},
                 {new Value(' '), """
 <Value>
-    <value type="character"> </value>
+    <value type="Character"> </value>
 </Value>
 """},
                 {new Value(new BigDecimal("1.230000")), """
 <Value>
-    <value type="bigDecimal">1.23</value>
+    <value type="BigDecimal">1.23</value>
 </Value>
 """},
                 {new Value(new byte[]{1, 2, 3}), """
@@ -147,36 +147,36 @@ class XmlTestMapperTest {
 """},
                 {new Value(new ByteArrayResource(new byte[]{3, 2, 1})), """
 <Value>
-    <value type="resource">AwIB</value>
+    <value type="Resource">AwIB</value>
 </Value>
 """},
                 {new Value(new SecureRandom()), """
 <Value>
-    <value type="secureRandom"></value>
+    <value type="SecureRandom"></value>
 </Value>
 """},
                 {new Value(HttpMethod.GET), """
 <Value>
-    <value type="httpMethod">GET</value>
+    <value type="HttpMethod">GET</value>
 </Value>
 """},
                 {new Value(new LinkedMultiValueMapStringString(Map.of("k1", List.of("v1")))), """
 <Value>
-    <value type="linkedMultiValueMapStringString">
+    <value type="LinkedMultiValueMapStringString">
         <k1>v1</k1>
     </value>
 </Value>
 """},
                 {new Value(new LinkedMultiValueMapStringObject(Map.of("k1", List.of(1.2f)))), """
 <Value>
-    <value type="linkedMultiValueMapStringObject">
-        <k1 type="float">1.2</k1>
+    <value type="LinkedMultiValueMapStringObject">
+        <k1 type="Float">1.2</k1>
     </value>
 </Value>
 """},
                 {new Value(FormatTestUtils.sr2(new byte[]{1, 2, 3})), """
 <Value>
-    <value type="resource">AQID</value>
+    <value type="Resource">AQID</value>
 </Value>
 """},
                 {new Value(Arrays.asList(
@@ -184,30 +184,30 @@ class XmlTestMapperTest {
                         List.of(List.of(1L, 2), Arrays.asList("s", null, false, null)),
                         List.of(List.of(5.0, 6.0f), Arrays.asList(null, 7, 8)))), """
 <Value>
-    <value type="arrayList">
+    <value type="ArrayList">
         <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-        <value type="arrayList"/>
-        <value type="arrayList">
-            <item type="arrayList">
-                <item type="long">1</item>
-                <item type="integer">2</item>
+        <value type="ArrayList"/>
+        <value type="ArrayList">
+            <item type="ArrayList">
+                <item type="Long">1</item>
+                <item type="Integer">2</item>
             </item>
-            <item type="arrayList">
+            <item type="ArrayList">
                 <item>s</item>
                 <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                <item type="boolean">false</item>
+                <item type="Boolean">false</item>
                 <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             </item>
         </value>
-        <value type="arrayList">
-            <item type="arrayList">
-                <item type="double">5.0</item>
-                <item type="float">6.0</item>
+        <value type="ArrayList">
+            <item type="ArrayList">
+                <item type="Double">5.0</item>
+                <item type="Float">6.0</item>
             </item>
-            <item type="arrayList">
+            <item type="ArrayList">
                 <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                <item type="integer">7</item>
-                <item type="integer">8</item>
+                <item type="Integer">7</item>
+                <item type="Integer">8</item>
             </item>
         </value>
     </value>
@@ -215,10 +215,10 @@ class XmlTestMapperTest {
 """},
                 {new Value(new Object[]{null, List.of(), true, "s", new int[]{1, 2}}), """
 <Value>
-    <value type="object[]">
+    <value type="Object[]">
         <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-        <value type="arrayList"/>
-        <value type="boolean">true</value>
+        <value type="ArrayList"/>
+        <value type="Boolean">true</value>
         <value>s</value>
         <value type="int[]">
             <item>1</item>
@@ -229,8 +229,8 @@ class XmlTestMapperTest {
 """},
                 {new Value(new Value("a", 1)), """
 <Value>
-    <value type="value" attr="a">
-        <value type="integer">1</value>
+    <value type="Value" attr="a">
+        <value type="Integer">1</value>
     </value>
 </Value>
 """},
@@ -286,7 +286,7 @@ class XmlTestMapperTest {
     <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <data>
         <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-        <data type="arrayList"/>
+        <data type="ArrayList"/>
         <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     </data>
 </root>
@@ -295,20 +295,20 @@ class XmlTestMapperTest {
                         new TypeTest(1, true, null)))), """
 <root>
     <data>
-        <data type="boolean">false</data>
-        <data type="integer">2</data>
+        <data type="Boolean">false</data>
+        <data type="Integer">2</data>
     </data>
     <data>
-        <data type="byte">3</data>
-        <data type="typeTest">
+        <data type="Byte">3</data>
+        <data type="TypeTest">
             <id>1</id>
-            <data type="boolean">true</data>
+            <data type="Boolean">true</data>
         </data>
     </data>
 </root>
 """},
                 {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"), """
-<EntryStringKeyObjectValue key="k" change="added" utype="string">str</EntryStringKeyObjectValue>
+<EntryStringKeyObjectValue key="k" change="added" utype="String">str</EntryStringKeyObjectValue>
 """},
                 {HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
                         FormatTestUtils.httpHeaders("Expires", List.of("0"), "Custom", List.of("c", "a")),
@@ -342,7 +342,7 @@ class XmlTestMapperTest {
 <RequestEntity>
     <url>/api</url>
     <method>POST</method>
-    <body type="resource">AQ==</body>
+    <body type="Resource">AQ==</body>
 </RequestEntity>
 """},
                 {new LinkedMultiValueMapStringString(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
@@ -355,8 +355,8 @@ class XmlTestMapperTest {
                 {new LinkedMultiValueMapStringObject(Map.of("k", List.of(1L, true))),
                         """
 <LinkedMultiValueMapStringObject>
-    <k type="long">1</k>
-    <k type="boolean">true</k>
+    <k type="Long">1</k>
+    <k type="Boolean">true</k>
 </LinkedMultiValueMapStringObject>
 """},
                 {new LinkedMultiValueMapStringObject(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
@@ -366,12 +366,12 @@ class XmlTestMapperTest {
     <k2>v2</k2>
 </LinkedMultiValueMapStringObject>
 """},
-                {new TestContainer(), "<test type=\"container\"/>\n"},
-                {new TestCase(), "<test type=\"case\"/>\n"},
-                {new TestPart(), "<test type=\"part\"/>\n"},
+                {new TestContainer(), "<test type=\"Container\"/>\n"},
+                {new TestCase(), "<test type=\"Case\"/>\n"},
+                {new TestPart(), "<test type=\"Part\"/>\n"},
                 {new Value(new ConverterToList("1", "2", "3")), """
 <Value>
-    <value type="converterToList">
+    <value type="ConverterToList">
         <value>1</value>
         <value>2</value>
         <value>3</value>
@@ -403,7 +403,7 @@ class XmlTestMapperTest {
         <attributes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     </attributes>
     <map>
-        <a type="integer">1</a>
+        <a type="Integer">1</a>
     </map>
 </root>
 """},
@@ -411,16 +411,16 @@ class XmlTestMapperTest {
                         new TypeTest(2, null, "2"), null), """
 <LinkedHashMapObjectObject>
     <entry>
-        <key type="typeTest">
+        <key type="TypeTest">
             <id>1</id>
             <name>1</name>
         </key>
-        <value type="value" attr="a">
-            <value type="long">12</value>
+        <value type="Value" attr="a">
+            <value type="Long">12</value>
         </value>
     </entry>
     <entry>
-        <key type="typeTest">
+        <key type="TypeTest">
             <id>2</id>
             <name>2</name>
         </key>
@@ -430,10 +430,10 @@ class XmlTestMapperTest {
                 {new TypeTest(1, map(new LinkedHashMapObjectObject<>(), "k1", 1, "k2", "s"), "s"), """
 <TypeTest>
     <id>1</id>
-    <data type="linkedHashMapObjectObject">
+    <data type="LinkedHashMapObjectObject">
         <entry>
             <key>k1</key>
-            <value type="integer">1</value>
+            <value type="Integer">1</value>
         </entry>
         <entry>
             <key>k2</key>
@@ -446,9 +446,9 @@ class XmlTestMapperTest {
                 {new TypeTest(1, map(new LinkedHashMapStringObject<>(), "k1", 1, "k2", "s", "k3", null), "s"), """
 <TypeTest>
     <id>1</id>
-    <data type="linkedHashMapStringObject">
-        <entry key="k1" utype="integer">1</entry>
-        <entry key="k2" utype="string">s</entry>
+    <data type="LinkedHashMapStringObject">
+        <entry key="k1" utype="Integer">1</entry>
+        <entry key="k2" utype="String">s</entry>
         <entry key="k3"/>
     </data>
     <name>s</name>
@@ -457,9 +457,9 @@ class XmlTestMapperTest {
                 {new TypeTest(1, map(new MapAttrNotWrapped<>(), "k1", 1, "k2", "s", "k3", null), "s"), """
 <TypeTest>
     <id>1</id>
-    <data type="mapAttrNotWrapped">
-        <data key="k1" utype="integer">1</data>
-        <data key="k2" utype="string">s</data>
+    <data type="MapAttrNotWrapped">
+        <data key="k1" utype="Integer">1</data>
+        <data key="k2" utype="String">s</data>
         <data key="k3"/>
     </data>
     <name>s</name>
@@ -469,19 +469,19 @@ class XmlTestMapperTest {
                         new Value("a", 12L), "k1", 1, "k2", "s", "k3", null), "t"), """
 <TypeTest>
     <id>2</id>
-    <data type="mapElemNotWrapped">
+    <data type="MapElemNotWrapped">
         <data>
-            <key type="typeTest">
+            <key type="TypeTest">
                 <id>1</id>
                 <name>1</name>
             </key>
-            <value type="value" attr="a">
-                <value type="long">12</value>
+            <value type="Value" attr="a">
+                <value type="Long">12</value>
             </value>
         </data>
         <data>
             <key>k1</key>
-            <value type="integer">1</value>
+            <value type="Integer">1</value>
         </data>
         <data>
             <key>k2</key>
@@ -559,8 +559,8 @@ class XmlTestMapperTest {
                 {new TypeTest(1, map(new LinkedHashMap<>(), "k1", 1, "k2", "s"), "s"), """
 <TypeTest>
     <id>1</id>
-    <data type="linkedHashMap">
-        <k1 type="integer">1</k1>
+    <data type="LinkedHashMap">
+        <k1 type="Integer">1</k1>
         <k2>s</k2>
     </data>
     <name>s</name>
@@ -569,10 +569,10 @@ class XmlTestMapperTest {
                 {new TypeTest(1, new ArrayList<>(List.of("1", 2, 3.0)), "s"), """
 <TypeTest>
     <id>1</id>
-    <data type="arrayList">
+    <data type="ArrayList">
         <data>1</data>
-        <data type="integer">2</data>
-        <data type="double">3.0</data>
+        <data type="Integer">2</data>
+        <data type="Double">3.0</data>
     </data>
     <name>s</name>
 </TypeTest>

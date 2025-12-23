@@ -16,6 +16,22 @@ public class V0_4Migration implements XmlMigration {
                     changed = true;
                     n.setAttributeValue("type", null);
                 });
+        node.findNodes()
+                .filter(n -> n.getAttributeValue("type") != null)
+                .forEach(n -> {
+                    changed = true;
+                    String type = n.getAttributeValue("type");
+                    n.setAttributeValue("type",
+                            type.substring(0, 1).toUpperCase() + type.substring(1));
+                });
+        node.findNodes()
+                .filter(n -> n.getAttributeValue("utype") != null)
+                .forEach(n -> {
+                    changed = true;
+                    String type = n.getAttributeValue("utype");
+                    n.setAttributeValue("utype",
+                            type.substring(0, 1).toUpperCase() + type.substring(1));
+                });
         if (changed) {
             node.save(TestUtils.getTestResourceFile(path));
         }
