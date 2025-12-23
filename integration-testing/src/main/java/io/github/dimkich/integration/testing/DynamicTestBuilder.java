@@ -178,6 +178,9 @@ public class DynamicTestBuilder {
                 Test test = testMapper.readAllTests();
                 iterator = test.getSubTests().iterator();
             } catch (Exception e) {
+                if (!infinite) {
+                    throw e;
+                }
                 log.error("", e);
                 iterator = Collections.emptyIterator();
             }
