@@ -31,6 +31,7 @@ public class TestSetupModule {
     private final List<Pair<Class<?>, String>> subTypesWithName = new ArrayList<>();
     private final List<Class<?>> subTypes = new ArrayList<>();
     private final List<Pair<Class<?>, String>> aliases = new ArrayList<>();
+    private final List<Pair<Class<?>, String>> baseTypes = new ArrayList<>();
     private final List<com.fasterxml.jackson.databind.Module> jacksonModules = new ArrayList<>();
     private final List<Pair<String, PropertyFilter>> jacksonFilters = new ArrayList<>();
     private final Map<Class<?>, BiPredicate<?, ?>> equalsMap = new HashMap<>();
@@ -139,6 +140,29 @@ public class TestSetupModule {
      */
     public TestSetupModule addAlias(Class<?> subType, String alias) {
         aliases.add(Pair.of(subType, alias));
+        return this;
+    }
+
+    /**
+     * Adds a base type. All subtypes of a given base type will have the same name as the base type.
+     *
+     * @param baseType the base type class
+     * @return this module for chaining
+     */
+    public TestSetupModule addBaseType(Class<?> baseType) {
+        baseTypes.add(Pair.of(baseType, baseType.getSimpleName()));
+        return this;
+    }
+
+    /**
+     * Adds a base type. All subtypes of a given base type will have the same name as the base type.
+     *
+     * @param baseType the base type class
+     * @param name     a unique name for the base type
+     * @return this module for chaining
+     */
+    public TestSetupModule addBaseType(Class<?> baseType, String name) {
+        baseTypes.add(Pair.of(baseType, name));
         return this;
     }
 

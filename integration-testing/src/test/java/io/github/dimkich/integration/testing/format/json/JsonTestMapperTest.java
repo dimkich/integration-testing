@@ -10,6 +10,9 @@ import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.FormatTestUtils;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
+import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticGenericArrayType;
+import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticParameterizedType;
+import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticWildcardType;
 import io.github.dimkich.integration.testing.format.dto.*;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
@@ -22,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -29,6 +33,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
 import org.springframework.web.client.HttpClientErrorException;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.security.SecureRandom;
@@ -144,6 +149,36 @@ class JsonTestMapperTest {
                         new TreeMap<>(Map.of(BigDecimal.valueOf(11.2), BigDecimal.valueOf(122.32),
                                 BigDecimal.valueOf(13.2), BigDecimal.valueOf(145.94)))),
                         "{\"bids\":{\"entry\":[{\"key\":\"1.2\",\"value\":\"12.3\"},{\"key\":\"1.33\",\"value\":\"16.3\"}]},\"offers\":{\"entry\":[{\"key\":\"11.2\",\"value\":\"122.32\"},{\"key\":\"13.2\",\"value\":\"145.94\"}]}}"},
+                {new Value(ArrayList.class), "{\"value\":[\"Class\",\"ArrayList\"]}"},
+                {new Value(HashMap.class), "{\"value\":[\"Class\",\"java.util.HashMap\"]}"},
+                {new Value(new SyntheticParameterizedType(ArrayList.class, new Type[]{String.class})),
+                        "{\"value\":[\"Type\",\"ArrayList<String>\"]}"},
+                {new Value(new SyntheticGenericArrayType(new SyntheticGenericArrayType(Object.class))),
+                        "{\"value\":[\"Type\",\"Object[][]\"]}"},
+                {new Value(new SyntheticParameterizedType(LinkedHashMap.class, new Type[]{
+                        new SyntheticWildcardType(new Type[]{Integer.class}, new Type[]{}),
+                        new SyntheticParameterizedType(ArrayList.class, new Type[]{
+                                new SyntheticWildcardType(new Type[]{Object.class}, new Type[]{String.class})
+                        })
+                })
+                ),
+                        "{\"value\":[\"Type\",\"LinkedHashMap<? extends Integer, ArrayList<? super String>>\"]}"},
+                {new Value(ParameterizedTypeReference.forType(ArrayList.class)),
+                        "{\"value\":[\"ParameterizedTypeReference\",\"ArrayList\"]}"},
+                {new Value(ParameterizedTypeReference.forType(
+                        new SyntheticParameterizedType(ArrayList.class, new Type[]{String.class}))),
+                        "{\"value\":[\"ParameterizedTypeReference\",\"ArrayList<String>\"]}"},
+                {new Value(ParameterizedTypeReference.forType(
+                        new SyntheticGenericArrayType(new SyntheticGenericArrayType(Object.class)))),
+                        "{\"value\":[\"ParameterizedTypeReference\",\"Object[][]\"]}"},
+                {new Value(ParameterizedTypeReference.forType(
+                        new SyntheticParameterizedType(LinkedHashMap.class, new Type[]{
+                                new SyntheticWildcardType(new Type[]{Integer.class}, new Type[]{}),
+                                new SyntheticParameterizedType(ArrayList.class, new Type[]{
+                                        new SyntheticWildcardType(new Type[]{Object.class}, new Type[]{String.class})
+                                })
+                        })
+                )), "{\"value\":[\"ParameterizedTypeReference\",\"LinkedHashMap<? extends Integer, ArrayList<? super String>>\"]}"},
         };
     }
 

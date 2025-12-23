@@ -8,11 +8,10 @@ import io.github.dimkich.integration.testing.format.common.location.StoreLocatio
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
 import io.github.dimkich.integration.testing.format.common.map.MapAsEntriesModule;
-import io.github.dimkich.integration.testing.format.common.mixin.ByteArrayInputStreamMixIn;
-import io.github.dimkich.integration.testing.format.common.mixin.SecureRandomMixIn;
-import io.github.dimkich.integration.testing.format.common.mixin.SpringResourceMixIn;
-import io.github.dimkich.integration.testing.format.common.mixin.ThrowableMixIn;
+import io.github.dimkich.integration.testing.format.common.mixin.*;
 import io.github.dimkich.integration.testing.format.common.serializer.BigDecimalSerializer;
+import io.github.dimkich.integration.testing.format.common.type.TypeGenerator;
+import io.github.dimkich.integration.testing.format.common.type.TypeParser;
 import io.github.dimkich.integration.testing.format.common.type.TypeResolverFactory;
 import io.github.dimkich.integration.testing.openapi.FieldErrorMixIn;
 import io.github.dimkich.integration.testing.openapi.SpringErrorDto;
@@ -21,11 +20,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.validation.FieldError;
 
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -37,12 +38,14 @@ import java.util.*;
 
 @Configuration
 @ConditionalOnClass(ObjectMapper.class)
-@Import({ObjectMapperConfigurer.class, TypeResolverFactory.class})
+@Import({ObjectMapperConfigurer.class, TypeResolverFactory.class, TypeParser.class, TypeGenerator.class})
 public class CommonFormatConfig {
     @Bean
     TestSetupModule commonFormatTestSetupModule() throws ClassNotFoundException {
         return new TestSetupModule()
                 .addParentType(Object.class).addParentType(Throwable.class).addParentType(Test.class)
+                .addParentType(Type.class)
+                .addBaseType(ParameterizedTypeReference.class).addBaseType(Type.class)
                 .addSubTypes(TestContainer.class, "Container")
                 .addSubTypes(TestCase.class, "Case")
                 .addSubTypes(TestPart.class, "Part")
@@ -86,7 +89,9 @@ public class CommonFormatConfig {
                         .setMixInAnnotation(FieldError.class, FieldErrorMixIn.class)
                         .setMixInAnnotation(SecureRandom.class, SecureRandomMixIn.class)
                         .setMixInAnnotation(Resource.class, SpringResourceMixIn.class)
-                        .setMixInAnnotation(ByteArrayInputStream.class, ByteArrayInputStreamMixIn.class))
+                        .setMixInAnnotation(ByteArrayInputStream.class, ByteArrayInputStreamMixIn.class)
+                        .setMixInAnnotation(Type.class, TypeMixin.class)
+                        .setMixInAnnotation(ParameterizedTypeReference.class, ParameterizedTypeReferenceMixIn.class))
                 .addJacksonModule(new JavaTimeModule())
                 .addJacksonModule(new StoreLocationModule())
                 .addJacksonModule(new MapAsEntriesModule());

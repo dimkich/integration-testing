@@ -3,12 +3,13 @@ package io.github.dimkich.integration.testing.format.common.type;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
-import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -19,7 +20,8 @@ public class TypeResolverFactory {
 
     private final Map<Class<?>, Set<NamedType>> parentToSubTypeMap = new HashMap<>();
     private final Map<String, NamedType> subTypes = new HashMap<>();
-    private final Map<JavaType, TypeIdResolver> resolverCache = new ConcurrentHashMap<>();
+    private final Map<Class<?>, String> baseTypes = new HashMap<>();
+    private final Map<JavaType, SharedTypeNameIdResolver> resolverCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, MapperConfig<?>> configCache = new ConcurrentHashMap<>();
 
 
@@ -32,14 +34,21 @@ public class TypeResolverFactory {
             module.getAliases().forEach(p -> this.addAlias(p.getKey(), p.getValue()));
         }
         for (TestSetupModule module : modules) {
+            module.getBaseTypes().forEach(p -> this.addBaseType(p.getKey(), p.getValue()));
             module.getSubTypesWithName().forEach(p -> this.addSubType(p.getKey(), p.getValue()));
             module.getSubTypes().forEach(this::addSubTypes);
             module.getEqualsMap().forEach(MockInvoke::addEqualsForType);
         }
     }
 
-    public TypeIdResolver createTypeIdResolver(MapperConfig<?> config, JavaType baseType) {
+    public SharedTypeNameIdResolver createTypeIdResolver(MapperConfig<?> config, JavaType baseType) {
         return getResolver(config, baseType);
+    }
+
+    @SneakyThrows
+    public Class<?> getType(String type) {
+        NamedType namedType = subTypes.get(type);
+        return namedType == null ? Class.forName(type) : namedType.getType();
     }
 
     public boolean isCollection(String type) {
@@ -51,7 +60,7 @@ public class TypeResolverFactory {
         return false;
     }
 
-    private TypeIdResolver getResolver(MapperConfig<?> config, JavaType baseType) {
+    private SharedTypeNameIdResolver getResolver(MapperConfig<?> config, JavaType baseType) {
         if (!configCache.containsKey(config.getClass())) {
             configCache.put(config.getClass(), config);
         } else if (configCache.get(config.getClass()) != config) {
@@ -71,7 +80,7 @@ public class TypeResolverFactory {
                 idToType.put(t.getName(), config.constructType(t.getType()));
                 typeToId.put(t.getType().getName(), t.getName());
             }
-            return new SharedTypeNameIdResolver(config, bt, typeToId, idToType);
+            return new SharedTypeNameIdResolver(config, bt, typeToId, idToType, baseTypes);
         });
     }
 
@@ -79,6 +88,10 @@ public class TypeResolverFactory {
         parentToSubTypeMap.computeIfAbsent(parent, p -> subTypes.values().stream()
                 .filter(n -> p.isAssignableFrom(n.getType()))
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
+        int modifiers = parent.getModifiers();
+        if (!Modifier.isAbstract(modifiers) && !Modifier.isInterface(modifiers) && !parent.isPrimitive()) {
+            addSubType(parent);
+        }
     }
 
     private void addSubType(Class<?> subType) {
@@ -106,5 +119,13 @@ public class TypeResolverFactory {
         parentToSubTypeMap.entrySet().stream()
                 .filter(e -> e.getKey().isAssignableFrom(subType))
                 .forEach(e -> e.getValue().add(namedType));
+    }
+
+    private void addBaseType(Class<?> baseType, String name) {
+        if (baseTypes.containsKey(baseType)) {
+            throw new RuntimeException(String.format("Base type with %s already added", baseType.getName()));
+        }
+        baseTypes.put(baseType, name);
+        addSubType(baseType, name);
     }
 }

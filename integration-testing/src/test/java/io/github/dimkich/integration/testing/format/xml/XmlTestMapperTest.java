@@ -14,6 +14,9 @@ import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.FormatTestUtils;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
+import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticGenericArrayType;
+import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticParameterizedType;
+import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticWildcardType;
 import io.github.dimkich.integration.testing.format.dto.*;
 import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributes;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
@@ -31,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -39,6 +43,7 @@ import org.springframework.http.RequestEntity;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.security.SecureRandom;
@@ -520,7 +525,66 @@ class XmlTestMapperTest {
     </offers>
 </OrderBookWrapped>
 """},
-
+                {new Value(ArrayList.class), """
+<Value>
+    <value type="Class">ArrayList</value>
+</Value>
+"""},
+                {new Value(HashMap.class), """
+<Value>
+    <value type="Class">java.util.HashMap</value>
+</Value>
+"""},
+                {new Value(new SyntheticParameterizedType(ArrayList.class, new Type[]{String.class})), """
+<Value>
+    <value type="Type">ArrayList&lt;String></value>
+</Value>
+"""},
+                {new Value(new SyntheticGenericArrayType(new SyntheticGenericArrayType(Object.class))), """
+<Value>
+    <value type="Type">Object[][]</value>
+</Value>
+"""},
+                {new Value(new SyntheticParameterizedType(LinkedHashMap.class, new Type[]{
+                        new SyntheticWildcardType(new Type[]{Integer.class}, new Type[]{}),
+                        new SyntheticParameterizedType(ArrayList.class, new Type[]{
+                                new SyntheticWildcardType(new Type[]{Object.class}, new Type[]{String.class})
+                        })
+                })
+                ), """
+<Value>
+    <value type="Type">LinkedHashMap&lt;? extends Integer, ArrayList&lt;? super String>></value>
+</Value>
+"""},
+                {new Value(ParameterizedTypeReference.forType(ArrayList.class)), """
+<Value>
+    <value type="ParameterizedTypeReference">ArrayList</value>
+</Value>
+"""},
+                {new Value(ParameterizedTypeReference.forType(
+                        new SyntheticParameterizedType(ArrayList.class, new Type[]{String.class}))), """
+<Value>
+    <value type="ParameterizedTypeReference">ArrayList&lt;String></value>
+</Value>
+"""},
+                {new Value(ParameterizedTypeReference.forType(
+                        new SyntheticGenericArrayType(new SyntheticGenericArrayType(Object.class)))), """
+<Value>
+    <value type="ParameterizedTypeReference">Object[][]</value>
+</Value>
+"""},
+                {new Value(ParameterizedTypeReference.forType(
+                        new SyntheticParameterizedType(LinkedHashMap.class, new Type[]{
+                                new SyntheticWildcardType(new Type[]{Integer.class}, new Type[]{}),
+                                new SyntheticParameterizedType(ArrayList.class, new Type[]{
+                                        new SyntheticWildcardType(new Type[]{Object.class}, new Type[]{String.class})
+                                })
+                        })
+                )), """
+<Value>
+    <value type="ParameterizedTypeReference">LinkedHashMap&lt;? extends Integer, ArrayList&lt;? super String>></value>
+</Value>
+"""},
                 {new Typed(new ArrayList<>(List.of(new TypeTest(1, null, "s"),
                         new TypeTest(2, null, "t"))),
                         map(new LinkedHashMap<>(), "k1", new TypeTest(3, null, "d"))), """
