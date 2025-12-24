@@ -2,12 +2,12 @@ package io.github.dimkich.integration.testing.format.common.type;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
-import com.fasterxml.jackson.databind.jsontype.NamedType;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 public class TypeResolverFactory {
     private final List<TestSetupModule> modules;
 
-    private final Map<Class<?>, Set<NamedType>> parentToSubTypeMap = new HashMap<>();
-    private final Map<String, NamedType> subTypes = new HashMap<>();
+    private final Map<Class<?>, Set<Pair<Class<?>, String>>> parentToSubTypeMap = new HashMap<>();
+    private final Map<String, Pair<Class<?>, String>> subTypes = new HashMap<>();
     private final Map<Class<?>, String> baseTypes = new HashMap<>();
     private final Map<JavaType, SharedTypeNameIdResolver> resolverCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, MapperConfig<?>> configCache = new ConcurrentHashMap<>();
@@ -34,8 +34,8 @@ public class TypeResolverFactory {
             module.getAliases().forEach(p -> this.addAlias(p.getKey(), p.getValue()));
         }
         for (TestSetupModule module : modules) {
-            module.getBaseTypes().forEach(p -> this.addBaseType(p.getKey(), p.getValue()));
-            module.getSubTypesWithName().forEach(p -> this.addSubType(p.getKey(), p.getValue()));
+            module.getBaseTypes().forEach(this::addBaseType);
+            module.getSubTypesWithName().forEach(this::addSubType);
             module.getSubTypes().forEach(this::addSubTypes);
             module.getEqualsMap().forEach(MockInvoke::addEqualsForType);
         }
@@ -47,14 +47,14 @@ public class TypeResolverFactory {
 
     @SneakyThrows
     public Class<?> getType(String type) {
-        NamedType namedType = subTypes.get(type);
-        return namedType == null ? Class.forName(type) : namedType.getType();
+        Pair<Class<?>, String> pair = subTypes.get(type);
+        return pair == null ? Class.forName(type) : pair.getKey();
     }
 
     public boolean isCollection(String type) {
-        NamedType namedType = subTypes.get(type);
-        if (namedType != null) {
-            Class<?> cls = namedType.getType();
+        Pair<Class<?>, String> pair = subTypes.get(type);
+        if (pair != null) {
+            Class<?> cls = pair.getKey();
             return (cls.isArray() && cls != byte[].class) || Collection.class.isAssignableFrom(cls);
         }
         return false;
@@ -69,16 +69,16 @@ public class TypeResolverFactory {
             resolverCache.clear();
         }
         return resolverCache.computeIfAbsent(baseType, bt -> {
-            Set<NamedType> subtypes = parentToSubTypeMap.get(bt.getRawClass());
+            Set<Pair<Class<?>, String>> subtypes = parentToSubTypeMap.get(bt.getRawClass());
             if (subtypes == null) {
                 return null;
             }
             ConcurrentHashMap<String, String> typeToId = new ConcurrentHashMap<>();
             HashMap<String, JavaType> idToType = new HashMap<>();
 
-            for (NamedType t : subtypes) {
-                idToType.put(t.getName(), config.constructType(t.getType()));
-                typeToId.put(t.getType().getName(), t.getName());
+            for (Pair<Class<?>, String> t : subtypes) {
+                idToType.put(t.getValue(), config.constructType(t.getKey()));
+                typeToId.put(t.getKey().getName(), t.getValue());
             }
             return new SharedTypeNameIdResolver(config, bt, typeToId, idToType, baseTypes);
         });
@@ -86,46 +86,47 @@ public class TypeResolverFactory {
 
     private void addParentType(Class<?> parent) {
         parentToSubTypeMap.computeIfAbsent(parent, p -> subTypes.values().stream()
-                .filter(n -> p.isAssignableFrom(n.getType()))
+                .filter(n -> p.isAssignableFrom(n.getKey()))
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
         int modifiers = parent.getModifiers();
-        if (!Modifier.isAbstract(modifiers) && !Modifier.isInterface(modifiers) && !parent.isPrimitive()) {
+        if (!subTypes.containsKey(parent.getSimpleName()) && !Modifier.isAbstract(modifiers)
+                && !Modifier.isInterface(modifiers) && !parent.isPrimitive()) {
             addSubType(parent);
         }
     }
 
     private void addSubType(Class<?> subType) {
-        addSubType(subType, subType.getSimpleName());
+        addSubType(Pair.of(subType, subType.getSimpleName()));
     }
 
     private void addSubTypes(Class<?>... subType) {
         Arrays.stream(subType).forEach(this::addSubType);
     }
 
-    private void addSubType(Class<?> subType, String name) {
-        if (subTypes.containsKey(name)) {
-            throw new RuntimeException(String.format("SubType with name %s already added", name));
+    private void addSubType(Pair<Class<?>, String> pair) {
+        if (subTypes.containsKey(pair.getValue())) {
+            throw new RuntimeException(String.format("SubType with name %s already added", pair.getValue()));
         }
-        NamedType namedType = new NamedType(subType, name);
-        subTypes.put(name, namedType);
+        subTypes.put(pair.getValue(), pair);
 
         parentToSubTypeMap.entrySet().stream()
-                .filter(e -> e.getKey().isAssignableFrom(subType))
-                .forEach(e -> e.getValue().add(namedType));
+                .filter(e -> e.getKey().isAssignableFrom(pair.getKey()))
+                .forEach(e -> e.getValue().add(pair));
     }
 
     private void addAlias(Class<?> subType, String alias) {
-        NamedType namedType = new NamedType(subType, alias);
         parentToSubTypeMap.entrySet().stream()
                 .filter(e -> e.getKey().isAssignableFrom(subType))
-                .forEach(e -> e.getValue().add(namedType));
+                .forEach(e -> e.getValue().add(Pair.of(subType, alias)));
     }
 
-    private void addBaseType(Class<?> baseType, String name) {
-        if (baseTypes.containsKey(baseType)) {
-            throw new RuntimeException(String.format("Base type with %s already added", baseType.getName()));
+    private void addBaseType(Pair<Class<?>, String> pair) {
+        if (baseTypes.containsKey(pair.getKey())) {
+            throw new RuntimeException(String.format("Base type with %s already added", pair.getKey().getName()));
         }
-        baseTypes.put(baseType, name);
-        addSubType(baseType, name);
+        baseTypes.put(pair.getKey(), pair.getValue());
+        if (!subTypes.containsKey(pair.getValue())) {
+            addSubType(pair);
+        }
     }
 }
