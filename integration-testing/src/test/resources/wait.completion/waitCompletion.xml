@@ -1,0 +1,468 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Container" name="future like">
+        <test type="Case" name="base class">
+            <bean>reflection</bean>
+            <method>create</method>
+            <request type="ArrayList">
+                <item type="Class">FutureLike1</item>
+                <item type="Class">FutureLike1Child1</item>
+                <item type="Class">FutureLike1</item>
+                <item type="Class">FutureLike1Child2</item>
+                <item type="Class">FutureLike1</item>
+            </request>
+            <response type="ArrayList">
+                <response>FutureLike1#await</response>
+                <response>FutureLike1#await</response>
+                <response>FutureLike1#await</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="base class and subclasses">
+            <bean>reflection</bean>
+            <method>create</method>
+            <request type="ArrayList">
+                <item type="Class">FutureLike2</item>
+                <item type="Class">FutureLike2Child1</item>
+                <item type="Class">FutureLike2</item>
+                <item type="Class">FutureLike2Child2</item>
+                <item type="Class">FutureLike2</item>
+            </request>
+            <response type="ArrayList">
+                <response>FutureLike2#await</response>
+                <response>FutureLike2#await</response>
+                <response>FutureLike2#await</response>
+                <response>FutureLike2Child1#await</response>
+                <response>FutureLike2Child2#await</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="annotation method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>FutureLike3</cls>
+                    <method>create</method>
+                </item>
+                <item type="Method">
+                    <cls>FutureLike3Child1</cls>
+                    <method>create</method>
+                </item>
+                <item type="Method">
+                    <cls>FutureLike3Child2</cls>
+                    <method>create</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>FutureLike3#await</response>
+                <response>FutureLike3Child2#await</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="base class and subclasses selector with annotation">
+            <bean>reflection</bean>
+            <method>create</method>
+            <request type="ArrayList">
+                <item type="Class">FutureLike4</item>
+                <item type="Class">FutureLike4Child1</item>
+                <item type="Class">FutureLike4</item>
+                <item type="Class">FutureLike4Child2</item>
+                <item type="Class">FutureLike4</item>
+            </request>
+            <response type="ArrayList">
+                <response>FutureLike4#await</response>
+                <response>FutureLike4#await</response>
+                <response>FutureLike4#await</response>
+                <response>FutureLike4Child2#await</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="annotation method and class selector; awaitConsumer">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>FutureLike5</cls>
+                    <method>create</method>
+                </item>
+                <item type="Method">
+                    <cls>FutureLike5Child1</cls>
+                    <method>create</method>
+                </item>
+                <item type="Method">
+                    <cls>FutureLike5Child2</cls>
+                    <method>create</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>FutureLike5Child1#await</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="static method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>FutureLike6</cls>
+                    <method>create</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>FutureLike6#await</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="method counting">
+        <test type="Case" name="base class">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodCounting1</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodCounting1Child1</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodCounting1Child2</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>MethodCounting1#method (count = 1)</response>
+                <response>MethodCounting1Child1#method (count = 0)</response>
+                <response>MethodCounting1Child2#method (count = 0)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="base and subclasses class">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodCounting2</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodCounting2Child1</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodCounting2Child2</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>MethodCounting2#method (count = 1)</response>
+                <response>MethodCounting2Child1#method (count = 1)</response>
+                <response>MethodCounting2Child2#method (count = 1)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="parent class method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodCounting3</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodCounting3Child1</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodCounting3Child2</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>MethodCounting3#method (count = 0)</response>
+                <response>MethodCounting3Child1#method (count = 1)</response>
+                <response>MethodCounting3Child2#method (count = 0)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="annotation method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodCounting41</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodCounting42</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodCounting43</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>MethodCounting41#method (count = 1)</response>
+                <response>MethodCounting41#method (count = 2)</response>
+                <response>MethodCounting42#method (count = 1)</response>
+                <response>MethodCounting43#method (count = 0)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="private static method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodCounting51</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>MethodCounting51#method (count = 1)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="method pair">
+        <test type="Case" name="parent class method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodPair1</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodPair1Child1</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodPair1Child2</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>MethodPair1#method (count = 0)</response>
+                <response>MethodPair1Child1#method (count = 1)</response>
+                <response>MethodPair1Child2#method (count = 1)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="parent class method; call endPointcut only">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodPair1</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodPair1Child2</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>MethodPair1#method (count = 0)</response>
+                <response>MethodPair1Child2#method (count = 0)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="public static method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodPair21</cls>
+                    <method>method</method>
+                </item>
+                <item type="Method">
+                    <cls>MethodPair22</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>MethodPair21#method (count = 1)</response>
+                <response>MethodPair22#method (count = 1)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="private inner class and private method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodCounting61</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>Processor#method (count = 1)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="pending tasks">
+        <test type="Case" name="base class and subclasses">
+            <bean>reflection</bean>
+            <method>create</method>
+            <request type="ArrayList">
+                <item type="Class">PendingTasks1</item>
+                <item type="Class">PendingTasks1Child1</item>
+                <item type="Class">PendingTasks1Child2</item>
+            </request>
+            <response type="ArrayList">
+                <response>PendingTasks1#taskCount</response>
+                <response>PendingTasks1#taskCount</response>
+                <response>PendingTasks1Child1#taskCount</response>
+                <response>PendingTasks1Child1#taskCount</response>
+                <response>PendingTasks1Child2#taskCount</response>
+                <response>PendingTasks1Child2#taskCount</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="base class">
+            <bean>reflection</bean>
+            <method>create</method>
+            <request type="ArrayList">
+                <item type="Class">PendingTasks2</item>
+                <item type="Class">PendingTasks2Child1</item>
+                <item type="Class">PendingTasks2Child2</item>
+            </request>
+            <response type="ArrayList">
+                <response>PendingTasks2#taskCount</response>
+                <response>PendingTasks2#taskCount</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="subclass">
+            <bean>reflection</bean>
+            <method>create</method>
+            <request type="ArrayList">
+                <item type="Class">PendingTasks3</item>
+                <item type="Class">PendingTasks3Child1</item>
+                <item type="Class">PendingTasks3Child2</item>
+            </request>
+            <response type="ArrayList">
+                <response>PendingTasks3Child2#taskCount</response>
+                <response>PendingTasks3Child2#taskCount</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="class annotation">
+            <bean>reflection</bean>
+            <method>create</method>
+            <request type="ArrayList">
+                <item type="Class">PendingTasks4</item>
+                <item type="Class">PendingTasks4Child1</item>
+                <item type="Class">PendingTasks4Child2</item>
+            </request>
+            <response type="ArrayList">
+                <response>PendingTasks4#taskCount</response>
+                <response>PendingTasks4#taskCount</response>
+                <response>PendingTasks4Child2#taskCount</response>
+                <response>PendingTasks4Child2#taskCount</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="class static factory method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>PendingTasks5</cls>
+                    <method>create</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>PendingTasks5#taskCount</response>
+                <response>PendingTasks5#taskCount</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="class static factory method is not called">
+            <bean>reflection</bean>
+            <method>create</method>
+            <request type="ArrayList">
+                <item type="Class">PendingTasks5</item>
+            </request>
+            <response type="ArrayList">
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+        <test type="Case" name="class static factory method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>PendingTasks6</cls>
+                    <method>create</method>
+                </item>
+                <item type="Method">
+                    <cls>PendingTasks6Child1</cls>
+                    <method>create</method>
+                </item>
+                <item type="Method">
+                    <cls>PendingTasks6Child2</cls>
+                    <method>create</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>PendingTasks6#taskCount</response>
+                <response>PendingTasks6#taskCount</response>
+                <response>PendingTasks6Child1#taskCount</response>
+                <response>PendingTasks6Child1#taskCount</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+    </test>
+</test>

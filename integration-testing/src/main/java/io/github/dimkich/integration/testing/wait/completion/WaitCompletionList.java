@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.wait.completion;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ import java.util.List;
  * until none of them report newly started work via
  * {@link WaitCompletion#isAnyTaskStarted()}.
  */
+@Slf4j
 @Getter
 @RequiredArgsConstructor
 public class WaitCompletionList {
@@ -44,6 +46,7 @@ public class WaitCompletionList {
         boolean rerun = true;
         while (rerun) {
             rerun = false;
+            log.debug("Waiting for completion of tasks.");
             for (WaitCompletion waitCompletion : tasks) {
                 waitCompletion.waitCompletion();
             }
@@ -53,5 +56,6 @@ public class WaitCompletionList {
                 }
             }
         }
+        log.debug("All tasks completed.");
     }
 }

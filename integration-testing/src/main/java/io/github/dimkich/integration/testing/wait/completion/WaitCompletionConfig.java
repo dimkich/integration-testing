@@ -1,5 +1,9 @@
 package io.github.dimkich.integration.testing.wait.completion;
 
+import io.github.dimkich.integration.testing.wait.completion.future.like.FutureLikeWaitCompletion;
+import io.github.dimkich.integration.testing.wait.completion.method.counting.MethodCountingWaitCompletion;
+import io.github.dimkich.integration.testing.wait.completion.method.pair.MethodPairWaitCompletion;
+import io.github.dimkich.integration.testing.wait.completion.pending.tasks.PendingTasksWaitCompletion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
@@ -16,11 +20,14 @@ import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
 
 @Configuration
+@Import({FutureLikeWaitCompletion.class, MethodCountingWaitCompletion.class, MethodPairWaitCompletion.class,
+        PendingTasksWaitCompletion.class})
 public class WaitCompletionConfig {
     @Configuration
     @ConditionalOnProperty(value = "integration.testing.wait.completion.enabled", havingValue = "false", matchIfMissing = true)
@@ -46,22 +53,7 @@ public class WaitCompletionConfig {
                     .bind(WaitCompletionProperties.class.getAnnotation(ConfigurationProperties.class).prefix(),
                             Bindable.of(WaitCompletionProperties.class))
                     .orElseThrow(IllegalStateException::new);
-            if (properties.getTasks() != null) {
-                int i = 0;
-                for (WaitCompletionProperties.Task task : properties.getTasks()) {
-                    String name = "taskWaitCompletion_" + i;
-                    BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(TaskWaitCompletion.class)
-                            .setLazyInit(true);
-                    registry.registerBeanDefinition(name, builder.getBeanDefinition());
 
-                    addDefinitionWithReference(name + "_Start", TaskWaitCompletion.Start.class, name);
-                    registerAdvisorDefinition(task.getStartPointCut(), name + "_Start");
-
-                    addDefinitionWithReference(name + "_End", TaskWaitCompletion.End.class, name);
-                    registerAdvisorDefinition(task.getEndPointCut(), name + "_End");
-                    i++;
-                }
-            }
             String env = environment.getProperty("integration.testing.environment");
             if (properties.isKafkaStandardTask() && io.github.dimkich.integration.testing.Environment.REAL.equals(env)) {
                 registerAdvisorDefinition("execution(* org.springframework.kafka.core.KafkaTemplate.send(..))",
@@ -70,13 +62,6 @@ public class WaitCompletionConfig {
             BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(WaitCompletionList.class)
                     .setLazyInit(true);
             registry.registerBeanDefinition("waitCompletion", builder.getBeanDefinition());
-        }
-
-        private void addDefinitionWithReference(String name, Class<?> cls, String reference) {
-            BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(cls)
-                    .setLazyInit(true)
-                    .addConstructorArgReference(reference);
-            registry.registerBeanDefinition(name, builder.getBeanDefinition());
         }
 
         private void registerAdvisorDefinition(String expression, String advice) {

@@ -6,21 +6,17 @@ import io.github.dimkich.integration.testing.util.ByteBuddyUtils;
 import lombok.Getter;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.asm.MemberSubstitution;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.pool.TypePool;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.time.Clock;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -35,7 +31,6 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <p>
  * The setup process involves:
  * <ul>
- *   <li>Injecting {@link JavaTimeAdvice} into the system class loader</li>
  *   <li>Configuring ByteBuddy to replace time-related method calls in core Java classes</li>
  *   <li>Optionally extending instrumentation to user-specified classes/packages via {@link MockJavaTime} annotation</li>
  * </ul>
@@ -53,70 +48,6 @@ public class MockJavaTimeSetUp {
      */
     @Getter
     private static boolean initialized = false;
-    private static boolean javaTimeAdviceToSystemClassLoader = false;
-    /**
-     * ASM visitor wrapper that fixes a bug in the JDK which forgets reconstruction of parameter names in some builds.
-     * <p>
-     * This wrapper attempts to use Mockito's {@code ParameterWritingVisitorWrapper} if available,
-     * otherwise falls back to a no-op visitor. The wrapper is applied during bytecode transformation
-     * to preserve parameter name information that would otherwise be lost.
-     * </p>
-     * <p>
-     * For more details, see:
-     * <a href="https://github.com/raphw/byte-buddy/issues/1562">ByteBuddy issue #1562</a>
-     * </p>
-     */
-    private static final Function<TypeDescription, AsmVisitorWrapper> parameterWritingVisitorWrapper;
-
-    static {
-        Constructor<?> constructor;
-        try {
-            Class<?> cls = Class.forName("org.mockito.internal.creation.bytebuddy.InlineBytecodeGenerator$ParameterWritingVisitorWrapper");
-            constructor = cls.getDeclaredConstructor(Class.class);
-            constructor.setAccessible(true);
-        } catch (Exception e) {
-            constructor = null;
-        }
-        Constructor<?> c = constructor;
-        parameterWritingVisitorWrapper = name -> {
-            try {
-                if (c != null && name instanceof TypeDescription.ForLoadedType) {
-                    return (AsmVisitorWrapper.AbstractBase) c.newInstance(Class.forName(name.getName()));
-                }
-            } catch (ReflectiveOperationException ignore) {
-            }
-            return AsmVisitorWrapper.NoOp.INSTANCE;
-        };
-    }
-
-    /**
-     * Moves the {@link JavaTimeAdvice} class to the system class loader so it can be accessed
-     * by transformed classes that may be loaded by different class loaders.
-     * <p>
-     * This is necessary because ByteBuddy transformations may occur in classes loaded by various
-     * class loaders, but those classes need to be able to invoke the advice methods. By injecting
-     * the advice class into the boot class loader using {@link ClassInjector.UsingUnsafe},
-     * it becomes accessible to all class loaders in the JVM.
-     * </p>
-     * <p>
-     * The method uses ByteBuddy to redefine the class and then injects the resulting bytecode
-     * into the boot class loader.
-     * </p>
-     */
-    public static void moveJavaTimeAdviceToSystemClassLoader() {
-        if (javaTimeAdviceToSystemClassLoader) {
-            return;
-        }
-        TypePool typePool = TypePool.Default.ofSystemLoader();
-        Map<TypeDescription, byte[]> types = new ByteBuddy()
-                .redefine(
-                        typePool.describe("io.github.dimkich.integration.testing.date.time.JavaTimeAdvice").resolve(),
-                        ClassFileLocator.ForClassLoader.ofSystemLoader())
-                .make()
-                .getAllTypes();
-        ClassInjector.UsingUnsafe.ofBootLoader().inject(types);
-        javaTimeAdviceToSystemClassLoader = true;
-    }
 
     /**
      * Sets up Java time mocking based on the provided {@link MockJavaTime} annotation configuration.
@@ -167,11 +98,19 @@ public class MockJavaTimeSetUp {
                                 .method(is(currentTimeMillis))
                                 .replaceWith(newCurrentTimeMillis)
                                 .on(any()))
-                        .visit(parameterWritingVisitorWrapper.apply(td)))
+                        .visit(ByteBuddyUtils.getParameterWritingVisitorWrapper().apply(td)))
                 .installOnByteBuddyAgent();
     }
 
-    public static void shutDown() {
+    /**
+     * Resets Java time mocking to its default behavior.
+     * <p>
+     * This method clears all delegates in {@link JavaTimeAdvice} and marks this setup as
+     * uninitialized so that {@link #setUp(MockJavaTime)} can perform initialization again on
+     * the next invocation.
+     * </p>
+     */
+    public static void tearDown() {
         if (initialized) {
             JavaTimeAdvice.setCallRealMethod(null);
             JavaTimeAdvice.setCurrentTimeMillis(null);
@@ -186,7 +125,6 @@ public class MockJavaTimeSetUp {
      * <p>
      * This method performs the following one-time setup:
      * <ol>
-     *   <li>Moves {@link JavaTimeAdvice} to the system class loader so it can be used by transformed classes</li>
      *   <li>Sets up access to internal JDK methods that need to be wrapped (e.g., {@code VM.getNanoTimeAdjustment},
      *       {@code TimeZone.getDefaultRef})</li>
      *   <li>Configures ByteBuddy to transform the following classes:
@@ -207,7 +145,7 @@ public class MockJavaTimeSetUp {
      * </ol>
      * </p>
      * <p>
-     * This initialization is performed only once, as tracked by {@link #isInitialized}.
+     * This initialization is performed only once, as tracked by {@link #isInitialized()}.
      * </p>
      *
      * @throws Exception if there is an error during reflection access, class injection, or agent installation
@@ -244,14 +182,14 @@ public class MockJavaTimeSetUp {
                                 .method(is(currentTimeMillis))
                                 .replaceWith(newCurrentTimeMillis)
                                 .on(any()))
-                        .visit(parameterWritingVisitorWrapper.apply(td)))
+                        .visit(ByteBuddyUtils.getParameterWritingVisitorWrapper().apply(td)))
                 .type(named(Clock.class.getName()))
                 .transform((builder, td, cl, module, domain) -> builder
                         .visit(MemberSubstitution.relaxed()
                                 .method(is(getNanoTimeAdjustment))
                                 .replaceWith(newGetNanoTimeAdjustment)
                                 .on(any()))
-                        .visit(parameterWritingVisitorWrapper.apply(td)))
+                        .visit(ByteBuddyUtils.getParameterWritingVisitorWrapper().apply(td)))
                 .type(namedOneOf(Calendar.class.getName(), Date.class.getName(), GregorianCalendar.class.getName(),
                         TimeZone.class.getName()))
                 .transform((builder, td, cl, module, domain) -> builder
@@ -259,7 +197,7 @@ public class MockJavaTimeSetUp {
                                 .method(is(getDefaultRef))
                                 .replaceWith(newGetDefaultRef)
                                 .on(any()))
-                        .visit(parameterWritingVisitorWrapper.apply(td)))
+                        .visit(ByteBuddyUtils.getParameterWritingVisitorWrapper().apply(td)))
                 .installOnByteBuddyAgent();
     }
 }
