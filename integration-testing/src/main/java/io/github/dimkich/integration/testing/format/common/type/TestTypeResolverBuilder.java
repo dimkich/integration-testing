@@ -19,6 +19,14 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.Set;
 
+/**
+ * Custom {@link StdTypeResolverBuilder} used in tests to configure Jackson's
+ * polymorphic type handling in a centralized way.
+ * <p>
+ * The builder delegates all decisions about type ids and subtype registration
+ * to {@link TypeResolverFactory} and exposes the names of JSON properties that
+ * carry type information (regular and "unwrapped" payloads).
+ */
 @Component("testTypeResolverBuilder")
 @RequiredArgsConstructor
 public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
@@ -27,6 +35,15 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
     @Getter
     private String unwrappedTypeProperty;
 
+    /**
+     * Initializes default type id strategy for tests:
+     * <ul>
+     *     <li>use {@link JsonTypeInfo.Id#NAME} as type id</li>
+     *     <li>include the id as a JSON property</li>
+     *     <li>use {@code "type"} as the main type property</li>
+     *     <li>use {@code "utype"} for unwrapped payloads</li>
+     * </ul>
+     */
     @PostConstruct
     void init() {
         init(JsonTypeInfo.Id.NAME, null);
@@ -35,14 +52,35 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
         unwrappedTypeProperty = "utype";
     }
 
+    /**
+     * Returns the set of JSON attribute names that may contain type information
+     * for objects handled by this builder.
+     *
+     * @return immutable set containing {@link #getTypeProperty()} and
+     * {@link #getUnwrappedTypeProperty()}
+     */
     public Set<String> getTypeAttributes() {
         return Set.of(getTypeProperty(), getUnwrappedTypeProperty());
     }
 
+    /**
+     * Determines whether the logical type represented by the given id should be
+     * treated as a collection (array or {@link java.util.Collection}).
+     *
+     * @param type logical type id or alias
+     * @return {@code true} if the type is configured as a collection, {@code false} otherwise
+     */
     public boolean isCollection(String type) {
         return typeResolverFactory.isCollection(type);
     }
 
+    /**
+     * Builds a {@link TypeSerializer} that writes the logical type id as a JSON
+     * property using a {@link TypeIdResolver} created by {@link TypeResolverFactory}.
+     *
+     * @return configured {@link AsPropertyTypeSerializer} or {@code null} when
+     * no resolver is available for the given base type
+     */
     @Override
     public TypeSerializer buildTypeSerializer(SerializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
         TypeIdResolver idResolver = typeResolverFactory.createTypeIdResolver(config, baseType);
@@ -52,6 +90,14 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
         return new AsPropertyTypeSerializer(idResolver, null, _typeProperty);
     }
 
+    /**
+     * Builds a {@link TypeDeserializer} that reads the logical type id from a
+     * JSON property using a {@link TypeIdResolver} created by
+     * {@link TypeResolverFactory}.
+     *
+     * @return configured {@link AsPropertyTypeDeserializer} or {@code null} when
+     * no resolver is available for the given base type
+     */
     @Override
     public TypeDeserializer buildTypeDeserializer(DeserializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
         TypeIdResolver idResolver = typeResolverFactory.createTypeIdResolver(config, baseType);

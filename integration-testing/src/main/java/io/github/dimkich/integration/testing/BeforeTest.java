@@ -1,5 +1,7 @@
 package io.github.dimkich.integration.testing;
 
+import io.github.dimkich.integration.testing.execution.TestExecutor;
+
 /**
  * Functional interface for executing before-test hooks in the integration testing framework.
  * <p>

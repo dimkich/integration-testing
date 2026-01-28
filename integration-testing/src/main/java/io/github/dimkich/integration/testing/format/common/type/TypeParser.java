@@ -10,6 +10,18 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Parser for string-based Java type descriptions used by integration-testing.
+ * <p>
+ * Supports:
+ * <ul>
+ *     <li>simple types, e.g. {@code java.lang.String}</li>
+ *     <li>parameterized types, e.g. {@code java.util.List<java.lang.String>}</li>
+ *     <li>wildcards with bounds, e.g. {@code ? extends Number}, {@code ? super Number}</li>
+ *     <li>generic arrays, e.g. {@code java.util.List<java.lang.String>[]}</li>
+ * </ul>
+ * Parsed types are resolved through {@link TypeResolverFactory}.
+ */
 @RequiredArgsConstructor
 public class TypeParser {
     private static final Type[] EMPTY_TYPE_ARRAY = new Type[]{};
@@ -17,6 +29,13 @@ public class TypeParser {
 
     private final TypeResolverFactory typeResolverFactory;
 
+    /**
+     * Parses the given textual type description into a {@link Type}.
+     *
+     * @param typeDesc textual description of the type
+     * @return resolved {@link Type} instance
+     * @throws RuntimeException if the description has incorrect format
+     */
     public Type parse(String typeDesc) {
         Tokenizer tokenizer = new Tokenizer(typeDesc);
         Type type = getType(tokenizer);
@@ -25,6 +44,14 @@ public class TypeParser {
         return type;
     }
 
+    /**
+     * Parses the next type from the tokenizer, including optional generic
+     * arguments and array dimensions.
+     *
+     * @param t tokenizer positioned at the beginning of the type
+     * @return parsed {@link Type}
+     * @throws RuntimeException if unexpected tokens are encountered
+     */
     private Type getType(Tokenizer t) {
         Tokenizer.Token token = t.nextToken();
         if (token == Tokenizer.Token.QUESTION) {
@@ -53,6 +80,14 @@ public class TypeParser {
         return type;
     }
 
+    /**
+     * Parses a comma-separated list of type arguments until the closing
+     * triangular bracket is reached.
+     *
+     * @param t tokenizer positioned after the opening {@code '<'}
+     * @return list of parsed type arguments
+     * @throws RuntimeException if the generic declaration is malformed
+     */
     private List<Type> getParameterizedType(Tokenizer t) {
         List<Type> list = new ArrayList<>();
         while (true) {
@@ -64,6 +99,20 @@ public class TypeParser {
         }
     }
 
+    /**
+     * Parses a wildcard type beginning with {@code '?'}.
+     * <p>
+     * Supported forms:
+     * <ul>
+     *     <li>{@code ?}</li>
+     *     <li>{@code ? extends SomeType}</li>
+     *     <li>{@code ? super SomeType}</li>
+     * </ul>
+     *
+     * @param t tokenizer positioned after the {@code '?'}
+     * @return corresponding {@link SyntheticWildcardType}
+     * @throws RuntimeException if the wildcard declaration is malformed
+     */
     private Type getWildcardType(Tokenizer t) {
         Tokenizer.Token token = t.nextToken();
         if (token == Tokenizer.Token.NAME) {
@@ -83,6 +132,12 @@ public class TypeParser {
         return new SyntheticWildcardType(OBJECT_ARRAY, EMPTY_TYPE_ARRAY);
     }
 
+    /**
+     * Simple tokenizer over the textual type description.
+     * <p>
+     * It breaks the input into structural and name tokens and keeps track
+     * of generic bracket depth to detect malformed input early.
+     */
     @RequiredArgsConstructor
     static class Tokenizer {
         enum Token {NAME, TRIANGULAR_OPEN, TRIANGULAR_CLOSE, COMMA, QUESTION, SQUARE_OPEN, SQUARE_CLOSE, EOF}
@@ -96,6 +151,15 @@ public class TypeParser {
         @Getter
         private String name;
 
+        /**
+         * Reads and returns the next token from {@link #typeDesc}.
+         * <p>
+         * Skips leading whitespaces, keeps track of generic bracket depth
+         * and validates basic structural correctness.
+         *
+         * @return next {@link Token}, or {@link Token#EOF} when input is exhausted
+         * @throws RuntimeException if brackets are unbalanced or format is incorrect
+         */
         public Token nextToken() {
             skipWhitespaces();
             if (index >= typeDesc.length()) {
@@ -127,6 +191,11 @@ public class TypeParser {
             };
         }
 
+        /**
+         * Reads a contiguous sequence of non-structural characters as a {@link Token#NAME}.
+         *
+         * @return {@link Token#NAME}
+         */
         private Token readNameToken() {
             skipWhitespaces();
             int start = index;
@@ -142,6 +211,9 @@ public class TypeParser {
             return currentToken = Token.NAME;
         }
 
+        /**
+         * Advances the internal cursor over any whitespace characters.
+         */
         private void skipWhitespaces() {
             while (index < typeDesc.length() && Character.isWhitespace(typeDesc.charAt(index))) {
                 index++;

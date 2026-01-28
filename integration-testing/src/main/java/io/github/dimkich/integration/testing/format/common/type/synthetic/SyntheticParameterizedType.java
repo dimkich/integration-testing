@@ -11,14 +11,33 @@ import java.util.StringJoiner;
 
 @Data
 @RequiredArgsConstructor
+/**
+ * Synthetic implementation of {@link ParameterizedType} that can be used to create
+ * parameterized type instances at runtime, for example for testing or reflective
+ * type construction.
+ */
 public class SyntheticParameterizedType implements ParameterizedType {
+    /**
+     * Raw type of this parameterized type, e.g. {@code List}.
+     */
     private final Type rawType;
+
+    /**
+     * Actual type arguments for this type, e.g. {@code String} for {@code List<String>}.
+     */
     private final Type[] actualTypeArguments;
 
+    /**
+     * Always returns {@code null} because this synthetic type does not model owner types.
+     */
     public Type getOwnerType() {
         return null;
     }
 
+    /**
+     * Returns a canonical string representation of this parameterized type, including its
+     * raw type and actual type arguments, e.g. {@code "java.util.List<java.lang.String>"}.
+     */
     @Override
     public String getTypeName() {
         String typeName = this.rawType.getTypeName();
@@ -32,6 +51,10 @@ public class SyntheticParameterizedType implements ParameterizedType {
         return typeName;
     }
 
+    /**
+     * Compares this synthetic type with another {@link ParameterizedType} based on raw type,
+     * owner type (always {@code null} for this implementation) and actual type arguments.
+     */
     @Override
     public boolean equals(Object o) {
         if (o instanceof ParameterizedType that) {
@@ -42,6 +65,9 @@ public class SyntheticParameterizedType implements ParameterizedType {
         }
     }
 
+    /**
+     * Returns the same value as {@link #getTypeName()}.
+     */
     @Override
     public String toString() {
         return getTypeName();

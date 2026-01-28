@@ -10,16 +10,42 @@ import java.lang.reflect.WildcardType;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Generates string representations of {@link Type} instances used in integration tests.
+ * <p>
+ * This generator is aware of arrays, parameterized types, generic arrays and wildcard
+ * bounds and delegates resolution of logical type ids to {@link SharedTypeNameIdResolver}.
+ */
 @RequiredArgsConstructor
 public class TypeGenerator {
     private final TypeResolverFactory typeResolverFactory;
 
+    /**
+     * Generate a string representation for the given {@link Type}.
+     * <p>
+     * If the resolved class has a logical type id registered in {@link SharedTypeNameIdResolver},
+     * that id is used; otherwise the fully-qualified class name or generic signature is returned.
+     *
+     * @param type   the type to represent
+     * @param config Jackson mapper configuration used to create the shared type id resolver
+     * @return string representation of the provided type
+     */
     public String generate(Type type, MapperConfig<?> config) {
         SharedTypeNameIdResolver resolver = typeResolverFactory.createTypeIdResolver(config,
                 config.constructType(Object.class));
         return generate(type, resolver);
     }
 
+    /**
+     * Generate a string representation for the given {@link Type} using the provided resolver.
+     * <p>
+     * Handles {@link Class} (including arrays), {@link ParameterizedType},
+     * {@link GenericArrayType} and {@link WildcardType} with upper and lower bounds.
+     *
+     * @param type     the type to represent
+     * @param resolver resolver that provides logical type ids for classes when available
+     * @return string representation of the provided type
+     */
     private String generate(Type type, SharedTypeNameIdResolver resolver) {
         if (type instanceof Class<?> cls) {
             if (cls.getComponentType() != null) {
