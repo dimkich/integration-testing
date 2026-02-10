@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing.format.common.type.synthetic;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.ParameterizedType;
@@ -9,13 +9,13 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-@Data
-@RequiredArgsConstructor
 /**
  * Synthetic implementation of {@link ParameterizedType} that can be used to create
  * parameterized type instances at runtime, for example for testing or reflective
  * type construction.
  */
+@Getter
+@RequiredArgsConstructor
 public class SyntheticParameterizedType implements ParameterizedType {
     /**
      * Raw type of this parameterized type, e.g. {@code List}.
@@ -63,6 +63,23 @@ public class SyntheticParameterizedType implements ParameterizedType {
         } else {
             return false;
         }
+    }
+
+    /**
+     * Returns a hash code value for this parameterized type.
+     * <p>
+     * The hash code is calculated based on the raw type, owner type,
+     * and the hash code of the actual type arguments array as specified
+     * in the {@link ParameterizedType} documentation.
+     * </p>
+     *
+     * @return the hash code value
+     */
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(actualTypeArguments) ^
+                Objects.hashCode(getOwnerType()) ^
+                Objects.hashCode(rawType);
     }
 
     /**

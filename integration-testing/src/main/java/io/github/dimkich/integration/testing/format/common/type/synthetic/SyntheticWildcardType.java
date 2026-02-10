@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing.format.common.type.synthetic;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.Type;
@@ -14,7 +14,7 @@ import java.util.Arrays;
  * <p>The bounds are provided at construction time and exposed via the
  * Lombok-generated accessors for {@code upperBounds} and {@code lowerBounds}.</p>
  */
-@Data
+@Getter
 @RequiredArgsConstructor
 public class SyntheticWildcardType implements WildcardType {
 
@@ -46,6 +46,21 @@ public class SyntheticWildcardType implements WildcardType {
                     && Arrays.equals(this.lowerBounds, type.getLowerBounds());
         }
         return false;
+    }
+
+    /**
+     * Returns the hash code value for this wildcard type.
+     * <p>
+     * The hash code is defined as the XOR of the hash codes of its upper
+     * and lower bounds arrays. This ensures consistency with the {@link #equals}
+     * method and follows common practices for synthetic type implementations.
+     * </p>
+     *
+     * @return the hash code value for this wildcard type
+     */
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(getUpperBounds()) ^ Arrays.hashCode(getLowerBounds());
     }
 
     /**
