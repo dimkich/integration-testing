@@ -1,46 +1,70 @@
 package io.github.dimkich.integration.testing.wait.completion.method.counting;
 
-import io.github.dimkich.integration.testing.wait.completion.Pointcut;
+import io.github.dimkich.integration.testing.expression.PointcutId;
 import net.bytebuddy.asm.Advice;
 
 import java.lang.reflect.Method;
 
 /**
- * ByteBuddy advice that tracks method executions for the
- * method-counting based {@code WaitCompletion} implementation.
- * <p>
- * Every instrumented method call is reported to {@link MethodCountingTracker}
- * on enter and exit so that tests can wait until the configured number of
- * method invocations have completed.
+ * ByteBuddy advice responsible for intercepting method entry and exit to maintain
+ * the active task counter.
+ *
+ * <p>This advice is injected into methods matched by {@link io.github.dimkich.integration.testing.wait.completion.MethodCountingAwait}
+ * pointcuts. It acts as a bridge between the instrumented application code and the
+ * {@link MethodCountingTracker}, ensuring that every started "task" is eventually
+ * reported as finished.</p>
+ *
+ * <h3>Interception Points:</h3>
+ * <ul>
+ *   <li><b>OnMethodEnter:</b> Increments the global counter if the 'when' condition is met.</li>
+ *   <li><b>OnMethodExit:</b> Decrements the global counter. This is configured to catch
+ *       all {@link Throwable} types to prevent counter leaks in case of runtime exceptions.</li>
+ * </ul>
+ *
+ * @see MethodCountingTracker
+ * @see io.github.dimkich.integration.testing.expression.PointcutId
  */
 public class MethodCountingAdvice {
 
     /**
-     * Reports the start of the instrumented method execution.
+     * Invoked immediately upon entering the instrumented method.
      *
-     * @param obj      the instance on which the method is invoked (may be {@code null} for static methods)
-     * @param method   the reflective {@link Method} being executed
-     * @param pointcut the textual pointcut expression used to select this method
+     * <p>This method reports a new task start to the {@link MethodCountingTracker}.
+     * It captures the target object, the method metadata, and the arguments to
+     * evaluate the dynamic 'when' condition defined in the pointcut settings.</p>
+     *
+     * @param obj        the instance on which the method is invoked (null for static methods).
+     * @param method     the reflected {@link Method} being executed (used for logging).
+     * @param args       array of arguments passed to the method.
+     * @param pointcutId unique identifier injected by the instrumentation engine to
+     *                   retrieve specific pointcut configurations.
      */
     @Advice.OnMethodEnter
-    public static void enter(@Advice.This(optional = true) Object obj, @Advice.Origin Method method,
-                             @Pointcut String pointcut) {
-        MethodCountingTracker.startTask(obj == null ? method.getDeclaringClass() : obj.getClass(), method, pointcut);
+    public static void enter(@Advice.This(optional = true) Object obj,
+                             @Advice.Origin Method method,
+                             @Advice.AllArguments Object[] args,
+                             @PointcutId int pointcutId) {
+        MethodCountingTracker.startTask(pointcutId, obj, method, args);
     }
 
     /**
-     * Reports the end of the instrumented method execution.
-     * <p>
-     * This advice is triggered both on normal completion and when the method
-     * exits with an exception.
+     * Invoked when the instrumented method exits, whether normally or by throwing an exception.
      *
-     * @param obj      the instance on which the method is invoked (may be {@code null} for static methods)
-     * @param method   the reflective {@link Method} being executed
-     * @param pointcut the textual pointcut expression used to select this method
+     * <p>The {@code onThrowable = Throwable.class} attribute is critical here: it ensures
+     * that the task counter is decremented even if the method fails. Without this,
+     * a thrown exception could cause the test to block indefinitely, waiting for
+     * a task that will never "finish" normally.</p>
+     *
+     * @param obj        the instance on which the method was invoked.
+     * @param method     the reflected {@link Method} that finished execution.
+     * @param args       array of arguments passed to the method.
+     * @param pointcutId unique identifier associated with this instrumentation point.
      */
     @Advice.OnMethodExit(onThrowable = Throwable.class)
-    public static void exit(@Advice.This(optional = true) Object obj, @Advice.Origin Method method,
-                            @Pointcut String pointcut) {
-        MethodCountingTracker.endTask(obj == null ? method.getDeclaringClass() : obj.getClass(), method, pointcut);
+    public static void exit(@Advice.This(optional = true) Object obj,
+                            @Advice.Origin Method method,
+                            @Advice.AllArguments Object[] args,
+                            @PointcutId int pointcutId) {
+        MethodCountingTracker.endTask(pointcutId, obj, method, args);
     }
 }

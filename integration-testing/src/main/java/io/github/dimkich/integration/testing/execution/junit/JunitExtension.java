@@ -1,5 +1,6 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
+import io.github.dimkich.integration.testing.InstrumentationManager;
 import io.github.dimkich.integration.testing.RepeatInstrumentation;
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
@@ -7,25 +8,14 @@ import io.github.dimkich.integration.testing.execution.TestBeanMock;
 import io.github.dimkich.integration.testing.execution.TestConstructorMock;
 import io.github.dimkich.integration.testing.execution.TestStaticMock;
 import io.github.dimkich.integration.testing.execution.mokito.MockitoGlobal;
+import io.github.dimkich.integration.testing.expression.PointcutRegistry;
 import io.github.dimkich.integration.testing.openapi.TestOpenAPI;
-import io.github.dimkich.integration.testing.util.ByteBuddyUtils;
-import io.github.dimkich.integration.testing.wait.completion.FutureLikeAwait;
-import io.github.dimkich.integration.testing.wait.completion.MethodCountingAwait;
-import io.github.dimkich.integration.testing.wait.completion.MethodPairAwait;
-import io.github.dimkich.integration.testing.wait.completion.PendingTasksAwait;
-import io.github.dimkich.integration.testing.wait.completion.future.like.FutureLikeWaitCompletion;
-import io.github.dimkich.integration.testing.wait.completion.method.counting.MethodCountingWaitCompletion;
-import io.github.dimkich.integration.testing.wait.completion.method.pair.MethodPairWaitCompletion;
-import io.github.dimkich.integration.testing.wait.completion.pending.tasks.PendingTasksWaitCompletion;
+import io.github.dimkich.integration.testing.wait.completion.WaitCompletionManager;
 import io.github.dimkich.integration.testing.web.TestRestTemplate;
 import io.github.sugarcubes.cloner.ClonerAgentSetUp;
 import lombok.Getter;
-import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.agent.builder.ResettableClassFileTransformer;
-import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -38,7 +28,6 @@ import java.util.List;
 import java.util.Set;
 
 import static org.springframework.core.annotation.AnnotatedElementUtils.findMergedAnnotation;
-import static org.springframework.core.annotation.AnnotatedElementUtils.findMergedRepeatableAnnotations;
 
 /**
  * JUnit 5 extension that prepares and tears down the integration-testing
@@ -71,7 +60,7 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     private static SpringBootTest springBootTest;
 
     private static Instrumentation instrumentation;
-    private static ResettableClassFileTransformer transformer;
+    private static final InstrumentationManager instrumentationManager = new InstrumentationManager();
 
     /**
      * Prepares the integration-testing infrastructure before all tests of the
@@ -90,25 +79,13 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         MockitoGlobal.start();
         instrumentation = ByteBuddyAgent.install();
         ClonerAgentSetUp.setClonerInstrumentationIfNone(instrumentation);
-        String basePath = "io.github.dimkich.integration.testing.";
-        ByteBuddyUtils.moveClassToBootClassLoader(
-                basePath + "date.time.JavaTimeAdvice",
-                basePath + "wait.completion.future.like.FutureLikeTracker",
-                basePath + "wait.completion.method.counting.MethodCountingTracker",
-                basePath + "wait.completion.method.pair.MethodPairTracker",
-                basePath + "wait.completion.pending.tasks.PendingTasksTracker",
-                basePath + "wait.completion.pending.tasks.PendingTasksTracker$IdentityWeakReference"
-        );
         MockJavaTime mockJavaTime = testClass.getAnnotation(MockJavaTime.class);
         if (mockJavaTime != null) {
             MockJavaTimeSetUp.setUp(mockJavaTime);
         }
-        AgentBuilder builder = createAgentBuilder();
-        builder = FutureLikeWaitCompletion.setUp(findMergedRepeatableAnnotations(testClass, FutureLikeAwait.class), builder);
-        builder = MethodCountingWaitCompletion.setUp(findMergedRepeatableAnnotations(testClass, MethodCountingAwait.class), builder);
-        builder = MethodPairWaitCompletion.setUp(findMergedRepeatableAnnotations(testClass, MethodPairAwait.class), builder);
-        builder = PendingTasksWaitCompletion.setUp(findMergedRepeatableAnnotations(testClass, PendingTasksAwait.class), builder);
-        transformer = builder.installOn(instrumentation);
+        AgentBuilder builder = instrumentationManager.createAgentBuilder();
+        builder = WaitCompletionManager.setUp(testClass, builder);
+        instrumentationManager.install(builder, instrumentation);
         repeatInstrumentation(testClass);
         testOpenAPIS = List.of(testClass.getAnnotationsByType(TestOpenAPI.class));
         beanMocks = List.of(testClass.getAnnotationsByType(TestBeanMock.class));
@@ -127,15 +104,9 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     public void afterAll(ExtensionContext context) {
         MockitoGlobal.stop();
         MockJavaTimeSetUp.tearDown();
-        FutureLikeWaitCompletion.tearDown();
-        MethodCountingWaitCompletion.tearDown();
-        MethodPairWaitCompletion.tearDown();
-        PendingTasksWaitCompletion.tearDown();
-        if (transformer != null) {
-            transformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.RETRANSFORMATION,
-                    AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Reiterating.INSTANCE);
-            transformer = null;
-        }
+        instrumentationManager.reset(instrumentation);
+        WaitCompletionManager.tearDown();
+        PointcutRegistry.clear();
         testOpenAPIS = List.of();
         testRestTemplates = List.of();
         beanMocks = List.of();
@@ -170,22 +141,5 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         if (!classes.isEmpty()) {
             instrumentation.retransformClasses(classes.toArray(new Class[]{}));
         }
-    }
-
-    /**
-     * Creates a pre-configured {@link AgentBuilder} instance used to install
-     * all wait-completion and instrumentation advices.
-     *
-     * @return configured {@link AgentBuilder}
-     */
-    private static AgentBuilder createAgentBuilder() {
-        return new AgentBuilder.Default()
-                .disableClassFormatChanges()
-                .with(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE))
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Reiterating.INSTANCE)
-                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .ignore(ElementMatchers.none());
     }
 }

@@ -1,63 +1,76 @@
 package io.github.dimkich.integration.testing.wait.completion.method.counting;
 
-import io.github.dimkich.integration.testing.util.ByteBuddyUtils;
-import io.github.dimkich.integration.testing.wait.completion.ClassPredicate;
+import io.github.dimkich.integration.testing.expression.ExpressionFactory;
+import io.github.dimkich.integration.testing.expression.PointcutMatch;
+import io.github.dimkich.integration.testing.expression.PointcutRegistry;
+import io.github.dimkich.integration.testing.expression.PointcutSettings;
 import io.github.dimkich.integration.testing.wait.completion.MethodCountingAwait;
-import io.github.dimkich.integration.testing.wait.completion.Pointcut;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletion;
-import io.github.dimkich.integration.testing.wait.completion.parser.ByteBuddySelectorParser;
-import io.github.dimkich.integration.testing.wait.completion.parser.ByteBuddySelectorResult;
 import lombok.SneakyThrows;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.asm.Advice;
 
 import java.util.Collection;
 
 /**
- * {@link WaitCompletion} implementation that tracks method invocations using ByteBuddy
- * and {@link MethodCountingTracker} to determine when all configured activities are complete.
+ * Implementation of the {@link WaitCompletion} strategy that tracks asynchronous
+ * activity by counting "in-flight" method invocations.
+ *
+ * <p>This strategy defines a "task" as the duration of a specific method execution
+ * (from entry to exit). It is particularly effective for fire-and-forget background
+ * processing, worker loops, or event-driven systems where completion is tied to
+ * the termination of a processing method.</p>
+ *
+ * <h3>How it works:</h3>
+ * <ul>
+ *   <li><b>Instrumentation:</b> During agent setup, it injects {@link MethodCountingAdvice}
+ *       into methods matching the {@link MethodCountingAwait#pointcut()} expression.</li>
+ *   <li><b>Tracking:</b> Every call to an instrumented method increments a global counter
+ *       on entry and decrements it on exit (including exceptional exits).</li>
+ *   <li><b>Synchronization:</b> The test execution blocks until the counter reaches
+ *       zero, ensuring all intercepted methods have finished their execution.</li>
+ * </ul>
+ *
+ * @see MethodCountingAwait
+ * @see MethodCountingTracker
+ * @see MethodCountingAdvice
  */
 public class MethodCountingWaitCompletion implements WaitCompletion {
 
     /**
-     * Configures the provided {@link AgentBuilder} with ByteBuddy transformations for all
-     * specified {@link MethodCountingAwait} pointcuts.
+     * Configures the provided {@link AgentBuilder} with ByteBuddy transformations
+     * for all specified {@link MethodCountingAwait} pointcuts.
      *
-     * @param awaits       collection of await configurations describing which methods to track
-     * @param agentBuilder agent builder to which the transformations should be applied
-     * @return the same {@link AgentBuilder} instance with all transformations registered
-     * @throws IllegalArgumentException if a {@link MethodCountingAwait} does not define a method matcher
+     * <p>For each configuration, this method:
+     * <ol>
+     *     <li>Compiles the <b>pointcut</b> expression via {@link ExpressionFactory}
+     *         to resolve class and method matchers.</li>
+     *     <li>Compiles the <b>when</b> expression into a runtime predicate for
+     *         dynamic filtering (e.g., counting only calls with specific arguments).</li>
+     *     <li>Registers the compiled settings in the {@link PointcutRegistry}.</li>
+     *     <li>Applies the {@link MethodCountingAdvice} to the identified injection points.</li>
+     * </ol></p>
+     *
+     * @param awaits       collection of await configurations describing which methods to track.
+     * @param agentBuilder base {@link AgentBuilder} instance to extend with transformations.
+     * @return the supplied {@link AgentBuilder} extended with method-counting instrumentation.
+     * @throws IllegalArgumentException if the pointcut expression fails to resolve or lacks a method matcher.
      */
     public static AgentBuilder setUp(Collection<MethodCountingAwait> awaits, AgentBuilder agentBuilder) {
-        MethodCountingTracker.setClassFilter(new ClassPredicate());
         for (MethodCountingAwait await : awaits) {
-            ByteBuddySelectorResult selector = ByteBuddySelectorParser.parse(await.pointcut());
-            if (selector.getMethodMatcher() == null) {
-                throw new IllegalArgumentException("MethodCountingAwait must have a method matcher");
-            }
-            ClassPredicate.put(await.pointcut(), selector.getTypeFilter());
+            PointcutMatch match = ExpressionFactory.createPointcutMatch(await.pointcut());
+            PointcutSettings settings = PointcutRegistry.get(match.getPointcutId());
 
-            agentBuilder = agentBuilder
-                    .type(selector.getTypeMatcher())
-                    .transform((builder, type, classLoader, module, domain) ->
-                            builder.visit(Advice.withCustomMapping().bind(Pointcut.class, await.pointcut())
-                                            .to(MethodCountingAdvice.class).on(selector.getMethodMatcher()))
-                                    .visit(ByteBuddyUtils.getParameterWritingVisitorWrapper().apply(type))
-                    );
+            settings.setWhen(ExpressionFactory.createInvokePredicate(await.when()));
+
+            agentBuilder = match.apply(agentBuilder, MethodCountingAdvice.class);
         }
         return agentBuilder;
     }
 
     /**
-     * Clears all registered class filters and pointcuts for method counting.
-     * Should be called when method-counting based waiting is no longer needed.
-     */
-    public static void tearDown() {
-        ClassPredicate.clear();
-    }
-
-    /**
-     * Resets the internal {@link MethodCountingTracker} state at the beginning of a wait sequence.
+     * Resets the internal {@link MethodCountingTracker} state.
+     * <p>Clears the active task counter and the activity flag to ensure a clean state
+     * before starting a new tracking cycle in a test.</p>
      */
     @Override
     public void start() {
@@ -65,9 +78,10 @@ public class MethodCountingWaitCompletion implements WaitCompletion {
     }
 
     /**
-     * Indicates whether any tracked method activity has been observed.
+     * Indicates whether any tracked method activity has been observed
+     * since the last {@link #start()} or {@link #waitCompletion()} call.
      *
-     * @return {@code true} if at least one tracked method was invoked, otherwise {@code false}
+     * @return {@code true} if at least one tracked method was invoked; otherwise {@code false}.
      */
     @Override
     public boolean isAnyTaskStarted() {
@@ -75,7 +89,11 @@ public class MethodCountingWaitCompletion implements WaitCompletion {
     }
 
     /**
-     * Blocks until all tracked method activities are completed.
+     * Blocks the current thread until all tracked method activities are completed.
+     * <p>This method delegates the blocking logic to {@link MethodCountingTracker#waitCompletion()},
+     * which waits for the atomic counter of in-flight executions to reach zero.</p>
+     *
+     * @throws InterruptedException (wrapped in SneakyThrows) if the thread is interrupted while waiting.
      */
     @Override
     @SneakyThrows

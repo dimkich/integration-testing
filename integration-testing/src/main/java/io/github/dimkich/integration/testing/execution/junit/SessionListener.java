@@ -1,5 +1,6 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
+import io.github.dimkich.integration.testing.util.ByteBuddyUtils;
 import lombok.Getter;
 import org.junit.platform.launcher.LauncherSession;
 import org.junit.platform.launcher.LauncherSessionListener;
@@ -8,36 +9,65 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JUnit Platform {@link LauncherSessionListener} that manages a shared {@link ExecutionListener}
- * instance for the duration of a launcher session.
+ * A JUnit Platform {@link LauncherSessionListener} that orchestrates the lifecycle of
+ * {@link ExecutionListener} and ensures proper bootstrapping for Byte Buddy advices.
  * <p>
- * The listener is created lazily when the first launcher session is opened and registered both as
- * a discovery and execution listener on the {@link org.junit.platform.launcher.Launcher}. The
- * most recently created listener is exposed via {@link #getExecutionListener()} for use in tests.
+ * This listener performs two critical roles:
+ * <ol>
+ *     <li><b>Class Bootstrapping:</b> In its static initializer, it forces key utility and
+ *     advice classes into the Boot ClassLoader. This is mandatory for instrumenting system
+ *     classes or classes where the advice must be visible globally across all class loaders.</li>
+ *     <li><b>Session Management:</b> It maintains a mapping between launcher sessions and
+ *     execution listeners, ensuring that each session has a consistent, registered observer
+ *     for both test discovery and execution phases.</li>
+ * </ol>
+ * <p>
+ * The most recently active {@link ExecutionListener} is globally accessible via
+ * {@link #getExecutionListener()} to bridge JUnit execution state with test logic.
  */
 public class SessionListener implements LauncherSessionListener {
     /**
-     * The {@link ExecutionListener} associated with the last opened launcher session.
+     * Bootstraps essential instrumentation classes.
+     * <p>
+     * Classes like {@code JavaTimeAdvice} and various trackers must reside in the Boot
+     * ClassLoader to avoid {@link NoClassDefFoundError} when they are injected into
+     * classes loaded by the bootstrap or extension class loaders.
+     */
+    static {
+        String basePath = "io.github.dimkich.integration.testing.";
+        ByteBuddyUtils.moveClassToBootClassLoader(
+                basePath + "date.time.JavaTimeAdvice",
+                basePath + "expression.PointcutSettings",
+                basePath + "expression.PointcutRegistry",
+                basePath + "wait.completion.future.like.FutureLikeTracker",
+                basePath + "wait.completion.method.counting.MethodCountingTracker",
+                basePath + "wait.completion.method.pair.MethodPairTracker",
+                basePath + "wait.completion.queue.like.QueueLikeTracker",
+                basePath + "wait.completion.queue.like.QueueLikeTracker$IdentityWeakReference"
+        );
+    }
+
+    /**
+     * The {@link ExecutionListener} instance associated with the most recently
+     * initialized session.
      */
     @Getter
     private static ExecutionListener executionListener;
 
     /**
-     * Internal map that holds a dedicated {@link ExecutionListener} instance for each
-     * {@link SessionListener}. This ensures that every session listener reuses its own listener
-     * across multiple invocations of {@link #launcherSessionOpened(LauncherSession)}.
+     * Internal registry to maintain a 1:1 mapping between session listeners and
+     * their respective execution observers.
      */
     private static final Map<SessionListener, ExecutionListener> listenerMap = new HashMap<>();
 
     /**
-     * Callback invoked by the JUnit Platform when a new {@link LauncherSession} is opened.
+     * Invoked by the JUnit Platform when a session starts.
      * <p>
-     * If this {@code SessionListener} does not yet have an associated {@link ExecutionListener},
-     * a new instance is created and registered with the launcher as both a discovery and
-     * execution listener. The associated listener is then stored in {@link #listenerMap} and
-     * assigned to {@link #executionListener}.
+     * Initializes a new {@link ExecutionListener} for the session if it doesn't exist,
+     * and registers it as both a <i>Discovery Listener</i> (to intercept test scanning)
+     * and a <i>Test Execution Listener</i> (to monitor test lifecycle events).
      *
-     * @param session the newly opened {@link LauncherSession}
+     * @param session the current JUnit launcher session.
      */
     @Override
     public void launcherSessionOpened(LauncherSession session) {

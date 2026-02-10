@@ -250,6 +250,22 @@
                 <response>MethodPairTracker.activeTasks = 0</response>
             </response>
         </test>
+        <test type="Case" name="private inner class and private method">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>MethodCounting61</cls>
+                    <method>method</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>Processor#method (count = 1)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
     </test>
     <test type="Container" name="method pair">
         <test type="Case" name="parent class method">
@@ -320,39 +336,23 @@
                 <response>MethodPairTracker.activeTasks = 0</response>
             </response>
         </test>
-        <test type="Case" name="private inner class and private method">
-            <bean>reflection</bean>
-            <method>invoke</method>
-            <request type="ArrayList">
-                <item type="Method">
-                    <cls>MethodCounting61</cls>
-                    <method>method</method>
-                </item>
-            </request>
-            <response type="ArrayList">
-                <response>Processor#method (count = 1)</response>
-                <response>FutureLikeTracker.activeTasks = 0</response>
-                <response>MethodCountingTracker.activeTasks = 0</response>
-                <response>MethodPairTracker.activeTasks = 0</response>
-            </response>
-        </test>
     </test>
     <test type="Container" name="pending tasks">
         <test type="Case" name="base class and subclasses">
             <bean>reflection</bean>
             <method>create</method>
             <request type="ArrayList">
-                <item type="Class">PendingTasks1</item>
-                <item type="Class">PendingTasks1Child1</item>
-                <item type="Class">PendingTasks1Child2</item>
+                <item type="Class">QueueLike1</item>
+                <item type="Class">QueueLike1Child1</item>
+                <item type="Class">QueueLike1Child2</item>
             </request>
             <response type="ArrayList">
-                <response>PendingTasks1#taskCount</response>
-                <response>PendingTasks1#taskCount</response>
-                <response>PendingTasks1Child1#taskCount</response>
-                <response>PendingTasks1Child1#taskCount</response>
-                <response>PendingTasks1Child2#taskCount</response>
-                <response>PendingTasks1Child2#taskCount</response>
+                <response>QueueLike1#taskCount</response>
+                <response>QueueLike1#taskCount</response>
+                <response>QueueLike1Child1#taskCount</response>
+                <response>QueueLike1Child1#taskCount</response>
+                <response>QueueLike1Child2#taskCount</response>
+                <response>QueueLike1Child2#taskCount</response>
                 <response>FutureLikeTracker.activeTasks = 0</response>
                 <response>MethodCountingTracker.activeTasks = 0</response>
                 <response>MethodPairTracker.activeTasks = 0</response>
@@ -362,13 +362,13 @@
             <bean>reflection</bean>
             <method>create</method>
             <request type="ArrayList">
-                <item type="Class">PendingTasks2</item>
-                <item type="Class">PendingTasks2Child1</item>
-                <item type="Class">PendingTasks2Child2</item>
+                <item type="Class">QueueLike2</item>
+                <item type="Class">QueueLike2Child1</item>
+                <item type="Class">QueueLike2Child2</item>
             </request>
             <response type="ArrayList">
-                <response>PendingTasks2#taskCount</response>
-                <response>PendingTasks2#taskCount</response>
+                <response>QueueLike2#taskCount</response>
+                <response>QueueLike2#taskCount</response>
                 <response>FutureLikeTracker.activeTasks = 0</response>
                 <response>MethodCountingTracker.activeTasks = 0</response>
                 <response>MethodPairTracker.activeTasks = 0</response>
@@ -378,13 +378,13 @@
             <bean>reflection</bean>
             <method>create</method>
             <request type="ArrayList">
-                <item type="Class">PendingTasks3</item>
-                <item type="Class">PendingTasks3Child1</item>
-                <item type="Class">PendingTasks3Child2</item>
+                <item type="Class">QueueLike3</item>
+                <item type="Class">QueueLike3Child1</item>
+                <item type="Class">QueueLike3Child2</item>
             </request>
             <response type="ArrayList">
-                <response>PendingTasks3Child2#taskCount</response>
-                <response>PendingTasks3Child2#taskCount</response>
+                <response>QueueLike3Child2#taskCount</response>
+                <response>QueueLike3Child2#taskCount</response>
                 <response>FutureLikeTracker.activeTasks = 0</response>
                 <response>MethodCountingTracker.activeTasks = 0</response>
                 <response>MethodPairTracker.activeTasks = 0</response>
@@ -394,15 +394,15 @@
             <bean>reflection</bean>
             <method>create</method>
             <request type="ArrayList">
-                <item type="Class">PendingTasks4</item>
-                <item type="Class">PendingTasks4Child1</item>
-                <item type="Class">PendingTasks4Child2</item>
+                <item type="Class">QueueLike4</item>
+                <item type="Class">QueueLike4Child1</item>
+                <item type="Class">QueueLike4Child2</item>
             </request>
             <response type="ArrayList">
-                <response>PendingTasks4#taskCount</response>
-                <response>PendingTasks4#taskCount</response>
-                <response>PendingTasks4Child2#taskCount</response>
-                <response>PendingTasks4Child2#taskCount</response>
+                <response>QueueLike4#taskCount</response>
+                <response>QueueLike4#taskCount</response>
+                <response>QueueLike4Child2#taskCount</response>
+                <response>QueueLike4Child2#taskCount</response>
                 <response>FutureLikeTracker.activeTasks = 0</response>
                 <response>MethodCountingTracker.activeTasks = 0</response>
                 <response>MethodPairTracker.activeTasks = 0</response>
@@ -413,13 +413,13 @@
             <method>invoke</method>
             <request type="ArrayList">
                 <item type="Method">
-                    <cls>PendingTasks5</cls>
+                    <cls>QueueLike5</cls>
                     <method>create</method>
                 </item>
             </request>
             <response type="ArrayList">
-                <response>PendingTasks5#taskCount</response>
-                <response>PendingTasks5#taskCount</response>
+                <response>QueueLike5#taskCount</response>
+                <response>QueueLike5#taskCount</response>
                 <response>FutureLikeTracker.activeTasks = 0</response>
                 <response>MethodCountingTracker.activeTasks = 0</response>
                 <response>MethodPairTracker.activeTasks = 0</response>
@@ -429,7 +429,7 @@
             <bean>reflection</bean>
             <method>create</method>
             <request type="ArrayList">
-                <item type="Class">PendingTasks5</item>
+                <item type="Class">QueueLike5</item>
             </request>
             <response type="ArrayList">
                 <response>FutureLikeTracker.activeTasks = 0</response>
@@ -442,23 +442,23 @@
             <method>invoke</method>
             <request type="ArrayList">
                 <item type="Method">
-                    <cls>PendingTasks6</cls>
+                    <cls>QueueLike6</cls>
                     <method>create</method>
                 </item>
                 <item type="Method">
-                    <cls>PendingTasks6Child1</cls>
+                    <cls>QueueLike6Child1</cls>
                     <method>create</method>
                 </item>
                 <item type="Method">
-                    <cls>PendingTasks6Child2</cls>
+                    <cls>QueueLike6Child2</cls>
                     <method>create</method>
                 </item>
             </request>
             <response type="ArrayList">
-                <response>PendingTasks6#taskCount</response>
-                <response>PendingTasks6#taskCount</response>
-                <response>PendingTasks6Child1#taskCount</response>
-                <response>PendingTasks6Child1#taskCount</response>
+                <response>QueueLike6#taskCount</response>
+                <response>QueueLike6#taskCount</response>
+                <response>QueueLike6Child1#taskCount</response>
+                <response>QueueLike6Child1#taskCount</response>
                 <response>FutureLikeTracker.activeTasks = 0</response>
                 <response>MethodCountingTracker.activeTasks = 0</response>
                 <response>MethodPairTracker.activeTasks = 0</response>

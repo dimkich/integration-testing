@@ -1,12 +1,12 @@
 package io.github.dimkich.integration.testing.wait.completion.future.like;
 
+import io.github.dimkich.integration.testing.expression.PointcutRegistry;
+import io.github.dimkich.integration.testing.expression.PointcutSettings;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,47 +26,9 @@ import java.util.logging.Logger;
  */
 public class FutureLikeTracker {
     private static final Logger log = Logger.getLogger(FutureLikeTracker.class.getName());
-    private static final Map<String, Consumer<Object>> awaitConsumers = new ConcurrentHashMap<>();
-    /**
-     * Predicate used to decide whether a given task should be tracked for a particular pointcut.
-     * <p>
-     * This predicate must be configured before any calls to {@link #addTask(Object, String)};
-     * otherwise a {@link NullPointerException} will occur when it is evaluated.
-     * </p>
-     */
-    @Setter
-    private static BiPredicate<String, Class<?>> classFilter;
     private static final Map<Object, Consumer<Object>> activeTasks = new ConcurrentHashMap<>();
     @Getter
     private static volatile boolean anyActivity;
-
-    /**
-     * Registers an await consumer for the given pointcut.
-     *
-     * @param pointcut      identifier of the pointcut used to match tracked tasks
-     * @param awaitConsumer consumer that performs the actual waiting logic for a task;
-     *                      must not already be registered for the given pointcut
-     * @throws IllegalArgumentException if an await consumer is already registered for the given pointcut
-     */
-    public static void addAwaitConsumer(String pointcut, Consumer<Object> awaitConsumer) {
-        awaitConsumers.compute(pointcut, (k, v) -> {
-            if (v != null) {
-                throw new IllegalArgumentException(String.format("Consumer with type '%s' already exists", pointcut));
-            }
-            return awaitConsumer;
-        });
-    }
-
-    /**
-     * Clears all registered await consumers.
-     * <p>
-     * This does not affect already registered active tasks, but it removes the
-     * mapping for future registrations.
-     * </p>
-     */
-    public static void clearAwaitConsumers() {
-        awaitConsumers.clear();
-    }
 
     /**
      * Returns the number of currently active tasks.
@@ -84,22 +46,10 @@ public class FutureLikeTracker {
         activeTasks.clear();
     }
 
-    /**
-     * Registers a new active task for the given pointcut.
-     * <p>
-     * The task is added only if it is not already tracked and the configured
-     * {@link #classFilter} accepts the provided pointcut and task type. It is expected
-     * that an await consumer has been registered for the same pointcut via
-     * {@link #addAwaitConsumer(String, Consumer)}; otherwise {@link #waitCompletion()}
-     * may fail with a {@link NullPointerException} when attempting to invoke it.
-     * </p>
-     *
-     * @param obj      task instance to track
-     * @param pointcut pointcut identifier used to resolve the corresponding await consumer
-     */
-    public static void addTask(Object obj, String pointcut) {
-        if (!activeTasks.containsKey(obj) && classFilter.test(pointcut, obj.getClass())) {
-            activeTasks.put(obj, awaitConsumers.get(pointcut));
+    public static void addTask(int pointcutId, Object obj, Object[] args) {
+        PointcutSettings settings = PointcutRegistry.get(pointcutId);
+        if (settings.checkWhen(obj, args) && !activeTasks.containsKey(obj)) {
+            activeTasks.put(obj, settings.getAwait());
             anyActivity = true;
             log.log(Level.FINE, "Active : {0}: started: {1}, ", new Object[]{activeTasks.size(), obj});
         }

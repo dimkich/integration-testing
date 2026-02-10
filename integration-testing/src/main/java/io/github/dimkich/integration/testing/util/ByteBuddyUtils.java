@@ -10,6 +10,7 @@ import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.pool.TypePool;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -97,6 +98,18 @@ public class ByteBuddyUtils {
         openModuleOfClass(constructor.getDeclaringClass());
         constructor.setAccessible(true);
         return constructor;
+    }
+
+    /**
+     * Makes the supplied {@link Field} accessible and opens its declaring module if needed.
+     *
+     * @param field field to make accessible
+     * @return the same field instance for fluent usage
+     */
+    public static Field makeAccessible(Field field) {
+        openModuleOfClass(field.getDeclaringClass());
+        field.setAccessible(true);
+        return field;
     }
 
     /**

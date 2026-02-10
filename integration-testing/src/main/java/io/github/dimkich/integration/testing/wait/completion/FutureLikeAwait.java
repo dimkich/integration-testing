@@ -1,78 +1,96 @@
 package io.github.dimkich.integration.testing.wait.completion;
 
-import eu.ciechanowiec.sneakyfun.SneakyConsumer;
-import io.github.dimkich.integration.testing.IntegrationTesting;
-
 import java.lang.annotation.*;
+import java.util.function.Consumer;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Declares how to discover and wait for completion of "future-like" objects.
- * <p>
- * The annotation is processed by {@code FutureLikeWaitCompletion} at agent startup.
- * For every declared {@link FutureLikeAwait} the framework:
+ * Defines a strategy to track and await completion of asynchronous "future-like" objects.
+ *
+ * <p>A "future-like" object is any instance that represents a pending operation (e.g.,
+ * {@code CompletableFuture}, Apache MINA {@code IoFuture}, or a custom Task class).
+ * This annotation instructs the framework to intercept the creation of such objects
+ * and block the test execution until they are complete.</p>
+ *
+ * <h3>Usage Examples:</h3>
  * <ul>
- *     <li>Parses {@link #pointcut()} using the Byte Buddy selector parser to find
- *     constructors and/or factory methods that create "future-like" instances.</li>
- *     <li>Instruments the matched constructors or factory methods so that every
- *     created instance is registered in the {@code FutureLikeTracker} together
- *     with a per-pointcut await strategy.</li>
- *     <li>Uses that await strategy later, when tests call the wait-completion
- *     API, to actually block until all tracked instances are completed.</li>
+ *   <li><b>Real-world (Apache MINA):</b> Intercept all IoFuture constructors and call a specific method to wait.
+ *       <pre>{@code
+ *       @FutureLikeAwait(
+ *           pointcut = "t.inherits('org.apache.mina.core.future.IoFuture') && m.isConstructor()",
+ *           await = "o.call('awaitUninterruptibly')"
+ *       )}</pre>
+ *   </li>
+ *   <li><b>Conditional Tracking:</b> Track only specific instances based on their class.
+ *       <pre>{@code
+ *       @FutureLikeAwait(
+ *           pointcut = "t.inherits('com.app.BaseTask') && m.isConstructor()",
+ *           when = "o.isSameClass(com.app.MyTask.class)",
+ *           await = "o.call('await')"
+ *       )}</pre>
+ *   </li>
+ *   <li><b>Annotation-based:</b> Target factory methods marked with a specific annotation.
+ *       <pre>{@code
+ *       @FutureLikeAwait(
+ *           pointcut = "t.inherits('com.app.BaseTask') && m.name('create') && m.ann('com.app.Tracked')",
+ *           awaitConsumer = MyCustomAwaitConsumer.class
+ *       )}</pre>
+ *   </li>
+ *   <li><b>Package-wide matching:</b>
+ *       <pre>{@code
+ *       @FutureLikeAwait(
+ *           pointcut = "t.packageStartsWith('com.app.async') && m.ann('com.app.AsyncMarker')",
+ *           await = "o.call('await')"
+ *       )}</pre>
+ *   </li>
  * </ul>
- * Typical usage is to put this annotation on an integration test class and
- * describe "where future-like objects come from" (via {@link #pointcut()})
- * and "how to wait for them" (via {@link #awaitMethod()} or {@link #awaitConsumer()}).
  */
 @Inherited
 @Documented
-@IntegrationTesting
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(FutureLikeAwait.List.class)
 public @interface FutureLikeAwait {
     /**
-     * Selector that defines which classes and factory methods create "future-like" objects.
-     * <p>
-     * The selector is parsed by the wait-completion Byte Buddy selector parser and
-     * translated into a {@code TypeDescription} and (optionally) a {@code MethodDescription}
-     * matcher. If the method matcher is missing, all constructors of the matched
-     * type are instrumented; otherwise only matching factory methods are instrumented.
-     * In both cases, every created instance is handed over to the configured await
-     * strategy so that it can be tracked and later awaited.
-     * <p>
-     * For the selector syntax see {@link io.github.dimkich.integration.testing.wait.completion.parser.ByteBuddySelectorParser}.
+     * A DSL expression to identify the "injection points" (constructors or methods)
+     * that produce the objects to be tracked.
+     *
+     * <p>Available variables: {@code t} (TypeDescriptionWrapper), {@code m} (MethodDescriptionWrapper).</p>
+     * @see io.github.dimkich.integration.testing.expression.ExpressionFactory
      */
     String pointcut();
 
     /**
-     * Name of an instance method that blocks until the represented computation is complete.
-     * <p>
-     * If specified, this no-arg method will be invoked reflectively on each
-     * tracked instance when the framework needs to wait for completion.
-     * <p>
-     * This is a convenience for existing "future-like" types that already expose
-     * a suitable blocking method such as {@code join()}, {@code get()} or similar.
-     * Either {@code awaitMethod()} or {@link #awaitConsumer()} must be provided.
+     * A DSL expression evaluated at runtime to determine if a specific instance should be tracked.
+     *
+     * <p>Available variables: {@code o} (ObjectWrapper - the created object), {@code a} (ArgsWrapper - factory/constructor arguments).</p>
+     * <p>Default is {@code "true"} (track all matched instances).</p>
      */
-    String awaitMethod() default "";
+    String when() default "true";
 
     /**
-     * Consumer strategy that performs the await logic on the matched object.
-     * <p>
-     * The consumer receives each "future-like" instance and is expected to block
-     * until the corresponding asynchronous computation has completed. This gives
-     * full control over how "completion" is detected (for example, by polling,
-     * delegating to a third‑party API or composing several futures).
-     * <p>
-     * If a concrete consumer class is specified here, it is instantiated once
-     * per {@link FutureLikeAwait} configuration and then used whenever the
-     * wait-completion mechanism needs to wait for all tracked tasks.
-     * Either {@link #awaitConsumer()} or {@code awaitMethod()} must be provided.
+     * A DSL expression representing the blocking action to perform on each tracked instance.
+     *
+     * <p>Typically used to call a method like {@code join()}, {@code get()}, or {@code await()}.
+     * This is a convenient alternative to providing a full {@link #awaitConsumer()} class.</p>
+     *
+     * <p>Available variable: {@code o} (ObjectWrapper - the tracked instance).</p>
+     * @example {@code await = "o.call('awaitUninterruptibly')"}
      */
-    Class<? extends SneakyConsumer<Object, ? extends Exception>> awaitConsumer() default NoConsumer.class;
+    String await() default "";
+
+    /**
+     * A custom implementation of {@link Consumer} that defines the waiting logic.
+     *
+     * <p>The consumer receives the tracked instance and must block the thread until
+     * the asynchronous operation is finished. Use this for complex scenarios
+     * (e.g., polling, multi-step checks, or using third-party APIs).</p>
+     *
+     * <p>The class must have a public no-args constructor.</p>
+     */
+    Class<? extends Consumer<Object>> awaitConsumer() default NoConsumer.class;
 
     /**
      * Container annotation for repeatable {@link FutureLikeAwait} declarations.
@@ -86,15 +104,15 @@ public @interface FutureLikeAwait {
     }
 
     /**
-     * Default consumer used when no await strategy is configured.
-     * <p>
-     * Always throws {@link UnsupportedOperationException} to signal a misconfiguration.
+     * Default marker used when no await strategy is configured.
+     * Always throws {@link UnsupportedOperationException} if invoked.
      */
-    final class NoConsumer implements SneakyConsumer<Object, Exception> {
+    final class NoConsumer implements Consumer<Object> {
         @Override
         public void accept(Object input) {
             throw new UnsupportedOperationException(
-                    "No await strategy provided. Specify either awaitMethod() or awaitConsumer()."
+                    "No await strategy provided for @FutureLikeAwait. " +
+                            "Specify either 'await' (expression) or 'awaitConsumer' (class)."
             );
         }
     }

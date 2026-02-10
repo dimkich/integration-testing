@@ -1,62 +1,58 @@
 package io.github.dimkich.integration.testing.wait.completion.method.counting;
 
+import io.github.dimkich.integration.testing.expression.PointcutRegistry;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiPredicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Tracks number of in-flight method executions that should be considered as "tasks"
- * for wait-completion logic.
- * <p>
- * The counter is incremented in {@link #startTask(Class, Method, String)} and
- * decremented in {@link #endTask(Class, Method, String)} for methods whose
- * classes are accepted by {@link #classFilter}. The {@link #waitCompletion()}
- * method blocks until all tracked tasks are finished (i.e. the internal counter
- * reaches zero).
+ * A global, thread-safe monitor that tracks the number of currently active method executions
+ * and provides synchronization primitives for test execution.
+ *
+ * <p>This tracker maintains an atomic "in-flight" counter. When the counter reaches zero,
+ * it signals any waiting threads that all background activities have completed.
+ * It is primarily used by {@link MethodCountingAdvice} to report method lifecycle events.</p>
+ *
+ * <h3>Key Features:</h3>
+ * <ul>
+ *   <li><b>Atomic Counters:</b> Uses {@link AtomicInteger} to track tasks without heavy locking on every call.</li>
+ *   <li><b>Conditional Tracking:</b> Evaluates the 'when' condition of a pointcut before incrementing/decrementing.</li>
+ *   <li><b>Wait-Notify Mechanism:</b> Blocks the test thread efficiently until all concurrent tasks finish.</li>
+ * </ul>
+ *
+ * @see MethodCountingAdvice
+ * @see MethodCountingWaitCompletion
  */
 public class MethodCountingTracker {
     /**
-     * Logger used for fine-grained diagnostic messages about task lifecycle.
+     * Logger used for diagnostic messages about task lifecycle and counter state.
      */
     private static final Logger log = Logger.getLogger(MethodCountingTracker.class.getName());
 
     /**
-     * Current number of active (in-flight) tasks.
+     * The number of currently executing (in-flight) tasks.
      */
     private static final AtomicInteger activeTasks = new AtomicInteger(0);
 
     /**
-     * Monitor object used for coordinating {@link #waitCompletion()} with calls
-     * to {@link #endTask(Class, Method, String)}.
+     * Dedicated monitor object for coordinating {@link #waitCompletion()} and {@link #endTask(int, Object, Method, Object[])}.
      */
     private static final Object lock = new Object();
 
     /**
-     * Predicate that decides whether a particular method should be tracked as a task.
-     * <p>
-     * First argument is a pointcut expression, second argument is the actual target class.
-     * It is expected to be configured by the surrounding instrumentation code before any
-     * calls to {@link #startTask(Class, Method, String)} or {@link #endTask(Class, Method, String)}.
-     */
-    @Setter
-    private static BiPredicate<String, Class<?>> classFilter;
-
-    /**
-     * Flag indicating whether any task was started since the last {@link #reset()}
-     * or {@link #waitCompletion()} call.
+     * Flag indicating whether any tracked activity has been observed
+     * since the last {@link #reset()} or {@link #waitCompletion()} call.
      */
     @Getter
     private static volatile boolean anyActivity;
 
     /**
-     * Resets internal counters and clears the {@link #anyActivity} flag.
-     * <p>
-     * Intended to be called before each test or wait-completion cycle.
+     * Resets the active task counter and the activity flag.
+     * <p>Should be called at the start of a test case to ensure no leaked counts
+     * from previous tests affect the current results.</p>
      */
     public static void reset() {
         activeTasks.set(0);
@@ -64,62 +60,66 @@ public class MethodCountingTracker {
     }
 
     /**
-     * Returns current number of active (in-flight) tasks.
-     *
-     * @return current active task count
+     * @return the current number of tasks being tracked.
      */
     public static int getActiveTasks() {
         return activeTasks.get();
     }
 
     /**
-     * Marks start of a method execution that should be tracked as a task if the
-     * {@link #classFilter} accepts the given pointcut and class.
+     * Increments the active task counter.
      *
-     * @param actualClass actual runtime class where the method is executed
-     * @param method      method that has just started
-     * @param pointcut    textual pointcut representation used for filtering
+     * <p>Called by {@link MethodCountingAdvice#enter}. It retrieves the pointcut
+     * settings and evaluates the dynamic 'when' condition. If the condition is met,
+     * the counter is incremented and the activity flag is set to {@code true}.</p>
+     *
+     * @param pointcutId the unique ID used to fetch settings from the {@link PointcutRegistry}.
+     * @param obj        the target object of the intercepted method.
+     * @param method     the method being executed (for logging).
+     * @param args       arguments passed to the method.
      */
-    public static void startTask(Class<?> actualClass, Method method, String pointcut) {
-        if (!classFilter.test(pointcut, actualClass)) {
-            return;
+    public static void startTask(int pointcutId, Object obj, Method method, Object[] args) {
+        if (PointcutRegistry.get(pointcutId).checkWhen(obj, args)) {
+            int count = activeTasks.incrementAndGet();
+            anyActivity = true;
+            log.log(Level.FINE, "Active: {0}: Started: {1}", new Object[]{count, method});
         }
-        int count = activeTasks.incrementAndGet();
-        anyActivity = true;
-        log.log(Level.FINE, "Active: {0}: Started: {1}, ", new Object[]{count, method});
     }
 
     /**
-     * Marks end of a method execution that was previously started via
-     * {@link #startTask(Class, Method, String)} if the {@link #classFilter}
-     * accepts the given pointcut and class.
-     * <p>
-     * When the active task count reaches zero all threads waiting in
-     * {@link #waitCompletion()} are notified.
+     * Decrements the active task counter.
      *
-     * @param actualClass actual runtime class where the method is executed
-     * @param method      method that has just finished
-     * @param pointcut    textual pointcut representation used for filtering
+     * <p>Called by {@link MethodCountingAdvice#exit}. If the 'when' condition is met,
+     * it decrements the counter. If the counter reaches zero, it triggers a
+     * {@code notifyAll()} on the internal lock to wake up the waiting test thread.</p>
+     *
+     * @param pointcutId the unique ID for pointcut settings.
+     * @param obj        the target object.
+     * @param method     the method that finished execution.
+     * @param args       method arguments.
      */
-    public static void endTask(Class<?> actualClass, Method method, String pointcut) {
-        if (!classFilter.test(pointcut, actualClass)) {
-            return;
-        }
-        int count = activeTasks.decrementAndGet();
-        log.log(Level.FINE, "Active: {0}: Ended: {1}}", new Object[]{count, method});
-        if (count == 0) {
-            synchronized (lock) {
-                lock.notifyAll();
+    public static void endTask(int pointcutId, Object obj, Method method, Object[] args) {
+        if (PointcutRegistry.get(pointcutId).checkWhen(obj, args)) {
+            int count = activeTasks.decrementAndGet();
+            log.log(Level.FINE, "Active: {0}: Ended: {1}", new Object[]{count, method});
+            if (count == 0) {
+                synchronized (lock) {
+                    lock.notifyAll();
+                }
             }
         }
     }
 
     /**
-     * Waits until all tracked tasks are completed.
-     * <p>
-     * It returns as soon as the active task counter reaches zero.
+     * Blocks the calling thread until there are no active (in-flight) tasks.
      *
-     * @throws InterruptedException if the current thread is interrupted while waiting
+     * <p>This method implements a wait loop. It checks the {@link #activeTasks} counter
+     * within a {@code synchronized} block. If the counter is greater than zero,
+     * it enters a {@code wait(1)} state, waking up either on notification
+     * from {@link #endTask} or after a 1ms timeout (to prevent potential deadlocks
+     * due to missed notifications or race conditions during counter transitions).</p>
+     *
+     * @throws InterruptedException if the thread is interrupted while waiting.
      */
     public static void waitCompletion() throws InterruptedException {
         log.log(Level.FINE, "WaitCompletion, active: {0}", new Object[]{activeTasks.get()});

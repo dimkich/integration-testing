@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.wait.completion;
 import io.github.dimkich.integration.testing.wait.completion.future.like.FutureLikeWaitCompletion;
 import io.github.dimkich.integration.testing.wait.completion.method.counting.MethodCountingWaitCompletion;
 import io.github.dimkich.integration.testing.wait.completion.method.pair.MethodPairWaitCompletion;
-import io.github.dimkich.integration.testing.wait.completion.pending.tasks.PendingTasksWaitCompletion;
+import io.github.dimkich.integration.testing.wait.completion.queue.like.QueueLikeWaitCompletion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
@@ -27,7 +27,7 @@ import java.util.List;
 
 @Configuration
 @Import({FutureLikeWaitCompletion.class, MethodCountingWaitCompletion.class, MethodPairWaitCompletion.class,
-        PendingTasksWaitCompletion.class})
+        QueueLikeWaitCompletion.class})
 public class WaitCompletionConfig {
     @Configuration
     @ConditionalOnProperty(value = "integration.testing.wait.completion.enabled", havingValue = "false", matchIfMissing = true)

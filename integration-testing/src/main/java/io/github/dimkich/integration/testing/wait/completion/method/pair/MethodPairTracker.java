@@ -1,137 +1,155 @@
 package io.github.dimkich.integration.testing.wait.completion.method.pair;
 
+import io.github.dimkich.integration.testing.expression.PointcutRegistry;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiPredicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Tracks pairs of method invocations that represent the start and end of logical tasks.
- * <p>
- * Each registered pair of pointcuts shares a single counter. When a start pointcut is hit,
- * the counter is incremented; when the corresponding end pointcut is hit, it is decremented.
- * The tracker can then be used to wait until all tracked tasks are completed.
+ * A specialized monitor that coordinates asynchronous task tracking through pairs
+ * of method invocations (start and end).
+ *
+ * <p>Unlike standard method counting, this tracker supports scenarios where a task
+ * starts in one method (e.g., sending a request) and completes in a different method
+ * (e.g., receiving a response). It maps two distinct pointcut IDs to a single
+ * {@link AtomicInteger} counter, effectively linking them as a logical pair.</p>
+ *
+ * <h3>Mechanism:</h3>
+ * <ul>
+ *   <li><b>Pair Registration:</b> Two pointcut IDs (start and end) are mapped to
+ *       the same {@link AtomicInteger} instance via {@link #registerPair(int, int)}.</li>
+ *   <li><b>Shared State:</b> Calling {@code startTask} increments the shared counter,
+ *       while {@code endTask} decrements the <i>same</i> counter.</li>
+ *   <li><b>Global Convergence:</b> The framework blocks until the <b>sum</b> of all
+ *       active tasks across all registered shared counters reaches zero.</li>
+ * </ul>
+ *
+ * @see MethodPairEnterAdvice
+ * @see MethodPairExitAdvice
+ * @see MethodPairWaitCompletion
  */
 public class MethodPairTracker {
     private static final Logger log = Logger.getLogger(MethodPairTracker.class.getName());
-    private static final Map<String, AtomicInteger> start = new ConcurrentHashMap<>();
-    private static final Map<String, AtomicInteger> end = new ConcurrentHashMap<>();
+
+    /**
+     * Map linking pointcut IDs to their respective shared counters.
+     * Multiple IDs (start/end) point to the same {@link AtomicInteger} instance.
+     */
+    private static final Map<Integer, AtomicInteger> counters = new ConcurrentHashMap<>();
 
     private static final Object lock = new Object();
-    @Setter
-    private static BiPredicate<String, Class<?>> classFilter;
+
+    /**
+     * Flag indicating whether any activity was recorded by any registered
+     * method pair since the last reset.
+     */
     @Getter
     private static volatile boolean anyActivity;
 
     /**
-     * Registers a new pair of pointcuts that will share a single activity counter.
+     * Links two pointcut IDs into a single logical pair sharing the same atomic counter.
      *
-     * @param startPointcut the identifier of the start pointcut
-     * @param endPointcut   the identifier of the end pointcut
-     * @throws IllegalArgumentException if either pointcut was already registered
+     * @param startId the ID of the pointcut that marks the task beginning (increments counter).
+     * @param endId   the ID of the pointcut that marks the task completion (decrements counter).
      */
-    public static void register(String startPointcut, String endPointcut) {
-        AtomicInteger integer = new AtomicInteger();
-        if (start.containsKey(startPointcut)) {
-            throw new IllegalArgumentException("startPointcut '" + startPointcut + "' already exists");
-        }
-        if (end.containsKey(endPointcut)) {
-            throw new IllegalArgumentException("endPointcut '" + endPointcut + "' already exists");
-        }
-        start.put(startPointcut, integer);
-        end.put(endPointcut, integer);
+    public static void registerPair(int startId, int endId) {
+        AtomicInteger sharedCounter = new AtomicInteger(0);
+        counters.put(startId, sharedCounter);
+        counters.put(endId, sharedCounter);
     }
 
     /**
-     * Removes all registered pointcuts and their counters.
-     * <p>
-     * This method does not change {@link #anyActivity}; use {@link #reset()} when
-     * you need to clear both counters and activity flag between tests.
+     * Removes all registered pointcut pairs and their associated counters.
+     * <p>This effectively clears the instrumentation rules from the tracker's memory.</p>
      */
     public static void clear() {
-        start.clear();
-        end.clear();
+        counters.clear();
     }
 
     /**
-     * Resets all counters to zero and clears the {@link #anyActivity} flag
-     * while keeping the set of registered pointcuts.
+     * Resets all shared counters to zero and clears the activity flag.
+     * <p>Keeps the registration of pointcut pairs intact, allowing for reuse in
+     * subsequent tracking cycles without re-registration.</p>
      */
     public static void reset() {
-        for (AtomicInteger integer : start.values()) {
-            integer.set(0);
-        }
+        counters.values().forEach(c -> c.set(0));
         anyActivity = false;
     }
 
     /**
-     * Returns the total number of currently active tasks across all registered pointcuts.
+     * Calculates the total number of currently active tasks across all
+     * unique registered counters.
      *
-     * @return the sum of all counters
+     * @return the total count of in-flight paired tasks.
      */
     public static int getActiveTasks() {
-        return start.values().stream().mapToInt(AtomicInteger::get).sum();
+        return counters.values().stream()
+                .distinct()
+                .mapToInt(AtomicInteger::get)
+                .sum();
     }
 
     /**
-     * Marks the beginning of a task for the given pointcut and method.
-     * <p>
-     * The start is only recorded if {@link #classFilter} accepts the given class
-     * and pointcut; otherwise the call is ignored.
+     * Increments the shared counter associated with the given pointcut ID.
      *
-     * @param actualClass the runtime class where the method is executed
-     * @param method      the method representing the start of the task
-     * @param pointcut    the pointcut identifier that was registered via {@link #register(String, String)}
-     */
-    public static void startTask(Class<?> actualClass, Method method, String pointcut) {
-        if (!classFilter.test(pointcut, actualClass)) {
-            return;
-        }
-        start.get(pointcut).incrementAndGet();
-        anyActivity = true;
-        log.log(Level.FINE, "Active: {0}: Started: {1}, ", new Object[]{getActiveTasks(), method});
-    }
-
-    /**
-     * Marks the end of a task for the given pointcut and method.
-     * <p>
-     * If the counter for this pointcut is greater than zero it is decremented.
-     * When the counter reaches zero, all threads waiting in {@link #waitCompletion()}
-     * are notified.
+     * <p>Invoked by {@link MethodPairEnterAdvice}. If the pointcut's 'when' condition
+     * is satisfied, the associated shared counter is incremented and the activity
+     * flag is set to {@code true}.</p>
      *
-     * @param actualClass the runtime class where the method is executed
-     * @param method      the method representing the end of the task
-     * @param pointcut    the pointcut identifier that was registered via {@link #register(String, String)}
+     * @param pointcutId the unique ID used to fetch settings and the shared counter.
+     * @param obj        the target object instance.
+     * @param method     the method being executed (for logging).
+     * @param args       arguments passed to the method.
      */
-    public static void endTask(Class<?> actualClass, Method method, String pointcut) {
-        if (!classFilter.test(pointcut, actualClass)) {
-            return;
-        }
-        AtomicInteger integer = end.get(pointcut);
-        int count = 0;
-        if (integer.get() > 0) {
-            count = end.get(pointcut).decrementAndGet();
-            log.log(Level.FINE, "Active: {0}: Ended: {1}}", new Object[]{getActiveTasks(), method});
-        }
-        if (count == 0) {
-            synchronized (lock) {
-                lock.notifyAll();
+    public static void startTask(int pointcutId, Object obj, Method method, Object[] args) {
+        if (PointcutRegistry.get(pointcutId).checkWhen(obj, args)) {
+            AtomicInteger counter = counters.get(pointcutId);
+            if (counter != null) {
+                counter.incrementAndGet();
+                anyActivity = true;
+                log.log(Level.FINE, "Active: {0}: Started: {1}", new Object[]{getActiveTasks(), method});
             }
         }
     }
 
     /**
-     * Blocks the current thread until there are no active tasks.
-     * <p>
-     * If there is no activity at the moment of invocation, this method returns immediately.
+     * Decrements the shared counter associated with the given pointcut ID.
      *
-     * @throws InterruptedException if the current thread is interrupted while waiting
+     * <p>Invoked by {@link MethodPairExitAdvice}. If the total number of active tasks
+     * across all pairs drops to zero, it notifies any threads blocked in {@link #waitCompletion()}.</p>
+     *
+     * @param pointcutId the unique ID for pointcut settings and counter lookup.
+     * @param obj        the target object instance.
+     * @param method     the method that finished execution.
+     * @param args       method arguments.
+     */
+    public static void endTask(int pointcutId, Object obj, Method method, Object[] args) {
+        if (PointcutRegistry.get(pointcutId).checkWhen(obj, args)) {
+            AtomicInteger counter = counters.get(pointcutId);
+            if (counter != null && counter.get() > 0) {
+                counter.decrementAndGet();
+                log.log(Level.FINE, "Active: {0}: Ended: {1}", new Object[]{getActiveTasks(), method});
+                if (getActiveTasks() == 0) {
+                    synchronized (lock) {
+                        lock.notifyAll();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Blocks the calling thread until the total number of active paired tasks reaches zero.
+     *
+     * <p>Uses a polled wait (1ms) within a synchronized block to ensure visibility
+     * of counter updates and prevent potential race conditions.</p>
+     *
+     * @throws InterruptedException if the thread is interrupted while waiting.
      */
     public static void waitCompletion() throws InterruptedException {
         log.log(Level.FINE, "WaitCompletion, active: {0}", new Object[]{getActiveTasks()});

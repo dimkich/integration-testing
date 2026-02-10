@@ -9,7 +9,7 @@ import io.github.dimkich.integration.testing.wait.completion.future.like.FutureL
 import io.github.dimkich.integration.testing.wait.completion.future.like.FutureLikeTracker;
 import io.github.dimkich.integration.testing.wait.completion.method.counting.MethodCountingTracker;
 import io.github.dimkich.integration.testing.wait.completion.method.pair.MethodPairTracker;
-import io.github.dimkich.integration.testing.wait.completion.pending.tasks.PendingTasksFunction6;
+import io.github.dimkich.integration.testing.wait.completion.queue.like.QueueLikeFunction6;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DynamicNode;
@@ -25,42 +25,57 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static io.github.dimkich.integration.testing.wait.completion.WaitCompletionTest.pkg;
+import static io.github.dimkich.integration.testing.wait.completion.WaitCompletionTest.*;
 
-@FutureLikeAwait(pointcut = "class(" + pkg + ".future.like.FutureLike1)", awaitMethod = "await")
-@FutureLikeAwait(pointcut = "class(" + pkg + ".future.like.FutureLike2+)", awaitMethod = "await")
-@FutureLikeAwait(pointcut = "method(@" + pkg + ".future.like.FutureLike3Ann)", awaitMethod = "await")
-@FutureLikeAwait(pointcut = "class(" + pkg + ".future.like.FutureLike4+" + "@" + pkg + ".future.like.FutureLike4Ann)",
-        awaitMethod = "await")
-@FutureLikeAwait(pointcut = "method(" + pkg + ".future.like.FutureLike5+#create(..)@" + pkg + ".future.like.FutureLike5Ann)",
-        awaitConsumer = FutureLike5Consumer.class)
-@FutureLikeAwait(pointcut = "method(" + pkg + ".future.like.FutureLike6#create(..))", awaitMethod = "await")
-@MethodCountingAwait(pointcut = "method(" + pkg + ".method.counting.MethodCounting1#method(..))")
-@MethodCountingAwait(pointcut = "method(" + pkg + ".method.counting.MethodCounting2+#method(..))")
-@MethodCountingAwait(pointcut = "method(" + pkg + ".method.counting.MethodCounting3#method(..) " +
-        "&& class(" + pkg + ".method.counting.MethodCounting3Child1))")
-@MethodCountingAwait(pointcut = "method(@" + pkg + ".method.counting.MethodCounting4Ann)")
-@MethodCountingAwait(pointcut = "method(" + pkg + ".method.counting.MethodCounting51#method(..))")
-@MethodCountingAwait(pointcut = "method(" + pkg + ".method.counting.MethodCounting61#method())")
-@MethodPairAwait(
-        startPointcut = "method(" + pkg + ".method.pair.MethodPair1#method(..) && class(" + pkg + ".method.pair.MethodPair1Child1))",
-        endPointcut = "method(" + pkg + ".method.pair.MethodPair1#method(..) && class(" + pkg + ".method.pair.MethodPair1Child2))"
-)
-@MethodPairAwait(startPointcut = "method(" + pkg + ".method.pair.MethodPair21#method(..))",
-        endPointcut = "method(" + pkg + ".method.pair.MethodPair22#method(..))")
-@PendingTasksAwait(pointcut = "class(" + pkg + ".pending.tasks.PendingTasks1+)", countPendingTasksMethod = "taskCount")
-@PendingTasksAwait(pointcut = "class(" + pkg + ".pending.tasks.PendingTasks2)", countPendingTasksMethod = "taskCount")
-@PendingTasksAwait(pointcut = "class(" + pkg + ".pending.tasks.PendingTasks3Child2)", countPendingTasksMethod = "taskCount")
-@PendingTasksAwait(pointcut = "class(@" + pkg + ".pending.tasks.PendingTasks4Ann)", countPendingTasksMethod = "taskCount")
-@PendingTasksAwait(pointcut = "method(" + pkg + ".pending.tasks.PendingTasks5#create(..))", countPendingTasksMethod = "taskCount")
-@PendingTasksAwait(pointcut = "method(@" + pkg + ".pending.tasks.PendingTasks6Ann)",
-        countPendingTasksFunction = PendingTasksFunction6.class)
-@RepeatInstrumentation({pkg + ".future.like", pkg + ".method.counting", pkg + ".method.pair", pkg + ".pending.tasks"})
+@FutureLikeAwait(pointcut = "t.name('" + FL + ".FutureLike1') && m.isConstructor()",
+        when = "o.isSameClass(" + FL + ".FutureLike1.class)", await = "o.call('await')")
+@FutureLikeAwait(pointcut = "t.name('" + FL + ".FutureLike2') && m.isConstructor()", await = "o.call('await')")
+@FutureLikeAwait(pointcut = "t.packageStartsWith('" + FL + "') && m.ann('" + FL + ".FutureLike3Ann')", await = "o.call('await')")
+@FutureLikeAwait(pointcut = "t.name('" + FL + ".FutureLike4') " +
+        "&& t.ann('" + FL + ".FutureLike4Ann') && m.isConstructor()", await = "o.call('await')",
+        when = "o.get().getClass().isAnnotationPresent(" + FL + ".FutureLike4Ann.class)")
+@FutureLikeAwait(pointcut = "t.inherits('" + FL + ".FutureLike5') && m.name('create') " +
+        "&& m.ann('" + FL + ".FutureLike5Ann')", awaitConsumer = FutureLike5Consumer.class)
+@FutureLikeAwait(pointcut = "t.name('" + FL + ".FutureLike6') && m.name('create')", await = "o.call('await')")
+@MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting1') && m.name('method')",
+        when = "o.isSameClass(" + MC + ".MethodCounting1.class)")
+@MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting2') && m.name('method')")
+@MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting3') && m.name('method')",
+        when = "o.isSameClass(" + MC + ".MethodCounting3Child1.class)")
+@MethodCountingAwait(pointcut = "t.packageStartsWith('" + MC + "') && m.ann('" + MC + ".MethodCounting4Ann')")
+@MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting51') && m.name('method')")
+@MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting61') && m.name('method')")
+@MethodPairAwait(startPointcut = "t.name('" + MP + ".MethodPair1') && m.name('method')",
+        startWhen = "o.isSameClass(" + MP + ".MethodPair1Child1.class)",
+        endPointcut = "t.name('" + MP + ".MethodPair1') && m.name('method')",
+        endWhen = "o.isSameClass(" + MP + ".MethodPair1Child2.class)")
+@MethodPairAwait(startPointcut = "t.name('" + MP + ".MethodPair21') && m.name('method')",
+        endPointcut = "t.name('" + MP + ".MethodPair22') && m.name('method')")
+@QueueLikeAwait(pointcut = "t.name('" + QL + ".QueueLike1') && m.isConstructor()",
+        size = "o.call('taskCount').asInt()")
+@QueueLikeAwait(pointcut = "t.name('" + QL + ".QueueLike2') && m.isConstructor()",
+        when = "o.isSameClass(" + QL + ".QueueLike2.class)",
+        size = "((Byte)o.call('taskCount').get()).intValue()")
+@QueueLikeAwait(pointcut = "t.name('" + QL + ".QueueLike3') && m.isConstructor()",
+        when = "o.isSameClass(" + QL + ".QueueLike3Child2.class)",
+        size = "o.call('taskCount').asList().size()")
+@QueueLikeAwait(pointcut = "t.packageStartsWith('" + QL + "') && t.ann('" + QL + ".QueueLike4Ann') && m.isConstructor()",
+        when = "o.get().getClass().isAnnotationPresent(" + QL + ".QueueLike4Ann.class)",
+        size = "o.call('taskCount').asInt()")
+@QueueLikeAwait(pointcut = "t.name('" + QL + ".QueueLike5') && m.name('create')",
+        size = "o.call('taskCount').asInt()")
+@QueueLikeAwait(pointcut = "t.packageStartsWith('" + QL + "') && m.ann('" + QL + ".QueueLike6Ann')",
+        sizeFunction = QueueLikeFunction6.class)
+@RepeatInstrumentation({FL, MC, MP, QL})
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @SpringBootTest(classes = {IntegrationTestConfig.class, WaitCompletionTest.Config.class},
         properties = {"integration.testing.wait.completion.enabled=true"})
 public class WaitCompletionTest {
     static final String pkg = "io.github.dimkich.integration.testing.wait.completion";
+    static final String FL = pkg + ".future.like";
+    static final String MC = pkg + ".method.counting";
+    static final String MP = pkg + ".method.pair";
+    static final String QL = pkg + ".queue.like";
     private final DynamicTestBuilder dynamicTestBuilder;
 
     @TestFactory
