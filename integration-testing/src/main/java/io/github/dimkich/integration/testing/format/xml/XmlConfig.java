@@ -47,6 +47,7 @@ public class XmlConfig {
         builder.serializationInclusion(JsonInclude.Include.NON_NULL);
         builder.enable(ToXmlGenerator.Feature.WRITE_NULLS_AS_XSI_NIL);
         builder.enable(ToXmlGenerator.Feature.WRITE_XML_1_1);
+        builder.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         builder.defaultUseWrapper(false);
 
         DefaultXmlPrettyPrinter.Indenter indenter = new Lf4SpacesIndenter();
