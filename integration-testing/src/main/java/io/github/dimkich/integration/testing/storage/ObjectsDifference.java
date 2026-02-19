@@ -10,7 +10,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 @Service
@@ -42,7 +44,7 @@ public class ObjectsDifference {
             return mapDiff(left == null ? Map.of() : (Map<?, ?>) left, (Map<?, ?>) right, level);
         }
         if ((left == null || left instanceof Collection<?>) && right instanceof Collection<?>) {
-            return collectionDiff(left == null ? List.of() : (Collection<?>) left, (Collection<?>) right, level);
+            return right;
         }
         return left == null ? right : pojoDiff(left, right, level);
     }
@@ -78,10 +80,6 @@ public class ObjectsDifference {
         return container.isEmpty() ? null : container;
     }
 
-    private Object collectionDiff(Collection<?> left, Collection<?> right, int level) {
-        return mapDiff(collectionToMap(left), collectionToMap(right), level);
-    }
-
     private Object pojoDiff(Object left, Object right, int level) {
         return mapDiff(pojoToMapConverter.apply(left), pojoToMapConverter.apply(right), level);
     }
@@ -101,16 +99,6 @@ public class ObjectsDifference {
             return bigDecimal.stripTrailingZeros().toPlainString();
         }
         return key.toString();
-    }
-
-    private Map<Integer, Object> collectionToMap(Collection<?> collection) {
-        int i = 0;
-        Map<Integer, Object> map = new LinkedHashMap<>();
-        for (Object item : collection) {
-            map.put(i, item);
-            i++;
-        }
-        return map;
     }
 
     @SneakyThrows
