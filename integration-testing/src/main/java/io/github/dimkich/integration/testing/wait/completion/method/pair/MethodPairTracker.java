@@ -157,7 +157,7 @@ public class MethodPairTracker {
         if (getActiveTasks() > 0) {
             synchronized (lock) {
                 while (getActiveTasks() > 0) {
-                    lock.wait(1);
+                    lock.wait();
                 }
                 log.log(Level.FINE, "WaitCompletion, active: {0}", new Object[]{getActiveTasks()});
             }

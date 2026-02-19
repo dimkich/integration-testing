@@ -66,7 +66,6 @@ public class FutureLikeTracker {
     public static void waitCompletion() throws InterruptedException {
         anyActivity = false;
         while (!activeTasks.isEmpty()) {
-            Thread.sleep(1);
             Iterator<Map.Entry<Object, Consumer<Object>>> iterator = activeTasks.entrySet().iterator();
             while (iterator.hasNext()) {
                 Map.Entry<Object, Consumer<Object>> entry = iterator.next();

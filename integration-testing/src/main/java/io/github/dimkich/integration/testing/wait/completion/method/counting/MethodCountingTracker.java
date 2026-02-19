@@ -127,7 +127,7 @@ public class MethodCountingTracker {
         if (activeTasks.get() > 0) {
             synchronized (lock) {
                 while (activeTasks.get() > 0) {
-                    lock.wait(1);
+                    lock.wait();
                 }
                 log.log(Level.FINE, "WaitCompletion, active: {0}", new Object[]{activeTasks.get()});
             }
