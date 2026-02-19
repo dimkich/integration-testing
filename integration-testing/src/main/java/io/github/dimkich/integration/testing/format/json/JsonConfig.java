@@ -35,6 +35,7 @@ public class JsonConfig {
         builder.disable(SerializationFeature.FAIL_ON_UNWRAPPED_TYPE_IDENTIFIERS);
         builder.serializationInclusion(JsonInclude.Include.NON_NULL);
         builder.enable(JsonParser.Feature.ALLOW_COMMENTS);
+        builder.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         builder.setDefaultTyping(resolverBuilder);
         builder.defaultPrettyPrinter(new CustomPrettyPrinter());
 
