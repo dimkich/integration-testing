@@ -9,35 +9,33 @@ import io.github.dimkich.integration.testing.format.common.map.dto.WrappedMap;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * Jackson {@link StdConverter} that converts a {@link WrappedMap} containing
- * {@link MapEntry} DTOs into a regular {@link Map}.
+ * Jackson {@link StdConverter} that unwraps {@link WrappedMap} values containing
+ * {@link MapEntry} DTOs and delegates conversion to another converter.
  * <p>
- * The actual map construction is delegated to the provided
- * {@link Converter} implementation, which is expected to know how to
- * build a concrete {@link Map} from a list of {@link MapEntry} objects.
+ * The resulting object type is determined by the configured delegate
+ * {@link Converter} implementation.
  *
  * @param <K> type of map keys
  * @param <V> type of map values
  */
 @RequiredArgsConstructor
 public class WrappedMapFromEntriesConverter<K, V> extends
-        StdConverter<WrappedMap<MapEntry<K, V>, K, V>, Map<K, V>> {
-    private final Converter<List<? extends MapEntry<K, V>>, Map<K, V>> mapFromEntriesConverter;
+        StdConverter<WrappedMap<MapEntry<K, V>, K, V>, Object> {
+    private final Converter<List<? extends MapEntry<K, V>>, Object> mapFromEntriesConverter;
     private final JavaType inputType;
 
     /**
-     * Converts the provided {@link WrappedMap} into a {@link Map} instance
-     * by delegating to the underlying {@link #mapFromEntriesConverter}.
+     * Converts the provided {@link WrappedMap} by extracting its entry list
+     * and delegating to the underlying {@link #mapFromEntriesConverter}.
      *
-     * @param value wrapper object holding the list of {@link MapEntry} DTOs;
-     *              expected to be non-null
-     * @return a map populated from the entries contained in the given wrapper
+     * @param value wrapper object holding the list of {@link MapEntry} DTOs
+     * @return converted container object produced by the delegate converter
+     * @throws NullPointerException when {@code value} is {@code null}
      */
     @Override
-    public Map<K, V> convert(WrappedMap<MapEntry<K, V>, K, V> value) {
+    public Object convert(WrappedMap<MapEntry<K, V>, K, V> value) {
         return mapFromEntriesConverter.convert(value.getEntry());
     }
 

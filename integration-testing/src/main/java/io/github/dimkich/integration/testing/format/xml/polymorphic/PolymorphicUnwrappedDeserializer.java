@@ -53,7 +53,11 @@ public class PolymorphicUnwrappedDeserializer extends BeanDeserializer {
             if (p.currentToken() != JsonToken.END_OBJECT) {
                 p.nextToken();
             }
-            if (unwrappedTypeDeserializer == null) {
+            if (unwrappedProperty.getValueDeserializer() != null) {
+                p.nextToken();
+                Object wrappedBean = unwrappedProperty.getValueDeserializer().deserialize(p, ctxt);
+                unwrappedProperty.set(bean, wrappedBean);
+            } else if (unwrappedTypeDeserializer == null) {
                 JsonDeserializer<Object> deserializer = findDeserializer(ctxt, unwrappedProperty.getType(), unwrappedProperty);
                 unwrappedProperty.withValueDeserializer(deserializer).deserializeAndSet(p, ctxt, bean);
             } else {

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -28,12 +29,28 @@ import java.util.Set;
  * carry type information (regular and "unwrapped" payloads).
  */
 @Component("testTypeResolverBuilder")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
     private final TypeResolverFactory typeResolverFactory;
 
     @Getter
     private String unwrappedTypeProperty;
+
+    /**
+     * Creates a copy of an existing builder with the specified default implementation.
+     * <p>
+     * Used by Jackson when it needs a derived resolver builder instance that preserves
+     * the current configuration while changing default implementation settings.
+     *
+     * @param base                source builder to copy configuration from
+     * @param defaultImpl         default fallback type to use when concrete type id is absent
+     * @param typeResolverFactory factory responsible for creating type-id resolvers
+     */
+    protected TestTypeResolverBuilder(TestTypeResolverBuilder base, Class<?> defaultImpl,
+                                      TypeResolverFactory typeResolverFactory) {
+        super(base, defaultImpl);
+        this.typeResolverFactory = typeResolverFactory;
+    }
 
     /**
      * Initializes default type id strategy for tests:
@@ -107,5 +124,33 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
         return new AsPropertyTypeDeserializer(baseType, idResolver,
                 _typeProperty, _typeIdVisible, null, _includeAs,
                 _strictTypeIdHandling(config, baseType));
+    }
+
+    /**
+     * Sets the default implementation type and returns this builder instance.
+     *
+     * @param defaultImpl fallback concrete class for polymorphic deserialization
+     * @return this builder for fluent chaining
+     */
+    @Override
+    public TestTypeResolverBuilder defaultImpl(Class<?> defaultImpl) {
+        _defaultImpl = defaultImpl;
+        return this;
+    }
+
+    /**
+     * Returns a builder configured with a new default implementation.
+     * <p>
+     * If the provided class matches the current one, this instance is reused.
+     *
+     * @param defaultImpl fallback concrete class for polymorphic deserialization
+     * @return this builder or a copied builder with updated default implementation
+     */
+    @Override
+    public TestTypeResolverBuilder withDefaultImpl(Class<?> defaultImpl) {
+        if (_defaultImpl == defaultImpl) {
+            return this;
+        }
+        return new TestTypeResolverBuilder(this, _defaultImpl, typeResolverFactory);
     }
 }

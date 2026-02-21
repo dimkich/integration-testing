@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.format.xml;
+package io.github.dimkich.integration.testing.format;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -11,13 +11,15 @@ import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestContainer;
 import io.github.dimkich.integration.testing.TestPart;
 import io.github.dimkich.integration.testing.TestSetupModule;
-import io.github.dimkich.integration.testing.format.FormatTestUtils;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
 import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticGenericArrayType;
 import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticParameterizedType;
 import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticWildcardType;
 import io.github.dimkich.integration.testing.format.dto.*;
+import io.github.dimkich.integration.testing.format.dto.map.*;
+import io.github.dimkich.integration.testing.format.xml.XmlConfig;
+import io.github.dimkich.integration.testing.format.xml.XmlTestMapper;
 import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributes;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
@@ -524,6 +526,39 @@ class XmlTestMapperTest {
         <entry key="13.2">145.94</entry>
     </offers>
 </OrderBookWrapped>
+"""},
+                {KeyAsAttributeIterable.of(List.of(new AbstractMap.SimpleEntry<>("1k", "val1"),
+                        new AbstractMap.SimpleEntry<>("2k", "val2"))), """
+<KeyAsAttributeIterable>
+    <val key="1k">val1</val>
+    <val key="2k">val2</val>
+</KeyAsAttributeIterable>
+"""},
+                {KeyAsAttributeIterator.of(Map.of("1k", "val1").entrySet().iterator()), """
+<KeyAsAttributeIterator>
+    <val key="1k">val1</val>
+</KeyAsAttributeIterator>
+"""},
+                {KeyAsAttributeIteratorString.of(List.of("v1", "v2")), """
+<KeyAsAttributeIteratorString>
+    <val>v1</val>
+    <val>v2</val>
+</KeyAsAttributeIteratorString>
+"""},
+                {KeyAsAttributeList.of(Map.of("1k", "val1").entrySet().stream().toList()), """
+<KeyAsAttributeList>
+    <val key="1k">val1</val>
+</KeyAsAttributeList>
+"""},
+                {KeyAsAttributeMap.of(Map.of("1k", "val1")), """
+<KeyAsAttributeMap>
+    <val key="1k">val1</val>
+</KeyAsAttributeMap>
+"""},
+                {KeyAsAttributeNavigableMap.of(Map.of("1k", "val1")), """
+<KeyAsAttributeNavigableMap>
+    <val key="1k">val1</val>
+</KeyAsAttributeNavigableMap>
 """},
                 {new Value(ArrayList.class), """
 <Value>

@@ -16,32 +16,32 @@ import io.github.dimkich.integration.testing.format.common.map.converter.MapToEn
 import io.github.dimkich.integration.testing.format.common.map.converter.WrappedMapToEntriesConverter;
 import io.github.dimkich.integration.testing.format.common.map.dto.MapEntry;
 import io.github.dimkich.integration.testing.format.common.map.dto.WrappedMap;
+import io.github.dimkich.integration.testing.format.util.JacksonUtils;
+import io.github.dimkich.integration.testing.format.util.MapTypes;
 
 import java.util.List;
 
 /**
  * A Jackson {@link BeanSerializerModifier} that customizes map serialization
- * based on the {@link JsonMapAsEntries} annotation.
+ * for types and properties annotated with {@link JsonMapAsEntries}.
  * <p>
- * This modifier intercepts map serialization to convert maps into a list of entries
- * or wrapped entries, allowing for custom XML/JSON formatting of map data.
+ * This modifier converts map values into a list of entry DTOs or a wrapped container
+ * of entry DTOs, depending on annotation settings.
  * <p>
  * The modifier handles two scenarios:
  * <ul>
- *   <li><b>Field-level annotation:</b> When {@link JsonMapAsEntries} is applied to a map field,
- *       the {@link #changeProperties(SerializationConfig, BeanDescription, List)} method
- *       assigns a custom serializer to that property.</li>
- *   <li><b>Type-level annotation:</b> When {@link JsonMapAsEntries} is applied to a map class,
- *       the {@link #modifyMapSerializer(SerializationConfig, MapType, BeanDescription, JsonSerializer)}
- *       method returns a custom serializer for that map type.</li>
+ *   <li><b>Field-level annotation:</b> {@link #changeProperties(SerializationConfig, BeanDescription, List)}
+ *       assigns a custom serializer to annotated bean properties when their declared type can be resolved as a map.</li>
+ *   <li><b>Type-level annotation:</b> {@link #modifyMapSerializer(SerializationConfig, MapType, BeanDescription, JsonSerializer)}
+ *       returns a custom serializer for annotated map types.</li>
  * </ul>
  * <p>
  * The serialization behavior depends on the annotation configuration:
  * <ul>
  *   <li>If {@code entriesWrapped} is {@code false}, maps are serialized as a list of entries
- *       (e.g., {@code [{"key": "k1", "value": "v1"}, ...]})</li>
- *   <li>If {@code entriesWrapped} is {@code true}, maps are serialized as a wrapped container
- *       containing a list of entries (e.g., {@code {"entries": [{"key": "k1", "value": "v1"}, ...]}})</li>
+ *       (for example, {@code [{"key":"k1","value":"v1"}, ...]}).</li>
+ *   <li>If {@code entriesWrapped} is {@code true}, maps are serialized as a wrapper object
+ *       containing entries (for example, {@code {"entries":[{"key":"k1","value":"v1"}, ...]}}).</li>
  * </ul>
  *
  * @see JsonMapAsEntries
@@ -49,82 +49,88 @@ import java.util.List;
  */
 public class MapAsEntriesSerializerModifier extends BeanSerializerModifier {
     /**
-     * Modifies bean properties to apply custom serialization for map fields
-     * annotated with {@link JsonMapAsEntries}.
+     * Applies custom map serialization to bean properties annotated with {@link JsonMapAsEntries}.
      * <p>
-     * This method iterates through all bean properties and checks for the
-     * {@link JsonMapAsEntries} annotation. If found on a map-typed property,
-     * it assigns a custom serializer that converts the map to entries format.
+     * For each annotated property, this method attempts to build a delegating serializer.
+     * If the property type cannot be resolved as a map, the property is left unchanged.
      *
      * @param config         the serialization configuration
      * @param beanDesc       the bean description containing metadata about the bean class
      * @param beanProperties the list of bean property writers to potentially modify
-     * @return the (possibly modified) list of bean property writers
+     * @return the same list instance with serializers assigned for supported properties
      */
     @Override
     public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
         for (BeanPropertyWriter property : beanProperties) {
             JsonMapAsEntries jsonMapAsEntries = property.getAnnotation(JsonMapAsEntries.class);
             if (jsonMapAsEntries != null) {
-                property.assignSerializer(createMapSerializer(config.getTypeFactory(), jsonMapAsEntries, property.getType()));
+                JsonSerializer<Object> ser = createMapSerializer(config.getTypeFactory(), jsonMapAsEntries, property.getType());
+                if (ser != null) {
+                    property.assignSerializer(ser);
+                }
             }
         }
         return beanProperties;
     }
 
     /**
-     * Modifies the map serializer for map types annotated with {@link JsonMapAsEntries}
-     * at the class level.
+     * Replaces the serializer for map types annotated with {@link JsonMapAsEntries}.
      * <p>
-     * This method checks if the map type's class has the {@link JsonMapAsEntries} annotation.
-     * If present, it returns a custom serializer that converts the map to entries format.
-     * Otherwise, it delegates to the default serializer.
+     * If the annotation is present and a delegating serializer can be created, that serializer
+     * is returned. Otherwise, the parent {@link BeanSerializerModifier} behavior is used.
      *
      * @param config     the serialization configuration
      * @param valueType  the map type being serialized
      * @param beanDesc   the bean description containing class annotations
-     * @param serializer the default serializer that would be used
-     * @return a custom serializer if {@link JsonMapAsEntries} is present, otherwise the default serializer
+     * @param serializer the serializer selected by Jackson before this modifier
+     * @return a custom serializer for supported annotated map types, or the parent result
      */
     @Override
     public JsonSerializer<?> modifyMapSerializer(SerializationConfig config, MapType valueType, BeanDescription beanDesc, JsonSerializer<?> serializer) {
         JsonMapAsEntries jsonMapAsEntries = beanDesc.getClassAnnotations().get(JsonMapAsEntries.class);
         if (jsonMapAsEntries != null) {
-            return createMapSerializer(config.getTypeFactory(), jsonMapAsEntries, valueType);
+            JsonSerializer<Object> ser = createMapSerializer(config.getTypeFactory(), jsonMapAsEntries, valueType);
+            if (ser != null) {
+                return ser;
+            }
         }
         return super.modifyMapSerializer(config, valueType, beanDesc, serializer);
     }
 
+    @Override
+    public JsonSerializer<?> modifySerializer(SerializationConfig config, BeanDescription beanDesc, JsonSerializer<?> serializer) {
+        return super.modifySerializer(config, beanDesc, serializer);
+    }
+
     /**
-     * Creates a custom serializer for maps based on the {@link JsonMapAsEntries} annotation configuration.
+     * Builds a delegating serializer for map-to-entry conversion based on {@link JsonMapAsEntries}.
      * <p>
-     * This method creates a serializer that converts a map into either:
+     * Depending on {@link JsonMapAsEntries#entriesWrapped()}, this method converts maps into:
      * <ul>
-     *   <li>A list of {@link MapEntry} objects (when {@code entriesWrapped} is {@code false})</li>
-     *   <li>A {@link WrappedMap} containing a list of entries (when {@code entriesWrapped} is {@code true})</li>
+     *   <li>a list of {@link MapEntry} objects, or</li>
+     *   <li>a {@link WrappedMap} containing those entries.</li>
      * </ul>
-     * <p>
-     * The entry format (key as attribute or key as element) is determined by the
-     * {@link JsonMapAsEntries#entryFormat()} value.
+     * The concrete entry DTO class is selected via {@link JsonMapAsEntries#entryFormat()}.
      *
      * @param typeFactory      the type factory for constructing Java types
      * @param jsonMapAsEntries the annotation containing serialization configuration
-     * @param javaType         the Java type of the map (must be a {@link MapType})
-     * @return a custom serializer for the map
-     * @throws RuntimeException if the provided {@code javaType} is not a {@link MapType}
+     * @param javaType         the declared property/type to resolve as a map
+     * @return a delegating serializer, or {@code null} when {@code javaType} is not a supported map type
      */
     private JsonSerializer<Object> createMapSerializer(
             TypeFactory typeFactory, JsonMapAsEntries jsonMapAsEntries, JavaType javaType) {
-        if (!(javaType instanceof MapType mapType)) {
-            throw new RuntimeException("@JsonMapAsEntries only for map type");
+        MapTypes types = JacksonUtils.resolveMapTypes(javaType);
+        if (types == null) {
+            return null;
         }
+
         MapToEntriesConverter<?, ?> conv = new MapToEntriesConverter<>(jsonMapAsEntries.entryFormat().getCls());
         JavaType mapEntryType = typeFactory.constructParametricType(jsonMapAsEntries.entryFormat().getCls(),
-                mapType.getKeyType(), mapType.getContentType());
+                types.getKeyType(), types.getValueType());
 
         if (jsonMapAsEntries.entriesWrapped()) {
             JavaType wrapperType = typeFactory.constructParametricType(WrappedMap.class,
-                    mapEntryType, mapType.getKeyType(), mapType.getContentType());
+                    mapEntryType, types.getKeyType(), types.getValueType());
             @SuppressWarnings("unchecked")
             Converter<Object, Object> castConv = (Converter<Object, Object>) ((Converter<?, ?>)
                     new WrappedMapToEntriesConverter<>(conv));

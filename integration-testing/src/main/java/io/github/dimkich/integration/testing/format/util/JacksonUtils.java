@@ -4,11 +4,14 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.type.MapType;
 import lombok.SneakyThrows;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
@@ -49,6 +52,28 @@ public class JacksonUtils {
                 || Collection.class.isAssignableFrom(cls) || Iterable.class.isAssignableFrom(cls)
                 || Stream.class.isAssignableFrom(cls) || BaseStream.class.isAssignableFrom(cls)
                 || Iterator.class.isAssignableFrom(cls);
+    }
+
+    public static MapTypes resolveMapTypes(JavaType type) {
+        JavaType keyType = null;
+        JavaType valueType = null;
+
+        if (type instanceof MapType mapType) {
+            keyType = mapType.getKeyType();
+            valueType = mapType.getContentType();
+        } else if (Iterable.class.isAssignableFrom(type.getRawClass()) ||
+                Iterator.class.isAssignableFrom(type.getRawClass())) {
+
+            JavaType entryType = type.containedTypeOrUnknown(0);
+            if (entryType != null && Map.Entry.class.isAssignableFrom(entryType.getRawClass())) {
+                keyType = entryType.containedTypeOrUnknown(0);
+                valueType = entryType.containedTypeOrUnknown(1);
+            }
+        }
+        if (keyType == null || valueType == null) {
+            return null;
+        }
+        return new MapTypes(keyType, valueType);
     }
 
     // for debug purpose

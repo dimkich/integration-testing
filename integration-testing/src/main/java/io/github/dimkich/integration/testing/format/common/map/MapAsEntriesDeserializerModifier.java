@@ -15,11 +15,13 @@ import io.github.dimkich.integration.testing.format.common.map.converter.MapFrom
 import io.github.dimkich.integration.testing.format.common.map.converter.WrappedMapFromEntriesConverter;
 import io.github.dimkich.integration.testing.format.common.map.dto.MapEntry;
 import io.github.dimkich.integration.testing.format.common.map.dto.WrappedMap;
+import io.github.dimkich.integration.testing.format.util.JacksonUtils;
+import io.github.dimkich.integration.testing.format.util.MapTypes;
+import lombok.SneakyThrows;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A Jackson {@link BeanDeserializerModifier} that processes {@link JsonMapAsEntries} annotations
@@ -75,12 +77,15 @@ public class MapAsEntriesDeserializerModifier extends BeanDeserializerModifier {
             JsonMapAsEntries jsonMapAsEntries = property.getAnnotation(JsonMapAsEntries.class);
             if (jsonMapAsEntries != null) {
                 int index = find(args, property);
-                property = property.withValueDeserializer(createMapDeserializer(config.getTypeFactory(),
-                        jsonMapAsEntries, property.getType()));
-                if (index >= 0) {
-                    args[index] = property;
+                JsonDeserializer<?> deser = createMapDeserializer(config.getTypeFactory(),
+                        jsonMapAsEntries, property.getType());
+                if (deser != null) {
+                    property = property.withValueDeserializer(deser);
+                    if (index >= 0) {
+                        args[index] = property;
+                    }
+                    builder.addOrReplaceProperty(property, true);
                 }
-                builder.addOrReplaceProperty(property, true);
             }
         }
 
@@ -98,6 +103,9 @@ public class MapAsEntriesDeserializerModifier extends BeanDeserializerModifier {
      * @return the index of the property in the array, or -1 if not found
      */
     private int find(SettableBeanProperty[] args, SettableBeanProperty property) {
+        if (args == null) {
+            return -1;
+        }
         for (int i = 0; i < args.length; i++) {
             if (args[i] == property) {
                 return i;
@@ -119,13 +127,17 @@ public class MapAsEntriesDeserializerModifier extends BeanDeserializerModifier {
      * @param type         the map type being deserialized
      * @param beanDesc     description of the map class
      * @param deserializer the default map deserializer
-     * @return a custom deserializer if the annotation is present, otherwise the default deserializer
+     * @return a custom deserializer if the annotation is present and map types are resolvable;
+     * otherwise delegates to the parent implementation
      */
     @Override
     public JsonDeserializer<?> modifyMapDeserializer(DeserializationConfig config, MapType type, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
         JsonMapAsEntries jsonMapAsEntries = beanDesc.getClassAnnotations().get(JsonMapAsEntries.class);
         if (jsonMapAsEntries != null) {
-            return createMapDeserializer(config.getTypeFactory(), jsonMapAsEntries, type);
+            JsonDeserializer<?> deser = createMapDeserializer(config.getTypeFactory(), jsonMapAsEntries, type);
+            if (deser != null) {
+                return deser;
+            }
         }
 
         return super.modifyMapDeserializer(config, type, beanDesc, deserializer);
@@ -147,84 +159,63 @@ public class MapAsEntriesDeserializerModifier extends BeanDeserializerModifier {
      * {@link JsonMapAsEntries#entryFormat()} value, which specifies the concrete
      * {@link MapEntry} implementation class to use.
      *
-     * @param <T>              the map type
-     * @param <K>              the map key type
-     * @param <V>              the map value type
      * @param typeFactory      the type factory for constructing generic types
      * @param jsonMapAsEntries the annotation configuration
      * @param type             the map type being deserialized
      * @return a deserializer that converts entries to the target map type
-     * @throws RuntimeException if the type is not a {@link MapType}
      */
-    private <T extends Map<K, V>, K, V> JsonDeserializer<?> createMapDeserializer(
+    private JsonDeserializer<?> createMapDeserializer(
             TypeFactory typeFactory, JsonMapAsEntries jsonMapAsEntries, JavaType type) {
-        if (!(type instanceof MapType)) {
-            throw new RuntimeException("@JsonMapAsEntries only for map type");
+        MapTypes types = JacksonUtils.resolveMapTypes(type);
+        if (types == null) {
+            return null;
         }
-        MapFromEntriesConverter<K, V> conv = new MapFromEntriesConverter<>(type.getRawClass());
+        MapFromEntriesConverter<?, ?> conv = new MapFromEntriesConverter<>(type.getRawClass());
         JavaType mapEntryType = typeFactory.constructParametricType(jsonMapAsEntries.entryFormat().getCls(),
-                type.getKeyType(), type.getContentType());
-
+                types.getKeyType(), types.getValueType());
         if (jsonMapAsEntries.entriesWrapped()) {
             JavaType wrapperType = typeFactory.constructParametricType(WrappedMap.class,
-                    mapEntryType, type.getKeyType(), type.getContentType());
+                    mapEntryType, types.getKeyType(), types.getValueType());
+
             @SuppressWarnings("unchecked")
-            Converter<Object, T> castConv = (Converter<Object, T>) ((Converter<?, ?>)
+            Converter<Object, Object> castConv = (Converter<Object, Object>) ((Converter<?, ?>)
                     new WrappedMapFromEntriesConverter<>(conv, wrapperType));
-            return new StdDelegatingDeserializer<>(castConv, wrapperType, null
-            );
+
+            return new StdDelegatingDeserializer<>(castConv, wrapperType, null);
         }
         CollectionType collectionType = typeFactory.constructCollectionType(List.class, mapEntryType);
-        CollectionDeserializer deserializer = new CollectionDeserializer(collectionType, null,
-                null, new ArrayListInstantiator());
+        CollectionDeserializer listDeserializer = new CollectionDeserializer(collectionType, null, null,
+                new CollectionInstantiator(collectionType.getRawClass()));
         @SuppressWarnings("unchecked")
-        Converter<Object, T> castConv = (Converter<Object, T>) ((Converter<?, ?>) conv);
-        return new StdDelegatingDeserializer<>(castConv, collectionType, deserializer);
+        Converter<Object, Object> castConv = (Converter<Object, Object>) ((Converter<?, ?>) conv);
+        return new StdDelegatingDeserializer<>(castConv, collectionType, listDeserializer);
     }
 
-    /**
-     * A {@link ValueInstantiator} that creates new {@link ArrayList} instances during deserialization.
-     * <p>
-     * This is used by the {@link CollectionDeserializer} when deserializing unwrapped map entries
-     * into a list before converting them to a map.
-     */
-    private static class ArrayListInstantiator extends ValueInstantiator.Base {
-        /**
-         * Creates a new instantiator for {@link ArrayList} instances.
-         */
-        public ArrayListInstantiator() {
-            super(ArrayList.class);
+    private static class CollectionInstantiator extends ValueInstantiator.Base {
+        private final Class<?> collectionClass;
+
+        public CollectionInstantiator(Class<?> collectionClass) {
+            super(collectionClass);
+            this.collectionClass = collectionClass;
         }
 
-        /**
-         * Indicates that this instantiator can create instances.
-         *
-         * @return always {@code true}
-         */
         @Override
         public boolean canInstantiate() {
             return true;
         }
 
-        /**
-         * Indicates that this instantiator can create instances using the default constructor.
-         *
-         * @return always {@code true}
-         */
         @Override
         public boolean canCreateUsingDefault() {
             return true;
         }
 
-        /**
-         * Creates a new empty {@link ArrayList} instance.
-         *
-         * @param ctxt the deserialization context
-         * @return a new empty {@link ArrayList}
-         */
         @Override
+        @SneakyThrows
         public Object createUsingDefault(DeserializationContext ctxt) {
-            return new ArrayList<>();
+            if (collectionClass.isInterface()) {
+                return new ArrayList<>();
+            }
+            return collectionClass.getDeclaredConstructor().newInstance();
         }
     }
 }

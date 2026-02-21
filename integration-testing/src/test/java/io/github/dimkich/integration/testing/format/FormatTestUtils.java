@@ -46,6 +46,19 @@ public class FormatTestUtils {
             compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber"), TestContainer.class);
             compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber"), TestCase.class);
             compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber"), TestPart.class);
+            compConfig.registerEqualsForType((it1, it2) -> {
+                if (it1 == it2) return true;
+                if (it1 == null || it2 == null) return false;
+
+                while (it1.hasNext() && it2.hasNext()) {
+                    Object o1 = it1.next();
+                    Object o2 = it2.next();
+                    if (!(Objects.equals(o1, o2))) {
+                        return false;
+                    }
+                }
+                return !it1.hasNext() && !it2.hasNext();
+            }, Iterator.class);
 
             sr2 = sr2Class.getDeclaredConstructor(ResourceHttpMessageConverter.class, byte[].class,
                     HttpInputMessage.class);

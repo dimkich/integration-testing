@@ -42,7 +42,7 @@ public class PolymorphicUnwrappedBeanPropertyWriter extends UnwrappingBeanProper
             return true;
         }
         Class<?> cls = value.getClass();
-        if (cls.isPrimitive() || Number.class.isAssignableFrom(cls)) {
+        if (cls.isPrimitive() || cls.isArray() || Number.class.isAssignableFrom(cls)) {
             return false;
         }
         if (cls.getPackage().getName().startsWith("java.util")) {

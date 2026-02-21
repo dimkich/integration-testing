@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing.format.json;
+package io.github.dimkich.integration.testing.format;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -7,13 +7,15 @@ import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestContainer;
 import io.github.dimkich.integration.testing.TestPart;
 import io.github.dimkich.integration.testing.TestSetupModule;
-import io.github.dimkich.integration.testing.format.FormatTestUtils;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
 import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticGenericArrayType;
 import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticParameterizedType;
 import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticWildcardType;
 import io.github.dimkich.integration.testing.format.dto.*;
+import io.github.dimkich.integration.testing.format.dto.map.*;
+import io.github.dimkich.integration.testing.format.json.JsonConfig;
+import io.github.dimkich.integration.testing.format.json.JsonTestMapper;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
 import io.github.dimkich.integration.testing.web.WebConfig;
@@ -149,6 +151,11 @@ class JsonTestMapperTest {
                         new TreeMap<>(Map.of(BigDecimal.valueOf(11.2), BigDecimal.valueOf(122.32),
                                 BigDecimal.valueOf(13.2), BigDecimal.valueOf(145.94)))),
                         "{\"bids\":{\"entry\":[{\"key\":\"1.2\",\"value\":\"12.3\"},{\"key\":\"1.33\",\"value\":\"16.3\"}]},\"offers\":{\"entry\":[{\"key\":\"11.2\",\"value\":\"122.32\"},{\"key\":\"13.2\",\"value\":\"145.94\"}]}}"},
+                {KeyAsAttributeIterator.of(Map.of("1k", "val1").entrySet().iterator()), "{\"val\":[{\"key\":\"1k\",\"value\":\"val1\"}]}"},
+                {KeyAsAttributeIteratorString.of(List.of("v1", "v2")), "{\"val\":[\"v1\",\"v2\"]}"},
+                {KeyAsAttributeList.of(Map.of("1k", "val1").entrySet().stream().toList()), "{\"val\":[{\"key\":\"1k\",\"value\":\"val1\"}]}"},
+                {KeyAsAttributeMap.of(Map.of("1k", "val1")), "{\"val\":[{\"key\":\"1k\",\"value\":\"val1\"}]}"},
+                {KeyAsAttributeNavigableMap.of(Map.of("1k", "val1")), "{\"val\":[{\"key\":\"1k\",\"value\":\"val1\"}]}"},
                 {new Value(ArrayList.class), "{\"value\":[\"Class\",\"ArrayList\"]}"},
                 {new Value(HashMap.class), "{\"value\":[\"Class\",\"java.util.HashMap\"]}"},
                 {new Value(new SyntheticParameterizedType(ArrayList.class, new Type[]{String.class})),
