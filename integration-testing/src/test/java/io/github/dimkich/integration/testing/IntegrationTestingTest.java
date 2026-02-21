@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.stream.Stream;
 
-@SpringBootTest(classes = {IntegrationTestConfig.class, IntegrationTestingTest.Config.class})
+@SpringBootTest(classes = IntegrationTestingTest.Config.class)
 @TestBeanMock(mockClass = IntegrationTestingTest.Converter.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class IntegrationTestingTest {

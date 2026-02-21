@@ -2,7 +2,6 @@ package io.github.dimkich.integration.testing.wait.completion;
 
 import eu.ciechanowiec.sneakyfun.SneakyRunnable;
 import io.github.dimkich.integration.testing.DynamicTestBuilder;
-import io.github.dimkich.integration.testing.IntegrationTestConfig;
 import io.github.dimkich.integration.testing.RepeatInstrumentation;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.wait.completion.future.like.FutureLike5Consumer;
@@ -68,7 +67,7 @@ import static io.github.dimkich.integration.testing.wait.completion.WaitCompleti
         sizeFunction = QueueLikeFunction6.class)
 @RepeatInstrumentation({FL, MC, MP, QL})
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@SpringBootTest(classes = {IntegrationTestConfig.class, WaitCompletionTest.Config.class},
+@SpringBootTest(classes = WaitCompletionTest.Config.class,
         properties = {"integration.testing.wait.completion.enabled=true"})
 public class WaitCompletionTest {
     static final String pkg = "io.github.dimkich.integration.testing.wait.completion";

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.dimkich.integration.testing.DynamicTestBuilder;
-import io.github.dimkich.integration.testing.IntegrationTestConfig;
 import io.github.dimkich.integration.testing.IntegrationTesting;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import lombok.Getter;
@@ -29,7 +28,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectUniqueId;
 
 @IntegrationTesting
-@SpringBootTest(classes = {IntegrationTestConfig.class, JunitIntegrationTest.Config.class})
+@SpringBootTest(classes = JunitIntegrationTest.Config.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class JunitIntegrationTest {
     private final DynamicTestBuilder dynamicTestBuilder;

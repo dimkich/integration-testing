@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import static org.mockito.ArgumentMatchers.any;
 
 @IntegrationTesting
-@SpringBootTest(classes = {IntegrationTestConfig.class, SimpleTest.Config.class})
+@SpringBootTest(classes = SimpleTest.Config.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class SimpleTest {
     private final DynamicTestBuilder dynamicTestBuilder;

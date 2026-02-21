@@ -27,7 +27,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 @MockJavaTime
-@SpringBootTest(classes = {IntegrationTestConfig.class, InitializationTest.Config.class})
+@SpringBootTest(classes = InitializationTest.Config.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class InitializationTest {
     private final DynamicTestBuilder dynamicTestBuilder;
