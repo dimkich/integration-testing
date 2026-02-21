@@ -10,6 +10,7 @@ import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStri
 import io.github.dimkich.integration.testing.format.common.map.MapAsEntriesModule;
 import io.github.dimkich.integration.testing.format.common.mixin.*;
 import io.github.dimkich.integration.testing.format.common.serializer.BigDecimalSerializer;
+import io.github.dimkich.integration.testing.format.common.serializer.IteratorDeserializer;
 import io.github.dimkich.integration.testing.format.common.type.TypeGenerator;
 import io.github.dimkich.integration.testing.format.common.type.TypeParser;
 import io.github.dimkich.integration.testing.format.common.type.TypeResolverFactory;
@@ -30,10 +31,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.*;
 
 @Configuration
@@ -67,10 +65,12 @@ public class CommonFormatConfig {
                 .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,
-                        LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, boolean.class,
-                        char.class, byte.class, short.class, int.class, long.class, double.class, float.class,
-                        SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class,
-                        LinkedHashMapObjectObject.class, LinkedHashMapStringObject.class)
+                        LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, Instant.class,
+                        boolean.class, char.class, byte.class, short.class, int.class, long.class, double.class,
+                        float.class, SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class,
+                        LinkedHashMapObjectObject.class, LinkedHashMapStringObject.class, RuntimeException.class,
+                        UnsupportedOperationException.class, IllegalStateException.class, NullPointerException.class,
+                        IllegalArgumentException.class, AbstractMap.SimpleEntry.class)
                 .clonerTypeAction(Throwable.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
@@ -84,6 +84,7 @@ public class CommonFormatConfig {
                     return Arrays.equals(b1, b2);
                 })
                 .addJacksonModule(new SimpleModule().addSerializer(BigDecimal.class, new BigDecimalSerializer())
+                        .addDeserializer(Iterator.class, new IteratorDeserializer())
                         .setMixInAnnotation(Throwable.class, ThrowableMixIn.class)
                         .setMixInAnnotation(FieldError.class, FieldErrorMixIn.class)
                         .setMixInAnnotation(FieldError.class, FieldErrorMixIn.class)
