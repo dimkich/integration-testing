@@ -1,7 +1,8 @@
 IntelliJ IDEA Integration (Plugin Support)
 ==========================================
 
-The **Integration Testing** plugin transforms IntelliJ IDEA into an interactive environment for test development and
+The **[Integration Testing](https://plugins.jetbrains.com/plugin/27576-integration-testing)** plugin transforms IntelliJ
+IDEA into an interactive environment for test development and
 recording. It automatically injects JVM arguments (-D...) into all **JUnit** and **TestNG** run configurations, allowing
 you to manage test behavior visually without editing project configuration files.
 
