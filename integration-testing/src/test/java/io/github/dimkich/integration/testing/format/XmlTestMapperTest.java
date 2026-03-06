@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
@@ -30,6 +31,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -311,6 +313,13 @@ class XmlTestMapperTest {
             <id>1</id>
             <data type="Boolean">true</data>
         </data>
+    </data>
+</root>
+"""},
+                {new ListOfListOfObject(List.of(List.of(""))), """
+<root>
+    <data>
+        <data></data>
     </data>
 </root>
 """},
@@ -724,6 +733,32 @@ class XmlTestMapperTest {
         buffer.copyCurrentStructure(p);
         p = buffer.asParserOnFirstToken();
         assertThat(o).usingRecursiveComparison(compConfig).isEqualTo(p.readValueAs(o.getClass()));
+    }
+
+    static Object[][] deserializationErrorsData() {
+        return new Object[][]{
+                {"""
+<Value>
+    <value type="UnknownClass">Some text</value>
+</Value>
+""", Value.class, InvalidTypeIdException.class},
+                {"""
+<Value>
+    <value type="UnknownClass"/>
+</Value>
+""", Value.class, InvalidTypeIdException.class},
+                {"""
+<Value>
+    <value><a/><b>123</b></value>
+</Value>
+""", Value.class, InvalidTypeIdException.class},
+        };
+    }
+
+    @ParameterizedTest
+    @MethodSource("deserializationErrorsData")
+    void deserializationErrors(String xml, Class<?> targetClass, Class<? extends Throwable> expectedError) {
+        Assertions.assertThrows(expectedError, () -> xmlMapper.readValue(xml, targetClass));
     }
 
     @Configuration

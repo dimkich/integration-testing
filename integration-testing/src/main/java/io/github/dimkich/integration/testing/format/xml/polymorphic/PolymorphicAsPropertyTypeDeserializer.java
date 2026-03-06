@@ -37,6 +37,16 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
         return deserializeTypedFromObject(p, ctxt);
     }
 
+    @Override
+    protected Object _deserializeTypedUsingDefaultImpl(JsonParser p, DeserializationContext ctxt,
+                                                       TokenBuffer tb, String msg) throws IOException {
+        if (_defaultImpl == null && _baseType != null && _baseType.getRawClass().isAssignableFrom(String.class)
+                && p.hasToken(JsonToken.END_OBJECT) && (tb == null || tb.firstToken() == null)) {
+            return "";
+        }
+        return super._deserializeTypedUsingDefaultImpl(p, ctxt, tb, msg);
+    }
+
     protected String findType(JsonParser p) {
         if (p instanceof FromXmlParser fromXmlParser) {
             XMLStreamReader xmlStreamReader = fromXmlParser.getStaxReader();
