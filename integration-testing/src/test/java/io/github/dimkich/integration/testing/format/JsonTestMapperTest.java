@@ -102,6 +102,8 @@ class JsonTestMapperTest {
                         new TypeTest(1, true, null)))),
                         "{\"data\":[[false,2],[[\"Byte\",3],{\"type\":\"TypeTest\",\"id\":1,\"data\":true}]]}"},
                 {new ListOfListOfObject(List.of(List.of(""))), "{\"data\":[[\"\"]]}"},
+                {new ListOfListOfObject(List.of(List.of(" "))), "{\"data\":[[\" \"]]}"},
+                {new ListOfListOfObject(List.of(List.of())), "{\"data\":[[]]}"},
                 {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"),
                         "{\"key\":\"k\",\"change\":\"added\",\"value\":\"str\"}"},
                 {HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",

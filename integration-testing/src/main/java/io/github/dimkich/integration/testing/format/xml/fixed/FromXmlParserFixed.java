@@ -51,4 +51,8 @@ public class FromXmlParserFixed extends FromXmlParser {
             throw e;
         }
     }
+
+    public String getRawText() {
+        return _currText;
+    }
 }

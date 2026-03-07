@@ -323,6 +323,18 @@ class XmlTestMapperTest {
     </data>
 </root>
 """},
+                {new ListOfListOfObject(List.of(List.of(" "))), """
+<root>
+    <data>
+        <data> </data>
+    </data>
+</root>
+"""},
+                {new ListOfListOfObject(List.of(List.of())), """
+<root>
+    <data/>
+</root>
+"""},
                 {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"), """
 <EntryStringKeyObjectValue key="k" change="added" utype="String">str</EntryStringKeyObjectValue>
 """},

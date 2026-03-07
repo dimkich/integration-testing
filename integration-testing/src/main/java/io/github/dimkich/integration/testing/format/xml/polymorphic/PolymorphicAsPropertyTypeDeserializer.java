@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import io.github.dimkich.integration.testing.format.common.type.TestTypeResolverBuilder;
 import io.github.dimkich.integration.testing.format.util.JacksonUtils;
+import io.github.dimkich.integration.testing.format.xml.fixed.FromXmlParserFixed;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
@@ -42,7 +43,11 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
                                                        TokenBuffer tb, String msg) throws IOException {
         if (_defaultImpl == null && _baseType != null && _baseType.getRawClass().isAssignableFrom(String.class)
                 && p.hasToken(JsonToken.END_OBJECT) && (tb == null || tb.firstToken() == null)) {
-            return "";
+            if (p instanceof FromXmlParserFixed fixed) {
+                return fixed.getRawText();
+            } else {
+                throw new IllegalStateException("FromXmlParserFixed must be used");
+            }
         }
         return super._deserializeTypedUsingDefaultImpl(p, ctxt, tb, msg);
     }
