@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.storage;
 
 import io.github.dimkich.integration.testing.storage.mapping.Container;
+import io.github.dimkich.integration.testing.storage.pojo.PojoAccessorService;
 import io.github.dimkich.integration.testing.util.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -23,8 +24,8 @@ public class ObjectsDifference {
     private static final RecursiveComparisonConfiguration compConfig = new RecursiveComparisonConfiguration();
 
     private final StorageProperties properties;
+    private final PojoAccessorService pojoAccessorService;
     private final Function<Object, Object> nonStringKeysConverter = Function.identity();
-    private final Function<Object, Map<String, Object>> pojoToMapConverter = PojoToMapUtil::mapWithReflectionFields;
     private final Function<Object, Boolean> simpleTypeDetector = o -> BeanUtils.isSimpleValueType(o.getClass());
 
     private String name;
@@ -81,7 +82,9 @@ public class ObjectsDifference {
     }
 
     private Object pojoDiff(Object left, Object right, int level) {
-        return mapDiff(pojoToMapConverter.apply(left), pojoToMapConverter.apply(right), level);
+        Map<String, Object> leftMap = pojoAccessorService.forBean(left).asMap();
+        Map<String, Object> rightMap = pojoAccessorService.forBean(right).asMap();
+        return mapDiff(leftMap, rightMap, level);
     }
 
     private String convertKey(Object key) {

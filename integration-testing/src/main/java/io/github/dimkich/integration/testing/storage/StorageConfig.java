@@ -3,8 +3,10 @@ package io.github.dimkich.integration.testing.storage;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
+import io.github.dimkich.integration.testing.storage.exclusion.FieldExclusionProcessor;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueOperationsConfig;
 import io.github.dimkich.integration.testing.storage.mapping.StorageMappingConfig;
+import io.github.dimkich.integration.testing.storage.pojo.PojoAccessorService;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageFactory;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import jakarta.annotation.PostConstruct;
@@ -38,7 +40,8 @@ import java.util.stream.Collectors;
 
 @Configuration
 @RequiredArgsConstructor
-@Import({TestDataStorages.class, ObjectsDifference.class, MockInvokeConfig.class, StorageMappingConfig.class})
+@Import({TestDataStorages.class, ObjectsDifference.class, MockInvokeConfig.class, StorageMappingConfig.class,
+        PojoAccessorService.class, FieldExclusionProcessor.class})
 @EnableConfigurationProperties(StorageProperties.class)
 public class StorageConfig {
     @Setter(onMethod_ = {@Autowired, @Lazy})
