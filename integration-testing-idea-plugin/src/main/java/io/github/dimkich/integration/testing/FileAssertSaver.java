@@ -65,7 +65,7 @@ public class FileAssertSaver {
                             Document document = FileDocumentManager.getInstance().getDocument(expected);
                             BufferedReader test = new BufferedReader(new StringReader(document.getText()));
                             while ((line = test.readLine()) != null) {
-                                writer.write(spaces + line);
+                                writer.write(line.trim().startsWith("<") ? spaces + line : line);
                                 writer.newLine();
                             }
                         }
