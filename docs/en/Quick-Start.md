@@ -215,6 +215,29 @@ Data Types for Request and Response
 
 💡 **Rule:** If `type` is not specified, the framework treats the value as `String`.
 
+Handling Varargs in Requests
+----------------
+
+If the Spring bean method you are calling uses variable arguments (varargs), for example:  
+public void rPush(String key, String... values)
+
+In the XML test file, you **must** explicitly specify the type Object[] for the variable part of the arguments. Using ArrayList will cause a "Method not found" error because Java reflection expects an array for the varargs parameter.
+
+**Correct Example:**
+```
+    <test type="Part" name="Setup">
+        <bean>redisStringFacade</bean>
+        <method>rPush</method>
+        <request>list:key</request>
+        <!-- Use Object[] to match varargs String... values -->
+        <request type="Object[]">
+            <item>v1</item>
+            <item>v2</item>
+            <item>v3</item>
+        </request>
+    </test>
+```
+
 Hooks (Optional)
 ----------------
 

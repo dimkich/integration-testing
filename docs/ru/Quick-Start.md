@@ -215,6 +215,29 @@ xml
 
 💡 **Правило:** Если `type` не указан, фреймворк считает значение строкой (`String`).
 
+Обработка Varargs в запросах
+----------------
+
+Если метод Spring-бина, который вы вызываете, использует аргументы переменной длины (varargs), например:  
+public void rPush(String key, String... values)
+
+В XML-файле теста вы **должны** явно указать тип Object[] для переменной части аргументов. Использование ArrayList приведет к ошибке "Method not found", так как рефлексия Java ожидает именно массив для параметров varargs.
+
+**Правильный пример:**
+``` 
+    <test type="Part" name="Setup">
+        <bean>redisStringFacade</bean>
+        <method>rPush</method>
+        <request>list:key</request>
+        <!-- Используйте Object[] для соответствия varargs String... values -->
+        <request type="Object[]">
+            <item>v1</item>
+            <item>v2</item>
+            <item>v3</item>
+        </request>
+    </test>
+```
+
 Хуки (опционально)
 ------------------
 
