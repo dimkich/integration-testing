@@ -154,13 +154,13 @@ public abstract class Test {
     @JsonIgnore
     public void check() {
         if (parentTest == null && getType() != Type.TestContainer) {
-            throw new RuntimeException("Root <test> must be of type=\"container\"");
+            throw new RuntimeException("Root <test> must be of type=\"Container\"");
         }
         if (getType() == Type.TestCase && parentTest.getType() != Type.TestContainer) {
-            throw new RuntimeException("<test type=\"case\"> can only be a child of <test type=\"container\">");
+            throw new RuntimeException("<test type=\"Case\"> can only be a child of <test type=\"Container\">");
         }
         if (getType() == Type.TestPart && parentTest.getType() != Type.TestCase) {
-            throw new RuntimeException("<test type=\"part\"> can only be a child of <test type=\"case\">");
+            throw new RuntimeException("<test type=\"Part\"> can only be a child of <test type=\"Case\">");
         }
     }
 
