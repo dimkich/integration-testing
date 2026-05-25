@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing;
+package io.github.dimkich.integration.testing.config;
 
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.context.annotation.PropertySource;

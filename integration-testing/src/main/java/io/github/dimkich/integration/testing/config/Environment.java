@@ -1,4 +1,4 @@
-package io.github.dimkich.integration.testing;
+package io.github.dimkich.integration.testing.config;
 
 public class Environment {
     public final static String REAL = "real";

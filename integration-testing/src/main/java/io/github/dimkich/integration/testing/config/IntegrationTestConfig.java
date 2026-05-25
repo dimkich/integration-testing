@@ -1,7 +1,9 @@
-package io.github.dimkich.integration.testing;
+package io.github.dimkich.integration.testing.config;
 
+import io.github.dimkich.integration.testing.DynamicTestBuilder;
+import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.assertion.AssertionConfig;
-import io.github.dimkich.integration.testing.date.time.DateTimeService;
+import io.github.dimkich.integration.testing.date.time.DateTimeConfig;
 import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
 import io.github.dimkich.integration.testing.format.TestFormatConfig;
 import io.github.dimkich.integration.testing.initialization.InitializationConfig;
@@ -21,9 +23,9 @@ import java.util.List;
 
 @Configuration
 @ConditionalOnProperty(value = "integration.testing.enabled", havingValue = "true", matchIfMissing = true)
-@Import({DynamicTestBuilder.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeService.class,
+@Import({DynamicTestBuilder.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeConfig.class,
         InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class,
-        WebConfig.class, TestFormatConfig.class})
+        WebConfig.class, TestFormatConfig.class, PropertyInheritanceMerger.class})
 public class IntegrationTestConfig {
     @Bean
     Cloner sugarCubesCloner(List<TestSetupModule> modules) {
