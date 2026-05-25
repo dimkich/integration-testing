@@ -36,7 +36,7 @@ public class FixedBeanSerializerFactory extends BeanSerializerFactory {
     public JsonSerializer<Object> createSerializer(SerializerProvider prov, JavaType origType) {
         JsonSerializer<Object> ser = super.createSerializer(prov, origType);
         if (ser instanceof StdDelegatingSerializer delegatingSerializer) {
-            return new TypedStdDelegatingSerializer(delegatingSerializer);
+            return new TypedStdDelegatingSerializer(delegatingSerializer, false);
         }
         return ser;
     }

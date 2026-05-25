@@ -1,5 +1,7 @@
 package io.github.dimkich.integration.testing.format.xml;
 
+import com.ctc.wstx.api.InvalidCharHandler;
+import com.ctc.wstx.api.WstxOutputProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -67,7 +69,12 @@ public class XmlConfig {
                 new WrapperModule());
 
         XmlMapper xmlMapper = builder.build();
-
+        if (xmlMapper.getFactory().getXMLOutputFactory().isPropertySupported(WstxOutputProperties.P_OUTPUT_INVALID_CHAR_HANDLER)) {
+            xmlMapper.getFactory().getXMLOutputFactory().setProperty(
+                    WstxOutputProperties.P_OUTPUT_INVALID_CHAR_HANDLER,
+                    new InvalidCharHandler.ReplacingHandler(' ')
+            );
+        }
         configurer.configure(xmlMapper);
 
         return new XmlTestMapper(xmlMapper);

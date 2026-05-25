@@ -67,24 +67,29 @@ public class TypeUtils {
      * @return the resolved type description.
      */
     public static TypeDescription resolve(String name) {
-        return CACHE.computeIfAbsent(name, n -> {
-            if (n.endsWith("[]")) {
-                String componentName = n.substring(0, n.length() - 2);
-                TypeDescription componentType = resolve(componentName); // Recursive call
-                return TypeDescription.ArrayProjection.of(componentType);
-            }
-            return switch (n) {
-                case "byte" -> TypeDescription.ForLoadedType.of(byte.class);
-                case "int" -> TypeDescription.ForLoadedType.of(int.class);
-                case "short" -> TypeDescription.ForLoadedType.of(short.class);
-                case "long" -> TypeDescription.ForLoadedType.of(long.class);
-                case "double" -> TypeDescription.ForLoadedType.of(double.class);
-                case "float" -> TypeDescription.ForLoadedType.of(float.class);
-                case "boolean" -> TypeDescription.ForLoadedType.of(boolean.class);
-                case "char" -> TypeDescription.ForLoadedType.of(char.class);
-                case "void" -> TypeDescription.ForLoadedType.of(void.class);
-                default -> TYPE_POOL.describe(n).resolve();
-            };
+        TypeDescription cached = CACHE.get(name);
+        if (cached != null) {
+            return cached;
+        }
+        if (name.endsWith("[]")) {
+            String componentName = name.substring(0, name.length() - 2);
+            TypeDescription componentType = resolve(componentName);
+            TypeDescription arrayType = TypeDescription.ArrayProjection.of(componentType);
+
+            CACHE.putIfAbsent(name, arrayType);
+            return arrayType;
+        }
+        return CACHE.computeIfAbsent(name, n -> switch (n) {
+            case "byte" -> TypeDescription.ForLoadedType.of(byte.class);
+            case "int" -> TypeDescription.ForLoadedType.of(int.class);
+            case "short" -> TypeDescription.ForLoadedType.of(short.class);
+            case "long" -> TypeDescription.ForLoadedType.of(long.class);
+            case "double" -> TypeDescription.ForLoadedType.of(double.class);
+            case "float" -> TypeDescription.ForLoadedType.of(float.class);
+            case "boolean" -> TypeDescription.ForLoadedType.of(boolean.class);
+            case "char" -> TypeDescription.ForLoadedType.of(char.class);
+            case "void" -> TypeDescription.ForLoadedType.of(void.class);
+            default -> TYPE_POOL.describe(n).resolve();
         });
     }
 
@@ -104,7 +109,6 @@ public class TypeUtils {
      * @param clazz the starting class for the search.
      * @param name  the field name.
      * @return the field instance, made accessible for reflection.
-     * @throws NoSuchFieldException if the field is not found in the hierarchy.
      */
     public static Field getField(Class<?> clazz, String name) {
         String key = clazz.getName() + "#" + name;
@@ -124,7 +128,6 @@ public class TypeUtils {
      * @param name  the method name.
      * @param types the actual runtime types of the arguments.
      * @return the best matching method instance.
-     * @throws NoSuchMethodException if no applicable method is found.
      */
     public static Method getMethod(Class<?> clazz, String name, Class<?>[] types) {
         String key = clazz.getName() + "#" + name + Arrays.toString(types);

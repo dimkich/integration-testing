@@ -7,6 +7,8 @@ import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestContainer;
 import io.github.dimkich.integration.testing.TestPart;
 import io.github.dimkich.integration.testing.TestSetupModule;
+import io.github.dimkich.integration.testing.date.time.DateTimeConfig;
+import io.github.dimkich.integration.testing.date.time.PeriodDuration;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
 import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticGenericArrayType;
@@ -45,7 +47,7 @@ import static io.github.dimkich.integration.testing.format.FormatTestUtils.compC
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = {JsonConfig.class, WebConfig.class, JsonTestMapperTest.Config.class})
+@SpringBootTest(classes = {JsonConfig.class, WebConfig.class, JsonTestMapperTest.Config.class, DateTimeConfig.class})
 class JsonTestMapperTest {
     private final JsonMapper jsonMapper;
 
@@ -189,6 +191,7 @@ class JsonTestMapperTest {
                                 })
                         })
                 )), "{\"value\":[\"ParameterizedTypeReference\",\"LinkedHashMap<? extends Integer, ArrayList<? super String>>\"]}"},
+                {new Value(PeriodDuration.valueOf("P1Y1M2DT23H59M59.999S")), "{\"value\":[\"PeriodDuration\",\"P1Y1M2DT23H59M59.999S\"]}"},
         };
     }
 

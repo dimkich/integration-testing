@@ -1,0 +1,7 @@
+FROM alpine:3.12
+RUN apk add --no-cache gcc make musl-dev git
+WORKDIR /build
+ARG FAKETIME_SHA=HEAD
+RUN git clone https://github.com/wolfcw/libfaketime.git . && \
+    git checkout ${FAKETIME_SHA} && \
+    CFLAGS="-DFAKE_STAT -DFAKE_PTHREAD -DFAKE_TIMERS -DFAKE_INTERNAL_CALLS -DFAKE_UTIME -pthread" make

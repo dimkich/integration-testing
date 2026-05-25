@@ -38,6 +38,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * }</pre>
  *
  * <p>
+ * For tests that use Testcontainers, you can apply deterministic time to Docker containers
+ * via {@link #dockerImages()}: specify regex patterns for image names that should receive
+ * libfaketime instrumentation so that in-container time matches the mocked Java time.
+ * </p>
+ *
+ * <p>
  * Only classes that are relevant to time handling are mocked; some JDK time-related
  * types that do not affect the observable notion of “current time” may be left untouched.
  * </p>
@@ -60,4 +66,25 @@ public @interface MockJavaTime {
      * </ul>
      */
     String[] value() default {};
+
+    /**
+     * Regex patterns for Testcontainers Docker image names that should have libfaketime
+     * instrumentation applied, enabling deterministic time inside those containers.
+     * <p>
+     * When non-empty, integration-testing configures matching containers (via
+     * {@link LibFakeTimeSetUp}) so that the OS-level "current time" inside the container
+     * is controlled by the test framework, aligning with the mocked Java Time API.
+     * </p>
+     * <p>
+     * Each value is a regex pattern matched against the full image name. For example:
+     * </p>
+     * <ul>
+     *     <li>{@code "redis.*"} – applies libfaketime to Redis containers;</li>
+     *     <li>{@code "postgres.*|mysql.*"} – applies to both Postgres and MySQL images.</li>
+     * </ul>
+     *
+     * @see LibFakeTimeSetUp
+     * @see LibFakeTimeTracker
+     */
+    String[] dockerImages() default {};
 }

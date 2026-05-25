@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.execution.junit;
 
 import io.github.dimkich.integration.testing.InstrumentationManager;
 import io.github.dimkich.integration.testing.RepeatInstrumentation;
+import io.github.dimkich.integration.testing.date.time.LibFakeTimeSetUp;
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
 import io.github.dimkich.integration.testing.execution.TestBeanMock;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.util.HashSet;
@@ -81,6 +83,9 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         ClonerAgentSetUp.setClonerInstrumentationIfNone(instrumentation);
         MockJavaTime mockJavaTime = testClass.getAnnotation(MockJavaTime.class);
         if (mockJavaTime != null) {
+            if (mockJavaTime.dockerImages().length > 0) {
+                LibFakeTimeSetUp.setUp(instrumentation, mockJavaTime.dockerImages());
+            }
             MockJavaTimeSetUp.setUp(mockJavaTime);
         }
         AgentBuilder builder = instrumentationManager.createAgentBuilder();
@@ -101,10 +106,11 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
      * @param context JUnit extension context (not used, but part of the contract)
      */
     @Override
-    public void afterAll(ExtensionContext context) {
+    public void afterAll(ExtensionContext context) throws IOException {
         MockitoGlobal.stop();
         MockJavaTimeSetUp.tearDown();
         instrumentationManager.reset(instrumentation);
+        LibFakeTimeSetUp.tearDown();
         WaitCompletionManager.tearDown();
         PointcutRegistry.clear();
         testOpenAPIS = List.of();

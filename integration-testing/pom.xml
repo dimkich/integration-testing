@@ -87,6 +87,11 @@
             <artifactId>janino</artifactId>
             <version>${janino.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.playtika.testcontainers</groupId>
+            <artifactId>testcontainers-common</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.platform</groupId>

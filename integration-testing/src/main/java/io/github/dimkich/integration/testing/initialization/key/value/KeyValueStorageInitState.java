@@ -114,7 +114,7 @@ public class KeyValueStorageInitState implements TestInitState<KeyValueStorageIn
          * Keys are strings and values can be any object type.
          * If {@code null}, no data will be loaded.
          */
-        private Map<String, Object> map;
+        private Map<Object, Object> map;
 
         /**
          * Whether to clear all existing data from the storage before loading new data.
@@ -129,9 +129,10 @@ public class KeyValueStorageInitState implements TestInitState<KeyValueStorageIn
          * @param init the initialization configuration containing data and clear flag
          * @return a new storage state instance initialized with the configuration data
          */
+        @SuppressWarnings("unchecked")
         static StorageState of(KeyValueStorageInit init) {
             StorageState storageState = new StorageState();
-            storageState.map = init.getMap();
+            storageState.map = (Map<Object, Object>) init.getMap();
             storageState.clear = init.getClear() != null && init.getClear();
             return storageState;
         }

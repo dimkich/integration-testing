@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.Map;
-
 /**
  * Represents a key-value storage initialization configuration for integration tests.
  * This class extends {@link io.github.dimkich.integration.testing.initialization.TestInit}
@@ -107,5 +105,5 @@ public class KeyValueStorageInit extends TestInit {
      * </init>
      * }</pre>
      */
-    private Map<String, Object> map;
+    private Object map;
 }

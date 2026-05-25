@@ -1,0 +1,45 @@
+spring:
+  data:
+    redis:
+      host: ${embedded.redis.host}
+      port: ${embedded.redis.port}
+      password: ${embedded.redis.password}
+
+integration:
+  testing:
+    redis:
+      connections:
+        redissonConnectionFactory:
+          schemas:
+            "[redisson.TestRedisDto]":
+              bean-ref: testRedisTemplate
+            jedis:
+              ignore: true
+            "[redisson.bit]":
+              class-ref: io.github.dimkich.integration.testing.redis.schema.ByteArrayRedisDataSchema
+            "[redisson.xor]":
+              class-ref: io.github.dimkich.integration.testing.redis.schema.ByteArrayRedisDataSchema
+            "[redisson.hll]":
+              bean-ref: testRedisTemplate
+            "[redisson.hidden]":
+              ignore: true
+        jedisConnectionFactory:
+          multipleDatabases: true
+          schemas:
+            redisson:
+              ignore: true
+    wait.completion.enabled: true
+    storage:
+      storages:
+        redissonConnectionFactory:
+          valueType: ',,OBJECT,OBJECT'
+          keyType: ',OBJECT,OBJECT,OBJECT'
+          changeType: ',true,true,true'
+        jedisConnectionFactory:
+          valueType: ',,OBJECT,OBJECT'
+          keyType: ',OBJECT,OBJECT,OBJECT'
+          changeType: ',true,true,true'
+        snapshotTestFactory:
+          valueType: ',,OBJECT,OBJECT'
+          keyType: ',OBJECT,OBJECT,OBJECT'
+          changeType: ',true,true,true'

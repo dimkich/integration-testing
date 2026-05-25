@@ -55,6 +55,7 @@ public class CommonFormatConfig {
                 .addSubTypes(boolean[].class, "boolean[]")
                 .addSubTypes(char[].class, "char[]")
                 .addSubTypes(Object[].class, "Object[]")
+                .addSubTypes(String[].class, "String[]")
                 .addSubTypes(UUID.class, "UUID")
                 .addAlias(ByteArrayResource.class, "Resource")
                 .addAlias(Class.forName("java.util.ImmutableCollections$List12"), "ArrayList")
@@ -70,7 +71,8 @@ public class CommonFormatConfig {
                         float.class, SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class,
                         LinkedHashMapObjectObject.class, LinkedHashMapStringObject.class, RuntimeException.class,
                         UnsupportedOperationException.class, IllegalStateException.class, NullPointerException.class,
-                        IllegalArgumentException.class, AbstractMap.SimpleEntry.class)
+                        IllegalArgumentException.class, NumberFormatException.class, AbstractMap.SimpleEntry.class,
+                        Duration.class)
                 .clonerTypeAction(Throwable.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)

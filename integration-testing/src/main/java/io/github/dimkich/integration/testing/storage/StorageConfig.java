@@ -4,7 +4,6 @@ import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.storage.exclusion.FieldExclusionProcessor;
-import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueOperationsConfig;
 import io.github.dimkich.integration.testing.storage.mapping.StorageMappingConfig;
 import io.github.dimkich.integration.testing.storage.pojo.PojoAccessorService;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageFactory;
@@ -41,7 +40,7 @@ import java.util.stream.Collectors;
 @Configuration
 @RequiredArgsConstructor
 @Import({TestDataStorages.class, ObjectsDifference.class, MockInvokeConfig.class, StorageMappingConfig.class,
-        PojoAccessorService.class, FieldExclusionProcessor.class})
+        PojoAccessorService.class, FieldExclusionProcessor.class, JacksonConverter.class})
 @EnableConfigurationProperties(StorageProperties.class)
 public class StorageConfig {
     @Setter(onMethod_ = {@Autowired, @Lazy})
@@ -59,6 +58,7 @@ public class StorageConfig {
                 .collect(Collectors.toMap(SQLDataStorageFactory::getDriverClassName, Function.identity()));
     }
 
+    @SuppressWarnings("unused")
     public TestDataStorage createDataSourceStorage(String name, DataSource dataSource) throws SQLException {
         @Cleanup Connection connection = dataSource.getConnection();
         String url = connection.getMetaData().getURL();
@@ -95,7 +95,6 @@ public class StorageConfig {
     }
 
     @Configuration
-    @Import(KeyValueOperationsConfig.class)
     @EnableConfigurationProperties(LiquibaseProperties.class)
     public static class DataSourceConfig implements BeanFactoryPostProcessor {
         @Override

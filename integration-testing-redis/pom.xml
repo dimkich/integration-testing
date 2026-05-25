@@ -25,19 +25,26 @@
             <artifactId>embedded-redis</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.moilioncircle</groupId>
+            <artifactId>redis-replicator</artifactId>
+            <version>3.11.0</version>
+        </dependency>
+        <dependency>
             <groupId>io.github.dimkich.integration.testing</groupId>
             <artifactId>integration-testing</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>3.23.5</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
-            <groupId>org.redisson</groupId>
-            <artifactId>redisson</artifactId>
-            <scope>provided</scope>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

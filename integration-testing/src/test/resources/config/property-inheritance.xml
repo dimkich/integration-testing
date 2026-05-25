@@ -1,0 +1,174 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Case" name="Override value and inherit nulls">
+        <bean>propertyInheritanceTestFacade</bean>
+        <method>merge</method>
+        <request type="SimpleConfig">
+            <name>ChildName</name>
+        </request>
+        <request type="SimpleConfig">
+            <name>ParentName</name>
+            <timeout>1000</timeout>
+        </request>
+        <response type="SimpleConfig">
+            <name>ChildName</name>
+            <timeout>1000</timeout>
+        </response>
+    </test>
+    <test type="Case" name="Union of Sets and Maps">
+        <bean>propertyInheritanceTestFacade</bean>
+        <method>merge</method>
+        <request type="SimpleConfig">
+            <tags></tags>
+            <meta>
+                <type>LinkedHashMap</type>
+                <k1>v1</k1>
+            </meta>
+        </request>
+        <request type="SimpleConfig">
+            <tags></tags>
+            <meta>
+                <type>LinkedHashMap</type>
+                <k2>v2</k2>
+            </meta>
+        </request>
+        <response type="SimpleConfig">
+            <tags></tags>
+            <meta>
+                <type>LinkedHashMap</type>
+                <k1>v1</k1>
+                <k2>v2</k2>
+            </meta>
+        </response>
+    </test>
+    <test type="Case" name="Should not inherit beanRef if classRef is set">
+        <bean>propertyInheritanceTestFacade</bean>
+        <method>merge</method>
+        <request type="ExclusiveConfig">
+            <classRef>com.MyClass</classRef>
+            <other>local</other>
+        </request>
+        <request type="ExclusiveConfig">
+            <beanRef>globalBean</beanRef>
+            <other>global</other>
+        </request>
+        <response type="ExclusiveConfig">
+            <classRef>com.MyClass</classRef>
+            <other>local</other>
+        </response>
+    </test>
+    <test type="Case" name="Merge nested POJO">
+        <bean>propertyInheritanceTestFacade</bean>
+        <method>merge</method>
+        <request type="NestedContainer">
+            <config>
+                <name>NestedChild</name>
+            </config>
+        </request>
+        <request type="NestedContainer">
+            <config>
+                <timeout>5000</timeout>
+            </config>
+            <globalId>GLOBAL_01</globalId>
+        </request>
+        <response type="NestedContainer">
+            <config>
+                <name>NestedChild</name>
+                <timeout>5000</timeout>
+            </config>
+            <globalId>GLOBAL_01</globalId>
+        </response>
+    </test>
+    <test type="Container" name="Null Input Validation">
+        <test type="Case" name="Target is Null">
+            <bean>propertyInheritanceTestFacade</bean>
+            <method>merge</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="SimpleConfig">
+                <name>Parent</name>
+            </request>
+        </test>
+        <test type="Case" name="Source is Null">
+            <bean>propertyInheritanceTestFacade</bean>
+            <method>merge</method>
+            <request type="SimpleConfig">
+                <name>Child</name>
+            </request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response type="SimpleConfig">
+                <name>Child</name>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="Exclusive Groups Advanced">
+        <test type="Case" name="Child sets B, should ignore A and C from Parent">
+            <bean>propertyInheritanceTestFacade</bean>
+            <method>merge</method>
+            <request type="TripleExclusiveConfig">
+                <b>ChildValueB</b>
+            </request>
+            <request type="TripleExclusiveConfig">
+                <a>ParentValueA</a>
+                <c>ParentValueC</c>
+            </request>
+            <response type="TripleExclusiveConfig">
+                <b>ChildValueB</b>
+            </response>
+        </test>
+        <test type="Case" name="Child group is empty, should inherit everything from parent">
+            <bean>propertyInheritanceTestFacade</bean>
+            <method>merge</method>
+            <request type="TripleExclusiveConfig"/>
+            <request type="TripleExclusiveConfig">
+                <a>A</a>
+                <b>B</b>
+            </request>
+            <response type="TripleExclusiveConfig">
+                <a>A</a>
+                <b>B</b>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="Set Merging Logic">
+        <test type="Case" name="Union without duplication">
+            <bean>propertyInheritanceTestFacade</bean>
+            <method>merge</method>
+            <request type="SimpleConfig">
+                <tags></tags>
+            </request>
+            <request type="SimpleConfig">
+                <tags></tags>
+            </request>
+            <response type="SimpleConfig">
+                <tags></tags>
+            </response>
+        </test>
+        <test type="Case" name="Merge complex items in set">
+            <bean>propertyInheritanceTestFacade</bean>
+            <method>merge</method>
+            <request type="SetContainer">
+                <items>
+                    <id>1</id>
+                    <value>ChildValue</value>
+                </items>
+            </request>
+            <request type="SetContainer">
+                <items>
+                    <id>2</id>
+                    <value>ParentValue</value>
+                </items>
+            </request>
+            <response type="SetContainer">
+                <items>
+                    <id>2</id>
+                    <value>ParentValue</value>
+                </items>
+                <items>
+                    <id>1</id>
+                    <value>ChildValue</value>
+                </items>
+            </response>
+        </test>
+    </test>
+</test>

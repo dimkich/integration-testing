@@ -16,8 +16,7 @@ Usage
 
 To activate time mocking, add the `@MockJavaTime` annotation to the test class:
 
-```
-java  
+```java  
 @MockJavaTime  
 @SpringBootTest  
 public class MyTimeSensitiveTest {  
@@ -37,9 +36,10 @@ ways to manage time:
 Annotation Attributes
 ---------------------
 
-| Attribute | Type       | Description                                                                                   | Default Value      |
-|-----------|------------|-----------------------------------------------------------------------------------------------|--------------------|
-| `value()` | `String[]` | Prefixes of class/package names for which `System.currentTimeMillis()` calls should be mocked | `{}` (empty array) |
+| Attribute        | Type       | Description                                                                                   | Default Value      |
+|------------------|------------|-----------------------------------------------------------------------------------------------|--------------------|
+| `value()`        | `String[]` | Prefixes of class/package names for which `System.currentTimeMillis()` calls should be mocked | `{}` (empty array) |
+| `dockerImages()` | `String[]` | Regex patterns for Testcontainers Docker image names that should have libfaketime applied.    | `{}` (empty array) |
 
 ### Details of the `value()` Attribute
 
@@ -50,8 +50,7 @@ Each value is interpreted as a "starts with" pattern for the fully qualified cla
 
 **Usage Example:**
 
-```
-java  
+```java  
 @MockJavaTime({  
     "com.example.myapp",          // whole package hierarchy  
     "org.thirdparty.lib.Client"   // concrete class and its inner classes  
@@ -75,13 +74,48 @@ public class MyTimeSensitiveTest {
 code or third-party libraries. For standard Java Time API mocking (`Clock`, `Instant`, `LocalDateTime`, etc.), it is
 sufficient to use `@MockJavaTime` without parameters.
 
+### Details of the `dockerImages()` Attribute
+
+This attribute enables deterministic time control inside Testcontainers Docker containers using libfaketime.
+
+When non-empty, the framework:
+
+    Starts a shared libfaketime-server container (dimkich/libfaketime-server:latest) to handle time updates.
+    Intercepts container startup via a ByteBuddy agent.
+    Detects the container OS (glibc Linux vs Alpine) and architecture (x64 vs arm64) to select the correct libfaketime binary.
+    Mounts the shared library and configures environment variables (LD_PRELOAD, FAKETIME_TIMESTAMP_FILE, TZ, etc.).
+    Connects the container to the server using shared IPC mode.
+
+This ensures that the OS-level time inside the matched Docker containers is dynamically updated alongside the mocked
+Java Time API during test execution.
+
+Each entry is a regular expression matched against the full Docker image name.
+
+Examples:
+
+    "redis.*" — applies libfaketime to all Redis containers.
+    "postgres.*|mysql.*" — applies to Postgres and MySQL images.
+
+**Usage Example:**
+
+```java  
+
+@MockJavaTime(
+        value = {"com.example.service"},
+        dockerImages = {"postgres.*", "redis.*"}
+)
+public class MyDatabaseTimeTest {
+  // Both Java Time and Database containers run with synchronized mocked time
+}
+
+```
+
 Standard Usage Scenario
 -----------------------
 
 **Recommended approach:** Set a fixed time once in the root container and do not change it in child tests.
 
-```
-xml  
+```xml  
 <?xml version='1.1' encoding='UTF-8'?>  
 <test type="Container">  
     <!-- Set time once for all tests -->  
@@ -124,8 +158,7 @@ Usage Examples
 
 ### Example 1: Test with Fixed Time (Standard Scenario)
 
-```
-xml  
+```xml  
 <?xml version='1.1' encoding='UTF-8'?>  
 <test type="Container">  
     <!-- Time is set once for all tests -->  
@@ -144,8 +177,7 @@ xml
 
 Using `addDuration` to shift time relative to the previous state or base time.
 
-```
-xml  
+```xml  
 <?xml version='1.1' encoding='UTF-8'?>  
 <test type="Container">  
     <!-- Base time initialization for the container -->  
@@ -174,8 +206,7 @@ xml
 
 Combining absolute time and shift at different hierarchy levels.
 
-```
-xml  
+```xml  
 <?xml version='1.1' encoding='UTF-8'?>  
 <test type="Container">  
     <test type="Case" name="increment with additional init">  
@@ -248,8 +279,7 @@ Troubleshooting
 **Cause:** `System.currentTimeMillis()` calls in third-party code are not intercepted by default.  
 **Solution:** Specify the library package in the `value()` attribute:
 
-```
-java  
+```java  
 @MockJavaTime({"org.thirdparty.lib"})  
 public class MyTest {  
     // ...  
@@ -268,8 +298,7 @@ tests in the class.
 **Cause:** By default, only Java Time API classes are mocked.  
 **Solution:** To mock `System.currentTimeMillis()`, specify packages in `value()`:
 
-```
-java  
+```java  
 @MockJavaTime({"com.myapp.service"})  
 public class MyTest {  
     // ...  
@@ -284,5 +313,6 @@ Recommendations
 2. **Set time in the root Container** --- this is the standard scenario that covers most use cases.
 3. **Use `value()` only when necessary** for mocking `System.currentTimeMillis()` in your code or third-party libraries.
 4. **Use `addDuration` for time progression** inside multi-step tests (`TestPart`).
-5. **Check package name uniqueness** in `value()` --- use fully qualified names.
-6. **Do not use `<mockInvoke>` for time** --- use `@MockJavaTime` and `DateTimeInit` for time management.  
+5. **Use `dockerImages()` for container-dependent tests** — synchronizes container system clocks with JVM test clocks.
+6. **Check package name uniqueness** in `value()` --- use fully qualified names.
+7. **Do not use `<mockInvoke>` for time** --- use `@MockJavaTime` and `DateTimeInit` for time management.  

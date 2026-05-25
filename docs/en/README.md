@@ -23,6 +23,21 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
 * **[TestSetupModule Configuration](TestSetupModule.md)** — Type registration, aliases, and cloning setup.
 * **[Test Initialization](Initialization.md)** — Environment setup: Time, DB, Caches, and Mocks.
 
+### Redis
+
+* **[Redis Overview](redis/README.md)** — `@EnableTestRedis` setup, XML examples, data types.
+* **[Data Types](redis/Data-Types.md)** — Initialization, `dataStorageDiff`, XML templates for Hash, List, Set, ZSet,
+  Stream, HyperLogLog.
+* **[Configuration](redis/Configuration.md)** — Connections, Deep Merge, Longest-Prefix Match,
+  full `application-test.yml`.
+* **[Binary Envelopes](redis/Binary-Envelopes.md)** — Envelope structure,
+  tags `{CONTENT}`, `{LEN}`, `{VER}`, `{TS}`, `{CRC32}`, `{FIX}`, `{STR}`, custom tags.
+* **[TTL & Time Shift](redis/TTL-Time-Shift.md)** — Virtual time, hash-field TTL (Redis 7.4+), step-by-step scenario.
+* **[Troubleshooting](redis/Troubleshooting.md)** — `Method not found`, `No handler`, `Redis Sync Timeout`,
+  empty `dataStorageDiff`.
+* **[Extensibility](redis/Extensibility.md)** — Custom codec/schema/data access, `BinarySegment` tags, stream & event
+  handlers, `TestSetupModule.addSubTypes()`.
+
 ### Tools & Integration
 
 * **[IntelliJ IDEA Integration](IDEA-Plugin.md)** — **(New!)** Manage tests via the IDEA Plugin, Visual Diff tool, and

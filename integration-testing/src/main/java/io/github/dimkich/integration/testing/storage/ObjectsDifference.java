@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.storage;
 
+import io.github.dimkich.integration.testing.date.time.PeriodDuration;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
-import io.github.dimkich.integration.testing.storage.pojo.PojoAccessorService;
 import io.github.dimkich.integration.testing.util.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 @Service
@@ -24,9 +25,10 @@ public class ObjectsDifference {
     private static final RecursiveComparisonConfiguration compConfig = new RecursiveComparisonConfiguration();
 
     private final StorageProperties properties;
-    private final PojoAccessorService pojoAccessorService;
+    private final JacksonConverter jacksonConverter;
     private final Function<Object, Object> nonStringKeysConverter = Function.identity();
-    private final Function<Object, Boolean> simpleTypeDetector = o -> BeanUtils.isSimpleValueType(o.getClass());
+    private final Function<Object, Boolean> simpleTypeDetector = o -> BeanUtils.isSimpleValueType(o.getClass())
+            || o.getClass() == PeriodDuration.class || o.getClass() == byte[].class;
 
     private String name;
 
@@ -43,6 +45,9 @@ public class ObjectsDifference {
         }
         if ((left == null || left instanceof Map<?, ?>) && right instanceof Map<?, ?>) {
             return mapDiff(left == null ? Map.of() : (Map<?, ?>) left, (Map<?, ?>) right, level);
+        }
+        if (right instanceof Set<?> rightSet) {
+            return setDiff(left instanceof Set<?> ? (Set<?>) left : Set.of(), rightSet, level);
         }
         if ((left == null || left instanceof Collection<?>) && right instanceof Collection<?>) {
             return right;
@@ -81,9 +86,24 @@ public class ObjectsDifference {
         return container.isEmpty() ? null : container;
     }
 
+    private Object setDiff(Set<?> leftSet, Set<?> rightSet, int level) {
+        Container container = Container.create(properties.getKeyType(name, level), properties.getValueType(name, level),
+                properties.getSort(name, level), properties.getChangeType(name, level));
+
+        rightSet.stream()
+                .filter(item -> !leftSet.contains(item))
+                .forEach(item -> container.addEntry(Container.ChangeType.added, null, item, this::convertKey));
+
+        leftSet.stream()
+                .filter(item -> !rightSet.contains(item))
+                .forEach(item -> container.addEntry(Container.ChangeType.deleted, null, item, this::convertKey));
+
+        return container.isEmpty() ? null : container;
+    }
+
     private Object pojoDiff(Object left, Object right, int level) {
-        Map<String, Object> leftMap = pojoAccessorService.forBean(left).asMap();
-        Map<String, Object> rightMap = pojoAccessorService.forBean(right).asMap();
+        Map<String, Object> leftMap = jacksonConverter.convertPojo(left);
+        Map<String, Object> rightMap = jacksonConverter.convertPojo(right);
         return mapDiff(leftMap, rightMap, level);
     }
 
@@ -109,7 +129,7 @@ public class ObjectsDifference {
         if (o1 == null || o2 == null) {
             return o1 == o2;
         }
-        if (o1.getClass() == o1.getClass().getMethod("equals", Object.class).getDeclaringClass()) {
+        if (simpleTypeDetector.apply(o1) && simpleTypeDetector.apply(o2)) {
             return Objects.equals(o1, o2);
         }
         return compCalculator.determineDifferences(o1, o2, compConfig).isEmpty();

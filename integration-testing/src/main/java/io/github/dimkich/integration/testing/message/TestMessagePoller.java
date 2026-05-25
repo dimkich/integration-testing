@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing.message;
 
-import io.github.dimkich.integration.testing.Environment;
+import io.github.dimkich.integration.testing.config.Environment;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

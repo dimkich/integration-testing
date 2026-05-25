@@ -1,0 +1,195 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Case" name="Exclude root and nested keys in Map">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request type="LinkedHashMap">
+            <id>1</id>
+            <secret>password123</secret>
+            <metadata type="LinkedHashMap">
+                <ip>127.0.0.1</ip>
+                <token>jwt-secret-token</token>
+            </metadata>
+        </request>
+        <request type="ArrayList">
+            <item>secret</item>
+            <item>metadata.token</item>
+        </request>
+        <response type="LinkedHashMap">
+            <id>1</id>
+            <metadata type="LinkedHashMap">
+                <ip>127.0.0.1</ip>
+            </metadata>
+        </response>
+    </test>
+    <test type="Case" name="Handle int, boolean and nested object">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request type="TestUser">
+            <id>100</id>
+            <name>Ivan</name>
+            <active>true</active>
+            <category> </category>
+            <profile>
+                <email>ivan@test.com</email>
+                <rank>5</rank>
+            </profile>
+        </request>
+        <request type="ArrayList">
+            <item>id</item>
+            <item>active</item>
+            <item>profile.email</item>
+        </request>
+        <response type="TestUser">
+            <id>0</id>
+            <name>Ivan</name>
+            <active>false</active>
+            <category> </category>
+            <profile>
+                <rank>5</rank>
+            </profile>
+        </response>
+    </test>
+    <test type="Case" name="Exclude field in every element of a list">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request type="TestUser">
+            <id>0</id>
+            <name>Admin</name>
+            <active>false</active>
+            <category> </category>
+            <tags>
+                <code>RED</code>
+                <priority>1</priority>
+            </tags>
+            <tags>
+                <code>BLUE</code>
+                <priority>10</priority>
+            </tags>
+        </request>
+        <request type="ArrayList">
+            <item>tags.priority</item>
+        </request>
+        <response type="TestUser">
+            <id>0</id>
+            <name>Admin</name>
+            <active>false</active>
+            <category> </category>
+            <tags>
+                <code>RED</code>
+                <priority>0</priority>
+            </tags>
+            <tags>
+                <code>BLUE</code>
+                <priority>0</priority>
+            </tags>
+        </response>
+    </test>
+    <test type="Case" name="Should not change anything">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request type="LinkedHashMap">
+            <key>value</key>
+        </request>
+        <request type="ArrayList">
+            <item>wrong.path</item>
+            <item>another.missing.field</item>
+        </request>
+        <response type="LinkedHashMap">
+            <key>value</key>
+        </response>
+    </test>
+    <test type="Case" name="Reset char field to null-char">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request type="TestUser">
+            <id>0</id>
+            <name>Tester</name>
+            <active>false</active>
+            <category>A</category>
+        </request>
+        <request type="ArrayList">
+            <item>category</item>
+        </request>
+        <response type="TestUser">
+            <id>0</id>
+            <name>Tester</name>
+            <active>false</active>
+            <category> </category>
+        </response>
+    </test>
+    <test type="Case" name="Exclude field inside a raw Java array">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request type="TestArrayContainer">
+            <tagArray>
+                <code>ALPHA</code>
+                <priority>1</priority>
+            </tagArray>
+            <tagArray>
+                <code>BETA</code>
+                <priority>2</priority>
+            </tagArray>
+        </request>
+        <request type="ArrayList">
+            <item>tagArray.code</item>
+        </request>
+        <response type="TestArrayContainer">
+            <tagArray>
+                <priority>1</priority>
+            </tagArray>
+            <tagArray>
+                <priority>2</priority>
+            </tagArray>
+        </response>
+    </test>
+    <test type="Case" name="Handle null input data">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        <request type="ArrayList">
+            <item>some.path</item>
+        </request>
+    </test>
+    <test type="Case" name="Handle null paths list">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request type="LinkedHashMap">
+            <key>value</key>
+        </request>
+        <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        <response type="LinkedHashMap">
+            <key>value</key>
+        </response>
+    </test>
+    <test type="Case" name="Handle empty paths list">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request type="LinkedHashMap">
+            <key>value</key>
+        </request>
+        <request type="ArrayList"/>
+        <response type="LinkedHashMap">
+            <key>value</key>
+        </response>
+    </test>
+    <test type="Case" name="Reset Object field to null">
+        <bean>fieldExclusionTestFacade</bean>
+        <method>apply</method>
+        <request type="TestUser">
+            <id>0</id>
+            <name>John</name>
+            <active>false</active>
+            <category> </category>
+        </request>
+        <request type="ArrayList">
+            <item>name</item>
+        </request>
+        <response type="TestUser">
+            <id>0</id>
+            <active>false</active>
+            <category> </category>
+        </response>
+    </test>
+</test>

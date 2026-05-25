@@ -23,6 +23,21 @@
 * **[Конфигурация TestSetupModule](TestSetupModule.md)** — Регистрация типов, алиасов и настройка клонирования.
 * **[Инициализация тестов](Initialization.md)** — Настройка окружения: время, БД, кэши, моки.
 
+### Redis
+
+* **[Обзор Redis](redis/README.md)** — Настройка `@EnableTestRedis`, XML-примеры, типы данных.
+* **[Типы данных](redis/Data-Types.md)** — Инициализация, `dataStorageDiff`, XML-шаблоны для Hash, List, Set, ZSet,
+  Stream, HyperLogLog.
+* **[Конфигурация](redis/Configuration.md)** — Подключения, Deep Merge, Longest-Prefix Match,
+  полный `application-test.yml`.
+* **[Бинарные упаковки](redis/Binary-Envelopes.md)** — Envelope-структура,
+  теги `{CONTENT}`, `{LEN}`, `{VER}`, `{TS}`, `{CRC32}`, `{FIX}`, `{STR}`, кастомные теги.
+* **[TTL и Time Shift](redis/TTL-Time-Shift.md)** — Виртуальное время, TTL хэш-полей (Redis 7.4+), пошаговый сценарий.
+* **[Устранение неполадок](redis/Troubleshooting.md)** — `Method not found`, `No handler`, `Redis Sync Timeout`,
+  пустой `dataStorageDiff`.
+* **[Расширяемость](redis/Extensibility.md)** — Кастомные кодек/схема/доступ к данным, теги `BinarySegment`, обработчики
+  потоков и событий, `TestSetupModule.addSubTypes()`.
+
 ### Инструменты и Интеграция
 
 * **[Интеграция с IntelliJ IDEA](IDEA-Plugin.md)** — **(New!)** Управление тестами через плагин, визуальный Diff и режим

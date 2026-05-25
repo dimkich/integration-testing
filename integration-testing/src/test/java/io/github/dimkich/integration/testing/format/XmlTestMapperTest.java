@@ -12,6 +12,8 @@ import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestContainer;
 import io.github.dimkich.integration.testing.TestPart;
 import io.github.dimkich.integration.testing.TestSetupModule;
+import io.github.dimkich.integration.testing.date.time.DateTimeConfig;
+import io.github.dimkich.integration.testing.date.time.PeriodDuration;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
 import io.github.dimkich.integration.testing.format.common.type.synthetic.SyntheticGenericArrayType;
@@ -57,7 +59,7 @@ import static io.github.dimkich.integration.testing.format.FormatTestUtils.compC
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = {XmlConfig.class, WebConfig.class, XmlTestMapperTest.Config.class})
+@SpringBootTest(classes = {XmlConfig.class, WebConfig.class, XmlTestMapperTest.Config.class, DateTimeConfig.class})
 class XmlTestMapperTest {
 
     private final XmlMapper xmlMapper;
@@ -471,6 +473,77 @@ class XmlTestMapperTest {
     <name>s</name>
 </TypeTest>
 """},
+                {new TypeTest(1, map(new LinkedHashMapStringObject<>(), "k",
+                        map(new LinkedHashMapObjectObject<>(), "k1", 1, "k2", "s")), "s"), """
+<TypeTest>
+    <id>1</id>
+    <data type="LinkedHashMapStringObject">
+        <entry key="k" utype="LinkedHashMapObjectObject">
+            <entry>
+                <key>k1</key>
+                <value type="Integer">1</value>
+            </entry>
+            <entry>
+                <key>k2</key>
+                <value>s</value>
+            </entry>
+        </entry>
+    </data>
+    <name>s</name>
+</TypeTest>
+"""},
+                {new TypeTest(1, map(new LinkedHashMapObjectObject<>(), "k",
+                        map(new LinkedHashMapStringObject<>(), "k1", 1, "k2", "s")), "s"), """
+<TypeTest>
+    <id>1</id>
+    <data type="LinkedHashMapObjectObject">
+        <entry>
+            <key>k</key>
+            <value type="LinkedHashMapStringObject">
+                <entry key="k1" utype="Integer">1</entry>
+                <entry key="k2" utype="String">s</entry>
+            </value>
+        </entry>
+    </data>
+    <name>s</name>
+</TypeTest>
+"""},
+                {map(new LinkedHashMapStringObject<>(), "k", List.of(1, 2, 3)), """
+<LinkedHashMapStringObject>
+    <entry key="k" utype="ArrayList">
+        <value type="Integer">1</value>
+        <value type="Integer">2</value>
+        <value type="Integer">3</value>
+    </entry>
+</LinkedHashMapStringObject>
+"""},
+                {map(new LinkedHashMapStringObject<>(), "k", new TypeTest(1, List.of(1, 2, 3), "s")), """
+<LinkedHashMapStringObject>
+    <entry key="k" utype="TypeTest">
+        <id>1</id>
+        <data type="ArrayList">
+            <data type="Integer">1</data>
+            <data type="Integer">2</data>
+            <data type="Integer">3</data>
+        </data>
+        <name>s</name>
+    </entry>
+</LinkedHashMapStringObject>
+"""},
+                {new TypeTest(1, map(new LinkedHashMapStringObject<>(), "k",
+                        new TypeTest(null, List.of("1"), null)), "s"), """
+<TypeTest>
+    <id>1</id>
+    <data type="LinkedHashMapStringObject">
+        <entry key="k" utype="TypeTest">
+            <data type="ArrayList">
+                <data>1</data>
+            </data>
+        </entry>
+    </data>
+    <name>s</name>
+</TypeTest>
+"""},
                 {new TypeTest(1, map(new LinkedHashMapStringObject<>(), "k1", 1, "k2", "s", "k3", null), "s"), """
 <TypeTest>
     <id>1</id>
@@ -712,6 +785,11 @@ class XmlTestMapperTest {
 <TypeTest>
     <name> </name>
 </TypeTest>
+"""},
+                {new Value(PeriodDuration.valueOf("P1Y1M2DT23H59M59.999S")), """
+<Value>
+    <value type="PeriodDuration">P1Y1M2DT23H59M59.999S</value>
+</Value>
 """},
         };
     }

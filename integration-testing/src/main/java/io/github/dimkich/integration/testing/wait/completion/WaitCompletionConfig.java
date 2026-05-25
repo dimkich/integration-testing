@@ -55,7 +55,7 @@ public class WaitCompletionConfig {
                     .orElseThrow(IllegalStateException::new);
 
             String env = environment.getProperty("integration.testing.environment");
-            if (properties.isKafkaStandardTask() && io.github.dimkich.integration.testing.Environment.REAL.equals(env)) {
+            if (properties.isKafkaStandardTask() && io.github.dimkich.integration.testing.config.Environment.REAL.equals(env)) {
                 registerAdvisorDefinition("execution(* org.springframework.kafka.core.KafkaTemplate.send(..))",
                         "kafkaTemplateInterceptor");
             }

@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class XmlTokenBuffer extends TokenBuffer {
-    private JsonToken currentToken;
+    private final JsonToken currentToken;
 
     public XmlTokenBuffer(JsonParser p, DeserializationContext ctxt) {
         super(p, ctxt);
@@ -119,6 +119,7 @@ public class XmlTokenBuffer extends TokenBuffer {
         /**********************************************************
          */
         @SneakyThrows
+        @SuppressWarnings("ClassEscapesDefinedScope")
         public XmlTokenParser(TokenBuffer.Segment firstSeg, ObjectCodec codec, boolean hasNativeTypeIds,
                               boolean hasNativeObjectIds, JsonStreamContext parentContext,
                               StreamReadConstraints streamReadConstraints, JsonToken currentToken) {
@@ -165,6 +166,13 @@ public class XmlTokenBuffer extends TokenBuffer {
                 _parsingContext.convertToArray();
                 _parsingContext.setCurrentName(getParsingContext().getParent().getCurrentName());
                 _currToken = t = JsonToken.START_ARRAY;
+            }
+            if (t == JsonToken.FIELD_NAME && !_parsingContext.inArray()) {
+                _parsingContext.convertToArray();
+                _parsingContext.setCurrentName(getText());
+                _currToken = JsonToken.START_ARRAY;
+                repeatToken = true;
+                return true;
             }
             return (t == JsonToken.START_ARRAY);
         }
@@ -214,7 +222,8 @@ public class XmlTokenBuffer extends TokenBuffer {
         /**********************************************************
          */
 
-        public JsonToken peekNextToken() throws IOException {
+        @SuppressWarnings("unused")
+        public JsonToken peekNextToken() {
             // closed? nothing more to peek, either
             if (_closed) return null;
             TokenBuffer.Segment seg = _segment;
@@ -248,6 +257,7 @@ public class XmlTokenBuffer extends TokenBuffer {
         private final Deque<JsonToken> nextToken = new ArrayDeque<>();
         private boolean repeatToken = false;
 
+        @SuppressWarnings("UnusedReturnValue")
         private JsonToken _nextToken() {
             // If we are closed, nothing more to do
             if (_closed || (_segment == null)) return null;
@@ -409,13 +419,10 @@ public class XmlTokenBuffer extends TokenBuffer {
             if (_currToken == null) {
                 return null;
             }
-            switch (_currToken) {
-                case VALUE_NUMBER_INT:
-                case VALUE_NUMBER_FLOAT:
-                    return ClassUtil.nullOrToString(_currentObject());
-                default:
-                    return _currToken.asString();
-            }
+            return switch (_currToken) {
+                case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> ClassUtil.nullOrToString(_currentObject());
+                default -> _currToken.asString();
+            };
         }
 
         @Override
@@ -452,12 +459,10 @@ public class XmlTokenBuffer extends TokenBuffer {
             // can only occur for floating-point numbers
             if (_currToken == JsonToken.VALUE_NUMBER_FLOAT) {
                 Object value = _currentObject();
-                if (value instanceof Double) {
-                    Double v = (Double) value;
+                if (value instanceof Double v) {
                     return v.isNaN() || v.isInfinite();
                 }
-                if (value instanceof Float) {
-                    Float v = (Float) value;
+                if (value instanceof Float v) {
                     return v.isNaN() || v.isInfinite();
                 }
             }
@@ -469,8 +474,7 @@ public class XmlTokenBuffer extends TokenBuffer {
             Number n = getNumberValue(true);
             if (n instanceof BigInteger) {
                 return (BigInteger) n;
-            } else if (n instanceof BigDecimal) {
-                final BigDecimal bd = (BigDecimal) n;
+            } else if (n instanceof BigDecimal bd) {
                 streamReadConstraints().validateBigIntegerScale(bd.scale());
                 return bd.toBigInteger();
             }
@@ -561,8 +565,7 @@ public class XmlTokenBuffer extends TokenBuffer {
             // Difficult to really support numbers-as-Strings; but let's try.
             // NOTE: no access to DeserializationConfig, unfortunately, so cannot
             // try to determine Double/BigDecimal preference...
-            if (value instanceof String) {
-                String str = (String) value;
+            if (value instanceof String str) {
                 final int len = str.length();
                 if (_currToken == JsonToken.VALUE_NUMBER_INT) {
                     if (preferBigNumbers
@@ -594,11 +597,11 @@ public class XmlTokenBuffer extends TokenBuffer {
                     + ClassUtil.classNameOf(value));
         }
 
-        private final boolean _smallerThanInt(Number n) {
+        private boolean _smallerThanInt(Number n) {
             return (n instanceof Short) || (n instanceof Byte);
         }
 
-        private final boolean _smallerThanLong(Number n) {
+        private boolean _smallerThanLong(Number n) {
             return (n instanceof Integer) || (n instanceof Short) || (n instanceof Byte);
         }
 
@@ -613,8 +616,7 @@ public class XmlTokenBuffer extends TokenBuffer {
                 }
                 return result;
             }
-            if (n instanceof BigInteger) {
-                BigInteger big = (BigInteger) n;
+            if (n instanceof BigInteger big) {
                 if (BI_MIN_INT.compareTo(big) > 0
                         || BI_MAX_INT.compareTo(big) < 0) {
                     reportOverflowInt();
@@ -626,8 +628,7 @@ public class XmlTokenBuffer extends TokenBuffer {
                     reportOverflowInt();
                 }
                 return (int) d;
-            } else if (n instanceof BigDecimal) {
-                BigDecimal big = (BigDecimal) n;
+            } else if (n instanceof BigDecimal big) {
                 if (BD_MIN_INT.compareTo(big) > 0
                         || BD_MAX_INT.compareTo(big) < 0) {
                     reportOverflowInt();
@@ -639,8 +640,7 @@ public class XmlTokenBuffer extends TokenBuffer {
         }
 
         protected long _convertNumberToLong(Number n) throws IOException {
-            if (n instanceof BigInteger) {
-                BigInteger big = (BigInteger) n;
+            if (n instanceof BigInteger big) {
                 if (BI_MIN_LONG.compareTo(big) > 0
                         || BI_MAX_LONG.compareTo(big) < 0) {
                     reportOverflowLong();
@@ -652,8 +652,7 @@ public class XmlTokenBuffer extends TokenBuffer {
                     reportOverflowLong();
                 }
                 return (long) d;
-            } else if (n instanceof BigDecimal) {
-                BigDecimal big = (BigDecimal) n;
+            } else if (n instanceof BigDecimal big) {
                 if (BD_MIN_LONG.compareTo(big) > 0
                         || BD_MAX_LONG.compareTo(big) < 0) {
                     reportOverflowLong();
@@ -679,7 +678,6 @@ public class XmlTokenBuffer extends TokenBuffer {
         }
 
         @Override
-        @SuppressWarnings("resource")
         public byte[] getBinaryValue(Base64Variant b64variant) throws IOException {
             // First: maybe we some special types?
             if (_currToken == JsonToken.VALUE_EMBEDDED_OBJECT) {

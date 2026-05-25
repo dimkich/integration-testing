@@ -18,7 +18,6 @@
         <spring-cloud.version>2022.0.5</spring-cloud.version>
         <playtika.version>3.0.8</playtika.version>
 
-        <redisson.version>3.19.3</redisson.version>
         <sugar-cubes-cloner.version>1.2.3</sugar-cubes-cloner.version>
         <sneaky-fun.version>1.0.0</sneaky-fun.version>
         <dbunit.version>3.0.0</dbunit.version>
@@ -115,11 +114,6 @@
                 <version>${revision}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.redisson</groupId>
-                <artifactId>redisson</artifactId>
-                <version>${redisson.version}</version>
-            </dependency>
             <dependency>
                 <groupId>io.github.sugar-cubes</groupId>
                 <artifactId>sugar-cubes-cloner</artifactId>

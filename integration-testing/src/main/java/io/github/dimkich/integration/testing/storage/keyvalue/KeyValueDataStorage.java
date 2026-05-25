@@ -18,7 +18,7 @@ public interface KeyValueDataStorage extends TestDataStorage {
      * @param map key-value pairs to store; keys must be unique within the map
      * @throws Exception if the data cannot be stored
      */
-    void putKeysData(Map<String, Object> map) throws Exception;
+    void putKeysData(Map<Object, Object> map) throws Exception;
 
     /**
      * Removes all data from the underlying storage.

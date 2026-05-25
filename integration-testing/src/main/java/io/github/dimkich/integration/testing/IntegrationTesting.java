@@ -1,5 +1,6 @@
 package io.github.dimkich.integration.testing;
 
+import io.github.dimkich.integration.testing.config.IntegrationTestConfig;
 import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.annotation.Import;

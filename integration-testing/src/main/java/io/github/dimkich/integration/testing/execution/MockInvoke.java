@@ -99,16 +99,15 @@ public class MockInvoke {
         this.result.add(new MockInvokeResult(e));
     }
 
-    @JsonIgnore
     /**
      * Resets the internal result index so that subsequent invocations start
      * from the first configured {@link MockInvokeResult}.
      */
+    @JsonIgnore
     public void reset() {
         resultIndex = 0;
     }
 
-    @JsonIgnore
     /**
      * Returns the current configured result value for this invocation and
      * advances the internal index. If no results are configured, {@code null}
@@ -116,6 +115,7 @@ public class MockInvoke {
      *
      * @return current result value or {@code null} if none
      */
+    @JsonIgnore
     public Object getCurrentResult() {
         if (this.result == null) {
             return null;
@@ -125,13 +125,13 @@ public class MockInvoke {
         return r.getReturn1();
     }
 
-    @JsonIgnore
     /**
      * If the current {@link MockInvokeResult} contains an exception, advances
      * the internal index and throws that exception.
      *
      * @throws Throwable when the current result is configured with an exception
      */
+    @JsonIgnore
     public void tryThrowException() throws Throwable {
         if (this.result == null) {
             return;
@@ -143,7 +143,6 @@ public class MockInvoke {
         }
     }
 
-    @SneakyThrows
     /**
      * Checks whether this mock configuration matches the supplied name, method and arguments.
      * <ul>
@@ -158,6 +157,7 @@ public class MockInvoke {
      * @param arg    actual arguments of the invocation
      * @return {@code true} if this configuration matches the supplied data
      */
+    @SneakyThrows
     public boolean equalsTo(String name, String method, List<Object> arg) {
         if (!Objects.equals(this.name, name) || !Objects.equals(this.method, method)) {
             return false;
@@ -179,12 +179,9 @@ public class MockInvoke {
         return true;
     }
 
-    private boolean isEquals(Object o1, Object o2) throws NoSuchMethodException {
+    private boolean isEquals(Object o1, Object o2) {
         if (o1 == null || o2 == null) {
             return o1 == o2;
-        }
-        if (o1.getClass() == o1.getClass().getMethod("equals", Object.class).getDeclaringClass()) {
-            return Objects.equals(o1, o2);
         }
         return compCalculator.determineDifferences(o1, o2, compConfig).isEmpty();
     }
