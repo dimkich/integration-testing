@@ -9,6 +9,7 @@ import io.github.dimkich.integration.testing.execution.junit.SessionListener;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
@@ -21,6 +22,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+@Slf4j
 @RequiredArgsConstructor
 public class DynamicTestBuilder {
     private final TestExecutor testExecutor;
@@ -105,8 +107,16 @@ public class DynamicTestBuilder {
 
         @SneakyThrows
         private void init() {
-            Test test = testMapper.readAllTests();
-            iterator = test.getSubTests().iterator();
+            try {
+                Test test = testMapper.readAllTests();
+                iterator = test.getSubTests().iterator();
+            } catch (Exception e) {
+                if (!infinite) {
+                    throw e;
+                }
+                log.error("", e);
+                iterator = Collections.emptyIterator();
+            }
         }
     }
 }

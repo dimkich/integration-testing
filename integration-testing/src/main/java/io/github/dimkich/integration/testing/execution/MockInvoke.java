@@ -9,6 +9,8 @@ import lombok.experimental.Accessors;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonDifferenceCalculator;
 
+import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -25,6 +27,8 @@ public class MockInvoke {
     static {
         compConfig.registerEqualsForType((amr1, amr2) -> compCalculator.determineDifferences(amr1.getReference(),
                 amr2.getReference(), compConfig).isEmpty(), AtomicMarkableReference.class);
+        compConfig.registerEqualsForType((a, b) -> a.compareTo(b) == 0, BigDecimal.class);
+        compConfig.registerEqualsForType((a, b) -> a.toInstant().equals(b.toInstant()), ZonedDateTime.class);
     }
 
     @JacksonXmlProperty(isAttribute = true)
@@ -108,12 +112,9 @@ public class MockInvoke {
         return true;
     }
 
-    private boolean isEquals(Object o1, Object o2) throws NoSuchMethodException {
+    private boolean isEquals(Object o1, Object o2) {
         if (o1 == null || o2 == null) {
             return o1 == o2;
-        }
-        if (o1.getClass() == o1.getClass().getMethod("equals", Object.class).getDeclaringClass()) {
-            return Objects.equals(o1, o2);
         }
         return compCalculator.determineDifferences(o1, o2, compConfig).isEmpty();
     }
