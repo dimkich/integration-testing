@@ -9,6 +9,8 @@ import lombok.experimental.Accessors;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonDifferenceCalculator;
 
+import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +35,8 @@ public class MockInvoke {
     static {
         compConfig.registerEqualsForType((amr1, amr2) -> compCalculator.determineDifferences(amr1.getReference(),
                 amr2.getReference(), compConfig).isEmpty(), AtomicMarkableReference.class);
+        compConfig.registerEqualsForType((a, b) -> a.compareTo(b) == 0, BigDecimal.class);
+        compConfig.registerEqualsForType((a, b) -> a.toInstant().equals(b.toInstant()), ZonedDateTime.class);
     }
 
     /**
