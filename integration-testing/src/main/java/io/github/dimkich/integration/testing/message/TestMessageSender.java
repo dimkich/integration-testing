@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.message;
 /**
  * Strategy interface for sending test messages into the system under test.
  * <p>
- * Implementations decide whether they can handle a particular {@link MessageDto}
+ * Implementations decide whether they can handle a particular {@link AbstractMessage}
  * and perform the actual sending of the inbound message.
  */
 public interface TestMessageSender {
@@ -14,12 +14,12 @@ public interface TestMessageSender {
      * @param message the message to check
      * @return {@code true} if this sender is able to send the message, {@code false} otherwise
      */
-    boolean canSend(MessageDto<?> message);
+    boolean canSend(AbstractMessage message);
 
     /**
      * Sends the given message as an inbound message into the system under test.
      *
      * @param message the message to send
      */
-    void sendInboundMessage(MessageDto<?> message);
+    void sendInboundMessage(AbstractMessage message);
 }

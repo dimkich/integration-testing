@@ -25,6 +25,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *         replication, and in-memory storage).</li>
  *     <li>Loads Redis configuration properties from the {@code redis.properties}
  *         classpath resource into the Spring context.</li>
+ *     <li>Activates the wait-completion subsystem ({@code integration.testing.wait.completion.enabled}
+ *         in {@code redis.properties}), so replication waits do not require extra test properties.</li>
  * </ul>
  * <p>
  * This annotation should be used on test classes that require interaction with Redis

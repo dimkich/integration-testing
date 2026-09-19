@@ -1,0 +1,487 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Container" name="Core round trip">
+        <test type="Case" name="Json dto">
+            <bean>serdeTestFacade</bean>
+            <method>roundTrip</method>
+            <request>json</request>
+            <request>io.github.dimkich.integration.testing.serde.dto.SerdeTestDto</request>
+            <request></request>
+            <request type="SerdeTestDto">
+                <id>1</id>
+                <name>json dto</name>
+                <items>a</items>
+                <items>b</items>
+            </request>
+            <response type="SerdeTestDto">
+                <id>1</id>
+                <name>json dto</name>
+                <items>a</items>
+                <items>b</items>
+            </response>
+        </test>
+        <test type="Case" name="Xml dto">
+            <bean>serdeTestFacade</bean>
+            <method>roundTrip</method>
+            <request>xml</request>
+            <request>io.github.dimkich.integration.testing.serde.dto.SerdeTestDto</request>
+            <request></request>
+            <request type="SerdeTestDto">
+                <id>2</id>
+                <name>xml dto</name>
+                <items>c</items>
+            </request>
+            <response type="SerdeTestDto">
+                <id>2</id>
+                <name>xml dto</name>
+                <items>c</items>
+            </response>
+        </test>
+        <test type="Case" name="Yaml dto">
+            <bean>serdeTestFacade</bean>
+            <method>roundTrip</method>
+            <request>yaml</request>
+            <request>io.github.dimkich.integration.testing.serde.dto.SerdeTestDto</request>
+            <request></request>
+            <request type="SerdeTestDto">
+                <id>3</id>
+                <name>yaml dto</name>
+                <items>d</items>
+            </request>
+            <response type="SerdeTestDto">
+                <id>3</id>
+                <name>yaml dto</name>
+                <items>d</items>
+            </response>
+        </test>
+        <test type="Case" name="String">
+            <bean>serdeTestFacade</bean>
+            <method>roundTrip</method>
+            <request>string</request>
+            <request></request>
+            <request></request>
+            <request>hello</request>
+            <response>hello</response>
+        </test>
+        <test type="Case" name="Generic target class">
+            <bean>serdeTestFacade</bean>
+            <method>roundTripToString</method>
+            <request>json</request>
+            <request>java.util.List&lt;java.lang.String&gt;</request>
+            <request type="ArrayList">
+                <item>a</item>
+                <item>b</item>
+            </request>
+            <response>[a, b]</response>
+        </test>
+        <test type="Case" name="Json tombstone">
+            <bean>serdeTestFacade</bean>
+            <method>serializeText</method>
+            <request>json</request>
+            <request></request>
+            <request></request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response>&lt;null&gt;</response>
+        </test>
+        <test type="Case" name="Bytes serialization">
+            <bean>serdeTestFacade</bean>
+            <method>serializeBytesHex</method>
+            <request>bytes</request>
+            <request>0A1B2C</request>
+            <response>0A1B2C</response>
+        </test>
+        <test type="Case" name="Bytes round trip">
+            <bean>serdeTestFacade</bean>
+            <method>roundTripBytesHex</method>
+            <request>bytes</request>
+            <request>00FF10</request>
+            <response>00FF10</response>
+        </test>
+        <test type="Case" name="Bytes tombstone">
+            <bean>serdeTestFacade</bean>
+            <method>roundTripBytesHex</method>
+            <request>bytes</request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response>&lt;null&gt;</response>
+        </test>
+    </test>
+    <test type="Container" name="Resolution">
+        <test type="Case" name="Provider names">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>base</request>
+            <request>json</request>
+            <request></request>
+            <request>core</request>
+            <response>JacksonSerializer</response>
+        </test>
+        <test type="Case" name="Provider name is case insensitive">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>base</request>
+            <request>JSON</request>
+            <request></request>
+            <request>core</request>
+            <response>JacksonSerializer</response>
+        </test>
+        <test type="Case" name="String provider">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>base</request>
+            <request>string</request>
+            <request></request>
+            <request>core</request>
+            <response>StringSerializer</response>
+        </test>
+        <test type="Case" name="Xml provider">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>base</request>
+            <request>xml</request>
+            <request></request>
+            <request>core</request>
+            <response>JacksonSerializer</response>
+        </test>
+        <test type="Case" name="Yaml provider">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>base</request>
+            <request>yaml</request>
+            <request></request>
+            <request>core</request>
+            <response>JacksonSerializer</response>
+        </test>
+        <test type="Case" name="Bytes provider">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>base</request>
+            <request>bytes</request>
+            <request></request>
+            <request>core</request>
+            <response>ByteArraySerializer</response>
+        </test>
+        <test type="Case" name="Custom provider">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>base</request>
+            <request>tagged</request>
+            <request></request>
+            <request>core</request>
+            <response>TaggedSerializer</response>
+        </test>
+        <test type="Case" name="Record level provider">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>record</request>
+            <request>record-only</request>
+            <request></request>
+            <request>core</request>
+            <response>TaggedSerializer</response>
+        </test>
+        <test type="Case" name="Platform class for adapted serializer">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>base</request>
+            <request>tagged</request>
+            <request></request>
+            <request>platform</request>
+            <response>DefaultPlatformSerializer</response>
+        </test>
+        <test type="Case" name="Record class for adapted serializer">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>record</request>
+            <request>tagged</request>
+            <request></request>
+            <request>record</request>
+            <response>DefaultPlatformRecordSerializer</response>
+        </test>
+        <test type="Case" name="Context aware provider">
+            <bean>serdeTestFacade</bean>
+            <method>resolveClass</method>
+            <request>base</request>
+            <request>platform-context</request>
+            <request></request>
+            <request>core</request>
+            <response>PlatformContextSerializer</response>
+        </test>
+        <test type="Case" name="Default without type">
+            <bean>serdeTestFacade</bean>
+            <method>resolveDefault</method>
+            <request>base</request>
+            <request></request>
+            <response>DEF:data</response>
+        </test>
+        <test type="Case" name="Default without type on record config">
+            <bean>serdeTestFacade</bean>
+            <method>resolveDefault</method>
+            <request>record</request>
+            <request></request>
+            <response>DEF:data</response>
+        </test>
+        <test type="Case" name="Bean ref">
+            <bean>serdeTestFacade</bean>
+            <method>serializePlatformByRef</method>
+            <request>customSerdeSerializer</request>
+            <request>hello</request>
+            <response>B:BEAN:hello</response>
+        </test>
+        <test type="Case" name="Fully qualified class name">
+            <bean>serdeTestFacade</bean>
+            <method>serializePlatformByFqcn</method>
+            <request>io.github.dimkich.integration.testing.serde.impl.StringSerializer</request>
+            <request>hello</request>
+            <response>B:hello</response>
+        </test>
+    </test>
+    <test type="Container" name="Platform adapters">
+        <test type="Case" name="Core to platform">
+            <bean>serdeTestFacade</bean>
+            <method>serializePlatform</method>
+            <request>base</request>
+            <request>tagged</request>
+            <request></request>
+            <request>hello</request>
+            <response>B:TAG:hello</response>
+        </test>
+        <test type="Case" name="Specific config adapter dominates">
+            <bean>serdeTestFacade</bean>
+            <method>serializePlatform</method>
+            <request>record</request>
+            <request>tagged</request>
+            <request></request>
+            <request>hello</request>
+            <response>S:REC:hello</response>
+        </test>
+        <test type="Case" name="Provider returns platform type directly">
+            <bean>serdeTestFacade</bean>
+            <method>serializePlatform</method>
+            <request>base</request>
+            <request>platform-direct</request>
+            <request></request>
+            <request>hello</request>
+            <response>D:hello</response>
+        </test>
+        <test type="Case" name="Context aware provider">
+            <bean>serdeTestFacade</bean>
+            <method>serializePlatform</method>
+            <request>base</request>
+            <request>platform-context</request>
+            <request></request>
+            <request>hello</request>
+            <response>B:test-channel:hello</response>
+        </test>
+        <test type="Case" name="Json via primary mapper">
+            <bean>serdeTestFacade</bean>
+            <method>serializePlatform</method>
+            <request>base</request>
+            <request>json</request>
+            <request></request>
+            <request type="SerdeTestDto">
+                <id>1</id>
+                <name>dto</name>
+                <items>a</items>
+                <items>b</items>
+            </request>
+            <response>B:{"id":1,"name":"dto","items":["a","b"]}</response>
+        </test>
+        <test type="Case" name="Json via alt mapper">
+            <bean>serdeTestFacade</bean>
+            <method>serializePlatform</method>
+            <request>base</request>
+            <request>json</request>
+            <request>altObjectMapper</request>
+            <request type="SerdeTestDto">
+                <id>2</id>
+                <name>alt</name>
+            </request>
+            <response>B:{"id":2,"name":"alt"}</response>
+        </test>
+        <test type="Case" name="Deserialize through platform">
+            <bean>serdeTestFacade</bean>
+            <method>deserializePlatformText</method>
+            <request>base</request>
+            <request>tagged</request>
+            <request></request>
+            <request></request>
+            <request>B:TAG:hello</request>
+            <response>hello</response>
+        </test>
+        <test type="Case" name="Deserialize json through platform">
+            <bean>serdeTestFacade</bean>
+            <method>deserializePlatformText</method>
+            <request>base</request>
+            <request>json</request>
+            <request>io.github.dimkich.integration.testing.serde.dto.SerdeTestDto</request>
+            <request></request>
+            <request>B:{"id":1,"name":"dto"}</request>
+            <response type="SerdeTestDto">
+                <id>1</id>
+                <name>dto</name>
+            </response>
+        </test>
+        <test type="Case" name="Deserialize with specific config adapter">
+            <bean>serdeTestFacade</bean>
+            <method>deserializePlatformText</method>
+            <request>record</request>
+            <request>tagged</request>
+            <request></request>
+            <request></request>
+            <request>S:REC:hello</request>
+            <response>hello</response>
+        </test>
+    </test>
+    <test type="Container" name="Record chain">
+        <test type="Case" name="Core provider through record chain">
+            <bean>serdeTestFacade</bean>
+            <method>serializeRecord</method>
+            <request>tagged</request>
+            <request>pre-</request>
+            <request>X-H</request>
+            <request>k1</request>
+            <request>hello</request>
+            <response>test-channel|pre-k1|X-H|B:REC:hello</response>
+        </test>
+        <test type="Case" name="Platform provider through record chain">
+            <bean>serdeTestFacade</bean>
+            <method>serializeRecord</method>
+            <request>platform-direct</request>
+            <request>pre-</request>
+            <request>X-H</request>
+            <request>k1</request>
+            <request>hello</request>
+            <response>test-channel|pre-k1|X-H|D:hello</response>
+        </test>
+        <test type="Case" name="Record deserialize">
+            <bean>serdeTestFacade</bean>
+            <method>deserializeRecordText</method>
+            <request>tagged</request>
+            <request>B:REC:hello</request>
+            <response>hello</response>
+        </test>
+    </test>
+    <test type="Container" name="Errors">
+        <test type="Case" name="Unknown provider name">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>nope</request>
+            <request></request>
+            <request></request>
+            <request></request>
+            <request>core</request>
+            <response>IllegalArgumentException: Unknown serde provider [nope] for config [SerdeProperties]. Known providers for this config: [string, tagged, bytes, xml, json, platform-context, unrelated-context, platform-direct, yaml]. | If you meant a Java class, use its fully qualified name (e.g. 'com.example.MySerializer'), not a simple name.</response>
+        </test>
+        <test type="Case" name="Record only provider is not visible on base config">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>record-only</request>
+            <request></request>
+            <request></request>
+            <request></request>
+            <request>core</request>
+            <response>IllegalArgumentException: Unknown serde provider [record-only] for config [SerdeProperties]. Known providers for this config: [string, tagged, bytes, xml, json, platform-context, unrelated-context, platform-direct, yaml]. | Note: 'record-only' is only available with config: [[TestRecordProperties]]. | If you meant a Java class, use its fully qualified name (e.g. 'com.example.MySerializer'), not a simple name.</response>
+        </test>
+        <test type="Case" name="Unknown fully qualified class">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>com.example.Missing</request>
+            <request></request>
+            <request></request>
+            <request></request>
+            <request>core</request>
+            <response>IllegalArgumentException: Serde class [com.example.Missing] not found, and no provider with this name. Known providers for this config: [string, tagged, bytes, xml, json, platform-context, unrelated-context, platform-direct, yaml].</response>
+        </test>
+        <test type="Case" name="No adapter found">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>java.lang.Object</request>
+            <request></request>
+            <request></request>
+            <request></request>
+            <request>beta</request>
+            <response>IllegalArgumentException: No adapter found from [java.lang.Object] to [io.github.dimkich.integration.testing.serde.platform.BetaPlatformSerializer] under configuration [SerdeProperties]. Supported source types: [TestSerdeSerializer]</response>
+        </test>
+        <test type="Case" name="Ambiguous adapters">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>tagged</request>
+            <request></request>
+            <request></request>
+            <request></request>
+            <request>common</request>
+            <response>IllegalArgumentException: Ambiguous serde adapters for source [io.github.dimkich.integration.testing.serde.provider.TaggedSerializer] and target [io.github.dimkich.integration.testing.serde.platform.CommonPlatformSerializer]: [io.github.dimkich.integration.testing.serde.platform.adapter.AmbiguousAlphaAdapter, io.github.dimkich.integration.testing.serde.platform.adapter.AmbiguousBetaAdapter] (candidates have incomparable target classes). Declare a more specific adapter to disambiguate.</response>
+        </test>
+        <test type="Case" name="Context mismatch">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>unrelated-context</request>
+            <request></request>
+            <request></request>
+            <request></request>
+            <request>platform</request>
+            <response>IllegalArgumentException: Provider [io.github.dimkich.integration.testing.serde.provider.UnrelatedContextSerdeProvider$UnrelatedContextSerializer] declares context type [io.github.dimkich.integration.testing.serde.platform.UnrelatedSerdeContext], but this adapter supplies [io.github.dimkich.integration.testing.serde.platform.TestPlatformContext]. Use a provider that accepts TestPlatformContext or work with the core TestSerdeSerializer directly.</response>
+        </test>
+        <test type="Case" name="Bean ref and type together">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>json</request>
+            <request>customSerdeSerializer</request>
+            <request></request>
+            <request></request>
+            <request>core</request>
+            <response>IllegalArgumentException: Both 'beanRef' and 'type' are set on the same serde config. They are mutually exclusive: 'beanRef' points to an existing bean, 'type' points to a provider or a fully qualified class name. Remove one of them.</response>
+        </test>
+        <test type="Case" name="Bean ref with target class">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request></request>
+            <request>customSerdeSerializer</request>
+            <request>java.lang.String</request>
+            <request></request>
+            <request>core</request>
+            <response>IllegalArgumentException: Field 'targetClass'/'objectMapperRef' has no effect when 'beanRef' is set. 'beanRef' returns a ready-made bean as-is; no configuration is applied. Use 'type' (provider name) if you need these applied.</response>
+        </test>
+        <test type="Case" name="Fully qualified class with target class">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>io.github.dimkich.integration.testing.serde.impl.StringSerializer</request>
+            <request></request>
+            <request>java.lang.String</request>
+            <request></request>
+            <request>core</request>
+            <response>IllegalArgumentException: Field 'targetClass'/'objectMapperRef' has no effect when 'type' is a fully qualified class name (contains a dot). Use a provider if you need these applied.</response>
+        </test>
+        <test type="Case" name="Missing object mapper ref">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>json</request>
+            <request></request>
+            <request></request>
+            <request>noSuchMapper</request>
+            <request>core</request>
+            <response>NoSuchBeanDefinitionException: No bean named 'noSuchMapper' available</response>
+        </test>
+        <test type="Case" name="Missing bean ref">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request></request>
+            <request>missingBean</request>
+            <request></request>
+            <request></request>
+            <request>core</request>
+            <response>NoSuchBeanDefinitionException: No bean named 'missingBean' available</response>
+        </test>
+    </test>
+</test>

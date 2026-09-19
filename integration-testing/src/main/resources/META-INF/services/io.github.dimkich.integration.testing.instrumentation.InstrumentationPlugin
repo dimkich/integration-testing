@@ -1,0 +1,10 @@
+io.github.sugarcubes.cloner.SugarCubesClonerPlugin
+io.github.dimkich.integration.testing.instrumentation.RepeatInstrumentationPlugin
+io.github.dimkich.integration.testing.wait.completion.future.like.FutureLikeWaitCompletion
+io.github.dimkich.integration.testing.wait.completion.method.counting.MethodCountingWaitCompletion
+io.github.dimkich.integration.testing.wait.completion.method.pair.MethodPairWaitCompletion
+io.github.dimkich.integration.testing.wait.completion.queue.like.QueueLikeWaitCompletion
+io.github.dimkich.integration.testing.date.time.MockJavaTimePlugin
+io.github.dimkich.integration.testing.date.time.LibFakeTimePlugin
+io.github.dimkich.integration.testing.execution.mockito.MockitoGlobalPlugin
+io.github.dimkich.integration.testing.execution.hook.MethodHookPlugin

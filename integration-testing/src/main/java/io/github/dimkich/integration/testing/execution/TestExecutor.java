@@ -5,7 +5,7 @@ import io.github.dimkich.integration.testing.assertion.AssertionConfig;
 import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
-import io.github.dimkich.integration.testing.message.MessageDto;
+import io.github.dimkich.integration.testing.message.AbstractMessage;
 import io.github.dimkich.integration.testing.message.TestMessagePoller;
 import io.github.dimkich.integration.testing.message.TestMessageSender;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
@@ -18,14 +18,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assumptions;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Executes integration tests with support for lifecycle management, message handling,
@@ -99,6 +98,14 @@ public class TestExecutor {
      */
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private InitializationService initializationService;
+
+    /**
+     * When true, errors during inbound message sending are captured in the test response
+     * instead of propagating. This enables testing error scenarios like adapter chain
+     * failures. Intended for framework self-testing only.
+     */
+    @Setter(onMethod_ = @Value("${integration.testing.self-testing:false}"))
+    private boolean selfTesting;
     /**
      * Manages test data storages and tracks differences between expected and actual states.
      */
@@ -131,6 +138,12 @@ public class TestExecutor {
     @Getter
     @Setter
     private Test lastTest;
+    /**
+     * Expected outbound messages of the currently executed test, saved before the
+     * {@link Test} instance is cleared. Used to align the captured messages to the
+     * order defined in the test file.
+     */
+    private List<AbstractMessage> expectedOutboundMessages;
 
     /**
      * Prepares the test for execution by initializing the test state and executing
@@ -157,12 +170,15 @@ public class TestExecutor {
      * @throws Exception if an error occurs during test preparation
      */
     public void before(Test expectedTest) throws Exception {
+        expectedOutboundMessages = null;
         test = expectedTest;
         log.info(">>> {}", test.getFullName());
         log.info(testMapper.getCurrentPathAndLocation(test));
         if (test.getCalculatedDisabled()) {
             return;
         }
+        expectedOutboundMessages = test.getOutboundMessages() == null
+                ? null : new ArrayList<>(test.getOutboundMessages());
         assertion.setExpected(test);
         test.setResponse(null);
         test.setDataStorageDiff(null);
@@ -236,14 +252,22 @@ public class TestExecutor {
         waitCompletion.start();
         MockAnswer.enable(() -> {
             try {
-                MessageDto<?> message = test.getInboundMessage();
+                AbstractMessage message = test.getInboundMessage();
                 if (message != null) {
-                    message.setTestInboundMessage(true);
-                    testMessageSenders.stream()
-                            .filter(s -> s.canSend(message))
-                            .findFirst()
-                            .orElseThrow(() -> new RuntimeException("No service found for message " + message))
-                            .sendInboundMessage(message);
+                    try {
+                        testMessageSenders.stream()
+                                .filter(s -> s.canSend(message))
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException("No service found for message " + message))
+                                .sendInboundMessage(message);
+                    } catch (Exception e) {
+                        log.error("", e);
+                        if (selfTesting) {
+                            test.setResponse(e);
+                        } else {
+                            throw e;
+                        }
+                    }
                 } else {
                     test.executeMethod(beanFactory, (m, r) -> cloner.clone(r));
                 }
@@ -252,16 +276,17 @@ public class TestExecutor {
             }
         });
 
-        int countMessages = test.getOutboundMessages() == null ? 0 : test.getOutboundMessages().size();
         if (testMessagePoller != null) {
-            List<MessageDto<?>> messages = testMessagePoller.pollMessages(countMessages);
-            messages.sort(Comparator.comparing(MessageDto::toString));
+            List<AbstractMessage> messages = testMessagePoller.pollMessages();
             test.setOutboundMessages(messages.isEmpty() ? null : messages);
         }
         if (testDataStorages != null) {
             test.setDataStorageDiff(testDataStorages.getMapDiff());
         }
         testConverters.forEach(c -> c.convertNoException(test));
+        if (test.getOutboundMessages() != null) {
+            test.setOutboundMessages(alignActualToExpected(expectedOutboundMessages, test.getOutboundMessages()));
+        }
 
         assertion.assertTestsEquals(test);
     }
@@ -342,5 +367,76 @@ public class TestExecutor {
      */
     public void addMockInvoke(MockInvoke invoke) {
         test.getMockInvoke().add(invoke);
+    }
+
+    /**
+     * Aligns actual messages to the order defined in expected messages using multiset matching.
+     * Unmatched actual messages are appended at the end in a deterministic (canonical) order.
+     *
+     * @param expectedMsgs expected messages in the order they are defined in the test file
+     * @param actualMsgs   captured messages in their arrival order
+     * @return actual messages aligned to the expected order
+     * @throws Exception if a message cannot be serialized to a canonical form
+     */
+    private List<AbstractMessage> alignActualToExpected(List<AbstractMessage> expectedMsgs,
+                                                        List<AbstractMessage> actualMsgs) throws Exception {
+        if (expectedMsgs == null || expectedMsgs.isEmpty()) {
+            return canonicalSort(actualMsgs);
+        }
+        List<AbstractMessage> aligned = new ArrayList<>();
+        List<AbstractMessage> remainingActual = new LinkedList<>(actualMsgs);
+        for (AbstractMessage expected : expectedMsgs) {
+            String expectedKey = getMessageKey(expected);
+            Iterator<AbstractMessage> iterator = remainingActual.iterator();
+            while (iterator.hasNext()) {
+                AbstractMessage actual = iterator.next();
+                if (expectedKey.equals(getMessageKey(actual))) {
+                    aligned.add(actual);
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+        aligned.addAll(canonicalSort(remainingActual));
+        return aligned;
+    }
+
+    /**
+     * Sorts messages by their canonical serialized representation. Keys are computed
+     * beforehand to keep the sorting itself free of checked exceptions and to avoid
+     * repeated serialization of the same message.
+     *
+     * @param messages messages to sort
+     * @return messages sorted by their canonical representation
+     * @throws Exception if a message cannot be serialized to a canonical form
+     */
+    private List<AbstractMessage> canonicalSort(List<AbstractMessage> messages) throws Exception {
+        if (messages == null || messages.isEmpty()) {
+            return messages;
+        }
+        List<Map.Entry<String, AbstractMessage>> keyedMessages = new ArrayList<>(messages.size());
+        for (AbstractMessage message : messages) {
+            keyedMessages.add(new AbstractMap.SimpleEntry<>(getMessageKey(message), message));
+        }
+        keyedMessages.sort(Map.Entry.comparingByKey());
+        List<AbstractMessage> sorted = new ArrayList<>(messages.size());
+        for (Map.Entry<String, AbstractMessage> entry : keyedMessages) {
+            sorted.add(entry.getValue());
+        }
+        return sorted;
+    }
+
+    /**
+     * Builds a canonical string key of a message exactly as it is seen by the assertion:
+     * the message is wrapped into a dummy test part and serialized by the current test mapper.
+     *
+     * @param message message to build the key for
+     * @return canonical string representation of the message
+     * @throws Exception if the message cannot be serialized
+     */
+    private String getMessageKey(AbstractMessage message) throws Exception {
+        TestPart wrapper = new TestPart();
+        wrapper.setOutboundMessages(List.of(message));
+        return testMapper.getSingleTestAsString(wrapper);
     }
 }

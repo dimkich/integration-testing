@@ -17,6 +17,7 @@ import io.github.dimkich.integration.testing.format.common.type.TypeResolverFact
 import io.github.dimkich.integration.testing.openapi.FieldErrorMixIn;
 import io.github.dimkich.integration.testing.openapi.SpringErrorDto;
 import io.github.sugarcubes.cloner.CopyAction;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,8 +40,9 @@ import java.util.*;
 @Import({ObjectMapperConfigurer.class, TypeResolverFactory.class, TypeParser.class, TypeGenerator.class})
 public class CommonFormatConfig {
     @Bean
-    TestSetupModule commonFormatTestSetupModule() throws ClassNotFoundException {
+    TestSetupModule commonFormatTestSetupModule(ConfigurableListableBeanFactory beanFactory) throws ClassNotFoundException {
         return new TestSetupModule()
+                .setHandlerInstantiator(new FormatHandlerInstantiator(beanFactory))
                 .addParentType(Object.class).addParentType(Throwable.class).addParentType(Test.class)
                 .addParentType(Type.class)
                 .addBaseType(ParameterizedTypeReference.class).addBaseType(Type.class)
@@ -71,12 +73,13 @@ public class CommonFormatConfig {
                         float.class, SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class,
                         LinkedHashMapObjectObject.class, LinkedHashMapStringObject.class, RuntimeException.class,
                         UnsupportedOperationException.class, IllegalStateException.class, NullPointerException.class,
-                        IllegalArgumentException.class, NumberFormatException.class, AbstractMap.SimpleEntry.class,
-                        Duration.class)
+                        IllegalArgumentException.class, NumberFormatException.class, ClassCastException.class,
+                        AbstractMap.SimpleEntry.class, Duration.class)
                 .clonerTypeAction(Throwable.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(Resource.class::isAssignableFrom, CopyAction.ORIGINAL)
+                .clonerTypeAction(Type.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .addEqualsForType(SecureRandom.class, (sr1, sr2) -> true)
                 .addEqualsForType(ByteArrayInputStream.class, (o1, o2) -> {
                     byte[] b1 = o1.readAllBytes();

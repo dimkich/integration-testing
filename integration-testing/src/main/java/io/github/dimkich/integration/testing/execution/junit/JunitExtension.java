@@ -1,52 +1,43 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
-import io.github.dimkich.integration.testing.InstrumentationManager;
-import io.github.dimkich.integration.testing.RepeatInstrumentation;
-import io.github.dimkich.integration.testing.date.time.LibFakeTimeSetUp;
-import io.github.dimkich.integration.testing.date.time.MockJavaTime;
-import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
 import io.github.dimkich.integration.testing.execution.TestBeanMock;
 import io.github.dimkich.integration.testing.execution.TestConstructorMock;
 import io.github.dimkich.integration.testing.execution.TestStaticMock;
-import io.github.dimkich.integration.testing.execution.mokito.MockitoGlobal;
 import io.github.dimkich.integration.testing.expression.PointcutRegistry;
+import io.github.dimkich.integration.testing.instrumentation.InstrumentationManager;
 import io.github.dimkich.integration.testing.openapi.TestOpenAPI;
-import io.github.dimkich.integration.testing.wait.completion.WaitCompletionManager;
 import io.github.dimkich.integration.testing.web.TestRestTemplate;
-import io.github.sugarcubes.cloner.ClonerAgentSetUp;
 import lombok.Getter;
-import net.bytebuddy.agent.ByteBuddyAgent;
-import net.bytebuddy.agent.builder.AgentBuilder;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.io.IOException;
-import java.lang.instrument.Instrumentation;
-import java.lang.instrument.UnmodifiableClassException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
-import static org.springframework.core.annotation.AnnotatedElementUtils.findMergedAnnotation;
 
 /**
  * JUnit 5 extension that prepares and tears down the integration-testing
  * environment for {@link SpringBootTest}-based tests.
- * <p>
- * On {@link #beforeAll(ExtensionContext)} it:
- * <ul>
- *     <li>verifies that the test class is annotated with {@link SpringBootTest}</li>
- *     <li>installs a {@link Instrumentation} instance via {@link ByteBuddyAgent}</li>
- *     <li>moves required helper classes to the boot classloader</li>
- *     <li>initialises mocked Java time if {@link MockJavaTime} is present</li>
- *     <li>configures ByteBuddy agents for the different wait-completion strategies</li>
- *     <li>collects OpenAPI, REST template and mock annotations declared on the test class</li>
- * </ul>
- * On {@link #afterAll(ExtensionContext)} it reverts all instrumentation state and clears
- * the collected metadata to avoid leaking state between tests.
+ *
+ * <p>Annotated with {@link Order @Order(Integer.MIN_VALUE)} so it is guaranteed
+ * to run <b>before</b> {@code SpringExtension}. Without this, a scenario is
+ * possible where {@code SpringExtension.beforeAll} creates the Spring context
+ * before {@link InstrumentationManager#install(Class)} has populated
+ * {@link InstrumentationManager#getActivePlugins()} — and plugins that inspect
+ * active instrumentations while the context is being built (for example
+ * {@code KafkaInFlightAgent.isInflightActive()} inside
+ * {@code KafkaConfig.PostProcessor}) would silently observe an empty list.
+ *
+ * <p>The ordering is not guaranteed by the JUnit specification nor by source
+ * order of annotations on the test class — {@code @Order} removes that
+ * dependency. {@code afterAll} callbacks are invoked in reverse order, so the
+ * instrumentation teardown in {@link #afterAll} runs after the Spring context is
+ * closed rather than before it.
  */
+@Slf4j
+@Order(Integer.MIN_VALUE)
 public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     @Getter
     private static List<TestOpenAPI> testOpenAPIS = List.of();
@@ -61,16 +52,6 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     @Getter
     private static SpringBootTest springBootTest;
 
-    private static Instrumentation instrumentation;
-    private static final InstrumentationManager instrumentationManager = new InstrumentationManager();
-
-    /**
-     * Prepares the integration-testing infrastructure before all tests of the
-     * current test class are executed.
-     *
-     * @param context JUnit extension context providing access to the test class
-     * @throws Exception if instrumentation or agent setup fails
-     */
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         Class<?> testClass = context.getRequiredTestClass();
@@ -78,20 +59,8 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         if (springBootTest == null) {
             throw new IllegalStateException("No SpringBootTest Annotation found");
         }
-        MockitoGlobal.start();
-        instrumentation = ByteBuddyAgent.install();
-        ClonerAgentSetUp.setClonerInstrumentationIfNone(instrumentation);
-        MockJavaTime mockJavaTime = testClass.getAnnotation(MockJavaTime.class);
-        if (mockJavaTime != null) {
-            if (mockJavaTime.dockerImages().length > 0) {
-                LibFakeTimeSetUp.setUp(instrumentation, mockJavaTime.dockerImages());
-            }
-            MockJavaTimeSetUp.setUp(mockJavaTime);
-        }
-        AgentBuilder builder = instrumentationManager.createAgentBuilder();
-        builder = WaitCompletionManager.setUp(testClass, builder);
-        instrumentationManager.install(builder, instrumentation);
-        repeatInstrumentation(testClass);
+        InstrumentationManager.install(testClass);
+
         testOpenAPIS = List.of(testClass.getAnnotationsByType(TestOpenAPI.class));
         beanMocks = List.of(testClass.getAnnotationsByType(TestBeanMock.class));
         constructorMocks = List.of(testClass.getAnnotationsByType(TestConstructorMock.class));
@@ -99,53 +68,14 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         testRestTemplates = List.of(testClass.getAnnotationsByType(TestRestTemplate.class));
     }
 
-    /**
-     * Cleans up all integration-testing related state after all tests of the
-     * current test class have been executed.
-     *
-     * @param context JUnit extension context (not used, but part of the contract)
-     */
     @Override
-    public void afterAll(ExtensionContext context) throws IOException {
-        MockitoGlobal.stop();
-        MockJavaTimeSetUp.tearDown();
-        instrumentationManager.reset(instrumentation);
-        LibFakeTimeSetUp.tearDown();
-        WaitCompletionManager.tearDown();
+    public void afterAll(ExtensionContext context) {
+        InstrumentationManager.clear();
         PointcutRegistry.clear();
         testOpenAPIS = List.of();
         testRestTemplates = List.of();
         beanMocks = List.of();
         constructorMocks = List.of();
         staticMocks = List.of();
-    }
-
-    /**
-     * Re-applies ByteBuddy instrumentation for all loaded classes whose name
-     * starts with any prefix specified in the {@link RepeatInstrumentation}
-     * annotation on the given test class.
-     *
-     * @param testClass the test class that may declare {@link RepeatInstrumentation}
-     * @throws UnmodifiableClassException if a matched class cannot be retransformed
-     */
-    private static void repeatInstrumentation(Class<?> testClass) throws UnmodifiableClassException {
-        RepeatInstrumentation ri = findMergedAnnotation(testClass, RepeatInstrumentation.class);
-        if (ri == null) {
-            return;
-        }
-        Set<Class<?>> classes = new HashSet<>();
-        for (Class<?> clazz : instrumentation.getAllLoadedClasses()) {
-            if (!instrumentation.isModifiableClass(clazz)) {
-                continue;
-            }
-            for (String name : ri.value()) {
-                if (clazz.getName().startsWith(name)) {
-                    classes.add(clazz);
-                }
-            }
-        }
-        if (!classes.isEmpty()) {
-            instrumentation.retransformClasses(classes.toArray(new Class[]{}));
-        }
     }
 }

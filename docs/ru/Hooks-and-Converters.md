@@ -1,6 +1,9 @@
 Хуки и преобразователи (BeforeTest, AfterTest, TestConverter)
 =============================================================
 
+> **Разграничение:** здесь описаны lifecycle-хуки теста (`BeforeTest`, `AfterTest`, `TestConverter`). Хуки на методы
+> приложения на уровне байт-кода (`@OnMethodEnter`, `@OnMethodExit`) описаны в [Хуки на методы](Method-Hooks.md).
+
 Обзор
 -----
 

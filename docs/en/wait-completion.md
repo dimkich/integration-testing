@@ -53,97 +53,18 @@ indicators show that the application has fully reached a state of rest.
 
 ### Defining Interception Points: Pointcut and When
 
-Every wait annotation in the system (`@FutureLikeAwait`, `@MethodCountingAwait`, etc.) relies on two fundamental
-parameters. If **Pointcut** answers the question "Where in the code do we place the sensor?", then **When** answers "
-Under what specific condition should this sensor trigger?".
+Every wait annotation in the system (`@FutureLikeAwait`, `@MethodCountingAwait`, etc.) relies on two attributes:
 
-### 1. The Pointcut Parameter: Anatomy of Instrumentation
+* **pointcut** — which classes and methods to instrument (variables `t` and `m`);
+* **when** — which calls count as tracked activity (variables `o` and `a`).
 
-A `Pointcut` is a DSL expression analyzed once during class loading by the Java agent. It defines a set of classes (`t`)
-and methods (`m`) into whose bytecode the tracking logic will be injected.
+```text
+pointcut = "t.inherits('com.app.BaseProcessor') && m.name('process')"
+when     = "o.isSameClass(com.app.CriticalProcessor.class)"
+```
 
-### The "Empty Filter" Rule (Critical!)
-
-The system is designed for maximum coverage by default. If your `pointcut` expression specifies a class but **does not
-specify** a method filter (e.g., via `m.name()`, `m.isConstructor()`, or `m.ann()`):
-
-* **Behavior:** The framework instruments **ALL** methods and all constructors of that class.
-* **When to use:** This is useful for quick debugging or in scenarios where absolutely any activity within a class is
-  considered "work" that must be awaited.
-* **Risk:** Excessive instrumentation of all getters, setters, and utility methods (like `hashCode` or `toString`) can
-  create unnecessary CPU overhead. It is highly recommended to always narrow down target methods.
-
-### Handling Inheritance
-
-Often, the method you want to track is declared in an interface or a base class.
-
-* **Nuance:** If you point the `pointcut` at a specific subclass (`t.name(...)`) but the target method is **not
-  overridden** there, ByteBuddy will not find an injection point in that subclass.
-* **Solution:** Use `t.inherits('BaseClassName')`. This ensures the method search traverses the entire inheritance
-  hierarchy, and instrumentation is applied correctly.
-
-**Pointcut Examples:**
-
-* `t.name('com.app.Service') && m.name('execute')` --- A specific method in a specific class.
-* `t.inherits('java.util.List') && m.name('add')` --- The `add` method in all implementations of the List interface.
-* `t.packageStartsWith('com.app.tasks') && m.ann('com.app.Tracked')` --- All methods marked with a specific annotation
-  within a package.
-
-*** ** * ** ***
-
-### 2. The When Parameter: Runtime Filtering
-
-While the `pointcut` is resolved at load time, the `when` expression is evaluated **at every invocation** of the
-instrumented method. This is a "smart filter" that decides whether this particular call constitutes a "task" that the
-test should wait for.  
-The following variables are available in the `when` expression:
-
-* `o` (**ObjectWrapper**): The target object instance ('this'). You can check its fields, class, or invoke its methods.
-* `a` (**ArgsWrapper**): The arguments passed to the method. You can validate their values or properties.
-
-### Why Use When?
-
-1. **Context Separation:** Thousands of background tasks might be running simultaneously. `when` allows the test to wait
-   only for those it initiated (e.g., by checking a specific ID or prefix in the arguments).
-2. **Subclass Refinement:** If a `pointcut` targets a base class (via `inherits`), `when` can filter invocations only
-   for a specific subclass.
-
-**When Examples:**
-
-* `o.isSameClass(com.app.MyWorker.class)` --- Ignore calls from other subclasses of the base class.
-* `a.arg(0).asString().equals('test-user')` --- Wait only for tasks associated with the test user.
-* `o.field('priority').asInt() > 5` --- Track only high-priority tasks.
-
-*** ** * ** ***
-
-### 3. Combined Usage (Best Practices)
-
-The right combination of these parameters allows for very precise and efficient "traps."  
-**Case: Waiting for a base class method only for a specific subclass**   
-Suppose `BaseProcessor.process()` is declared in the base and not overridden in `CriticalProcessor`.  
-java
-
-    @MethodCountingAwait(
-        // Instrumentation is applied to all BaseProcessor implementations having a 'process' method
-        pointcut = "t.inherits('com.app.BaseProcessor') && m.name('process')",
-        // But the counter increments ONLY if the instance is a CriticalProcessor
-        when = "o.isSameClass(com.app.CriticalProcessor.class)"
-    )
-
-Используйте код с осторожностью.
-**Case: Handling Factory Methods**   
-If an asynchronous object is created via a static factory method instead of `new`, the `pointcut` must target that
-method:  
-java
-
-    @FutureLikeAwait(
-        // Target the 'create' factory method in a specific class
-        pointcut = "t.name('com.app.TaskFactory') && m.name('create')",
-        // Wait by invoking a method on the returned object
-        await = "o.call('get')"
-    )
-
-Используйте код с осторожностью.
+The full syntax, the function reference (`t`, `m`, `o`, `a`), the empty filter rule, and performance guidance live on a
+separate page: [Expression DSL](Expression-DSL.md).
 
 *** ** * ** ***
 

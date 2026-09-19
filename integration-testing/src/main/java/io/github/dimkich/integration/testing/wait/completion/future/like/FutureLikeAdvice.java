@@ -27,7 +27,7 @@ public class FutureLikeAdvice {
             @Advice.Return(typing = Assigner.Typing.DYNAMIC) Object returned,
             @Advice.AllArguments Object[] args,
             @PointcutId int pointcutId) {
-        Object obj = (thiz != null) ? thiz : returned;
+        Object obj = (returned != null) ? returned : thiz;
         if (obj != null) {
             FutureLikeTracker.addTask(pointcutId, obj, args);
         }

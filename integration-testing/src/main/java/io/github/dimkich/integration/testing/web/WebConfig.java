@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.execution.junit.JunitExtension;
 import io.github.dimkich.integration.testing.web.jackson.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -31,11 +30,9 @@ import org.springframework.web.context.WebApplicationContext;
 import java.net.URI;
 
 @Configuration
-@RequiredArgsConstructor
 @ConditionalOnClass({ResponseEntity.class, SpringHandlerInstantiator.class, RestClientResponseException.class,
         WebConfig.TestRestTemplateConfig.class})
 public class WebConfig {
-    private final ConfigurableListableBeanFactory beanFactory;
 
     @Bean
     TestSetupModule webTestModule() throws ClassNotFoundException {
@@ -48,7 +45,6 @@ public class WebConfig {
         jacksonModule.setMixInAnnotation(HttpMethod.class, HttpMethodMixIn.class);
         jacksonModule.setMixInAnnotation(HttpEntity.class, HttpEntityMixIn.class);
         return new TestSetupModule()
-                .setHandlerInstantiator(new SpringHandlerInstantiator(beanFactory))
                 .addJacksonModule(jacksonModule)
                 .addAlias(Class.forName("org.springframework.http.converter.ResourceHttpMessageConverter$1"), "Resource")
                 .addAlias(Class.forName("org.springframework.http.converter.ResourceHttpMessageConverter$2"), "Resource")
@@ -71,6 +67,7 @@ public class WebConfig {
     MockMvcBuilderCustomizer portCustomizer() {
         return builder -> builder.apply(new MockMvcConfigurer() {
             @Override
+            @SuppressWarnings("NullableProblems")
             public RequestPostProcessor beforeMockMvcCreated(ConfigurableMockMvcBuilder<?> builder, WebApplicationContext context) {
                 return request -> {
                     request.setLocalPort(request.getServerPort());
@@ -83,6 +80,7 @@ public class WebConfig {
     @TestConfiguration
     public static class TestRestTemplateConfig implements BeanFactoryPostProcessor {
         @Override
+        @SuppressWarnings("NullableProblems")
         public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
             for (TestRestTemplate testRestTemplate : JunitExtension.getTestRestTemplates()) {
                 String factoryBean = beanFactory.getBeanNamesForType(getClass())[0];

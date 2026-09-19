@@ -66,8 +66,6 @@ In UntilStopped mode, the internal InfiniteTestIterator re-executes the init() m
 The plugin dynamically changes the behavior of objects declared with @TestBeanMock, @TestConstructorMock, and
 @TestStaticMock:
 
-* **useMocks** : Enables mock mode (environment=mock). This allows running tests locally without starting heavy Docker
-  containers, significantly speeding up development.
 * **mockAlwaysCallRealMethods** : Forces all mocks to call real methods. Used to automatically harvest baseline data
   from a working system.
 * **mockCallRealMethodsOnNoData** : If no <result> section is found in the XML for a specific call, the real method is

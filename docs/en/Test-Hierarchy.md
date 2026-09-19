@@ -143,7 +143,7 @@ Each `TestCase`:
 
 1. **Inherits settings** from all parent `Container` (chain to root)
 2. **Gets isolated environment** --- state is reset before execution
-3. **Executes independently** from other `Case` --- **does not see** results of previous cases
+3. **Executes independently** of other `Case` --- **does not see** results of previous cases
 
 ```
 xml  
@@ -306,17 +306,17 @@ xml
 Test Fields
 -----------
 
-| Field             | Type             | Description                              |
-|-------------------|------------------|------------------------------------------|
-| `bean`            | String           | Spring bean name for method call         |
-| `method`          | String           | Method name to call                      |
-| `request`         | List<Object>     | Method arguments (list of `<value>`)     |
-| `response`        | Object           | Expected execution result                |
-| `mockInvoke`      | List             | Expected mock calls                      |
-| `inboundMessage`  | MessageDto       | Inbound message for testing              |
-| `outboundMessage` | List<MessageDto> | Expected outbound messages               |
-| `custom`          | Map              | Custom test data                         |
-| `init`            | List<TestInit>   | Initialization configuration before test |
+| Field             | Type                  | Description                              |
+|-------------------|-----------------------|------------------------------------------|
+| `bean`            | String                | Spring bean name for method call         |
+| `method`          | String                | Method name to call                      |
+| `request`         | List<Object>          | Method arguments (list of `<value>`)     |
+| `response`        | Object                | Expected execution result                |
+| `mockInvoke`      | List                  | Expected mock calls                      |
+| `inboundMessage`  | AbstractMessage       | Inbound message for testing              |
+| `outboundMessage` | List<AbstractMessage> | Expected outbound messages               |
+| `custom`          | Map                   | Custom test data                         |
+| `init`            | List<TestInit>        | Initialization configuration before test |
 
 💡 **Note:** Detailed description of `init` field and available initialization actions is provided in a separate
 documentation section.

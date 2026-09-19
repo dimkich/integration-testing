@@ -127,6 +127,22 @@
                 <response>MethodPairTracker.activeTasks = 0</response>
             </response>
         </test>
+        <test type="Case" name="instance method return different type">
+            <bean>reflection</bean>
+            <method>invoke</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>FutureLike7</cls>
+                    <method>create</method>
+                </item>
+            </request>
+            <response type="ArrayList">
+                <response>FutureLike7Result#await</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
     </test>
     <test type="Container" name="method counting">
         <test type="Case" name="base class">

@@ -38,6 +38,23 @@
 * **[Расширяемость](redis/Extensibility.md)** — Кастомные кодек/схема/доступ к данным, теги `BinarySegment`, обработчики
   потоков и событий, `TestSetupModule.addSubTypes()`.
 
+### Kafka
+
+* **[Обзор Kafka](kafka/README.md)** — Настройка `@EnableTestKafka`, XML-примеры, отправка и проверка сообщений.
+* **[Конфигурация](kafka/Configuration.md)** — Подключения, топики и regex-маски, настройки serde,
+  `ignore`/`ignore-inbound`, `excluded-fields`.
+* **[Записи и заголовки](kafka/Records-and-Headers.md)** — `<inboundMessage>`/`<outboundMessage>`, заголовки,
+  tombstone, ошибки десериализации.
+* **[Сериализация (Serde)](kafka/Serde.md)** — Форматы String/JSON/XML/bytes, настройка по частям,
+  `spring-json`/`spring-xml`, заголовки с информацией о типе.
+* **[In-Flight и лаг](kafka/In-Flight-and-Lag.md)** — Ожидание обработки, два режима, таймауты, Cold Start, транзакции.
+* **[Устранение неполадок](kafka/Troubleshooting.md)** — Timeout ожидания, ошибки serde-конфига, пропавшие
+  сообщения, Docker.
+* **[Сценарии с ошибками](kafka/Error-Handling.md)** — Незакоммиченные offset'ы, пропущенные упавшие сообщения,
+  принудительный коммит из теста.
+* **[Расширяемость](kafka/Extensibility.md)** — Свои сериализаторы, заголовки и форматы через `bean-ref` и
+  `TestSerdeProvider`.
+
 ### Инструменты и Интеграция
 
 * **[Интеграция с IntelliJ IDEA](IDEA-Plugin.md)** — **(New!)** Управление тестами через плагин, визуальный Diff и режим
@@ -48,6 +65,8 @@
 ### Расширенные возможности
 
 * **[Система Wait-Completion](wait-completion.md)** — Ожидание завершения асинхронных процессов.
+* **[Хуки на методы](Method-Hooks.md)** — `@OnMethodEnter`/`@OnMethodExit`: наблюдение и внедрение поведения в методы
+  приложения.
 * **[Хуки и преобразователи](Hooks-and-Converters.md)** — Использование `BeforeTest`, `AfterTest` и `TestConverter`.
 * **[Аннотация JsonMapAsEntries](JsonMapAsEntries.md)** — Продвинутый маппинг коллекций для XML.
 * **[Механизм ResettableIterator](ResettableIterator.md)** — Многоразовые итераторы для тестов.

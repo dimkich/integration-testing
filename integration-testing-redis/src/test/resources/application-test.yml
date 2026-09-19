@@ -28,7 +28,6 @@ integration:
           schemas:
             redisson:
               ignore: true
-    wait.completion.enabled: true
     storage:
       storages:
         redissonConnectionFactory:

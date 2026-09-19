@@ -1,51 +1,35 @@
 package io.github.dimkich.integration.testing.message;
 
-import io.github.dimkich.integration.testing.config.Environment;
-import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @ConditionalOnMissingBean(TestMessagePoller.class)
 public class TestMessagePoller {
-    @Value("${integration.testing.environment}")
-    private String environment;
+    private final ArrayDeque<AbstractMessage> messages = new ArrayDeque<>();
 
-    private final BlockingQueue<MessageDto<?>> messages = new ArrayBlockingQueue<>(1000);
-
-    @SneakyThrows
-    public MessageDto<?> pollMessage() {
-        if (Environment.MOCK.equals(environment)) {
-            return messages.poll(1, TimeUnit.NANOSECONDS);
-        }
-        return messages.poll(500, TimeUnit.MILLISECONDS);
+    /**
+     * Adds a message to the queue of accumulated messages.
+     *
+     * @param message the message to accumulate
+     */
+    public synchronized void putMessage(AbstractMessage message) {
+        messages.addLast(message);
     }
 
-    @SneakyThrows
-    public void putMessage(MessageDto<?> message) {
-        if (!message.isTestInboundMessage()) {
-            messages.put(message);
-        }
-    }
-
-    public List<MessageDto<?>> pollMessages(int expectedCount) {
-        List<MessageDto<?>> list = new ArrayList<>();
-        messages.drainTo(list);
-        for (int i = list.size(); i < expectedCount; i++) {
-            MessageDto<?> message = pollMessage();
-            if (message == null) {
-                break;
-            }
-            list.add(message);
-        }
-        messages.drainTo(list);
+    /**
+     * Returns all messages accumulated by the time of the call.
+     * Synchronization has already been performed by WaitCompletion.
+     *
+     * @return the collected messages
+     */
+    public synchronized List<AbstractMessage> pollMessages() {
+        List<AbstractMessage> list = new ArrayList<>(messages);
+        messages.clear();
         return list;
     }
 }

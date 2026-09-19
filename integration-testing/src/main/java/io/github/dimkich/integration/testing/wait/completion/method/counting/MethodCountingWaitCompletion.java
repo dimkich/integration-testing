@@ -4,12 +4,15 @@ import io.github.dimkich.integration.testing.expression.ExpressionFactory;
 import io.github.dimkich.integration.testing.expression.PointcutMatch;
 import io.github.dimkich.integration.testing.expression.PointcutRegistry;
 import io.github.dimkich.integration.testing.expression.PointcutSettings;
+import io.github.dimkich.integration.testing.instrumentation.InstrumentationPlugin;
 import io.github.dimkich.integration.testing.wait.completion.MethodCountingAwait;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletion;
 import lombok.SneakyThrows;
 import net.bytebuddy.agent.builder.AgentBuilder;
 
 import java.util.Collection;
+
+import static org.springframework.core.annotation.AnnotatedElementUtils.findMergedRepeatableAnnotations;
 
 /**
  * Implementation of the {@link WaitCompletion} strategy that tracks asynchronous
@@ -34,37 +37,25 @@ import java.util.Collection;
  * @see MethodCountingTracker
  * @see MethodCountingAdvice
  */
-public class MethodCountingWaitCompletion implements WaitCompletion {
+public class MethodCountingWaitCompletion implements WaitCompletion, InstrumentationPlugin {
 
-    /**
-     * Configures the provided {@link AgentBuilder} with ByteBuddy transformations
-     * for all specified {@link MethodCountingAwait} pointcuts.
-     *
-     * <p>For each configuration, this method:
-     * <ol>
-     *     <li>Compiles the <b>pointcut</b> expression via {@link ExpressionFactory}
-     *         to resolve class and method matchers.</li>
-     *     <li>Compiles the <b>when</b> expression into a runtime predicate for
-     *         dynamic filtering (e.g., counting only calls with specific arguments).</li>
-     *     <li>Registers the compiled settings in the {@link PointcutRegistry}.</li>
-     *     <li>Applies the {@link MethodCountingAdvice} to the identified injection points.</li>
-     * </ol></p>
-     *
-     * @param awaits       collection of await configurations describing which methods to track.
-     * @param agentBuilder base {@link AgentBuilder} instance to extend with transformations.
-     * @return the supplied {@link AgentBuilder} extended with method-counting instrumentation.
-     * @throws IllegalArgumentException if the pointcut expression fails to resolve or lacks a method matcher.
-     */
-    public static AgentBuilder setUp(Collection<MethodCountingAwait> awaits, AgentBuilder agentBuilder) {
+    @Override
+    public boolean isApplicable(Class<?> testClass) {
+        return !findMergedRepeatableAnnotations(testClass, MethodCountingAwait.class).isEmpty();
+    }
+
+    @Override
+    public AgentBuilder configureBuilder(Class<?> testClass, AgentBuilder builder) {
+        Collection<MethodCountingAwait> awaits = findMergedRepeatableAnnotations(testClass, MethodCountingAwait.class);
         for (MethodCountingAwait await : awaits) {
             PointcutMatch match = ExpressionFactory.createPointcutMatch(await.pointcut());
             PointcutSettings settings = PointcutRegistry.get(match.getPointcutId());
 
             settings.setWhen(ExpressionFactory.createInvokePredicate(await.when()));
 
-            agentBuilder = match.apply(agentBuilder, MethodCountingAdvice.class);
+            builder = match.apply(builder, MethodCountingAdvice.class);
         }
-        return agentBuilder;
+        return builder;
     }
 
     /**
@@ -92,8 +83,6 @@ public class MethodCountingWaitCompletion implements WaitCompletion {
      * Blocks the current thread until all tracked method activities are completed.
      * <p>This method delegates the blocking logic to {@link MethodCountingTracker#waitCompletion()},
      * which waits for the atomic counter of in-flight executions to reach zero.</p>
-     *
-     * @throws InterruptedException (wrapped in SneakyThrows) if the thread is interrupted while waiting.
      */
     @Override
     @SneakyThrows

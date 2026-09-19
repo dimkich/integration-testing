@@ -79,7 +79,9 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
             tb.writeString(typeId);
         }
         if (deser.handledType() != null && JacksonUtils.isIndexedType(deser.handledType())) {
-            tb = ctxt.bufferForInputBuffering(p);
+            if (tb == null) {
+                tb = ctxt.bufferForInputBuffering(p);
+            }
             p.nextToken();
             tb.writeStartObject();
             while (p.currentToken() != JsonToken.END_OBJECT) {
@@ -99,8 +101,12 @@ public class PolymorphicAsPropertyTypeDeserializer extends AsPropertyTypeDeseria
         if (isWrapped) {
             p.nextToken();
         }
-        if (p.currentToken() == JsonToken.END_OBJECT && "Character".equals(typeId)) {
-            return ' ';
+        if (p.currentToken() == JsonToken.END_OBJECT) {
+            Class<?> rawType = deser.handledType();
+            if (rawType == Character.class || rawType == char.class) {
+                return ' ';
+            }
+            return deser.getEmptyValue(ctxt);
         }
         Object bean = deser.deserialize(p, ctxt);
         if (isWrapped && p.currentToken() != JsonToken.END_OBJECT) {

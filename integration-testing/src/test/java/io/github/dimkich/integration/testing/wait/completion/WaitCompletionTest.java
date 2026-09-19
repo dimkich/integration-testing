@@ -2,8 +2,8 @@ package io.github.dimkich.integration.testing.wait.completion;
 
 import eu.ciechanowiec.sneakyfun.SneakyRunnable;
 import io.github.dimkich.integration.testing.DynamicTestBuilder;
-import io.github.dimkich.integration.testing.RepeatInstrumentation;
 import io.github.dimkich.integration.testing.TestSetupModule;
+import io.github.dimkich.integration.testing.instrumentation.RepeatInstrumentation;
 import io.github.dimkich.integration.testing.wait.completion.future.like.FutureLike5Consumer;
 import io.github.dimkich.integration.testing.wait.completion.future.like.FutureLikeTracker;
 import io.github.dimkich.integration.testing.wait.completion.method.counting.MethodCountingTracker;
@@ -36,6 +36,7 @@ import static io.github.dimkich.integration.testing.wait.completion.WaitCompleti
 @FutureLikeAwait(pointcut = "t.inherits('" + FL + ".FutureLike5') && m.name('create') " +
         "&& m.ann('" + FL + ".FutureLike5Ann')", awaitConsumer = FutureLike5Consumer.class)
 @FutureLikeAwait(pointcut = "t.name('" + FL + ".FutureLike6') && m.name('create')", await = "o.call('await')")
+@FutureLikeAwait(pointcut = "t.name('" + FL + ".FutureLike7') && m.name('create')", await = "o.call('await')")
 @MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting1') && m.name('method')",
         when = "o.isSameClass(" + MC + ".MethodCounting1.class)")
 @MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting2') && m.name('method')")
@@ -78,7 +79,7 @@ public class WaitCompletionTest {
     private final DynamicTestBuilder dynamicTestBuilder;
 
     @TestFactory
-    Stream<DynamicNode> tests() throws Exception {
+    Stream<DynamicNode> tests() {
         return dynamicTestBuilder.build("wait.completion/waitCompletion.xml");
     }
 

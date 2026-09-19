@@ -10,6 +10,7 @@ buildNumber.properties
 .idea/
 .gradle
 .intellijPlatform
+integration-testing-idea-plugin/bin
 integration-testing-idea-plugin/build
 .flattened-pom.xml
 # https://github.com/takari/maven-wrapper#usage-without-binary-jar
@@ -20,3 +21,4 @@ integration-testing-idea-plugin/build
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+.factorypath

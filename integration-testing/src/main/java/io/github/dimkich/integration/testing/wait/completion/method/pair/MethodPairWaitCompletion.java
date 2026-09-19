@@ -3,12 +3,15 @@ package io.github.dimkich.integration.testing.wait.completion.method.pair;
 import io.github.dimkich.integration.testing.expression.ExpressionFactory;
 import io.github.dimkich.integration.testing.expression.PointcutMatch;
 import io.github.dimkich.integration.testing.expression.PointcutRegistry;
+import io.github.dimkich.integration.testing.instrumentation.InstrumentationPlugin;
 import io.github.dimkich.integration.testing.wait.completion.MethodPairAwait;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletion;
 import lombok.SneakyThrows;
 import net.bytebuddy.agent.builder.AgentBuilder;
 
 import java.util.Collection;
+
+import static org.springframework.core.annotation.AnnotatedElementUtils.findMergedRepeatableAnnotations;
 
 /**
  * Implementation of the {@link WaitCompletion} strategy that synchronizes test execution
@@ -35,26 +38,16 @@ import java.util.Collection;
  * @see MethodPairEnterAdvice
  * @see MethodPairExitAdvice
  */
-public class MethodPairWaitCompletion implements WaitCompletion {
+public class MethodPairWaitCompletion implements WaitCompletion, InstrumentationPlugin {
 
-    /**
-     * Configures the provided {@link AgentBuilder} with ByteBuddy transformations
-     * for all specified start/end method pairs.
-     *
-     * <p>For each {@link MethodPairAwait} configuration, this method:
-     * <ol>
-     *     <li>Compiles the <b>startPointcut</b> and <b>endPointcut</b> expressions.</li>
-     *     <li>Compiles the <b>startWhen</b> and <b>endWhen</b> runtime conditions.</li>
-     *     <li>Registers the two pointcut IDs as a linked pair in the {@link MethodPairTracker}.</li>
-     *     <li>Applies entry advice to the start method and exit advice to the end method.</li>
-     * </ol></p>
-     *
-     * @param awaits       collection of await configurations describing the start/end methods.
-     * @param agentBuilder base {@link AgentBuilder} instance to extend with transformations.
-     * @return the supplied {@link AgentBuilder} instance with all pair transformations registered.
-     * @throws IllegalArgumentException if a start or end pointcut fails to define a method matcher.
-     */
-    public static AgentBuilder setUp(Collection<MethodPairAwait> awaits, AgentBuilder agentBuilder) {
+    @Override
+    public boolean isApplicable(Class<?> testClass) {
+        return !findMergedRepeatableAnnotations(testClass, MethodPairAwait.class).isEmpty();
+    }
+
+    @Override
+    public AgentBuilder configureBuilder(Class<?> testClass, AgentBuilder builder) {
+        Collection<MethodPairAwait> awaits = findMergedRepeatableAnnotations(testClass, MethodPairAwait.class);
         for (MethodPairAwait await : awaits) {
             PointcutMatch startMatch = ExpressionFactory.createPointcutMatch(await.startPointcut());
             PointcutMatch endMatch = ExpressionFactory.createPointcutMatch(await.endPointcut());
@@ -66,18 +59,14 @@ public class MethodPairWaitCompletion implements WaitCompletion {
 
             MethodPairTracker.registerPair(startMatch.getPointcutId(), endMatch.getPointcutId());
 
-            agentBuilder = startMatch.apply(agentBuilder, MethodPairEnterAdvice.class);
-            agentBuilder = endMatch.apply(agentBuilder, MethodPairExitAdvice.class);
+            builder = startMatch.apply(builder, MethodPairEnterAdvice.class);
+            builder = endMatch.apply(builder, MethodPairExitAdvice.class);
         }
-        return agentBuilder;
+        return builder;
     }
 
-    /**
-     * Completely clears all registered method-pair configurations and their counters.
-     * <p>This should be called during the cleanup phase of the test suite to
-     * remove stale instrumentation rules.</p>
-     */
-    public static void tearDown() {
+    @Override
+    public void cleanup() {
         MethodPairTracker.clear();
     }
 
@@ -106,8 +95,6 @@ public class MethodPairWaitCompletion implements WaitCompletion {
      * Blocks the current thread until all tracked method-pair activities are completed.
      * <p>Delegates the waiting logic to {@link MethodPairTracker#waitCompletion()},
      * which blocks until the sum of all paired counters reaches zero.</p>
-     *
-     * @throws InterruptedException (wrapped in SneakyThrows) if the thread is interrupted while waiting.
      */
     @Override
     @SneakyThrows

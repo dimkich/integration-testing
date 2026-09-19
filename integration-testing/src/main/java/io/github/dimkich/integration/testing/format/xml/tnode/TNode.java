@@ -15,6 +15,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -50,6 +52,7 @@ public class TNode {
         return new TNode(((Element) node).addElement(name));
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public TNode addChild(String tag, String value) {
         Element element = ((Element) node).addElement(tag);
         element.setText(value);
@@ -103,8 +106,42 @@ public class TNode {
         return null;
     }
 
+    /**
+     * Returns all attributes of this node as an ordered map.
+     *
+     * @return the attributes of the node, empty if the node cannot have attributes
+     */
+    public Map<String, String> getAttributes() {
+        if (node instanceof Element element) {
+            Map<String, String> attributes = new LinkedHashMap<>();
+            for (Attribute attribute : element.attributes()) {
+                attributes.put(attribute.getName(), attribute.getValue());
+            }
+            return attributes;
+        }
+        return Map.of();
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
     public TNode setAttributeValue(String name, String value) {
         ((Element) node).addAttribute(name, value);
+        return this;
+    }
+
+    /**
+     * Removes the attribute with the given name, if present.
+     *
+     * @param name the attribute name
+     * @return this node, for chaining
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    public TNode removeAttribute(String name) {
+        if (node instanceof Element element) {
+            Attribute attribute = element.attribute(name);
+            if (attribute != null) {
+                element.remove(attribute);
+            }
+        }
         return this;
     }
 
@@ -117,6 +154,7 @@ public class TNode {
         return Stream.of();
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public TNode setChildNodes(Collection<TNode> newChildNodes) {
         ((Branch) node).setContent(newChildNodes.stream().map(tn -> tn.node).toList());
         return this;

@@ -28,6 +28,9 @@ public class LinkedMultiValueMapStringObject extends LinkedMultiValueMap<String,
         public LinkedMultiValueMapStringObject deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonDeserializer<Object> deserializer = ctxt.findRootValueDeserializer(valueType);
             LinkedMultiValueMapStringObject map = new LinkedMultiValueMapStringObject();
+            if (p.currentToken() == JsonToken.VALUE_STRING) {
+                return map;
+            }
             do {
                 if (p.currentToken() == JsonToken.FIELD_NAME) {
                     String fieldName = p.currentName();
@@ -41,7 +44,7 @@ public class LinkedMultiValueMapStringObject extends LinkedMultiValueMap<String,
                     }
                 }
             } while ((p.nextToken() != JsonToken.END_OBJECT));
-            return map.isEmpty() ? null : map;
+            return map;
         }
     }
 }

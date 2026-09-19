@@ -1,9 +1,9 @@
 package io.github.dimkich.integration.testing;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,20 +21,25 @@ public class ArgStorage implements PersistentStateComponent<PluginState> {
             new ArgComboBox("repeat    ", "-Dintegration.testing.repeat=",
                     "Once - run tests ones;<br /><br />Until Stopped - repeat tests execution until tests are stopped manually",
                     "Once", "UntilStopped"),
-            new ArgCheckBox("useMocks", "-Dintegration.testing.environment=mock", "Try to use less services started with docker. Speed up tests for local development."),
-            new ArgCheckBox("mockAlwaysCallRealMethods", "-Dintegration.testing.mock.mockAlwaysCallRealMethods=true", "Allways calls real methods of mocks declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock. Used to fill test data from real service calls."),
+            new ArgCheckBox("mockAlwaysCallRealMethods", "-Dintegration.testing.mock.mockAlwaysCallRealMethods=true", "Always calls real methods of mocks declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock. Used to fill test data from real service calls."),
             new ArgCheckBox("mockCallRealMethodsOnNoData", "-Dintegration.testing.mock.mockCallRealMethodsOnNoData=true", "Calls real method of mocks declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock, only when data for mock is not filled. Used to fill test data from real service calls."),
-            new ArgCheckBox("mockReturnMockOnNoData", "-Dintegration.testing.mock.mockReturnMockOnNoData=true", "Returns Mokito deep mock when calling method of mock declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock, only when data for mock is not filled. Used to fill initial data."),
-            new ArgCheckBox("spyCreateData", "-Dintegration.testing.mock.spyCreateData=true", "Allways fill data of spy method calls declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock. Used to fill initial data."),
+            new ArgCheckBox("mockReturnMockOnNoData", "-Dintegration.testing.mock.mockReturnMockOnNoData=true", "Returns Mockito deep mock when calling method of mock declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock, only when data for mock is not filled. Used to fill initial data."),
+            new ArgCheckBox("spyCreateData", "-Dintegration.testing.mock.spyCreateData=true", "Always fill data of spy method calls declared with @TestBeanMock, @TestConstructorMock and @TestStaticMock. Used to fill initial data."),
             new ArgLabel("Hibernate"),
             new ArgCheckBox("hibernateShowSql", "-Dspring.jpa.properties.hibernate.show_sql=true", "Show hibernate sql"),
             new ArgCheckBox("hibernateUseSqlComments", "-Dspring.jpa.properties.hibernate.use_sql_comments=true", "Show hibernate sql comments"),
             new ArgCheckBox("hibernateFormatSql", "-Dspring.jpa.properties.hibernate.format_sql=true", "Format hibernate sql"),
-            new ArgCheckBox("hibernateShowBindParams", "-Dlogging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE -Dlogging.level.org.hibernate.orm.jdbc.bind=TRACE", "Show parameters binded to sql")
+            new ArgCheckBox("hibernateShowBindParams", "-Dlogging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE -Dlogging.level.org.hibernate.orm.jdbc.bind=TRACE", "Show parameters bound to sql")
     ).collect(Collectors.toMap(Arg::getText, Function.identity(), (x, y) -> y, LinkedHashMap::new));
 
-    public static ArgStorage getInstance() {
-        return ApplicationManager.getApplication().getService(ArgStorage.class);
+    /**
+     * Returns the project-scoped instance of this service.
+     *
+     * @param project the current IntelliJ project
+     * @return the {@code ArgStorage} service of the project
+     */
+    public static ArgStorage getInstance(Project project) {
+        return project.getService(ArgStorage.class);
     }
 
     public List<Arg> getAll() {

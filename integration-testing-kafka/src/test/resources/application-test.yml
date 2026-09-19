@@ -1,0 +1,291 @@
+integration:
+  testing:
+    self-testing: true
+    kafka:
+      connections:
+        kafka1:
+          bootstrapServers: "${embedded.kafka.brokerList}"
+          expected-groups:
+            - text-record-group
+          excluded-fields:
+            - partition
+            - offset
+            - timestamp
+            - headers.id
+            - headers.timestamp
+            - headers.kafka_batchConvertedHeaders
+            - headers.kafka_offset
+            - headers.kafka_receivedPartitionId
+            - headers.kafka_receivedTimestamp
+            - headers.kafka_timestampType
+          topics:
+            "text-record-in":
+              serializer:
+                type: io.github.dimkich.integration.testing.kafka.serde.serialization.StringKafkaRecordSerializer
+            "text-record-out":
+              deserializer:
+                type: io.github.dimkich.integration.testing.kafka.serde.deserialization.StringKafkaRecordDeserializer
+
+            "text-parts-in":
+              serializer:
+                key:
+                  type: io.github.dimkich.integration.testing.serde.impl.StringSerializer
+                value:
+                  type: io.github.dimkich.integration.testing.serde.impl.StringSerializer
+                headers:
+                  type: io.github.dimkich.integration.testing.serde.impl.StringSerializer
+            "text-parts-out":
+              deserializer:
+                key:
+                  type: io.github.dimkich.integration.testing.serde.impl.StringDeserializer
+                value:
+                  type: io.github.dimkich.integration.testing.serde.impl.StringDeserializer
+                headers:
+                  type: io.github.dimkich.integration.testing.serde.impl.StringDeserializer
+
+            "text-native-in":
+              serializer:
+                key:
+                  type: org.apache.kafka.common.serialization.StringSerializer
+                value:
+                  type: org.apache.kafka.common.serialization.StringSerializer
+                headers:
+                  type: org.apache.kafka.common.serialization.StringSerializer
+            "text-native-out":
+              deserializer:
+                key:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                value:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                headers:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+
+            "text-string-record-in":
+              serializer:
+                type: string
+            "text-string-record-out":
+              deserializer:
+                type: string
+
+            "error-in":
+              serializer:
+                type: java.util.ArrayList
+
+            # --- JSON СЦЕНАРИИ ---
+
+            # KafkaRecord Serializer (type: json)
+            "json-record-in":
+              serializer:
+                type: json
+            "json-record-out":
+              deserializer:
+                type: json
+                target-class: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto
+
+            # Individually Configured Parts (Key, Value, Headers раздельно)
+            "json-parts-in":
+              serializer:
+                key:
+                  type: io.github.dimkich.integration.testing.serde.impl.StringSerializer
+                value:
+                  type: json
+                headers:
+                  type: org.springframework.kafka.support.DefaultKafkaHeaderMapper
+            "json-parts-out":
+              deserializer:
+                key:
+                  type: io.github.dimkich.integration.testing.serde.impl.StringDeserializer
+                value:
+                  type: json
+                  target-class: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto
+                headers:
+                  type: org.springframework.kafka.support.DefaultKafkaHeaderMapper
+
+            # Spring JSON (Spring Kafka native classes)
+            "json-spring-json-in":
+              serializer:
+                type: spring-json
+                add-type-info-headers: true
+            "json-spring-json-out":
+              deserializer:
+                type: spring-json
+                use-type-info-headers: true
+                trusted-packages: "*"
+            "json-spring-json-no-type-in":
+              serializer:
+                type: spring-json
+                add-type-info-headers: false
+            "json-spring-json-no-type-out":
+              deserializer:
+                type: spring-json
+                use-type-info-headers: false
+                target-class: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto
+                trusted-packages: "*"
+
+            # --- БИНАРНЫЕ СЦЕНАРИИ (BYTES) ---
+
+            # Сценарий 4: KafkaRecord Serializer (ByteArray)
+            "byte-record-in":
+              serializer:
+                type: bytes
+            "byte-record-out":
+              deserializer:
+                type: bytes
+
+            # Сценарий 5: Individually Configured Parts (Key, Value, Header)
+            "byte-parts-in":
+              serializer:
+                key:
+                  type: io.github.dimkich.integration.testing.serde.impl.ByteArraySerializer
+                value:
+                  type: io.github.dimkich.integration.testing.serde.impl.ByteArraySerializer
+                headers:
+                  type: io.github.dimkich.integration.testing.serde.impl.ByteArraySerializer
+            "byte-parts-out":
+              deserializer:
+                key:
+                  type: io.github.dimkich.integration.testing.serde.impl.ByteArrayDeserializer
+                value:
+                  type: io.github.dimkich.integration.testing.serde.impl.ByteArrayDeserializer
+                headers:
+                  type: io.github.dimkich.integration.testing.serde.impl.ByteArrayDeserializer
+
+            # Сценарий 6: Native Kafka SerDe Classes
+            "byte-native-in":
+              serializer:
+                key:
+                  type: org.apache.kafka.common.serialization.StringSerializer
+                value:
+                  type: org.apache.kafka.common.serialization.ByteArraySerializer
+                headers:
+                  type: org.apache.kafka.common.serialization.ByteArraySerializer
+            "byte-native-out":
+              deserializer:
+                key:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                value:
+                  type: org.apache.kafka.common.serialization.ByteArrayDeserializer
+                headers:
+                  type: org.apache.kafka.common.serialization.ByteArrayDeserializer
+
+            # --- MISC СЦЕНАРИИ ---
+
+            "misc-pattern-service-orders":
+              serializer:
+                type: spring-json
+                add-type-info-headers: true
+            "misc-pattern-processed":
+              deserializer:
+                type: json
+                target-class: io.github.dimkich.integration.testing.kafka.OrderEventDto
+
+            "misc-slow":
+              serializer:
+                key:
+                  type: string
+                value:
+                  type: string
+                headers:
+                  type: string
+            "misc-slow-result":
+              deserializer:
+                type: string
+
+            "misc-cold-start":
+              serializer:
+                type: spring-json
+                add-type-info-headers: true
+            "misc-cold-start-result":
+              deserializer:
+                key:
+                  type: string
+                value:
+                  type: json
+                  target-class: io.github.dimkich.integration.testing.kafka.OrderDto
+                headers:
+                  type: string
+
+            "misc-tx-out":
+              deserializer:
+                key:
+                  type: string
+                value:
+                  type: string
+                headers:
+                  type: string
+
+            "misc-tx-offsets-in":
+              serializer:
+                type: string
+            "misc-tx-offsets-out":
+              deserializer:
+                type: string
+
+            "misc-uncommitted-in":
+              serializer:
+                type: string
+            "misc-uncommitted-out":
+              deserializer:
+                type: string
+
+            "misc-assign":
+              serializer:
+                type: spring-json
+                add-type-info-headers: true
+            "misc-assign-result":
+              deserializer:
+                key:
+                  type: string
+                value:
+                  type: json
+                  target-class: io.github.dimkich.integration.testing.kafka.OrderEventDto
+                headers:
+                  type: string
+
+            # --- XML СЦЕНАРИИ ---
+
+            # Plain XML (type: xml - KafkaRecord serializer)
+            "xml-record-in":
+              serializer:
+                type: xml
+            "xml-record-out":
+              deserializer:
+                type: xml
+                target-class: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto
+
+            # Spring XML (type: spring-xml - Spring Kafka native classes)
+
+
+            "xml-spring-xml-in":
+              serializer:
+                type: spring-xml
+                add-type-info-headers: true
+            "xml-spring-xml-out":
+              deserializer:
+                type: spring-xml
+                use-type-info-headers: true
+                trusted-packages: "*"
+            "xml-spring-xml-no-type-in":
+              serializer:
+                type: spring-xml
+                add-type-info-headers: false
+            "xml-spring-xml-no-type-out":
+              deserializer:
+                type: spring-xml
+                use-type-info-headers: false
+                target-class: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto
+                trusted-packages: "*"
+
+        monitor:
+          bootstrapServers: "${embedded.kafka.brokerList}"
+          expected-groups:
+            - json-record-group
+          ignoreInbound: false
+          excluded-fields:
+            - partition
+            - offset
+            - timestamp
+
+logging:
+  level:
+    io.github.dimkich.integration.testing.kafka: TRACE

@@ -1,0 +1,1922 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Container" name="Init">
+        <test type="Case" name="Check no timeout on startup">
+            <bean>testBean</bean>
+            <method>getZero</method>
+            <response type="Integer">0</response>
+        </test>
+    </test>
+    <test type="Container" name="Text">
+        <test type="Container" name="KafkaRecord Serializer with Headers">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <init type="DateTimeInit" dateTime="2026-05-31T11:30:00Z"/>
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="text-record-in">
+                        <key>record-base-1</key>
+                        <value>record value</value>
+                        <partition>0</partition>
+                        <headers>
+                            <test-header>custom-header-data</test-header>
+                            <test-header>text-base-header</test-header>
+                            <test-header>third-header-value</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="text-record-in">
+                                <key>record-base-1</key>
+                                <value>record value</value>
+                                <headers>
+                                    <test-header>custom-header-data</test-header>
+                                    <test-header>text-base-header</test-header>
+                                    <test-header>third-header-value</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-record-in">
+                        <key>record-base-1</key>
+                        <value>record value</value>
+                        <headers>
+                            <test-header>custom-header-data</test-header>
+                            <test-header>text-base-header</test-header>
+                            <test-header>third-header-value</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>textKafkaTemplate</request>
+                    <request>text-record-out</request>
+                    <request>record-base-1</request>
+                    <request>record value - processed</request>
+                    <request type="LinkedHashMap">
+                        <test-header>text-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-record-out">
+                        <key>record-base-1</key>
+                        <value>record value - processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-record-out">
+                        <key>record-base-1</key>
+                        <value>record value - processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+            <test type="Container" name="Tombstone">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="text-record-in">
+                        <headers>
+                            <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="text-record-in">
+                                <headers>
+                                    <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-record-in">
+                        <headers>
+                            <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundNullHeader</method>
+                    <request>textKafkaTemplate</request>
+                    <request>text-record-out</request>
+                    <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <request>test-header</request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-record-out">
+                        <headers>
+                            <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-record-out">
+                        <headers>
+                            <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="Individually Configured Parts">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="text-parts-in">
+                        <key>parts-base-1</key>
+                        <value>parts payload</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="text-parts-in">
+                                <key>parts-base-1</key>
+                                <value>parts payload</value>
+                                <headers>
+                                    <test-header>text-base-header</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-parts-in">
+                        <key>parts-base-1</key>
+                        <value>parts payload</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>textKafkaTemplate</request>
+                    <request>text-parts-out</request>
+                    <request>parts-base-1</request>
+                    <request>parts payload-parts-processed</request>
+                    <request type="LinkedHashMap">
+                        <test-header>text-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-parts-out">
+                        <key>parts-base-1</key>
+                        <value>parts payload-parts-processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-parts-out">
+                        <key>parts-base-1</key>
+                        <value>parts payload-parts-processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="Native Kafka SerDe Classes">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="text-native-in">
+                        <key>native-base-1</key>
+                        <value>native text</value>
+                        <headers>
+                            <test-header>native-custom-header</test-header>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="text-native-in">
+                                <key>native-base-1</key>
+                                <value>native text</value>
+                                <headers>
+                                    <test-header>native-custom-header</test-header>
+                                    <test-header>text-base-header</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-native-in">
+                        <key>native-base-1</key>
+                        <value>native text</value>
+                        <headers>
+                            <test-header>native-custom-header</test-header>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>textKafkaTemplate</request>
+                    <request>text-native-out</request>
+                    <request>native-base-1</request>
+                    <request>native text-native-processed</request>
+                    <request type="LinkedHashMap">
+                        <test-header>text-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-native-out">
+                        <key>native-base-1</key>
+                        <value>native text-native-processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-native-out">
+                        <key>native-base-1</key>
+                        <value>native text-native-processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="String Record (type:string)">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="text-string-record-in">
+                        <key>strrec-base-1</key>
+                        <value>string record value</value>
+                        <headers>
+                            <test-header>str-header</test-header>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="text-string-record-in">
+                                <key>strrec-base-1</key>
+                                <value>string record value</value>
+                                <headers>
+                                    <test-header>str-header</test-header>
+                                    <test-header>text-base-header</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-string-record-in">
+                        <key>strrec-base-1</key>
+                        <value>string record value</value>
+                        <headers>
+                            <test-header>str-header</test-header>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>textKafkaTemplate</request>
+                    <request>text-string-record-out</request>
+                    <request>strrec-base-1</request>
+                    <request>string record value-string-record-processed</request>
+                    <request type="LinkedHashMap">
+                        <test-header>text-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-string-record-out">
+                        <key>strrec-base-1</key>
+                        <value>string record value-string-record-processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-string-record-out">
+                        <key>strrec-base-1</key>
+                        <value>string record value-string-record-processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="Default (no config)">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="text-default-in">
+                        <key>def-base-1</key>
+                        <value>hello default</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="text-default-in">
+                                <key>def-base-1</key>
+                                <value>hello default</value>
+                                <headers>
+                                    <test-header>text-base-header</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-default-in">
+                        <key>def-base-1</key>
+                        <value>hello default</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>textKafkaTemplate</request>
+                    <request>text-default-out</request>
+                    <request>def-base-1</request>
+                    <request>hello default-default-processed</request>
+                    <request type="LinkedHashMap">
+                        <test-header>text-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-default-out">
+                        <key>def-base-1</key>
+                        <value>hello default-default-processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="text-default-out">
+                        <key>def-base-1</key>
+                        <value>hello default-default-processed</value>
+                        <headers>
+                            <test-header>text-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+    </test>
+    <test type="Container" name="Json">
+        <test type="Container" name="KafkaRecord Serializer with Headers">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="json-record-in">
+                        <key>json-record-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>jr-1</id>
+                            <name>record value</name>
+                            <amount>1</amount>
+                            <price>1.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>json-custom-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="json-record-in">
+                                <key>json-record-base-1</key>
+                                <value type="JsonTestDto">
+                                    <id>jr-1</id>
+                                    <name>record value</name>
+                                    <amount>1</amount>
+                                    <price>1.0</price>
+                                    <active>true</active>
+                                    <tags></tags>
+                                    <timestamp>2026-05-31T11:30:00Z</timestamp>
+                                    <localDateTime>2026-05-31T11:30:00</localDateTime>
+                                </value>
+                                <headers>
+                                    <test-header type="byte[]">anNvbi1jdXN0b20taGVhZGVy</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-record-in">
+                        <key>json-record-base-1</key>
+                        <value>{"id":"jr-1","name":"record value","amount":1,"price":1.0,"active":true,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <test-header>json-custom-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>jsonKafkaTemplate</request>
+                    <request>json-record-out</request>
+                    <request>json-record-base-1</request>
+                    <request type="JsonTestDto">
+                        <id>jr-1</id>
+                        <name>record value</name>
+                        <amount>1</amount>
+                        <price>1.0</price>
+                        <active>true</active>
+                        <tags></tags>
+                        <timestamp>2026-05-31T11:30:00Z</timestamp>
+                        <localDateTime>2026-05-31T11:30:00</localDateTime>
+                    </request>
+                    <request type="LinkedHashMap">
+                        <test-header>json-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-record-out">
+                        <key>json-record-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>jr-1</id>
+                            <name>record value</name>
+                            <amount>1</amount>
+                            <price>1.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-record-out">
+                        <key>json-record-base-1</key>
+                        <value>{"id":"jr-1","name":"record value","amount":1,"price":1.0,"active":true,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="Individually Configured Parts">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="json-parts-in">
+                        <key>json-parts-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>jp-1</id>
+                            <name>parts payload</name>
+                            <amount>77</amount>
+                            <price>77.7</price>
+                            <active>false</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="json-parts-in">
+                                <key>json-parts-base-1</key>
+                                <value type="JsonTestDto">
+                                    <id>jp-1</id>
+                                    <name>parts payload</name>
+                                    <amount>77</amount>
+                                    <price>77.7</price>
+                                    <active>false</active>
+                                    <tags></tags>
+                                    <timestamp>2026-05-31T11:30:00Z</timestamp>
+                                    <localDateTime>2026-05-31T11:30:00</localDateTime>
+                                </value>
+                                <headers>
+                                    <test-header>json-base-header</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-parts-in">
+                        <key>json-parts-base-1</key>
+                        <value>{"id":"jp-1","name":"parts payload","amount":77,"price":77.7,"active":false,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundSpring</method>
+                    <request>springJsonKafkaTemplate</request>
+                    <request>json-parts-out</request>
+                    <request>json-parts-base-1</request>
+                    <request type="JsonTestDto">
+                        <id>jp-1</id>
+                        <name>parts payload</name>
+                        <amount>77</amount>
+                        <price>77.7</price>
+                        <active>false</active>
+                        <tags></tags>
+                        <timestamp>2026-05-31T11:30:00Z</timestamp>
+                        <localDateTime>2026-05-31T11:30:00</localDateTime>
+                    </request>
+                    <request type="LinkedHashMap">
+                        <test-header>json-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-parts-out">
+                        <key>json-parts-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>jp-1</id>
+                            <name>parts payload</name>
+                            <amount>77</amount>
+                            <price>77.7</price>
+                            <active>false</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                            <__TypeId__ type="byte[]">aW8uZ2l0aHViLmRpbWtpY2guaW50ZWdyYXRpb24udGVzdGluZy5rYWZrYS5zZXJkZS5qc29uLkpz
+b25UZXN0RHRv</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-parts-out">
+                        <key>json-parts-base-1</key>
+                        <value>{"id":"jp-1","name":"parts payload","amount":77,"price":77.7,"active":false,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="Spring JSON">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-in">
+                        <key>json-spring-json-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>jsj-1</id>
+                            <name>spring json</name>
+                            <amount>15</amount>
+                            <price>15.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <traceId>spring-json-test-1</traceId>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="json-spring-json-in">
+                                <key>json-spring-json-base-1</key>
+                                <value type="JsonTestDto">
+                                    <id>jsj-1</id>
+                                    <name>spring json</name>
+                                    <amount>15</amount>
+                                    <price>15.0</price>
+                                    <active>true</active>
+                                    <tags></tags>
+                                    <timestamp>2026-05-31T11:30:00Z</timestamp>
+                                    <localDateTime>2026-05-31T11:30:00</localDateTime>
+                                </value>
+                                <headers>
+                                    <traceId>spring-json-test-1</traceId>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-in">
+                        <key>json-spring-json-base-1</key>
+                        <value>{"id":"jsj-1","name":"spring json","amount":15,"price":15.0,"active":true,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <traceId>spring-json-test-1</traceId>
+                            <spring_json_header_types>{"traceId":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="Multi-value headers">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-in">
+                        <key>json-spring-json-multi-1</key>
+                        <value type="JsonTestDto">
+                            <id>jsj-multi-1</id>
+                            <name>multi headers</name>
+                            <amount>7</amount>
+                            <price>7.5</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <traceId>multi-a</traceId>
+                            <traceId>multi-b</traceId>
+                            <traceId xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="MapStringKeyObjectValue">
+                                <key>json-spring-json-multi-1</key>
+                                <value type="MapStringKeyObjectValue">
+                                    <id>jsj-multi-1</id>
+                                    <name>multi headers</name>
+                                    <amount type="Integer">7</amount>
+                                    <price type="Double">7.5</price>
+                                </value>
+                                <headers type="MapStringKeyObjectValue">
+                                    <traceId type="ArrayList">
+                                        <traceId>multi-a</traceId>
+                                        <traceId>multi-b</traceId>
+                                        <traceId xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                    </traceId>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-in">
+                        <key>json-spring-json-multi-1</key>
+                        <value>{"id":"jsj-multi-1","name":"multi headers","amount":7,"price":7.5,"active":true,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <traceId>["multi-a","multi-b",null]</traceId>
+                            <spring_json_header_types>{"traceId":"java.util.ImmutableCollections$ListN"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundSpring</method>
+                    <request>springJsonKafkaTemplate</request>
+                    <request>json-spring-json-out</request>
+                    <request>json-spring-json-base-1</request>
+                    <request type="JsonTestDto">
+                        <id>jsj-1</id>
+                        <name>spring json</name>
+                        <amount>15</amount>
+                        <price>15.0</price>
+                        <active>true</active>
+                        <tags></tags>
+                        <timestamp>2026-05-31T11:30:00Z</timestamp>
+                        <localDateTime>2026-05-31T11:30:00</localDateTime>
+                    </request>
+                    <request type="LinkedHashMap">
+                        <test-header>json-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-out">
+                        <key>json-spring-json-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>jsj-1</id>
+                            <name>spring json</name>
+                            <amount>15</amount>
+                            <price>15.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-out">
+                        <key>json-spring-json-base-1</key>
+                        <value>{"id":"jsj-1","name":"spring json","amount":15,"price":15.0,"active":true,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework with list header">
+                    <bean>testBean</bean>
+                    <method>sendOutboundSpringMultiHeader</method>
+                    <request>springJsonKafkaTemplate</request>
+                    <request>json-spring-json-out</request>
+                    <request>json-spring-json-multi-out-1</request>
+                    <request type="JsonTestDto">
+                        <id>jsj-multi-1</id>
+                        <name>multi headers</name>
+                        <amount>7</amount>
+                        <price>7.5</price>
+                        <active>true</active>
+                        <tags></tags>
+                        <timestamp>2026-05-31T11:30:00Z</timestamp>
+                        <localDateTime>2026-05-31T11:30:00</localDateTime>
+                    </request>
+                    <request>traceId</request>
+                    <request>multi-a</request>
+                    <request>multi-b</request>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-out">
+                        <key>json-spring-json-multi-out-1</key>
+                        <value type="JsonTestDto">
+                            <id>jsj-multi-1</id>
+                            <name>multi headers</name>
+                            <amount>7</amount>
+                            <price>7.5</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <traceId>multi-a</traceId>
+                            <traceId>multi-b</traceId>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-out">
+                        <key>json-spring-json-multi-out-1</key>
+                        <value>{"id":"jsj-multi-1","name":"multi headers","amount":7,"price":7.5,"active":true,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <traceId>["multi-a","multi-b"]</traceId>
+                            <spring_json_header_types>{"traceId":"java.util.ImmutableCollections$List12"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+            <test type="Container" name="Tombstone">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-in">
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="json-spring-json-in">
+                                <value type="KafkaNull"/>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-in">
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundNullHeader</method>
+                    <request>springJsonKafkaTemplate</request>
+                    <request>json-spring-json-out</request>
+                    <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <request>traceId</request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-out">
+                        <headers>
+                            <traceId xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-out">
+                        <headers>
+                            <traceId xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+            <test type="Container" name="OrderEventDto">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-in">
+                        <key>json-spring-json-order-1</key>
+                        <value type="OrderEventDto">
+                            <orderId>jsj-order-1</orderId>
+                            <status>PROCESSED</status>
+                        </value>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="json-spring-json-in">
+                                <key>json-spring-json-order-1</key>
+                                <value type="OrderEventDto">
+                                    <orderId>jsj-order-1</orderId>
+                                    <status>PROCESSED</status>
+                                </value>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-in">
+                        <key>json-spring-json-order-1</key>
+                        <value>{"orderId":"jsj-order-1","status":"PROCESSED"}</value>
+                        <headers>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderEventDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundSpring</method>
+                    <request>springJsonKafkaTemplate</request>
+                    <request>json-spring-json-out</request>
+                    <request>json-spring-json-order-1</request>
+                    <request type="OrderEventDto">
+                        <orderId>jsj-order-1</orderId>
+                        <status>PROCESSED</status>
+                    </request>
+                    <request type="LinkedHashMap">
+                        <test-header>json-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-out">
+                        <key>json-spring-json-order-1</key>
+                        <value type="OrderEventDto">
+                            <orderId>jsj-order-1</orderId>
+                            <status>PROCESSED</status>
+                        </value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-out">
+                        <key>json-spring-json-order-1</key>
+                        <value>{"orderId":"jsj-order-1","status":"PROCESSED"}</value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderEventDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+            <test type="Container" name="NoTypeInfoHeaders">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-no-type-in">
+                        <key>jsj-no-type-1</key>
+                        <value type="JsonTestDto">
+                            <id>jsj-no-type-1</id>
+                            <name>no type headers</name>
+                            <amount>10</amount>
+                            <price>5.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="json-spring-json-no-type-in">
+                                <key>jsj-no-type-1</key>
+                                <value type="JsonTestDto">
+                                    <id>jsj-no-type-1</id>
+                                    <name>no type headers</name>
+                                    <amount>10</amount>
+                                    <price>5.0</price>
+                                    <active>true</active>
+                                    <tags></tags>
+                                    <timestamp>2026-05-31T11:30:00Z</timestamp>
+                                    <localDateTime>2026-05-31T11:30:00</localDateTime>
+                                </value>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-no-type-in">
+                        <key>jsj-no-type-1</key>
+                        <value>{"id":"jsj-no-type-1","name":"no type headers","amount":10,"price":5.0,"active":true,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundSpring</method>
+                    <request>springJsonKafkaTemplate</request>
+                    <request>json-spring-json-no-type-out</request>
+                    <request>jsj-no-type-1</request>
+                    <request type="JsonTestDto">
+                        <id>jsj-no-type-1</id>
+                        <name>no type headers</name>
+                        <amount>10</amount>
+                        <price>5.0</price>
+                        <active>true</active>
+                        <tags></tags>
+                        <timestamp>2026-05-31T11:30:00Z</timestamp>
+                        <localDateTime>2026-05-31T11:30:00</localDateTime>
+                    </request>
+                    <request type="LinkedHashMap">
+                        <test-header>json-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-no-type-out">
+                        <key>jsj-no-type-1</key>
+                        <value type="JsonTestDto">
+                            <id>jsj-no-type-1</id>
+                            <name>no type headers</name>
+                            <amount>10</amount>
+                            <price>5.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-json-no-type-out">
+                        <key>jsj-no-type-1</key>
+                        <value>{"id":"jsj-no-type-1","name":"no type headers","amount":10,"price":5.0,"active":true,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <test-header>json-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Case" name="Invalid Payload">
+            <bean>testBean</bean>
+            <method>sendOutbound</method>
+            <request>jsonKafkaTemplate</request>
+            <request>json-record-out</request>
+            <request>error-invalid-json</request>
+            <request>{invalid json}</request>
+            <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-record-out">
+                <exception>
+                    <exceptionType>MismatchedInputException</exceptionType>
+                    <message>Cannot construct instance of `io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('{invalid json}')
+ at [Source: (byte[])""{invalid json}""; line: 1, column: 1]</message>
+                </exception>
+                <key>error-invalid-json</key>
+                <value>"{invalid json}"</value>
+                <headers>
+                    <__TypeId__>java.lang.String</__TypeId__>
+                </headers>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="json-record-out">
+                <key>error-invalid-json</key>
+                <value>"{invalid json}"</value>
+                <headers>
+                    <__TypeId__>java.lang.String</__TypeId__>
+                </headers>
+            </outboundMessage>
+        </test>
+    </test>
+    <test type="Container" name="Xml">
+        <test type="Container" name="Spring XML">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="xml-spring-xml-in">
+                        <key>xml-spring-xml-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>xml-base-1</id>
+                            <name>spring xml</name>
+                            <amount>15</amount>
+                            <price>15.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="xml-spring-xml-in">
+                                <key>xml-spring-xml-base-1</key>
+                                <value type="JsonTestDto">
+                                    <id>xml-base-1</id>
+                                    <name>spring xml</name>
+                                    <amount>15</amount>
+                                    <price>15.0</price>
+                                    <active>true</active>
+                                    <tags></tags>
+                                    <timestamp>2026-05-31T11:30:00Z</timestamp>
+                                    <localDateTime>2026-05-31T11:30:00</localDateTime>
+                                </value>
+                                <headers>
+                                    <test-header>xml-base-header</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-spring-xml-in">
+                        <key>xml-spring-xml-base-1</key>
+                        <value>&lt;JsonTestDto>&lt;id>xml-base-1&lt;/id>&lt;name>spring xml&lt;/name>&lt;amount>15&lt;/amount>&lt;price>15.0&lt;/price>&lt;active>true&lt;/active>&lt;tags>&lt;tags>&lt;/tags>&lt;/tags>&lt;timestamp>2026-05-31T11:30:00Z&lt;/timestamp>&lt;localDateTime>2026-05-31T11:30:00&lt;/localDateTime>&lt;/JsonTestDto></value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundSpring</method>
+                    <request>springXmlKafkaTemplate</request>
+                    <request>xml-spring-xml-out</request>
+                    <request>xml-spring-xml-base-1</request>
+                    <request type="JsonTestDto">
+                        <id>xml-base-1</id>
+                        <name>spring xml</name>
+                        <amount>15</amount>
+                        <price>15.0</price>
+                        <active>true</active>
+                        <tags></tags>
+                        <timestamp>2026-05-31T11:30:00Z</timestamp>
+                        <localDateTime>2026-05-31T11:30:00</localDateTime>
+                    </request>
+                    <request type="LinkedHashMap">
+                        <test-header>xml-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="xml-spring-xml-out">
+                        <key>xml-spring-xml-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>xml-base-1</id>
+                            <name>spring xml</name>
+                            <amount>15</amount>
+                            <price>15.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-spring-xml-out">
+                        <key>xml-spring-xml-base-1</key>
+                        <value>&lt;JsonTestDto>&lt;id>xml-base-1&lt;/id>&lt;name>spring xml&lt;/name>&lt;amount>15&lt;/amount>&lt;price>15.0&lt;/price>&lt;active>true&lt;/active>&lt;tags>&lt;tags>&lt;/tags>&lt;/tags>&lt;timestamp>2026-05-31T11:30:00Z&lt;/timestamp>&lt;localDateTime>2026-05-31T11:30:00&lt;/localDateTime>&lt;/JsonTestDto></value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+            <test type="Container" name="OrderEventDto">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="xml-spring-xml-in">
+                        <key>xml-spring-xml-order-1</key>
+                        <value type="OrderEventDto">
+                            <orderId>xml-order-1</orderId>
+                            <status>PROCESSED</status>
+                        </value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="xml-spring-xml-in">
+                                <key>xml-spring-xml-order-1</key>
+                                <value type="OrderEventDto">
+                                    <orderId>xml-order-1</orderId>
+                                    <status>PROCESSED</status>
+                                </value>
+                                <headers>
+                                    <test-header>xml-base-header</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-spring-xml-in">
+                        <key>xml-spring-xml-order-1</key>
+                        <value>&lt;OrderEventDto>&lt;orderId>xml-order-1&lt;/orderId>&lt;status>PROCESSED&lt;/status>&lt;/OrderEventDto></value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderEventDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundSpring</method>
+                    <request>springXmlKafkaTemplate</request>
+                    <request>xml-spring-xml-out</request>
+                    <request>xml-spring-xml-order-1</request>
+                    <request type="OrderEventDto">
+                        <orderId>xml-order-1</orderId>
+                        <status>PROCESSED</status>
+                    </request>
+                    <request type="LinkedHashMap">
+                        <test-header>xml-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="xml-spring-xml-out">
+                        <key>xml-spring-xml-order-1</key>
+                        <value type="OrderEventDto">
+                            <orderId>xml-order-1</orderId>
+                            <status>PROCESSED</status>
+                        </value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-spring-xml-out">
+                        <key>xml-spring-xml-order-1</key>
+                        <value>&lt;OrderEventDto>&lt;orderId>xml-order-1&lt;/orderId>&lt;status>PROCESSED&lt;/status>&lt;/OrderEventDto></value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderEventDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+            <test type="Container" name="NoTypeInfoHeaders">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="xml-spring-xml-no-type-in">
+                        <key>xml-no-type-1</key>
+                        <value type="JsonTestDto">
+                            <id>xml-no-type-1</id>
+                            <name>no type headers</name>
+                            <amount>10</amount>
+                            <price>5.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="xml-spring-xml-no-type-in">
+                                <key>xml-no-type-1</key>
+                                <value type="JsonTestDto">
+                                    <id>xml-no-type-1</id>
+                                    <name>no type headers</name>
+                                    <amount>10</amount>
+                                    <price>5.0</price>
+                                    <active>true</active>
+                                    <tags></tags>
+                                    <timestamp>2026-05-31T11:30:00Z</timestamp>
+                                    <localDateTime>2026-05-31T11:30:00</localDateTime>
+                                </value>
+                                <headers>
+                                    <test-header>xml-base-header</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-spring-xml-no-type-in">
+                        <key>xml-no-type-1</key>
+                        <value>&lt;JsonTestDto>&lt;id>xml-no-type-1&lt;/id>&lt;name>no type headers&lt;/name>&lt;amount>10&lt;/amount>&lt;price>5.0&lt;/price>&lt;active>true&lt;/active>&lt;tags>&lt;tags>&lt;/tags>&lt;/tags>&lt;timestamp>2026-05-31T11:30:00Z&lt;/timestamp>&lt;localDateTime>2026-05-31T11:30:00&lt;/localDateTime>&lt;/JsonTestDto></value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundSpring</method>
+                    <request>springXmlKafkaTemplate</request>
+                    <request>xml-spring-xml-no-type-out</request>
+                    <request>xml-no-type-1</request>
+                    <request type="JsonTestDto">
+                        <id>xml-no-type-1</id>
+                        <name>no type headers</name>
+                        <amount>10</amount>
+                        <price>5.0</price>
+                        <active>true</active>
+                        <tags></tags>
+                        <timestamp>2026-05-31T11:30:00Z</timestamp>
+                        <localDateTime>2026-05-31T11:30:00</localDateTime>
+                    </request>
+                    <request type="LinkedHashMap">
+                        <test-header>xml-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="xml-spring-xml-no-type-out">
+                        <key>xml-no-type-1</key>
+                        <value type="JsonTestDto">
+                            <id>xml-no-type-1</id>
+                            <name>no type headers</name>
+                            <amount>10</amount>
+                            <price>5.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-spring-xml-no-type-out">
+                        <key>xml-no-type-1</key>
+                        <value>&lt;JsonTestDto>&lt;id>xml-no-type-1&lt;/id>&lt;name>no type headers&lt;/name>&lt;amount>10&lt;/amount>&lt;price>5.0&lt;/price>&lt;active>true&lt;/active>&lt;tags>&lt;tags>&lt;/tags>&lt;/tags>&lt;timestamp>2026-05-31T11:30:00Z&lt;/timestamp>&lt;localDateTime>2026-05-31T11:30:00&lt;/localDateTime>&lt;/JsonTestDto></value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                            <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="Plain XML">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="xml-record-in">
+                        <key>xml-record-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>xmlr-1</id>
+                            <name>record value</name>
+                            <amount>1</amount>
+                            <price>1.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>xml-custom-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="xml-record-in">
+                                <key>xml-record-base-1</key>
+                                <value type="JsonTestDto">
+                                    <id>xmlr-1</id>
+                                    <name>record value</name>
+                                    <amount>1</amount>
+                                    <price>1.0</price>
+                                    <active>true</active>
+                                    <tags></tags>
+                                    <timestamp>2026-05-31T11:30:00Z</timestamp>
+                                    <localDateTime>2026-05-31T11:30:00</localDateTime>
+                                </value>
+                                <headers>
+                                    <test-header type="byte[]">eG1sLWN1c3RvbS1oZWFkZXI=</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-record-in">
+                        <key>xml-record-base-1</key>
+                        <value>&lt;JsonTestDto>&lt;id>xmlr-1&lt;/id>&lt;name>record value&lt;/name>&lt;amount>1&lt;/amount>&lt;price>1.0&lt;/price>&lt;active>true&lt;/active>&lt;tags>&lt;tags>&lt;/tags>&lt;/tags>&lt;timestamp>2026-05-31T11:30:00Z&lt;/timestamp>&lt;localDateTime>2026-05-31T11:30:00&lt;/localDateTime>&lt;/JsonTestDto></value>
+                        <headers>
+                            <test-header>xml-custom-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>xmlKafkaTemplate</request>
+                    <request>xml-record-out</request>
+                    <request>xml-record-base-1</request>
+                    <request type="JsonTestDto">
+                        <id>xmlr-1</id>
+                        <name>record value</name>
+                        <amount>1</amount>
+                        <price>1.0</price>
+                        <active>true</active>
+                        <tags></tags>
+                        <timestamp>2026-05-31T11:30:00Z</timestamp>
+                        <localDateTime>2026-05-31T11:30:00</localDateTime>
+                    </request>
+                    <request type="LinkedHashMap">
+                        <test-header>xml-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="xml-record-out">
+                        <key>xml-record-base-1</key>
+                        <value type="JsonTestDto">
+                            <id>xmlr-1</id>
+                            <name>record value</name>
+                            <amount>1</amount>
+                            <price>1.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-record-out">
+                        <key>xml-record-base-1</key>
+                        <value>&lt;JsonTestDto>&lt;id>xmlr-1&lt;/id>&lt;name>record value&lt;/name>&lt;amount>1&lt;/amount>&lt;price>1.0&lt;/price>&lt;active>true&lt;/active>&lt;tags>&lt;tags>&lt;/tags>&lt;/tags>&lt;timestamp>2026-05-31T11:30:00Z&lt;/timestamp>&lt;localDateTime>2026-05-31T11:30:00&lt;/localDateTime>&lt;/JsonTestDto></value>
+                        <headers>
+                            <test-header>xml-base-header</test-header>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Case" name="Invalid Payload">
+            <bean>testBean</bean>
+            <method>sendOutbound</method>
+            <request>xmlKafkaTemplate</request>
+            <request>xml-record-out</request>
+            <request>error-invalid-xml</request>
+            <request>&lt;&lt;invalid>>xml&lt;&lt;</request>
+            <outboundMessage type="KafkaRecord" connection="kafka1" topic="xml-record-out">
+                <exception>
+                    <exceptionType>UnrecognizedPropertyException</exceptionType>
+                    <message>Unrecognized field "" (class io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto), not marked as ignorable (8 known properties: "active", "amount", "price", "id", "timestamp", "tags", "name", "localDateTime"])
+ at [Source: (byte[])"&lt;String>&amp;lt;&amp;lt;invalid>>xml&amp;lt;&amp;lt;&lt;/String>"; line: 1, column: 46] (through reference chain: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto[""])</message>
+                </exception>
+                <key>error-invalid-xml</key>
+                <value>&lt;String>&amp;lt;&amp;lt;invalid>>xml&amp;lt;&amp;lt;&lt;/String></value>
+                <headers>
+                    <__TypeId__>java.lang.String</__TypeId__>
+                </headers>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-record-out">
+                <key>error-invalid-xml</key>
+                <value>&lt;String>&amp;lt;&amp;lt;invalid>>xml&amp;lt;&amp;lt;&lt;/String></value>
+                <headers>
+                    <__TypeId__>java.lang.String</__TypeId__>
+                </headers>
+            </outboundMessage>
+        </test>
+    </test>
+    <test type="Container" name="Byte">
+        <test type="Container" name="KafkaRecord Serializer with Headers">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="byte-record-in">
+                        <key>brec-base-1</key>
+                        <value type="byte[]">cmVjb3JkIHZhbHVl</value>
+                        <headers>
+                            <test-header>byte-custom-header</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="byte-record-in">
+                                <key>brec-base-1</key>
+                                <value type="byte[]">cmVjb3JkIHZhbHVl</value>
+                                <headers>
+                                    <test-header type="byte[]">Ynl0ZS1jdXN0b20taGVhZGVy</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-record-in">
+                        <key>brec-base-1</key>
+                        <value>record value</value>
+                        <headers>
+                            <test-header>byte-custom-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>byteKafkaTemplate</request>
+                    <request>byte-record-out</request>
+                    <request>brec-base-1</request>
+                    <request type="byte[]">cmVjb3JkIHZhbHVlIC0gcHJvY2Vzc2Vk</request>
+                    <request type="LinkedHashMap">
+                        <test-header>byte-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-record-out">
+                        <key>brec-base-1</key>
+                        <value type="byte[]">cmVjb3JkIHZhbHVlIC0gcHJvY2Vzc2Vk</value>
+                        <headers>
+                            <test-header>byte-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-record-out">
+                        <key>brec-base-1</key>
+                        <value>record value - processed</value>
+                        <headers>
+                            <test-header>byte-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+            <test type="Container" name="Tombstone">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="byte-record-in">
+                        <headers>
+                            <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="byte-record-in">
+                                <headers>
+                                    <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-record-in">
+                        <headers>
+                            <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutboundNullHeader</method>
+                    <request>byteKafkaTemplate</request>
+                    <request>byte-record-out</request>
+                    <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <request>test-header</request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-record-out">
+                        <headers>
+                            <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-record-out">
+                        <headers>
+                            <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="Individually Configured Parts">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="byte-parts-in">
+                        <key type="byte[]">YnBhcnRzLWJhc2UtMQ==</key>
+                        <value type="byte[]">cGFydHMgcGF5bG9hZA==</value>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="byte-parts-in">
+                                <key>bparts-base-1</key>
+                                <value type="byte[]">cGFydHMgcGF5bG9hZA==</value>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-parts-in">
+                        <key>bparts-base-1</key>
+                        <value>parts payload</value>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>byteKafkaTemplate</request>
+                    <request>byte-parts-out</request>
+                    <request>YnBhcnRzLWJhc2UtMQ==</request>
+                    <request type="byte[]">cGFydHMgcGF5bG9hZC1wYXJ0cy1wcm9jZXNzZWQ=</request>
+                    <request type="LinkedHashMap">
+                        <test-header>byte-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-parts-out">
+                        <key type="byte[]">WW5CaGNuUnpMV0poYzJVdE1RPT0=</key>
+                        <value type="byte[]">cGFydHMgcGF5bG9hZC1wYXJ0cy1wcm9jZXNzZWQ=</value>
+                        <headers>
+                            <test-header type="byte[]">Ynl0ZS1iYXNlLWhlYWRlcg==</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-parts-out">
+                        <key>YnBhcnRzLWJhc2UtMQ==</key>
+                        <value>parts payload-parts-processed</value>
+                        <headers>
+                            <test-header>byte-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="Native Kafka SerDe Classes">
+            <test type="Container" name="Base">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="byte-native-in">
+                        <key>bnat-base-1</key>
+                        <value type="byte[]">bmF0aXZlIGJ5dGU=</value>
+                        <headers>
+                            <test-header type="byte[]">Ynl0ZS1jdXN0b20taGVhZGVy</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="byte-native-in">
+                                <key>bnat-base-1</key>
+                                <value type="byte[]">bmF0aXZlIGJ5dGU=</value>
+                                <headers>
+                                    <test-header type="byte[]">Ynl0ZS1jdXN0b20taGVhZGVy</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-native-in">
+                        <key>bnat-base-1</key>
+                        <value>native byte</value>
+                        <headers>
+                            <test-header>byte-custom-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>byteKafkaTemplate</request>
+                    <request>byte-native-out</request>
+                    <request>bnat-base-1</request>
+                    <request type="byte[]">bmF0aXZlIGJ5dGUtbmF0aXZlLXByb2Nlc3NlZA==</request>
+                    <request type="LinkedHashMap">
+                        <test-header>byte-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-native-out">
+                        <key>bnat-base-1</key>
+                        <value type="byte[]">bmF0aXZlIGJ5dGUtbmF0aXZlLXByb2Nlc3NlZA==</value>
+                        <headers>
+                            <test-header type="byte[]">Ynl0ZS1iYXNlLWhlYWRlcg==</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-native-out">
+                        <key>bnat-base-1</key>
+                        <value>native byte-native-processed</value>
+                        <headers>
+                            <test-header>byte-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+            <test type="Container" name="UTF-8">
+                <test type="Case" name="Framework to SUT">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="byte-native-in">
+                        <key>bnat-utf8-1</key>
+                        <value type="byte[]">0J/RgNC40LLQtdGCLCDQvNC40YAhINCi0LXRgdGC0LjRgNGD0LXQvCDQutC+0LTQuNGA0L7QstC6
+0YMg8J+agA==</value>
+                        <headers>
+                            <test-header type="byte[]">Ynl0ZS1uYXRpdmUtdXRmOC1oZWFkZXI=</test-header>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="byte-native-in">
+                                <key>bnat-utf8-1</key>
+                                <value type="byte[]">0J/RgNC40LLQtdGCLCDQvNC40YAhINCi0LXRgdGC0LjRgNGD0LXQvCDQutC+0LTQuNGA0L7QstC6
+0YMg8J+agA==</value>
+                                <headers>
+                                    <test-header type="byte[]">Ynl0ZS1uYXRpdmUtdXRmOC1oZWFkZXI=</test-header>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-native-in">
+                        <key>bnat-utf8-1</key>
+                        <value>Привет, мир! Тестируем кодировку 🚀</value>
+                        <headers>
+                            <test-header>byte-native-utf8-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+                <test type="Case" name="SUT to Framework">
+                    <bean>testBean</bean>
+                    <method>sendOutbound</method>
+                    <request>byteKafkaTemplate</request>
+                    <request>byte-native-out</request>
+                    <request>bnat-utf8-1</request>
+                    <request type="byte[]">0J/RgNC40LLQtdGCLCDQvNC40YAhINCi0LXRgdGC0LjRgNGD0LXQvCDQutC+0LTQuNGA0L7QstC6
+0YMg8J+agC1uYXRpdmUtcHJvY2Vzc2Vk</request>
+                    <request type="LinkedHashMap">
+                        <test-header>byte-base-header</test-header>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-native-out">
+                        <key>bnat-utf8-1</key>
+                        <value type="byte[]">0J/RgNC40LLQtdGCLCDQvNC40YAhINCi0LXRgdGC0LjRgNGD0LXQvCDQutC+0LTQuNGA0L7QstC6
+0YMg8J+agC1uYXRpdmUtcHJvY2Vzc2Vk</value>
+                        <headers>
+                            <test-header type="byte[]">Ynl0ZS1iYXNlLWhlYWRlcg==</test-header>
+                        </headers>
+                    </outboundMessage>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="byte-native-out">
+                        <key>bnat-utf8-1</key>
+                        <value>Привет, мир! Тестируем кодировку 🚀-native-processed</value>
+                        <headers>
+                            <test-header>byte-base-header</test-header>
+                        </headers>
+                    </outboundMessage>
+                </test>
+            </test>
+        </test>
+    </test>
+    <test type="Container" name="Misc">
+        <test type="Case" name="Pattern Matching">
+            <inboundMessage type="KafkaRecord" connection="kafka1" topic="misc-pattern-service-orders">
+                <key>misc-pattern-1</key>
+                <value type="OrderDto">
+                    <id>misc-pattern-1</id>
+                    <item>PatternItem</item>
+                </value>
+            </inboundMessage>
+            <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-pattern-processed">
+                <key>misc-pattern-1</key>
+                <value type="OrderEventDto">
+                    <orderId>misc-pattern-1</orderId>
+                    <status>PATTERN_MATCHED</status>
+                </value>
+                <headers>
+                    <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderEventDto</__TypeId__>
+                </headers>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-pattern-processed">
+                <key>misc-pattern-1</key>
+                <value>{"orderId":"misc-pattern-1","status":"PATTERN_MATCHED"}</value>
+                <headers>
+                    <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderEventDto</__TypeId__>
+                </headers>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-pattern-service-orders">
+                <key>misc-pattern-1</key>
+                <value>{"id":"misc-pattern-1","item":"PatternItem"}</value>
+                <headers>
+                    <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderDto</__TypeId__>
+                </headers>
+            </outboundMessage>
+        </test>
+        <test type="Case" name="Slow SUT">
+            <inboundMessage type="KafkaRecord" connection="kafka1" topic="misc-slow">
+                <key>misc-slow-1</key>
+                <value>delayed message</value>
+            </inboundMessage>
+            <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-slow-result">
+                <key>misc-slow-1</key>
+                <value>delayed message</value>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-slow">
+                <key>misc-slow-1</key>
+                <value>delayed message</value>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-slow-result">
+                <key>misc-slow-1</key>
+                <value>delayed message</value>
+            </outboundMessage>
+        </test>
+        <test type="Case" name="Cold Start">
+            <inboundMessage type="KafkaRecord" connection="kafka1" topic="misc-cold-start">
+                <key>misc-cold-1</key>
+                <value type="OrderDto">
+                    <id>misc-cold-1</id>
+                    <item>ColdItem</item>
+                </value>
+            </inboundMessage>
+            <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-cold-start-result">
+                <key>misc-cold-1</key>
+                <value type="OrderDto">
+                    <id>misc-cold-1</id>
+                    <item>ColdItem</item>
+                </value>
+                <headers>
+                    <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderDto</__TypeId__>
+                </headers>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-cold-start">
+                <key>misc-cold-1</key>
+                <value>{"id":"misc-cold-1","item":"ColdItem"}</value>
+                <headers>
+                    <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderDto</__TypeId__>
+                </headers>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-cold-start-result">
+                <key>misc-cold-1</key>
+                <value>{"id":"misc-cold-1","item":"ColdItem"}</value>
+                <headers>
+                    <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderDto</__TypeId__>
+                </headers>
+            </outboundMessage>
+        </test>
+        <test type="Case" name="Adapter error - missing chain">
+            <inboundMessage type="KafkaRecord" connection="kafka1" topic="error-in">
+                <key>k1</key>
+                <value>val</value>
+            </inboundMessage>
+            <response type="IllegalArgumentException">
+                <message>No adapter found from [java.util.ArrayList] to [io.github.dimkich.integration.testing.kafka.serde.serialization.KafkaRecordSerializer] under configuration [RecordProperties]. Supported source types: [Serializer, TestSerdeSerializer]</message>
+            </response>
+        </test>
+        <test type="Container" name="Transactions">
+            <test type="Case" name="Commit Transaction">
+                <bean>testBean</bean>
+                <method>sendInTransaction</method>
+                <request>miscTxKafkaTemplate</request>
+                <request>misc-tx-out</request>
+                <request>tx-key-1</request>
+                <request>tx-payload-1</request>
+                <request type="Boolean">false</request>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-tx-out">
+                    <key>tx-key-1</key>
+                    <value>tx-payload-1</value>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-tx-out">
+                    <key>tx-key-1</key>
+                    <value>tx-payload-1</value>
+                </outboundMessage>
+            </test>
+            <test type="Case" name="Abort Transaction">
+                <bean>testBean</bean>
+                <method>sendInTransaction</method>
+                <request>miscTxKafkaTemplate</request>
+                <request>misc-tx-out</request>
+                <request>tx-key-2</request>
+                <request>tx-payload-2</request>
+                <request type="Boolean">true</request>
+                <response type="RuntimeException">
+                    <message>Rollback requested</message>
+                </response>
+            </test>
+            <test type="Case" name="Transactional offset commit">
+                <inboundMessage type="KafkaRecord" connection="kafka1" topic="misc-tx-offsets-in">
+                    <key>tx-offsets-1</key>
+                    <value>tx offsets payload</value>
+                </inboundMessage>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-tx-offsets-out">
+                    <key>tx-offsets-1</key>
+                    <value>tx offsets payload - processed</value>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-tx-offsets-in">
+                    <key>tx-offsets-1</key>
+                    <value>tx offsets payload</value>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-tx-offsets-out">
+                    <key>tx-offsets-1</key>
+                    <value>tx offsets payload - processed</value>
+                </outboundMessage>
+            </test>
+            <test type="Case" name="Deprecated sendOffsetsToTransaction">
+                <bean>testBean</bean>
+                <method>sendOffsetsInTransaction</method>
+                <request>miscTxKafkaTemplate</request>
+                <request>misc-tx-out</request>
+                <request>tx-key-3</request>
+                <request>tx-payload-3</request>
+                <request>misc-deprecated-group</request>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-tx-out">
+                    <key>tx-key-3</key>
+                    <value>tx-payload-3</value>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-tx-out">
+                    <key>tx-key-3</key>
+                    <value>tx-payload-3</value>
+                </outboundMessage>
+            </test>
+        </test>
+        <test type="Container" name="Uncommitted offsets">
+            <test type="Case" name="Poison message: offset is force-committed by the hook">
+                <inboundMessage type="KafkaRecord" connection="kafka1" topic="misc-uncommitted-in">
+                    <key>poison-1</key>
+                    <value>poison</value>
+                </inboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-uncommitted-in">
+                    <key>poison-1</key>
+                    <value>poison</value>
+                </outboundMessage>
+            </test>
+            <test type="Case" name="Next case is not blocked by leftover lag">
+                <inboundMessage type="KafkaRecord" connection="kafka1" topic="misc-uncommitted-in">
+                    <key>good-1</key>
+                    <value>good</value>
+                </inboundMessage>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-uncommitted-out">
+                    <key>good-1</key>
+                    <value>good - processed</value>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-uncommitted-in">
+                    <key>good-1</key>
+                    <value>good</value>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-uncommitted-out">
+                    <key>good-1</key>
+                    <value>good - processed</value>
+                </outboundMessage>
+            </test>
+        </test>
+        <test type="Container" name="Assign">
+            <test type="Case" name="Assign topic partition directly">
+                <bean>testBean</bean>
+                <method>sendOutbound</method>
+                <request>jsonKafkaTemplate</request>
+                <request>misc-assign</request>
+                <request>assign-key-1</request>
+                <request type="OrderDto">
+                    <id>assign-order-1</id>
+                    <item>laptop</item>
+                </request>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-assign">
+                    <key>assign-key-1</key>
+                    <value>{"id":"assign-order-1","item":"laptop"}</value>
+                    <headers>
+                        <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderDto</__TypeId__>
+                    </headers>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-assign-result">
+                    <key>assign-key-1</key>
+                    <value type="OrderEventDto">
+                        <orderId>assign-order-1</orderId>
+                        <status>ASSIGN_PROCESSED</status>
+                    </value>
+                    <headers>
+                        <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderEventDto</__TypeId__>
+                    </headers>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-assign">
+                    <key>assign-key-1</key>
+                    <value>{"id":"assign-order-1","item":"laptop"}</value>
+                    <headers>
+                        <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderDto</__TypeId__>
+                    </headers>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-assign-result">
+                    <key>assign-key-1</key>
+                    <value>{"orderId":"assign-order-1","status":"ASSIGN_PROCESSED"}</value>
+                    <headers>
+                        <__TypeId__>io.github.dimkich.integration.testing.kafka.OrderEventDto</__TypeId__>
+                    </headers>
+                </outboundMessage>
+            </test>
+        </test>
+    </test>
+</test>

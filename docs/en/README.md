@@ -38,6 +38,23 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
 * **[Extensibility](redis/Extensibility.md)** — Custom codec/schema/data access, `BinarySegment` tags, stream & event
   handlers, `TestSetupModule.addSubTypes()`.
 
+### Kafka
+
+* **[Kafka Overview](kafka/README.md)** — `@EnableTestKafka` setup, XML examples, sending and asserting messages.
+* **[Configuration](kafka/Configuration.md)** — Connections, topics and regex patterns, serde settings,
+  `ignore`/`ignore-inbound`, `excluded-fields`.
+* **[Records & Headers](kafka/Records-and-Headers.md)** — `<inboundMessage>`/`<outboundMessage>`, headers,
+  tombstones, deserialization errors.
+* **[Serialization (Serde)](kafka/Serde.md)** — String/JSON/XML/bytes formats, per-part setup,
+  `spring-json`/`spring-xml`, type-info headers.
+* **[In-Flight & Lag](kafka/In-Flight-and-Lag.md)** — Waiting for processing, two modes, timeouts, Cold Start,
+  transactions.
+* **[Troubleshooting](kafka/Troubleshooting.md)** — Wait timeouts, serde config errors, missing messages, Docker.
+* **[Error Handling](kafka/Error-Handling.md)** — Uncommitted offsets, skipped failed messages, forcing a commit in
+  tests.
+* **[Extensibility](kafka/Extensibility.md)** — Custom serializers, headers and formats via `bean-ref` and
+  `TestSerdeProvider`.
+
 ### Tools & Integration
 
 * **[IntelliJ IDEA Integration](IDEA-Plugin.md)** — **(New!)** Manage tests via the IDEA Plugin, Visual Diff tool, and
@@ -48,6 +65,8 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
 ### Advanced Features
 
 * **[Wait-Completion System](wait-completion.md)** — Handling asynchrony in reactive and event-driven stacks.
+* **[Method Hooks](Method-Hooks.md)** — `@OnMethodEnter`/`@OnMethodExit`: observe and inject behavior into application
+  methods.
 * **[Hooks and Converters](Hooks-and-Converters.md)** — Extending behavior via `BeforeTest`, `AfterTest`,
   and `TestConverter`.
 * **[JsonMapAsEntries Annotation](JsonMapAsEntries.md)** — Advanced collection mapping for XML/JSON.

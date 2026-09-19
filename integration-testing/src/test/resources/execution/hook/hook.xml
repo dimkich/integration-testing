@@ -1,0 +1,61 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Container" name="hook">
+        <test type="Case" name="process enter and exit">
+            <bean>hookInvoker</bean>
+            <method>process</method>
+            <request type="String">ok-1</request>
+            <response type="ArrayList">
+                <response>enter method=process target=HookedService args=[ok-1]</response>
+                <response>exit method=process target=HookedService return=svc:ok-1 thrown=null</response>
+                <response>result = svc:ok-1</response>
+            </response>
+        </test>
+        <test type="Case" name="when condition matched">
+            <bean>hookInvoker</bean>
+            <method>conditional</method>
+            <request type="String">ok-2</request>
+            <response type="ArrayList">
+                <response>enter method=conditional target=HookedService args=[ok-2]</response>
+                <response>result = svc?ok-2</response>
+            </response>
+        </test>
+        <test type="Case" name="when condition skipped">
+            <bean>hookInvoker</bean>
+            <method>conditional</method>
+            <request type="String">skip-1</request>
+            <response type="ArrayList">
+                <response>result = svc?skip-1</response>
+            </response>
+        </test>
+        <test type="Case" name="exit action receives thrown">
+            <bean>hookInvoker</bean>
+            <method>fail</method>
+            <request type="String">x</request>
+            <response type="ArrayList">
+                <response>exit method=fail target=HookedService return=null thrown=IllegalStateException:boom:x</response>
+                <response>result = thrown: boom:x</response>
+            </response>
+        </test>
+        <test type="Case" name="constructor enter">
+            <bean>hookInvoker</bean>
+            <method>create</method>
+            <request type="String">svc</request>
+            <response type="ArrayList">
+                <response>enter method=&lt;init&gt; target=null args=[svc]</response>
+                <response>result = null</response>
+            </response>
+        </test>
+        <test type="Case" name="static method enter and exit">
+            <bean>hookInvoker</bean>
+            <method>staticProcess</method>
+            <request type="String">ok</request>
+            <response type="ArrayList">
+                <response>enter method=staticProcess target=null args=[ok]</response>
+                <response>exit method=staticProcess target=null return=static:ok thrown=null</response>
+                <response>result = static:ok</response>
+            </response>
+        </test>
+    </test>
+</test>

@@ -24,6 +24,7 @@ import io.github.dimkich.integration.testing.format.dto.map.*;
 import io.github.dimkich.integration.testing.format.xml.XmlConfig;
 import io.github.dimkich.integration.testing.format.xml.XmlTestMapper;
 import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributes;
+import io.github.dimkich.integration.testing.message.AbstractMessage;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
 import io.github.dimkich.integration.testing.web.WebConfig;
@@ -395,6 +396,18 @@ class XmlTestMapperTest {
     <k1>v1</k1>
     <k2>v2</k2>
 </LinkedMultiValueMapStringObject>
+"""},
+                {new MultiValueBean(), """
+<MultiValueBean>
+    <headers/>
+    <name>after</name>
+</MultiValueBean>
+"""},
+                {new MultiValueStringBean(), """
+<MultiValueStringBean>
+    <headers/>
+    <name>after</name>
+</MultiValueStringBean>
 """},
                 {new TestContainer(), "<test type=\"Container\"/>\n"},
                 {new TestCase(), "<test type=\"Case\"/>\n"},
@@ -791,6 +804,30 @@ class XmlTestMapperTest {
     <value type="PeriodDuration">P1Y1M2DT23H59M59.999S</value>
 </Value>
 """},
+                {TestMessage.testCase1(), """
+<test type="Case" name="BugRepro">
+    <inboundMessage type="TestMessage" connection="conn1">
+        <key>k1</key>
+        <headers/>
+    </inboundMessage>
+    <outboundMessage type="TestMessage" connection="conn1">
+        <key>k2</key>
+        <headers/>
+    </outboundMessage>
+</test>
+"""},
+                {TestMessage.testCase2(), """
+<test type="Case" name="EmptyByteKey">
+    <inboundMessage type="TestMessage" connection="conn1">
+        <key type="byte[]"></key>
+        <headers/>
+    </inboundMessage>
+    <outboundMessage type="TestMessage" connection="conn1">
+        <key type="byte[]">AQID</key>
+        <headers/>
+    </outboundMessage>
+</test>
+"""},
         };
     }
 
@@ -855,8 +892,10 @@ class XmlTestMapperTest {
     static class Config {
         @Bean
         TestSetupModule testModule() {
-            return new TestSetupModule().addSubTypes(MapElemNotWrapped.class, MapAttrNotWrapped.class,
-                    TypeTest.class, Value.class, ConverterToList.class);
+            return new TestSetupModule()
+                    .addParentType(AbstractMessage.class)
+                    .addSubTypes(MapElemNotWrapped.class, MapAttrNotWrapped.class, TypeTest.class, Value.class,
+                            ConverterToList.class, TestMessage.class);
         }
     }
 

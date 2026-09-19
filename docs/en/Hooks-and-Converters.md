@@ -1,6 +1,9 @@
 Hooks and Converters (BeforeTest, AfterTest, TestConverter)
 ===========================================================
 
+> **Scope:** this page covers test lifecycle hooks (`BeforeTest`, `AfterTest`, `TestConverter`). Bytecode-level hooks on
+> application methods (`@OnMethodEnter`, `@OnMethodExit`) are described in [Method Hooks](Method-Hooks.md).
+
 Overview
 --------
 

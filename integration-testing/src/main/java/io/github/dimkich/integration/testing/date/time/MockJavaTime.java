@@ -30,7 +30,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <pre>{@code
  * @MockJavaTime({
  *     "com.example.myapp",          // whole package hierarchy
- *     "org.thirdparty.lib.Client"   // concrete class and its inner classes
+ *     "org.example.lib.Client"      // concrete class and its inner classes
  * })
  * public class MyTimeSensitiveTest {
  *     // ...
@@ -72,7 +72,7 @@ public @interface MockJavaTime {
      * instrumentation applied, enabling deterministic time inside those containers.
      * <p>
      * When non-empty, integration-testing configures matching containers (via
-     * {@link LibFakeTimeSetUp}) so that the OS-level "current time" inside the container
+     * {@link LibFakeTimePlugin}) so that the OS-level "current time" inside the container
      * is controlled by the test framework, aligning with the mocked Java Time API.
      * </p>
      * <p>
@@ -83,7 +83,7 @@ public @interface MockJavaTime {
      *     <li>{@code "postgres.*|mysql.*"} – applies to both Postgres and MySQL images.</li>
      * </ul>
      *
-     * @see LibFakeTimeSetUp
+     * @see LibFakeTimePlugin
      * @see LibFakeTimeTracker
      */
     String[] dockerImages() default {};

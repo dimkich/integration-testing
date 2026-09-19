@@ -1,8 +1,7 @@
 package io.github.dimkich.integration.testing.web.jackson;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -11,26 +10,33 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.Getter;
-import lombok.Setter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.io.IOException;
 import java.util.Iterator;
 
-@Getter(onMethod_ = @JsonIgnore)
-@Setter(onMethod_ = @JsonIgnore)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@SuppressWarnings("unused")
+@Getter(onMethod_ = @JsonProperty)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({"statusCode", "rawStatusCode", "responseHeaders", "message"})
 @JsonDeserialize(using = HttpClientErrorExceptionMixIn.Deserializer.class)
 public class HttpClientErrorExceptionMixIn {
-    private Object statusText;
-    private Object responseBody;
-    private Object charset;
+    private HttpStatusCode statusCode;
+    private int rawStatusCode;
+    private HttpHeaders responseHeaders;
+    private String message;
 
+    /**
+     * Jackson deserializer that restores {@link HttpClientErrorException} instances
+     * from their serialized form.
+     */
     public static class Deserializer extends StdDeserializer<HttpClientErrorException> {
+        /**
+         * Creates the deserializer.
+         */
         public Deserializer() {
             super(HttpClientErrorException.class);
         }

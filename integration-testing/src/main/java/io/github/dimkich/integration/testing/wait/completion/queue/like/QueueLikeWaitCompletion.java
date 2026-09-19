@@ -4,6 +4,7 @@ import io.github.dimkich.integration.testing.expression.ExpressionFactory;
 import io.github.dimkich.integration.testing.expression.PointcutMatch;
 import io.github.dimkich.integration.testing.expression.PointcutRegistry;
 import io.github.dimkich.integration.testing.expression.PointcutSettings;
+import io.github.dimkich.integration.testing.instrumentation.InstrumentationPlugin;
 import io.github.dimkich.integration.testing.wait.completion.QueueLikeAwait;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletion;
 import lombok.SneakyThrows;
@@ -11,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.agent.builder.AgentBuilder;
 
 import java.util.Collection;
+
+import static org.springframework.core.annotation.AnnotatedElementUtils.findMergedRepeatableAnnotations;
 
 /**
  * Implementation of the {@link WaitCompletion} strategy that synchronizes tests by polling
@@ -36,31 +39,16 @@ import java.util.Collection;
  * @see QueueLikeAdvice
  */
 @Slf4j
-public class QueueLikeWaitCompletion implements WaitCompletion {
+public class QueueLikeWaitCompletion implements WaitCompletion, InstrumentationPlugin {
 
-    /**
-     * Configures the {@link AgentBuilder} with ByteBuddy transformations for all
-     * specified queue-like pointcuts.
-     *
-     * <p>For each {@link QueueLikeAwait} configuration, this method:
-     * <ol>
-     *     <li>Compiles the <b>pointcut</b> expression to identify where to intercept service creation.</li>
-     *     <li>Compiles the <b>when</b> condition for runtime filtering of tracked instances.</li>
-     *     <li>Resolves the <b>count/size</b> logic:
-     *         <ul>
-     *             <li>If a {@code size} expression is provided, it is compiled into a {@code Function}.</li>
-     *             <li>Otherwise, the specified {@code sizeFunction} class is instantiated.</li>
-     *         </ul>
-     *     </li>
-     *     <li>Applies {@link QueueLikeAdvice} to register created instances with the tracker.</li>
-     * </ol></p>
-     *
-     * @param awaits       collection of await configurations describing what to track and how to count tasks.
-     * @param agentBuilder base {@link AgentBuilder} instance to extend.
-     * @return the extended {@link AgentBuilder} with applied transformations.
-     * @throws ReflectiveOperationException if the custom size function class cannot be instantiated.
-     */
-    public static AgentBuilder setUp(Collection<QueueLikeAwait> awaits, AgentBuilder agentBuilder) throws ReflectiveOperationException {
+    @Override
+    public boolean isApplicable(Class<?> testClass) {
+        return !findMergedRepeatableAnnotations(testClass, QueueLikeAwait.class).isEmpty();
+    }
+
+    @Override
+    public AgentBuilder configureBuilder(Class<?> testClass, AgentBuilder builder) throws ReflectiveOperationException {
+        Collection<QueueLikeAwait> awaits = findMergedRepeatableAnnotations(testClass, QueueLikeAwait.class);
         for (QueueLikeAwait await : awaits) {
             PointcutMatch match = ExpressionFactory.createPointcutMatch(await.pointcut());
             PointcutSettings settings = PointcutRegistry.get(match.getPointcutId());
@@ -72,17 +60,13 @@ public class QueueLikeWaitCompletion implements WaitCompletion {
             } else {
                 settings.setCount(await.sizeFunction().getConstructor().newInstance());
             }
-            agentBuilder = match.apply(agentBuilder, QueueLikeAdvice.class);
+            builder = match.apply(builder, QueueLikeAdvice.class);
         }
-        return agentBuilder;
+        return builder;
     }
 
-    /**
-     * Resets the global state of tracked services.
-     * <p>Delegates to {@link QueueLikeTracker#clear()} to remove all currently
-     * monitored instances between test runs.</p>
-     */
-    public static void tearDown() {
+    @Override
+    public void cleanup() {
         QueueLikeTracker.clear();
     }
 

@@ -8,7 +8,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -30,7 +29,7 @@ import java.util.regex.Pattern;
  * {@code alpine_x64.so}, {@code alpine_arm64.so}.
  * </p>
  *
- * @see LibFakeTimeSetUp
+ * @see LibFakeTimePlugin
  * @see LibFakeTimeAdvice
  * @see LibFakeTimeNowSetter
  */
@@ -45,7 +44,7 @@ public class LibFakeTimeTracker {
     private static GenericContainer<?> libFakeTimeServerContainer;
     private static final Object lock = new Object();
 
-    @SuppressWarnings("try")
+    @SuppressWarnings("resource")
     private static GenericContainer<?> createFakeTimeServerContainer() {
         return new GenericContainer<>("dimkich/libfaketime-server:latest")
                 .withExposedPorts(9999);
@@ -186,13 +185,13 @@ public class LibFakeTimeTracker {
         try {
             @Cleanup CopyArchiveFromContainerCmd copyCmd = container.getDockerClient()
                     .copyArchiveFromContainerCmd(tempId, "/lib/ld-musl-x86_64.so.1");
-            @Cleanup InputStream is = copyCmd.exec();
+            copyCmd.exec().close();
             return "alpine";
         } catch (Exception e1) {
             try {
                 @Cleanup CopyArchiveFromContainerCmd copyCmd2 = container.getDockerClient()
                         .copyArchiveFromContainerCmd(tempId, "/lib/ld-musl-aarch64.so.1");
-                @Cleanup InputStream is2 = copyCmd2.exec();
+                copyCmd2.exec().close();
                 return "alpine";
             } catch (Exception e2) {
                 return "linux";

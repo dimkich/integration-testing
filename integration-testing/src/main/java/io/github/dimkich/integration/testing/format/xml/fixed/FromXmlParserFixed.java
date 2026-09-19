@@ -24,9 +24,6 @@ public class FromXmlParserFixed extends FromXmlParser {
         if (xsiNil && _currToken == JsonToken.START_OBJECT && _nextToken == JsonToken.END_OBJECT) {
             super.nextToken();
             _currToken = JsonToken.VALUE_NULL;
-        } else if (_currToken == JsonToken.VALUE_NULL && !xsiNil) {
-            _nextToken = JsonToken.END_OBJECT;
-            _currToken = JsonToken.START_OBJECT;
         }
         return _currToken;
     }

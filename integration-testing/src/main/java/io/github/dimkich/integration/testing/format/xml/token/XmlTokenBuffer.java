@@ -69,7 +69,7 @@ public class XmlTokenBuffer extends TokenBuffer {
         /**
          * @since 2.15
          */
-        protected StreamReadConstraints _streamReadConstraints;
+        protected final StreamReadConstraints _streamReadConstraints;
 
         /**
          * @since 2.3
@@ -80,8 +80,6 @@ public class XmlTokenBuffer extends TokenBuffer {
          * @since 2.3
          */
         protected final boolean _hasNativeObjectIds;
-
-        protected final boolean _hasNativeIds;
 
         /*
         /**********************************************************
@@ -134,7 +132,6 @@ public class XmlTokenBuffer extends TokenBuffer {
             _parsingContext = XmlTokenBufferReadContext.createRootContext(currentToken, parentContext);
             _hasNativeTypeIds = hasNativeTypeIds;
             _hasNativeObjectIds = hasNativeObjectIds;
-            _hasNativeIds = (hasNativeTypeIds || hasNativeObjectIds);
 
             findTypeId = TokenBuffer.Segment.class.getDeclaredMethod("findTypeId", int.class);
             findTypeId.setAccessible(true);
@@ -242,7 +239,7 @@ public class XmlTokenBuffer extends TokenBuffer {
          */
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             if (!_closed) {
                 _closed = true;
             }
@@ -336,6 +333,9 @@ public class XmlTokenBuffer extends TokenBuffer {
                 _currToken = JsonToken.FIELD_NAME;
                 Object ob = _segment.get(ptr); // inlined _currentObject();
                 String name = (ob instanceof String) ? ((String) ob) : ob.toString();
+                if (!name.equals(_parsingContext.getCurrentName()) && _parsingContext.shouldWrap(name)) {
+                    nextToken.addLast(JsonToken.START_OBJECT);
+                }
                 _parsingContext.setCurrentName(name);
                 return name;
             }

@@ -45,7 +45,7 @@ public class XmlConfig {
         builder.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         builder.configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
         builder.enable(SerializationFeature.INDENT_OUTPUT);
-        builder.enable(FromXmlParser.Feature.EMPTY_ELEMENT_AS_NULL);
+        builder.disable(FromXmlParser.Feature.EMPTY_ELEMENT_AS_NULL);
         builder.serializationInclusion(JsonInclude.Include.NON_NULL);
         builder.enable(ToXmlGenerator.Feature.WRITE_NULLS_AS_XSI_NIL);
         builder.enable(ToXmlGenerator.Feature.WRITE_XML_1_1);

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import eu.ciechanowiec.sneakyfun.SneakyConsumer;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
 import io.github.dimkich.integration.testing.initialization.TestInit;
-import io.github.dimkich.integration.testing.message.MessageDto;
+import io.github.dimkich.integration.testing.message.AbstractMessage;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -50,7 +50,7 @@ import java.util.stream.Stream;
  * @author dimkich
  * @see TestInit
  * @see MockInvoke
- * @see MessageDto
+ * @see AbstractMessage
  * @see TestContainer
  * @see TestCase
  * @see TestPart
@@ -94,7 +94,7 @@ public abstract class Test {
     private String bean;
     private String method;
     private List<Object> request;
-    private MessageDto<?> inboundMessage;
+    private AbstractMessage inboundMessage;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<MockInvoke> mockInvoke = new ArrayList<>();
     private Object response;
@@ -104,7 +104,7 @@ public abstract class Test {
     private Map<String, Object> custom;
     private Object dataStorageDiff;
     @JsonProperty("outboundMessage")
-    private List<MessageDto<?>> outboundMessages;
+    private List<AbstractMessage> outboundMessages;
     @JsonBackReference
     private Test parentTest;
     @JsonManagedReference
@@ -129,9 +129,9 @@ public abstract class Test {
     public abstract Type getType();
 
     /**
-     * Checks if this test is a container (has sub-tests).
+     * Checks if this test is a container (has subtests).
      *
-     * @return true if this test has sub-tests, false otherwise
+     * @return true if this test has subtests, false otherwise
      */
     @JsonIgnore
     public boolean isContainer() {
@@ -167,12 +167,12 @@ public abstract class Test {
     /**
      * Executes the before hook for this test and its parent hierarchy.
      * <p>
-     * If the test is already initialized, it will fix the after hooks for sub-tests.
+     * If the test is already initialized, it will fix the after hooks for subtests.
      * Otherwise, it recursively calls before on the parent test, validates the test structure,
      * executes the before consumer, and marks the test as initialized.
      *
      * @param before the consumer to execute before the test runs
-     * @param after the consumer to execute after the test runs (used for fixing sub-tests)
+     * @param after the consumer to execute after the test runs (used for fixing subtests)
      * @throws Exception if an error occurs during execution
      */
     public void before(SneakyConsumer<Test, Exception> before, SneakyConsumer<Test, Exception> after) throws Exception {
@@ -230,7 +230,7 @@ public abstract class Test {
      */
     public Boolean getCalculatedDisabled() {
         if (calculatedDisabled == null) {
-            calculatedDisabled = disabled ? disabled : parentTest != null && parentTest.getCalculatedDisabled();
+            calculatedDisabled = disabled || (parentTest != null && parentTest.getCalculatedDisabled());
         }
         return calculatedDisabled;
     }
@@ -244,7 +244,7 @@ public abstract class Test {
     }
 
     /**
-     * Checks if this test is the last leaf in its parent's sub-tests list.
+     * Checks if this test is the last leaf in its parent's subtests list.
      * <p>
      * A root test (no parent) is considered the last leaf.
      *

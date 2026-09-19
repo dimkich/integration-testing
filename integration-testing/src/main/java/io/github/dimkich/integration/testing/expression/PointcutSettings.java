@@ -1,5 +1,6 @@
 package io.github.dimkich.integration.testing.expression;
 
+import io.github.dimkich.integration.testing.execution.hook.MethodAction;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -66,6 +67,12 @@ public class PointcutSettings {
      * <p>Used by {@code QueueLikeWaitCompletion} to calculate the aggregate workload.</p>
      */
     private Function<Object, Integer> count = ZERO_COUNT;
+
+    /**
+     * The custom action executed on method enter or exit.
+     * <p>Used by {@code @OnMethodEnter} and {@code @OnMethodExit} hooks declared on a test class.</p>
+     */
+    private MethodAction action;
 
     /**
      * Evaluates the 'when' condition against the intercepted object and its arguments.

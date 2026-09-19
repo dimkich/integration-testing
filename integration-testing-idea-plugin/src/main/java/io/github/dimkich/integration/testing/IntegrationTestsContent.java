@@ -19,7 +19,7 @@ public class IntegrationTestsContent extends JPanel {
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        for (Arg agr : ArgStorage.getInstance().getAll()) {
+        for (Arg agr : ArgStorage.getInstance(project).getAll()) {
             add((Component) agr, gbc);
             gbc.gridy++;
         }

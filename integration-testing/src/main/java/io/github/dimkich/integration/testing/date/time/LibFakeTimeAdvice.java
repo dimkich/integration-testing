@@ -7,7 +7,7 @@ import org.testcontainers.containers.GenericContainer;
  * ByteBuddy advice that intercepts {@link GenericContainer#start()} to inject libfaketime
  * configuration before the container starts.
  * <p>
- * Applied via {@link LibFakeTimeSetUp} to all Testcontainers {@code GenericContainer} subclasses.
+ * Applied via {@link LibFakeTimePlugin} to all Testcontainers {@code GenericContainer} subclasses.
  * When a container is about to start, this advice delegates to {@link LibFakeTimeTracker#onEnter}
  * to configure LD_PRELOAD, the libfaketime shared library, and related environment variables,
  * enabling deterministic time control in integration tests.

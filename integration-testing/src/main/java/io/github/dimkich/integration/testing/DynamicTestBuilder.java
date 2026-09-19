@@ -1,9 +1,5 @@
 package io.github.dimkich.integration.testing;
 
-import io.github.dimkich.integration.testing.date.time.DateTimeService;
-import io.github.dimkich.integration.testing.date.time.JavaTimeAdvice;
-import io.github.dimkich.integration.testing.date.time.MockJavaTimeSetUp;
-import io.github.dimkich.integration.testing.execution.MockAnswer;
 import io.github.dimkich.integration.testing.execution.TestExecutor;
 import io.github.dimkich.integration.testing.execution.junit.JunitExecutable;
 import io.github.dimkich.integration.testing.execution.junit.SessionListener;
@@ -16,8 +12,6 @@ import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -27,17 +21,15 @@ import java.util.stream.StreamSupport;
  * Builds a JUnit 5 dynamic test tree from integration test descriptions.
  * <p>
  * The builder delegates to {@link CompositeTestMapper} to read tests from a path
- * and to {@link TestExecutor} to execute individual tests. It also configures
- * time-related behavior when {@link MockJavaTimeSetUp} is initialized and
- * supports repeated execution controlled by the {@code integration.testing.repeat}
- * property (e.g. {@code Once}, {@code UntilStopped}).
+ * and to {@link TestExecutor} to execute individual tests. It supports repeated
+ * execution controlled by the {@code integration.testing.repeat} property
+ * (e.g. {@code Once}, {@code UntilStopped}).
  */
 @Slf4j
 @RequiredArgsConstructor
 public class DynamicTestBuilder {
     private final TestExecutor testExecutor;
     private final CompositeTestMapper testMapper;
-    private final DateTimeService dateTimeService;
     @Value("${integration.testing.repeat:Once}")
     private String repeat;
 
@@ -46,9 +38,8 @@ public class DynamicTestBuilder {
      *
      * @param path path to the test description resource (for example, a file or classpath location)
      * @return stream of {@link DynamicNode} representing the root tests and containers
-     * @throws Exception if reading or mapping tests fails
      */
-    public Stream<DynamicNode> build(String path) throws Exception {
+    public Stream<DynamicNode> build(String path) {
         return build(path, t -> true);
     }
 
@@ -62,9 +53,8 @@ public class DynamicTestBuilder {
      * @param path             path to the test description resource
      * @param allowedTestNames ordered list of test names that must match parents and the test itself
      * @return stream of {@link DynamicNode} that satisfy the name filter
-     * @throws Exception if reading or mapping tests fails
      */
-    public Stream<DynamicNode> build(String path, List<String> allowedTestNames) throws Exception {
+    public Stream<DynamicNode> build(String path, List<String> allowedTestNames) {
         return build(path, t -> {
             int i = 0;
             Iterator<Test> iterator = t.getParentsAndItselfAsc().iterator();
@@ -92,18 +82,10 @@ public class DynamicTestBuilder {
      * @param path   path to the test description resource
      * @param filter predicate used to enable or disable tests dynamically
      * @return stream of {@link DynamicNode} backed by an {@link InfiniteTestIterator}
-     * @throws Exception if reading or mapping tests fails
      */
-    public Stream<DynamicNode> build(String path, Predicate<Test> filter) throws Exception {
+    public Stream<DynamicNode> build(String path, Predicate<Test> filter) {
         testMapper.setPath(path);
         testExecutor.setExecutionListener(SessionListener.getExecutionListener());
-        if (MockJavaTimeSetUp.isInitialized()) {
-            JavaTimeAdvice.setCallRealMethod(() -> !MockAnswer.isEnabled());
-            JavaTimeAdvice.setCurrentTimeMillis(() -> dateTimeService.getDateTime().toInstant().toEpochMilli());
-            JavaTimeAdvice.setGetNanoTimeAdjustment(o -> ChronoUnit.NANOS.between(Instant.ofEpochSecond(o),
-                    dateTimeService.getDateTime().toInstant()));
-            JavaTimeAdvice.setGetDefaultRef(() -> TimeZone.getTimeZone(dateTimeService.getDateTime().getOffset()));
-        }
 
         Spliterator<DynamicNode> spliterator = Spliterators.spliteratorUnknownSize(
                 new InfiniteTestIterator("UntilStopped".equals(repeat), filter), Spliterator.ORDERED);

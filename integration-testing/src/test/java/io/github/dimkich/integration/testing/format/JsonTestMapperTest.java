@@ -18,6 +18,7 @@ import io.github.dimkich.integration.testing.format.dto.*;
 import io.github.dimkich.integration.testing.format.dto.map.*;
 import io.github.dimkich.integration.testing.format.json.JsonConfig;
 import io.github.dimkich.integration.testing.format.json.JsonTestMapper;
+import io.github.dimkich.integration.testing.message.AbstractMessage;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
 import io.github.dimkich.integration.testing.web.WebConfig;
@@ -123,6 +124,8 @@ class JsonTestMapperTest {
                 {new LinkedMultiValueMapStringObject(Map.of("k", List.of(1L, true))), "{\"k\":[[\"Long\",1],true]}"},
                 {new LinkedMultiValueMapStringObject(FormatTestUtils.map("k1", List.of("v1"), "k2", List.of("v2"))),
                         "{\"k1\":[\"v1\"],\"k2\":[\"v2\"]}"},
+                {new MultiValueBean(), "{\"headers\":{},\"name\":\"after\"}"},
+                {new MultiValueStringBean(), "{\"headers\":{},\"name\":\"after\"}"},
                 {new TestContainer(), "{\"type\":\"Container\"}"},
                 {new TestCase(), "{\"type\":\"Case\"}"},
                 {new TestPart(), "{\"type\":\"Part\"}"},
@@ -192,6 +195,9 @@ class JsonTestMapperTest {
                         })
                 )), "{\"value\":[\"ParameterizedTypeReference\",\"LinkedHashMap<? extends Integer, ArrayList<? super String>>\"]}"},
                 {new Value(PeriodDuration.valueOf("P1Y1M2DT23H59M59.999S")), "{\"value\":[\"PeriodDuration\",\"P1Y1M2DT23H59M59.999S\"]}"},
+                // тест для json тестов
+                {TestMessage.testCase1(), "{\"type\":\"Case\",\"name\":\"BugRepro\",\"inboundMessage\":{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":\"k1\",\"headers\":{}},\"outboundMessage\":[{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":\"k2\",\"headers\":{}}]}"},
+                {TestMessage.testCase2(), "{\"type\":\"Case\",\"name\":\"EmptyByteKey\",\"inboundMessage\":{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":[\"byte[]\",\"\"],\"headers\":{}},\"outboundMessage\":[{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":[\"byte[]\",\"AQID\"],\"headers\":{}}]}"},
         };
     }
 
@@ -215,8 +221,10 @@ class JsonTestMapperTest {
     static class Config {
         @Bean
         TestSetupModule testModule() {
-            return new TestSetupModule().addSubTypes(MapElemNotWrapped.class, MapAttrNotWrapped.class,
-                    TypeTest.class, Value.class, ConverterToList.class);
+            return new TestSetupModule()
+                    .addParentType(AbstractMessage.class)
+                    .addSubTypes(MapElemNotWrapped.class, MapAttrNotWrapped.class, TypeTest.class, Value.class,
+                            ConverterToList.class, TestMessage.class);
         }
     }
 
