@@ -78,10 +78,10 @@ integration:
 ```
 
 > **Tip:** the default `inflight = true` mode is the main and fastest one: lag is computed from the
-> instrumented application clients without contacting the broker. Use
-> `@EnableTestKafka(inflight = false)` (Admin API) only when client instrumentation is impossible —
-> it queries the broker on every lag check and is therefore slower. See
-> [In-Flight Tracking and Lag Control](In-Flight-and-Lag.md) for details.
+> application's clients without contacting the broker. Use
+> `@EnableTestKafka(inflight = false)` (Admin API) only when the application's clients are not
+> available (for example, the SUT runs in another process) — it queries the broker on every lag check
+> and is therefore slower. See [In-Flight Tracking and Lag Control](In-Flight-and-Lag.md) for details.
 
 Quick start: writing your first test
 ------------------------------------

@@ -9,6 +9,18 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+/**
+ * Builds the stack of init states while a test tree is being executed: collects {@code init}
+ * declarations by {@code applyTo} level, converts and merges them into {@link TestInitState}s and
+ * applies state changes between tests.
+ *
+ * <p>{@link AddBuilder} is used when descending into a test and {@link RemoveBuilder} when leaving
+ * it. When {@link InitSetup#saveState()} is enabled, every test element gets its own state, so
+ * states can be applied incrementally.
+ *
+ * @param <T> init declaration type
+ * @param <S> init state type
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
@@ -29,12 +41,21 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
     private final RemoveBuilder removeBuilder = new RemoveBuilder();
     private S currentState;
 
+    /**
+     * Clears the accumulated state and test stacks.
+     */
     public void clear() {
         stateStack.clear();
         testStack.clear();
         initsToStatesCache.clear();
     }
 
+    /**
+     * Marks the current state as modified: the next change creates a copy instead of mutating the
+     * state shared with the stack.
+     *
+     * @return the current (possibly copied) state
+     */
     public S changeCurrentStatus() {
         if (!stateStack.isEmpty() && currentState == stateStack.getLast()) {
             currentState = currentState.copy();
@@ -50,11 +71,25 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
         };
     }
 
+    /**
+     * Collects init declarations while the builder descends into the test tree.
+     */
     public class AddBuilder {
+        /**
+         * Adds all inits declared for the given test element.
+         *
+         * @param test test element being entered
+         */
         public void add(Test test) {
             testInits.addAll(getInits(test.getType()).readFromCursor());
         }
 
+        /**
+         * Adds a single init declaration: an init with {@code applyTo} is deferred in the cursor of
+         * the corresponding level, otherwise it is added directly.
+         *
+         * @param init init declaration
+         */
         public void add(T init) {
             if (init.getApplyTo() == null) {
                 testInits.add(init);
@@ -63,6 +98,13 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
             getInits(init.getApplyTo()).push(init);
         }
 
+        /**
+         * Converts the collected inits into states and pushes them onto the stacks; applies the
+         * resulting state to the setup when it differs from the current one.
+         *
+         * @param test test element the current segment belongs to
+         * @throws Exception if the init setup fails
+         */
         public void build(Test test) throws Exception {
             testInits.finishSegment(test);
             if (test.isContainer()) {
@@ -123,14 +165,25 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
             }
 
             if (currentState != null && !stateStack.isEmpty() && currentState != stateStack.getLast()) {
-                initSetup.apply(currentState, stateStack.getLast(), test);
-                currentState = stateStack.getLast();
+                try {
+                    initSetup.apply(currentState, stateStack.getLast(), test);
+                } finally {
+                    currentState = stateStack.getLast();
+                }
                 log.debug("init state applied, current state {}", currentState);
             }
         }
     }
 
+    /**
+     * Removes init declarations and states while the builder leaves the test tree.
+     */
     public class RemoveBuilder {
+        /**
+         * Removes an init declaration with {@code applyTo} from the cursor of its level.
+         *
+         * @param init init declaration to remove
+         */
         public void remove(T init) {
             if (init.getApplyTo() == null) {
                 return;
@@ -138,6 +191,11 @@ public class InitStateBuilder<T extends TestInit, S extends TestInitState<S>> {
             assert init.equals(getInits(init.getApplyTo()).pop());
         }
 
+        /**
+         * Pops the state and the test element pushed when entering the given test.
+         *
+         * @param test test element being left
+         */
         public void build(Test test) {
             if (!testStack.isEmpty() && test == testStack.getLast()) {
                 S state = stateStack.removeLast();

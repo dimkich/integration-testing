@@ -19,28 +19,17 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@ConfigurationProperties(prefix = "integration.testing.kafka")
+@ConfigurationProperties(prefix = "integration.testing.kafka", ignoreUnknownFields = false)
 public class KafkaProperties extends TopicProperties {
     @Setter(onMethod_ = @Autowired)
     private PropertyInheritanceMerger merger;
 
-    /**
-     * Interval between lag poll iterations. Kept low so lag resolution (and
-     * consumer-group stabilization) is detected promptly at the cost of more
-     * frequent thread wakeups; a higher value would trade detection latency for
-     * lower CPU load. Overridable via {@code integration.testing.kafka.lag-polling-interval-ms}.
-     */
+    // kept low so lag resolution is prompt; a higher value trades detection latency for CPU load
     private long lagPollingIntervalMs = 5;
     private long lagPollingTimeoutMs = 10000;
     private long startupStabilizationTimeoutSeconds = 30;
 
-    /**
-     * Interval between Admin API readiness checks of the expected consumer groups.
-     * Kept higher than the lag polling interval so that waiting for an
-     * asynchronously starting SUT does not flood the broker with
-     * {@code describeConsumerGroups} calls. Overridable via
-     * {@code integration.testing.kafka.readiness-polling-interval-ms}.
-     */
+    // kept higher than lag polling so waiting for a starting SUT does not flood the broker
     private long readinessPollingIntervalMs = 100;
 
     @Getter
@@ -49,8 +38,10 @@ public class KafkaProperties extends TopicProperties {
 
     /**
      * Normalizes the connections map, applies property inheritance from the root
-     * configuration down to the topics and validates all serializer/deserializer
-     * configurations.
+     * configuration down to the topics, merges the record-level base into the record
+     * components, applies the default source to each level and validates all
+     * serializer/deserializer configurations. Defaults are applied after the whole
+     * inheritance chain has been merged, so the validated configuration is final.
      */
     @PostConstruct
     public void init() {
@@ -61,12 +52,24 @@ public class KafkaProperties extends TopicProperties {
         connections = new ConcurrentHashMap<>(connections);
         connections.forEach((name, conn) -> {
             prepare(conn);
+            applyDefaultSources(conn);
             validate(conn, "connection[" + name + "]");
             if (conn.getTopics() != null) {
-                conn.getTopics().forEach((topic, props) ->
-                        validate(props, "connection[" + name + "].topics[" + topic + "]"));
+                conn.getTopics().forEach((topic, props) -> {
+                    applyDefaultSources(props);
+                    validate(props, "connection[" + name + "].topics[" + topic + "]");
+                });
             }
         });
+    }
+
+    private void applyDefaultSources(TopicProperties props) {
+        if (props.getSerializer() != null) {
+            props.getSerializer().applyDefaultSource(merger);
+        }
+        if (props.getDeserializer() != null) {
+            props.getDeserializer().applyDefaultSource(merger);
+        }
     }
 
     private void validate(TopicProperties props, String path) {
@@ -99,9 +102,22 @@ public class KafkaProperties extends TopicProperties {
 
     private ConnectionProperties prepare(ConnectionProperties connection) {
         merger.merge(connection, this);
+        prepareRecords(connection);
         if (connection.getTopics() != null) {
-            connection.getTopics().values().forEach(topic -> merger.merge(topic, connection));
+            connection.getTopics().values().forEach(topic -> {
+                merger.merge(topic, connection);
+                prepareRecords(topic);
+            });
         }
         return connection;
+    }
+
+    private void prepareRecords(TopicProperties props) {
+        if (props.getSerializer() != null) {
+            props.getSerializer().prepare(merger);
+        }
+        if (props.getDeserializer() != null) {
+            props.getDeserializer().prepare(merger);
+        }
     }
 }

@@ -76,10 +76,11 @@ Sometimes leaving lag is the expected behavior:
 * the application deliberately does not ack a failed record;
 * the application configuration cannot be changed right now.
 
+> ⚠️ **Important:** this is Java code that requires access to Spring Kafka classes — ask a developer
+> for help. If the application configuration can still be changed, use Path 1 instead.
+
 Then intercept the completion of Spring Kafka's error handling and commit the offset from the test.
-`handleRemaining` runs on the consumer thread, so `commitSync` is safe there. The framework learns
-about the commit from the standard `ConsumerInterceptor.onCommit`, and in `inflight = false` mode the
-broker reports it through the Admin API.
+`handleRemaining` runs on the consumer thread, so `commitSync` is safe there.
 
 ### 1. Action
 
@@ -154,12 +155,9 @@ public abstract class BaseKafkaIntegrationTest {
 
 1. The test sends a message the application fails to process. The framework sees the lag and waits.
 2. The application exhausts its retries and passes the record to the error handler.
-3. On exit from `handleRemaining` the action calls `consumer.commitSync(...)` on the consumer
-   thread.
-4. Kafka reports the successful commit to `ConsumerInterceptor.onCommit`; the in-flight ledger (or
-   the Admin API in `inflight = false` mode) sees the new committed offset.
-5. On the next lag poll (`lag-polling-interval-ms`, 5 ms by default) the framework sees zero lag and
-   continues the case. The broker is left clean for the following tests.
+3. The action commits the offset of the skipped record.
+4. The framework sees the new committed offset and continues the case. The broker is left clean for
+   the following tests.
 
 ### Limitations
 

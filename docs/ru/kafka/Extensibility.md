@@ -9,28 +9,36 @@
 Свой сериализатор записи
 ------------------------
 
-Реализуйте `KafkaRecordSerializer` — он превращает сообщение теста в байты для брокера:
+Запись целиком — это обычный конвертер ядра. Реализуйте `TestSerdeConverter<KafkaRecord, ProducerRecord,
+TestSerdeContext>`:
 
 ```java
 package com.example.kafka;
 
 import io.github.dimkich.integration.testing.kafka.KafkaRecord;
-import io.github.dimkich.integration.testing.kafka.serde.serialization.KafkaRecordSerializer;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class PlainTextRecordSerializer implements KafkaRecordSerializer {
+@Getter
+public class PlainTextRecordSerializer implements TestSerdeConverter<KafkaRecord, ProducerRecord, TestSerdeContext> {
+
+    private final Class<KafkaRecord> inputClass = KafkaRecord.class;
+    private final Class<ProducerRecord> outputClass = ProducerRecord.class;
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
     @Override
-    public ProducerRecord<byte[], byte[]> serialize(KafkaRecord message) {
+    public ProducerRecord convert(KafkaRecord record, TestSerdeContext context) {
         return new ProducerRecord<>(
-                message.getTopic(),
-                message.getPartition(),
-                toBytes(message.getKey()),
-                toBytes(message.getValue()));
+                record.getTopic(),
+                record.getPartition(),
+                toBytes(record.getKey()),
+                toBytes(record.getValue()));
     }
 
     private byte[] toBytes(Object value) {
@@ -53,24 +61,31 @@ public class PlainTextRecordSerializer implements KafkaRecordSerializer {
 Свой десериализатор записи
 --------------------------
 
-Реализуйте `KafkaRecordDeserializer` — он превращает сырую запись, пойманную сниффером, в
-`KafkaRecord`:
+Десериализатор — обратный конвертер `ConsumerRecord → KafkaRecord`:
 
 ```java
 package com.example.kafka;
 
 import io.github.dimkich.integration.testing.kafka.KafkaRecord;
-import io.github.dimkich.integration.testing.kafka.serde.deserialization.KafkaRecordDeserializer;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class PlainTextRecordDeserializer implements KafkaRecordDeserializer {
+@Getter
+public class PlainTextRecordDeserializer
+        implements TestSerdeConverter<ConsumerRecord, KafkaRecord, TestSerdeContext> {
+
+    private final Class<ConsumerRecord> inputClass = ConsumerRecord.class;
+    private final Class<KafkaRecord> outputClass = KafkaRecord.class;
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
     @Override
-    public KafkaRecord deserialize(ConsumerRecord<byte[], byte[]> record) {
+    public KafkaRecord convert(ConsumerRecord record, TestSerdeContext context) {
         KafkaRecord message = new KafkaRecord();
         message.setTopic(record.topic());
         message.setKey(toString(record.key()));
@@ -99,26 +114,39 @@ public class PlainTextRecordDeserializer implements KafkaRecordDeserializer {
 Свои заголовки
 --------------
 
-За сериализацию заголовков отвечают `KafkaHeaderSerializer` и `KafkaHeaderDeserializer`:
+Заголовки — тоже конвертеры: сериализатор `TestSerdeConverter<MultiValueMap<String, Object>, Headers,
+TestSerdeContext>`, десериализатор — обратный.
 
 ```java
 package com.example.kafka;
 
-import io.github.dimkich.integration.testing.kafka.serde.serialization.KafkaHeaderSerializer;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
 import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class UpperCaseHeaderSerializer implements KafkaHeaderSerializer {
+@Getter
+public class UpperCaseHeaderSerializer
+        implements TestSerdeConverter<MultiValueMap, Headers, TestSerdeContext> {
+
+    private final Class<MultiValueMap> inputClass = MultiValueMap.class;
+    private final Class<Headers> outputClass = Headers.class;
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
     @Override
-    public void serialize(MultiValueMap<String, Object> source, Headers target) {
-        source.forEach((name, values) -> values.forEach(value -> target.add(
+    @SuppressWarnings("unchecked")
+    public Headers convert(MultiValueMap map, TestSerdeContext context) {
+        Headers headers = new RecordHeaders();
+        ((MultiValueMap<String, Object>) map).forEach((name, values) -> values.forEach(value -> headers.add(
                 name,
                 String.valueOf(value).toUpperCase().getBytes(StandardCharsets.UTF_8))));
+        return headers;
     }
 }
 ```
@@ -128,87 +156,18 @@ headers:
   bean-ref: upperCaseHeaderSerializer
 ```
 
-Свой формат (TestSerdeProvider)
--------------------------------
+Свой формат (TestSerdeProviderFactory)
+--------------------------------------
 
-Провайдер формата создаёт пару «сериализатор + десериализатор» и регистрируется под собственным
-именем. Такой формат затем можно указывать в `type`:
+Провайдер формата — общая точка расширения ядра serde: фабрика, которая для запрошенной пары
+типов создаёт конвертер `input -> output`. Реализуйте `TestSerdeProviderFactory<I, O, C, R, P>`
+(имя формата — `getName()`, класс конфигурации — `P`) и зарегистрируйте бин — он станет
+доступен под своим именем и в настройке целиком, и в частях. Примеры:
+`io.github.dimkich.integration.testing.serde.providers.JsonProviderFactory`,
+`StringProviderFactory`.
 
-```java
-package com.example.kafka;
-
-import io.github.dimkich.integration.testing.serde.SerdeContext;
-import io.github.dimkich.integration.testing.serde.SerdeProperties;
-import io.github.dimkich.integration.testing.serde.TestSerdeDeserializer;
-import io.github.dimkich.integration.testing.serde.TestSerdeProvider;
-import io.github.dimkich.integration.testing.serde.TestSerdeSerializer;
-import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
-@Component
-public class Base64SerdeProvider implements TestSerdeProvider<SerdeProperties> {
-
-    @Override
-    public String getName() {
-        return "base64";
-    }
-
-    @Override
-    public Object createSerializer(SerdeProperties config) {
-        return new Base64Serializer();
-    }
-
-    @Override
-    public Object createDeserializer(SerdeProperties config) {
-        return new Base64Deserializer();
-    }
-
-    private static class Base64Serializer implements TestSerdeSerializer<Object, SerdeContext> {
-
-        @Override
-        public Class<SerdeContext> getContextClass() {
-            return SerdeContext.class;
-        }
-
-        @Override
-        public byte[] serialize(Object data, SerdeContext context) {
-            if (data == null) {
-                return null;
-            }
-            return Base64.getEncoder().encode(String.valueOf(data).getBytes(StandardCharsets.UTF_8));
-        }
-    }
-
-    private static class Base64Deserializer implements TestSerdeDeserializer<Object, SerdeContext> {
-
-        @Override
-        public Class<SerdeContext> getContextClass() {
-            return SerdeContext.class;
-        }
-
-        @Override
-        public Object deserialize(byte[] data, SerdeContext context) {
-            if (data == null) {
-                return null;
-            }
-            return new String(Base64.getDecoder().decode(data), StandardCharsets.UTF_8);
-        }
-    }
-}
-```
-
-```yaml
-"order-out":
-  deserializer:
-    value:
-      type: base64
-```
-
-Провайдер должен быть Spring-бином: если ваш тестовый пакет не попадает в сканирование, объявите его
-через `@Bean` в конфигурации теста. Провайдеры, созданные для заголовков, не должны зависеть от
-контекста сообщения — иначе при старте будет ошибка с подсказкой.
+В Kafka провайдер можно указывать и в настройке целиком, и в частях. Провайдеры, созданные для
+заголовков, не должны зависеть от контекста сообщения — иначе при старте будет ошибка с подсказкой.
 
 Дополнительные свойства Kafka-клиента
 -------------------------------------

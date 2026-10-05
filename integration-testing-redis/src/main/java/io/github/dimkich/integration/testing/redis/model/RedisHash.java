@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.redis.model;
 import com.moilioncircle.redis.replicator.rdb.datatype.TTLValue;
 import io.github.dimkich.integration.testing.format.common.map.JsonMapAsEntries;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 
 import java.util.Map;
 import java.util.TreeMap;

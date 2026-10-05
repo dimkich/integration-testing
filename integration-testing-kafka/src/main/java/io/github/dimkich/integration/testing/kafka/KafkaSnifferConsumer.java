@@ -2,9 +2,10 @@ package io.github.dimkich.integration.testing.kafka;
 
 import io.github.dimkich.integration.testing.kafka.registry.KafkaTopicMetadata;
 import io.github.dimkich.integration.testing.kafka.registry.KafkaTopicRegistry;
-import io.github.dimkich.integration.testing.kafka.serde.deserialization.KafkaRecordDeserializer;
 import io.github.dimkich.integration.testing.message.ExceptionDto;
 import io.github.dimkich.integration.testing.message.TestMessagePoller;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -17,7 +18,6 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -32,10 +32,12 @@ import java.util.regex.Pattern;
  * <p>Offsets of messages sent by the test itself are tracked by
  * {@link InboundMessageRegistry} and skipped when the topic is configured with
  * {@code ignoreInbound}. Deserialization failures are captured as poison records with
- * an attached {@link ExceptionDto} instead of aborting the poll loop.</p>
+ * an attached {@link ExceptionDto} instead of aborting the poll loop; the original key,
+ * value and header bytes are preserved so binary payloads are not corrupted.</p>
  */
 @Slf4j
 @RequiredArgsConstructor
+@SuppressWarnings("rawtypes")
 public class KafkaSnifferConsumer {
 
     // =====================================================================================
@@ -154,11 +156,11 @@ public class KafkaSnifferConsumer {
                 continue;
             }
 
-            KafkaRecordDeserializer deserializer = metadata.getDeserializer();
+            TestSerdeConverter<ConsumerRecord, KafkaRecord, TestSerdeContext> deserializer = metadata.getDeserializer();
 
             KafkaRecord kafkaRecord;
             try {
-                kafkaRecord = deserializer.deserialize(withCopiedHeaders(record));
+                kafkaRecord = deserializer.convert(withCopiedHeaders(record), TestSerdeContext.EMPTY);
             } catch (Exception e) {
                 log.warn("Sniffer [{}]: Deserialization error on topic [{}] at offset [{}]",
                         connectionName, topic, record.offset(), e);
@@ -197,21 +199,21 @@ public class KafkaSnifferConsumer {
                 record.key(), record.value(), new RecordHeaders(record.headers()), record.leaderEpoch());
     }
 
+    /**
+     * Creates a record that keeps the original bytes of the key, value and headers, so a
+     * deserialization failure never corrupts a binary payload with a lossy UTF-8 conversion.
+     * In XML expectations such values are written as Base64 with {@code type="byte[]"}.
+     */
     private static KafkaRecord createPoisonRecord(ConsumerRecord<byte[], byte[]> record, Exception exception) {
         KafkaRecord dto = new KafkaRecord();
         dto.setTopic(record.topic());
         dto.setPartition(record.partition());
         dto.setOffset(record.offset());
         dto.setTimestamp(record.timestamp());
-        if (record.key() != null) {
-            dto.setKey(new String(record.key(), StandardCharsets.UTF_8));
-        }
-        if (record.value() != null) {
-            dto.setValue(new String(record.value(), StandardCharsets.UTF_8));
-        }
+        dto.setKey(record.key());
+        dto.setValue(record.value());
         for (Header header : record.headers()) {
-            dto.getHeaders().add(header.key(),
-                    header.value() == null ? null : new String(header.value(), StandardCharsets.UTF_8));
+            dto.getHeaders().add(header.key(), header.value());
         }
         dto.setException(new ExceptionDto(exception));
         return dto;

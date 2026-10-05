@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing.redis.accessor;
 
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import org.springframework.data.redis.connection.RedisConnection;
 
 /**
@@ -21,7 +21,7 @@ public class StringDataAccessor {
      *
      * @param keyRaw encoded Redis key
      * @param data   value to store (raw bytes or a codec-serializable object)
-     * @param conn   connection used for the write
+     * @param conn   connection used for writing
      * @param schema provides the value codec for non-byte[] data
      */
     public void store(byte[] keyRaw, Object data, RedisConnection conn, RedisDataSchema schema) {

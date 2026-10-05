@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing.redis.registry;
 
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import io.github.dimkich.integration.testing.storage.exclusion.FieldExclusionTree;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

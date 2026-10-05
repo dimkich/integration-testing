@@ -1,63 +1,71 @@
 package io.github.dimkich.integration.testing.serde;
 
-import io.github.dimkich.integration.testing.serde.adapter.SerdeAdapterResolver;
-import io.github.dimkich.integration.testing.serde.resolver.SerdeResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 
-import java.util.function.Supplier;
-
 /**
- * Facade of the serde subsystem for modules: resolves a serializer/deserializer from
- * {@link SerdeProperties} and adapts it to the type the module requires.
+ * Facade of the serde subsystem for modules: resolves a converter from the configuration
+ * ({@link #resolve}) or adapts an already available source ({@link #adapt}), decorating the
+ * result in both cases.
  *
- * <p>Modules should depend only on this class, not on
- * {@link SerdeResolver} or {@link SerdeAdapterResolver} directly.</p>
+ * <p>A ready source wins over the configuration; a missing converter is an error. Modules should
+ * depend only on this class, not on the managers directly.
  */
 @RequiredArgsConstructor
 public class SerdeManager {
-    private final SerdeResolver serdeResolver;
-    private final SerdeAdapterResolver adapterResolver;
+
+    private final ConverterManager converterManager;
+    private final AdapterManager adapterManager;
+    private final DecoratorManager decoratorManager;
 
     /**
-     * Resolves a serializer for the given configuration and adapts it to {@code targetType}.
+     * Resolves a converter from the configuration: validates the configuration and fails when
+     * nothing can be resolved.
      *
-     * @param props serde configuration, or {@code null} to use the default
-     * @param targetType the serializer type required by the module
-     * @param defaultSupplier supplies the fallback serializer when {@code props} is
-     *                        {@code null} or no serializer is resolved
-     * @param <T> the target serializer type
-     * @return the resolved and adapted serializer, or the default one
+     * @param props        serde configuration
+     * @param inputClass   requested input type
+     * @param outputClass  requested output type
+     * @param contextClass requested context type
+     * @param role         requested component role, or {@code null} for a universal one
+     * @throws IllegalArgumentException if {@code props} is {@code null} or nothing can be resolved
      */
-    public <T> T resolveAndAdaptSerializer(@Nullable SerdeProperties props, Class<T> targetType, Supplier<T> defaultSupplier) {
+    public <I, O, C extends TestSerdeContext> TestSerdeConverter<I, O, C> resolve(
+            TestSerdeProperties props, Class<I> inputClass, Class<O> outputClass,
+            Class<C> contextClass, @Nullable ComponentRole role) {
+
         if (props == null) {
-            return defaultSupplier.get();
+            throw new IllegalArgumentException("Serde configuration must not be null");
         }
-        Object raw = serdeResolver.resolveSerializer(props);
-        if (raw == null) {
-            return defaultSupplier.get();
-        }
-        return adapterResolver.adapt(raw, targetType, props);
+        SerdeRoleCollector collector = new SerdeRoleCollector();
+        props.reportRoles(collector);
+        collector.validate();
+        return converterManager.resolve(inputClass, outputClass, contextClass, props, role);
     }
 
     /**
-     * Resolves a deserializer for the given configuration and adapts it to {@code targetType}.
+     * Adapts an already available source to a converter of the requested types and applies the
+     * matching decorators.
      *
-     * @param props serde configuration, or {@code null} to use the default
-     * @param targetType the deserializer type required by the module
-     * @param defaultSupplier supplies the fallback deserializer when {@code props} is
-     *                        {@code null} or no deserializer is resolved
-     * @param <T> the target deserializer type
-     * @return the resolved and adapted deserializer, or the default one
+     * @param source       ready source object
+     * @param props        serde configuration
+     * @param inputClass   requested input type
+     * @param outputClass  requested output type
+     * @param contextClass requested context type
+     * @param role         requested component role, or {@code null} for a universal one
+     * @throws IllegalArgumentException if {@code props} is {@code null} or no adapter matches
      */
-    public <T> T resolveAndAdaptDeserializer(@Nullable SerdeProperties props, Class<T> targetType, Supplier<T> defaultSupplier) {
+    public <I, O, C extends TestSerdeContext> TestSerdeConverter<I, O, C> adapt(
+            Object source, TestSerdeProperties props, Class<I> inputClass, Class<O> outputClass,
+            Class<C> contextClass, @Nullable ComponentRole role) {
+
         if (props == null) {
-            return defaultSupplier.get();
+            throw new IllegalArgumentException("Serde configuration must not be null");
         }
-        Object raw = serdeResolver.resolveDeserializer(props);
-        if (raw == null) {
-            return defaultSupplier.get();
-        }
-        return adapterResolver.adapt(raw, targetType, props);
+        SerdeRoleCollector collector = new SerdeRoleCollector();
+        props.reportRoles(collector);
+        collector.validate();
+        return decoratorManager.decorate(
+                adapterManager.adapt(source, props, inputClass, outputClass, contextClass, role), props,
+                inputClass, outputClass, contextClass);
     }
 }

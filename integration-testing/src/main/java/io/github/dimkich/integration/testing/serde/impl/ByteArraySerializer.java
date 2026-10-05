@@ -1,20 +1,23 @@
 package io.github.dimkich.integration.testing.serde.impl;
 
-import io.github.dimkich.integration.testing.serde.SerdeContext;
-import io.github.dimkich.integration.testing.serde.TestSerdeSerializer;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
 
 /**
- * Pass-through serializer: returns the byte array unchanged.
+ * Converter that casts the input to a byte array and returns it unchanged.
  */
-public class ByteArraySerializer implements TestSerdeSerializer<byte[], SerdeContext> {
+@Getter
+public class ByteArraySerializer implements TestSerdeConverter<Object, byte[], TestSerdeContext> {
+
+    private final Class<Object> inputClass = Object.class;
+
+    private final Class<byte[]> outputClass = byte[].class;
+
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
     @Override
-    public Class<SerdeContext> getContextClass() {
-        return SerdeContext.class;
-    }
-
-    @Override
-    public byte[] serialize(byte[] data, SerdeContext context) {
-        return data;
+    public byte[] convert(Object input, TestSerdeContext context) {
+        return (byte[]) input;
     }
 }

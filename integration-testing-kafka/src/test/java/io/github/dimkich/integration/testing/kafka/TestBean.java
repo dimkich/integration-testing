@@ -2,11 +2,14 @@ package io.github.dimkich.integration.testing.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerGroupMetadata;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -17,6 +20,7 @@ import org.springframework.messaging.support.MessageBuilder;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -95,6 +99,20 @@ public class TestBean {
         }
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
+    public void sendOffsetsInTransactionDeprecated(String templateBeanName, String topic, Object key, Object payload,
+                                                   String groupId) {
+        KafkaTemplate template = context.getBean(templateBeanName, KafkaTemplate.class);
+        ProducerFactory producerFactory = template.getProducerFactory();
+        try (Producer producer = producerFactory.createProducer()) {
+            producer.beginTransaction();
+            producer.send(new ProducerRecord<>(topic, key, payload));
+            producer.sendOffsetsToTransaction(
+                    Map.of(new TopicPartition(topic, 0), new OffsetAndMetadata(0)), groupId);
+            producer.commitTransaction();
+        }
+    }
+
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void sendInTransaction(String templateBeanName, String topic, Object key, Object payload, boolean rollback) {
         KafkaTemplate template = context.getBean(templateBeanName, KafkaTemplate.class);
@@ -107,5 +125,17 @@ public class TestBean {
             }
             return true;
         });
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void commitWithoutTransaction(String templateBeanName) {
+        KafkaTemplate template = context.getBean(templateBeanName, KafkaTemplate.class);
+        Map<String, Object> props = new HashMap<>(template.getProducerFactory().getConfigurationProperties());
+        props.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "failed-commit-test");
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+        try (Producer<byte[], byte[]> producer = new KafkaProducer<>(props)) {
+            producer.commitTransaction();
+        }
     }
 }

@@ -459,7 +459,7 @@ public class InFlightLedger implements DisposableBean {
      */
     public static void handleConsumerConstructorExit(Object consumer, Object[] args) {
         if (!clientRegistry.activate(consumer)) {
-            return;  // внутреннее звено цепочки конструкторов — уже посчитан
+            return;  // intermediate constructor in the chain — already counted
         }
         ClientConfigParser.ConsumerCfg cfg = ClientConfigParser.parseConsumerConfig(args);
         if (cfg.getBootstrapServers() == null) {
@@ -481,7 +481,7 @@ public class InFlightLedger implements DisposableBean {
      */
     public static void handleConsumerClose(Object consumer) {
         if (!clientRegistry.deactivate(consumer)) {
-            return;  // уже закрыт — idempotent close
+            return;  // already closed — idempotent close
         }
         ConsumerIdentity id = clientRegistry.consumer(consumer);
         decrementActiveConsumer(id.bootstrapServers(), id.groupId());

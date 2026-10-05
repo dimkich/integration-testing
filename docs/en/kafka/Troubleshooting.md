@@ -56,28 +56,23 @@ for them up to `startup-stabilization-timeout-seconds` and then fails with
 subscription-based groups: groups with manual `assign` appear as `EMPTY` on the broker, and waiting
 for them will not complete.
 
-Error: `No adapter found from [...] to [KafkaRecordSerializer]`
---------------------------------------------------------------
+Serde resolution errors
+-----------------------
 
-### Symptoms
+`No adapter from [...]`, `Unknown serde provider [...]`,
+`No converter for [...]`, `Field 'binaryEnvelope' ...`, config conflicts (`Both 'beanRef' and 'type' are set ...`) and
+other serde errors are shared by all platforms; their causes and fixes are collected in the
+[Serde overview](../serde/README.md#diagnostics).
 
-A case fails at startup with:
+In Kafka the error text additionally includes the path to the setting:
 
 ```text
-No adapter found from [java.util.ArrayList] to [...KafkaRecordSerializer] under configuration
-[RecordProperties]. Supported source types: [Serializer, TestSerdeSerializer]
+Invalid serializer config at connection[kafka1].topics[order-in]: Both 'beanRef' and 'type' are set on the same serde config. ...
 ```
 
-### Cause
-
-The `serializer` has a `type` that cannot serialize messages (in the example, an arbitrary
-`java.util.ArrayList` class), and the framework does not know how to apply it.
-
-### Fix
-
-Use a supported format (`string`, `json`, `xml`, `bytes`, `yaml`, `spring-json`, `spring-xml`), a
-native Kafka class (`org.apache.kafka.common.serialization.*`), or a custom record serializer (see
-[Extensibility](Extensibility.md)). The list of supported source types is included in the error text.
+The full table of allowed combinations is in [Configuration](Configuration.md). If the `serializer`
+references a class that cannot serialize messages, use a supported format or a custom record
+serializer (see [Extensibility](Extensibility.md)).
 
 Startup error: `Connection [...] must have bootstrapServers configured`
 -----------------------------------------------------------------------
@@ -118,36 +113,15 @@ At test startup the context fails with a message mentioning `@Order on JunitExte
 
 ### Cause
 
-The Kafka context is built before the framework's JUnit extension has activated instrumentation.
-Usually this means the test was started without `@EnableTestKafka` (or with incompatible extension
+The Kafka context is built before the framework's JUnit extension has activated its plugins. Usually
+this means the test was started without `@EnableTestKafka` (or with incompatible extension
 ordering).
 
 ### Fix
 
-Run the test through `@EnableTestKafka`; do not override the JUnit extension order manually. If
-client instrumentation is impossible, use `@EnableTestKafka(inflight = false)` — a slower mode that
-tracks lag through the Admin API.
-
-Startup error: `Invalid serializer config at connection[...]`
--------------------------------------------------------------
-
-### Symptoms
-
-The context fails to start with a configuration path in the message:
-
-```text
-Invalid serializer config at connection[kafka1].topics[order-in]: Conflicting serde config: ...
-```
-
-### Cause
-
-An invalid serde combination: for example, `bean-ref` together with `key`/`value`/`headers`, or
-`type: json` together with `value`.
-
-### Fix
-
-Bring the configuration to one of the allowed styles: "whole record" or "per part". The full table is
-in [Configuration](Configuration.md). The error text suggests what exactly conflicts.
+Run the test through `@EnableTestKafka`; do not override the JUnit extension order manually. If the
+application's clients are not available, use `@EnableTestKafka(inflight = false)` — a slower mode
+that tracks lag through the Admin API.
 
 Method is not called, although it is specified in the test
 ---------------------------------------------------------
@@ -203,7 +177,7 @@ Data cannot be deserialized
 
 ### Symptoms
 
-The Diff shows a "raw" record (UTF-8) and an `<exception>` with a Jackson error.
+The Diff shows a "raw" record (key/value as `byte[]` in Base64) and an `<exception>` with a Jackson error.
 
 ### Cause
 

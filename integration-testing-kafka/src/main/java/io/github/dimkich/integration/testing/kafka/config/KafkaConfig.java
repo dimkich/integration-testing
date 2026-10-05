@@ -8,10 +8,11 @@ import io.github.dimkich.integration.testing.kafka.inflight.ledger.InFlightLedge
 import io.github.dimkich.integration.testing.kafka.inflight.ledger.InFlightLedgerScope;
 import io.github.dimkich.integration.testing.kafka.registry.KafkaObjectFactory;
 import io.github.dimkich.integration.testing.kafka.registry.KafkaTopicRegistry;
+import io.github.dimkich.integration.testing.kafka.serde.KafkaHeaderDeserializerConverterFactory;
+import io.github.dimkich.integration.testing.kafka.serde.KafkaHeaderSerializerConverterFactory;
 import io.github.dimkich.integration.testing.kafka.serde.KafkaRecordSerdeFactory;
 import io.github.dimkich.integration.testing.kafka.serde.adapter.*;
-import io.github.dimkich.integration.testing.kafka.serde.provider.SpringJsonKafkaSerdeProvider;
-import io.github.dimkich.integration.testing.kafka.serde.provider.SpringXmlKafkaSerdeProvider;
+import io.github.dimkich.integration.testing.kafka.serde.provider.*;
 import io.github.dimkich.integration.testing.kafka.util.BootstrapUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -42,7 +43,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Spring configuration of the Kafka module: registers the serde factory, topic
+ * Spring configuration of the Kafka module: registers the serde factories, topic
  * registry, sniffer manager and serde adapters, and creates per-connection
  * infrastructure beans (producers, consumers, admin clients, sniffers, wait
  * completion and message senders) through {@link PostProcessor}.
@@ -51,28 +52,29 @@ import java.util.stream.Collectors;
 @EnableConfigurationProperties(KafkaProperties.class)
 @Import({
         KafkaRecordSerdeFactory.class,
+        KafkaHeaderSerializerConverterFactory.class,
+        KafkaHeaderDeserializerConverterFactory.class,
         KafkaObjectFactory.class,
         KafkaTopicRegistry.class,
         KafkaSnifferManager.class,
 
-        SpringJsonKafkaSerdeProvider.class,
-        SpringXmlKafkaSerdeProvider.class,
+        SpringJsonKafkaValueSerializerProvider.class,
+        SpringJsonKafkaValueDeserializerProvider.class,
+        SpringXmlKafkaValueSerializerProvider.class,
+        SpringXmlKafkaValueDeserializerProvider.class,
+        SpringJsonKafkaHeaderSerializerProvider.class,
+        SpringJsonKafkaHeaderDeserializerProvider.class,
+        SpringXmlKafkaHeaderSerializerProvider.class,
+        SpringXmlKafkaHeaderDeserializerProvider.class,
 
-        CoreToKafkaSerializerAdapter.class,
-        CoreToKafkaDeserializerAdapter.class,
-
-        TestSerdeSerializerToKafkaRecordSerializerAdapter.class,
-        TestSerdeDeserializerToKafkaRecordDeserializerAdapter.class,
-
-        KafkaSerializerToKafkaRecordSerializerAdapter.class,
-        KafkaDeserializerToKafkaRecordDeserializerAdapter.class,
-
-        KafkaHeaderMapperToKafkaHeaderSerializerAdapter.class,
-        KafkaHeaderMapperToKafkaHeaderDeserializerAdapter.class,
-        TestSerdeSerializerToKafkaHeaderSerializerAdapter.class,
-        TestSerdeDeserializerToKafkaHeaderDeserializerAdapter.class,
+        KafkaSerializerToRecordPartSerializerAdapter.class,
+        KafkaDeserializerToRecordPartDeserializerAdapter.class,
         KafkaSerializerToKafkaHeaderSerializerAdapter.class,
         KafkaDeserializerToKafkaHeaderDeserializerAdapter.class,
+        KafkaHeaderMapperToKafkaHeaderSerializerAdapter.class,
+        KafkaHeaderMapperToKafkaHeaderDeserializerAdapter.class,
+        TestSerdeConverterToKafkaHeaderSerializerAdapter.class,
+        TestSerdeConverterToKafkaHeaderDeserializerAdapter.class,
 
         KafkaConfig.PostProcessor.class
 })
@@ -178,24 +180,7 @@ public class KafkaConfig {
             return listableBeanFactory.getBeanNamesForType(KafkaProperties.class, true, false)[0];
         }
 
-        /**
-         * Verifies that instrumentation has been installed before the Kafka context
-         * is built.
-         *
-         * <p>The Kafka module always relies on at least one active
-         * {@code InstrumentationPlugin}: {@code SugarCubesClonerPlugin} is applicable
-         * to every test class, so a completed
-         * {@link InstrumentationManager#install(Class)} never leaves the plugin list
-         * empty. An empty list therefore means {@code install()} has not run yet —
-         * typically because {@code SpringExtension.beforeAll} created the context
-         * before {@code JunitExtension.beforeAll}. See the
-         * {@code @Order(HIGHEST_PRECEDENCE)} annotation on
-         * {@code JunitExtension}.
-         *
-         * <p>Failing here turns a silent misconfiguration (inflight mode disabled,
-         * admin-based state checker used instead, no ByteBuddy transformer installed)
-         * into an explicit startup error.
-         */
+        // at least one plugin is always applicable, so an empty list means install() has not run yet
         private void assertInstrumentationInstalled() {
             if (InstrumentationManager.getActivePlugins().isEmpty()) {
                 throw new IllegalStateException(
@@ -206,17 +191,8 @@ public class KafkaConfig {
             }
         }
 
-        /**
-         * Binds the connection map through the manual {@code Binder}.
-         *
-         * <p>The target type is {@link ConnectionBootstrap} rather than the full
-         * {@link ConnectionProperties} on purpose: the manual binder does not see
-         * {@code @ConfigurationPropertiesBinding} beans, so binding a type with
-         * {@code java.lang.reflect.Type} fields (via {@code SerdeProperties.targetClass})
-         * would fail with {@code ConverterNotFoundException}. Only the fields needed
-         * for grouping are bound here; the full config is resolved later via
-         * {@code KafkaProperties.getConnection(name)}.
-         */
+        // ConnectionBootstrap, not ConnectionProperties: the manual binder does not see
+        // @ConfigurationPropertiesBinding beans, so binding java.lang.reflect.Type fields would fail
         private Map<String, ConnectionBootstrap> bindConnectionKeys() {
             return Binder.get(environment)
                     .bind("integration.testing.kafka.connections",
@@ -244,18 +220,7 @@ public class KafkaConfig {
             return groups;
         }
 
-        /**
-         * Grouping key for client-side beans. Combines the normalized bootstrap
-         * address with the connection-level client properties so that two
-         * connections to the same cluster but with different
-         * {@code security.protocol}, {@code sasl.*}, {@code acks},
-         * {@code client.id}, {@code transactional.id}, etc. receive separate
-         * Kafka clients instead of silently sharing the first one's config.
-         *
-         * <p>Properties are defensively copied into an unmodifiable map to
-         * guarantee stable {@code equals}/{@code hashCode} for the lifetime of
-         * the key.
-         */
+        // normalized address + client properties: connections with different security/acks/ids must not share clients
         private record ClusterKey(String normalizedBootstrap, Map<String, Object> properties) {
             ClusterKey {
                 properties = properties == null
@@ -312,24 +277,8 @@ public class KafkaConfig {
                     .getBeanDefinition();
         }
 
-        /**
-         * Creates a per-connection {@link KafkaSnifferConsumer} bean.
-         *
-         * <p>The first three constructor arguments ({@code connectionNames}, {@code consumer},
-         * {@code rebalanceListener}) are per-connection and supplied explicitly via
-         * RuntimeBeanReference, because they cannot be resolved by type: the context holds
-         * N {@link KafkaConsumer} and N {@link SnifferRebalanceListener} beans, one per
-         * bootstrap address.
-         *
-         * <p>The remaining three arguments ({@code topicRegistry}, {@code testMessagePoller},
-         * {@code inboundMessageRegistry}) are singletons resolved by type via
-         * {@link AbstractBeanDefinition#AUTOWIRE_CONSTRUCTOR}.
-         *
-         * <p><b>The order of the first three arguments is coupled to the field declaration
-         * order in {@link KafkaSnifferConsumer}</b> (Lombok {@code @RequiredArgsConstructor}
-         * generates the constructor in field order). When reordering per-connection fields,
-         * update this factory too. See the marker comment in the class itself.
-         */
+        // the first three args are per-connection (N beans of each type) and their order is coupled to the
+        // field order of KafkaSnifferConsumer; the rest are autowired singletons
         private AbstractBeanDefinition createBootstrapSnifferDef(BeanNames group) {
             AbstractBeanDefinition def = BeanDefinitionBuilder
                     .genericBeanDefinition(KafkaSnifferConsumer.class)
@@ -420,16 +369,8 @@ public class KafkaConfig {
             this.messageSender = prefix + "KafkaMessageSender";
         }
 
-        /**
-         * Returns a short deterministic suffix derived from the client
-         * properties, or an empty string when properties are absent. Used only
-         * to disambiguate bean names when multiple groups share the same
-         * bootstrap address. The suffix is not used for equality; {@link PostProcessor.ClusterKey}
-         * carries the full property map and compares by value, so a collision
-         * here surfaces as a bean name clash (loud
-         * {@code BeanDefinitionOverrideException}) rather than as silent
-         * property mixing.
-         */
+        // disambiguates bean names for groups on the same bootstrap address; equality lives in
+        // ClusterKey, so a suffix collision surfaces as a bean name clash instead of silent mixing
         private static String propertiesSuffix(Map<String, Object> properties) {
             if (properties == null || properties.isEmpty()) {
                 return "";

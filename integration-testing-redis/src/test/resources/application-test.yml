@@ -12,15 +12,69 @@ integration:
         redissonConnectionFactory:
           schemas:
             "[redisson.TestRedisDto]":
-              bean-ref: testRedisTemplate
+              value:
+                bean-ref: testValueSerializer
+              hash-key:
+                type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
+              hash-value:
+                type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
+            "[redisson.bin]":
+              value:
+                bean-ref: testValueSerializer
+                binary-envelope: '{VER(1)}{LEN(INT, BE)}{CONTENT}'
+              hash-key:
+                type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
+              hash-value:
+                type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
+            "[redisson.envelope]":
+              value:
+                binary-envelope: '{VER(1)}{LEN(INT, BE)}{CONTENT}'
+            "[redisson.partial]":
+              value:
+                bean-ref: testValueSerializer
+            "[redisson.base]":
+              type: json
+            "[redisson.mix]":
+              type: json
+              value:
+                type: string
+            "[redisson.slots]":
+              value:
+                bean-ref: redissonSlotCodec
+              hash-key:
+                bean-ref: redissonSlotCodec
+              hash-value:
+                bean-ref: redissonSlotCodec
+            "[redisson.client]":
+              value:
+                bean-ref: redissonClient
+              hash-key:
+                bean-ref: redissonClient
+              hash-value:
+                bean-ref: redissonClient
             jedis:
               ignore: true
             "[redisson.bit]":
-              class-ref: io.github.dimkich.integration.testing.redis.schema.ByteArrayRedisDataSchema
+              value:
+                type: bytes
+              hash-key:
+                type: bytes
+              hash-value:
+                type: bytes
             "[redisson.xor]":
-              class-ref: io.github.dimkich.integration.testing.redis.schema.ByteArrayRedisDataSchema
+              value:
+                type: bytes
+              hash-key:
+                type: bytes
+              hash-value:
+                type: bytes
             "[redisson.hll]":
-              bean-ref: testRedisTemplate
+              value:
+                bean-ref: testValueSerializer
+              hash-key:
+                type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
+              hash-value:
+                type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
             "[redisson.hidden]":
               ignore: true
         jedisConnectionFactory:
@@ -31,14 +85,14 @@ integration:
     storage:
       storages:
         redissonConnectionFactory:
-          valueType: ',,OBJECT,OBJECT'
-          keyType: ',OBJECT,OBJECT,OBJECT'
-          changeType: ',true,true,true'
+          valueType: [ OBJECT, OBJECT, OBJECT, OBJECT ]
+          keyType: [ STRING, OBJECT, OBJECT, OBJECT ]
+          changeType: [ false, true, true, true ]
         jedisConnectionFactory:
-          valueType: ',,OBJECT,OBJECT'
-          keyType: ',OBJECT,OBJECT,OBJECT'
-          changeType: ',true,true,true'
+          valueType: [ OBJECT, OBJECT, OBJECT, OBJECT ]
+          keyType: [ STRING, OBJECT, OBJECT, OBJECT ]
+          changeType: [ false, true, true, true ]
         snapshotTestFactory:
-          valueType: ',,OBJECT,OBJECT'
-          keyType: ',OBJECT,OBJECT,OBJECT'
-          changeType: ',true,true,true'
+          valueType: [ OBJECT, OBJECT, OBJECT, OBJECT ]
+          keyType: [ STRING, OBJECT, OBJECT, OBJECT ]
+          changeType: [ false, true, true, true ]

@@ -105,6 +105,34 @@
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <response>&lt;null&gt;</response>
         </test>
+        <test type="Case" name="Tagged null round trip">
+            <bean>serdeTestFacade</bean>
+            <method>roundTripToString</method>
+            <request>tagged</request>
+            <request></request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response>&lt;null&gt;</response>
+        </test>
+        <test type="Case" name="Native bridge null round trip">
+            <bean>serdeTestFacade</bean>
+            <method>roundTripToString</method>
+            <request>native-bridge</request>
+            <request></request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response>&lt;null&gt;</response>
+        </test>
+        <test type="Case" name="Deserialize text">
+            <bean>serdeTestFacade</bean>
+            <method>deserializeText</method>
+            <request>json</request>
+            <request>io.github.dimkich.integration.testing.serde.dto.SerdeTestDto</request>
+            <request></request>
+            <request>{"id":3,"name":"text"}</request>
+            <response type="SerdeTestDto">
+                <id>3</id>
+                <name>text</name>
+            </response>
+        </test>
     </test>
     <test type="Container" name="Resolution">
         <test type="Case" name="Provider names">
@@ -113,17 +141,17 @@
             <request>base</request>
             <request>json</request>
             <request></request>
-            <request>core</request>
             <response>JacksonSerializer</response>
         </test>
-        <test type="Case" name="Provider name is case insensitive">
+        <test type="Case" name="Provider name is case sensitive">
             <bean>serdeTestFacade</bean>
-            <method>resolveClass</method>
+            <method>errorOf</method>
             <request>base</request>
             <request>JSON</request>
             <request></request>
-            <request>core</request>
-            <response>JacksonSerializer</response>
+            <request></request>
+            <request></request>
+            <response>IllegalArgumentException: Unknown serde provider [JSON] for config [StandardSerdeProperties]. Known providers: [misbehaving, string, tagged, native-bridge, xml, bytes, roles, json, unrelated-context, platform-context, record-only, yaml]. | If you meant a Java class, use its fully qualified name, not a simple name.</response>
         </test>
         <test type="Case" name="String provider">
             <bean>serdeTestFacade</bean>
@@ -131,7 +159,6 @@
             <request>base</request>
             <request>string</request>
             <request></request>
-            <request>core</request>
             <response>StringSerializer</response>
         </test>
         <test type="Case" name="Xml provider">
@@ -140,7 +167,6 @@
             <request>base</request>
             <request>xml</request>
             <request></request>
-            <request>core</request>
             <response>JacksonSerializer</response>
         </test>
         <test type="Case" name="Yaml provider">
@@ -149,7 +175,6 @@
             <request>base</request>
             <request>yaml</request>
             <request></request>
-            <request>core</request>
             <response>JacksonSerializer</response>
         </test>
         <test type="Case" name="Bytes provider">
@@ -158,7 +183,6 @@
             <request>base</request>
             <request>bytes</request>
             <request></request>
-            <request>core</request>
             <response>ByteArraySerializer</response>
         </test>
         <test type="Case" name="Custom provider">
@@ -167,7 +191,6 @@
             <request>base</request>
             <request>tagged</request>
             <request></request>
-            <request>core</request>
             <response>TaggedSerializer</response>
         </test>
         <test type="Case" name="Record level provider">
@@ -176,93 +199,88 @@
             <request>record</request>
             <request>record-only</request>
             <request></request>
-            <request>core</request>
             <response>TaggedSerializer</response>
         </test>
-        <test type="Case" name="Platform class for adapted serializer">
+        <test type="Case" name="Context aware provider needs platform context">
             <bean>serdeTestFacade</bean>
-            <method>resolveClass</method>
-            <request>base</request>
-            <request>tagged</request>
-            <request></request>
-            <request>platform</request>
-            <response>DefaultPlatformSerializer</response>
-        </test>
-        <test type="Case" name="Record class for adapted serializer">
-            <bean>serdeTestFacade</bean>
-            <method>resolveClass</method>
-            <request>record</request>
-            <request>tagged</request>
-            <request></request>
-            <request>record</request>
-            <response>DefaultPlatformRecordSerializer</response>
-        </test>
-        <test type="Case" name="Context aware provider">
-            <bean>serdeTestFacade</bean>
-            <method>resolveClass</method>
+            <method>errorOf</method>
             <request>base</request>
             <request>platform-context</request>
             <request></request>
-            <request>core</request>
-            <response>PlatformContextSerializer</response>
-        </test>
-        <test type="Case" name="Default without type">
-            <bean>serdeTestFacade</bean>
-            <method>resolveDefault</method>
-            <request>base</request>
             <request></request>
-            <response>DEF:data</response>
-        </test>
-        <test type="Case" name="Default without type on record config">
-            <bean>serdeTestFacade</bean>
-            <method>resolveDefault</method>
-            <request>record</request>
             <request></request>
-            <response>DEF:data</response>
+            <response>IllegalArgumentException: No converter for [Object -> byte[]] under config [StandardSerdeProperties]</response>
         </test>
         <test type="Case" name="Bean ref">
             <bean>serdeTestFacade</bean>
-            <method>serializePlatformByRef</method>
+            <method>serializeByRef</method>
             <request>customSerdeSerializer</request>
             <request>hello</request>
-            <response>B:BEAN:hello</response>
+            <response>BEAN:hello</response>
         </test>
         <test type="Case" name="Fully qualified class name">
             <bean>serdeTestFacade</bean>
-            <method>serializePlatformByFqcn</method>
+            <method>serializeText</method>
             <request>io.github.dimkich.integration.testing.serde.impl.StringSerializer</request>
+            <request></request>
+            <request></request>
             <request>hello</request>
-            <response>B:hello</response>
+            <response>hello</response>
         </test>
     </test>
-    <test type="Container" name="Platform adapters">
-        <test type="Case" name="Core to platform">
+    <test type="Container" name="Default factory">
+        <test type="Case" name="Factory class by config field">
             <bean>serdeTestFacade</bean>
-            <method>serializePlatform</method>
-            <request>base</request>
+            <method>resolveDefaultFactoryClass</method>
+            <request>string</request>
+            <response>StringSerializer</response>
+        </test>
+        <test type="Case" name="Bytes factory class by config field">
+            <bean>serdeTestFacade</bean>
+            <method>resolveDefaultFactoryClass</method>
+            <request>bytes</request>
+            <response>ByteArraySerializer</response>
+        </test>
+        <test type="Case" name="Serialize through default factory">
+            <bean>serdeTestFacade</bean>
+            <method>serializeDefaultFactory</method>
             <request>tagged</request>
-            <request></request>
             <request>hello</request>
-            <response>B:TAG:hello</response>
+            <response>PLAIN:hello</response>
         </test>
-        <test type="Case" name="Specific config adapter dominates">
+        <test type="Case" name="Round trip through default factory">
             <bean>serdeTestFacade</bean>
-            <method>serializePlatform</method>
-            <request>record</request>
+            <method>roundTripDefaultFactory</method>
             <request>tagged</request>
-            <request></request>
             <request>hello</request>
-            <response>S:REC:hello</response>
+            <response>hello</response>
         </test>
-        <test type="Case" name="Provider returns platform type directly">
+        <test type="Case" name="Round trip string through default factory">
             <bean>serdeTestFacade</bean>
-            <method>serializePlatform</method>
-            <request>base</request>
-            <request>platform-direct</request>
-            <request></request>
+            <method>roundTripDefaultFactory</method>
+            <request>string</request>
             <request>hello</request>
-            <response>D:hello</response>
+            <response>hello</response>
         </test>
+        <test type="Case" name="Round trip bytes through default factory">
+            <bean>serdeTestFacade</bean>
+            <method>roundTripDefaultFactoryBytes</method>
+            <request>00FF10</request>
+            <response>00FF10</response>
+        </test>
+        <test type="Case" name="Bytes default factory null">
+            <bean>serdeTestFacade</bean>
+            <method>roundTripDefaultFactoryBytes</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response>&lt;null&gt;</response>
+        </test>
+        <test type="Case" name="No default factory for config">
+            <bean>serdeTestFacade</bean>
+            <method>errorOfUnconfiguredConfig</method>
+            <response>IllegalArgumentException: No converter for [Object -> byte[]] under config [UnconfiguredConfig]</response>
+        </test>
+    </test>
+    <test type="Container" name="Platform context">
         <test type="Case" name="Context aware provider">
             <bean>serdeTestFacade</bean>
             <method>serializePlatform</method>
@@ -270,7 +288,7 @@
             <request>platform-context</request>
             <request></request>
             <request>hello</request>
-            <response>B:test-channel:hello</response>
+            <response>test-channel:hello</response>
         </test>
         <test type="Case" name="Json via primary mapper">
             <bean>serdeTestFacade</bean>
@@ -284,7 +302,7 @@
                 <items>a</items>
                 <items>b</items>
             </request>
-            <response>B:{"id":1,"name":"dto","items":["a","b"]}</response>
+            <response>{"id":1,"name":"dto","items":["a","b"]}</response>
         </test>
         <test type="Case" name="Json via alt mapper">
             <bean>serdeTestFacade</bean>
@@ -296,68 +314,76 @@
                 <id>2</id>
                 <name>alt</name>
             </request>
-            <response>B:{"id":2,"name":"alt"}</response>
+            <response>{"id":2,"name":"alt"}</response>
         </test>
-        <test type="Case" name="Deserialize through platform">
+        <test type="Case" name="Deserialize with platform context">
             <bean>serdeTestFacade</bean>
             <method>deserializePlatformText</method>
             <request>base</request>
             <request>tagged</request>
             <request></request>
             <request></request>
-            <request>B:TAG:hello</request>
+            <request>TAG:hello</request>
             <response>hello</response>
         </test>
-        <test type="Case" name="Deserialize json through platform">
+        <test type="Case" name="Deserialize json with platform context">
             <bean>serdeTestFacade</bean>
             <method>deserializePlatformText</method>
             <request>base</request>
             <request>json</request>
             <request>io.github.dimkich.integration.testing.serde.dto.SerdeTestDto</request>
             <request></request>
-            <request>B:{"id":1,"name":"dto"}</request>
+            <request>{"id":1,"name":"dto"}</request>
             <response type="SerdeTestDto">
                 <id>1</id>
                 <name>dto</name>
             </response>
         </test>
-        <test type="Case" name="Deserialize with specific config adapter">
+        <test type="Case" name="Deserialize platform context provider">
             <bean>serdeTestFacade</bean>
             <method>deserializePlatformText</method>
-            <request>record</request>
-            <request>tagged</request>
+            <request>base</request>
+            <request>platform-context</request>
             <request></request>
             <request></request>
-            <request>S:REC:hello</request>
+            <request>test-channel:hello</request>
             <response>hello</response>
         </test>
+        <test type="Case" name="Deserialize platform context null">
+            <bean>serdeTestFacade</bean>
+            <method>deserializePlatformToText</method>
+            <request>platform-context</request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response>&lt;null&gt;</response>
+        </test>
     </test>
-    <test type="Container" name="Record chain">
-        <test type="Case" name="Core provider through record chain">
+    <test type="Container" name="Record level">
+        <test type="Case" name="Record provider">
             <bean>serdeTestFacade</bean>
             <method>serializeRecord</method>
             <request>tagged</request>
-            <request>pre-</request>
-            <request>X-H</request>
-            <request>k1</request>
             <request>hello</request>
-            <response>test-channel|pre-k1|X-H|B:REC:hello</response>
+            <response>REC:hello</response>
         </test>
-        <test type="Case" name="Platform provider through record chain">
+        <test type="Case" name="Record only provider">
             <bean>serdeTestFacade</bean>
             <method>serializeRecord</method>
-            <request>platform-direct</request>
-            <request>pre-</request>
-            <request>X-H</request>
-            <request>k1</request>
+            <request>record-only</request>
             <request>hello</request>
-            <response>test-channel|pre-k1|X-H|D:hello</response>
+            <response>ONLY:hello</response>
         </test>
         <test type="Case" name="Record deserialize">
             <bean>serdeTestFacade</bean>
-            <method>deserializeRecordText</method>
+            <method>deserializeRecord</method>
             <request>tagged</request>
-            <request>B:REC:hello</request>
+            <request>REC:hello</request>
+            <response>hello</response>
+        </test>
+        <test type="Case" name="Record only deserialize">
+            <bean>serdeTestFacade</bean>
+            <method>deserializeRecord</method>
+            <request>record-only</request>
+            <request>ONLY:hello</request>
             <response>hello</response>
         </test>
     </test>
@@ -370,8 +396,7 @@
             <request></request>
             <request></request>
             <request></request>
-            <request>core</request>
-            <response>IllegalArgumentException: Unknown serde provider [nope] for config [SerdeProperties]. Known providers for this config: [string, tagged, bytes, xml, json, platform-context, unrelated-context, platform-direct, yaml]. | If you meant a Java class, use its fully qualified name (e.g. 'com.example.MySerializer'), not a simple name.</response>
+            <response>IllegalArgumentException: Unknown serde provider [nope] for config [StandardSerdeProperties]. Known providers: [misbehaving, string, tagged, native-bridge, xml, bytes, roles, json, unrelated-context, platform-context, record-only, yaml]. | If you meant a Java class, use its fully qualified name, not a simple name.</response>
         </test>
         <test type="Case" name="Record only provider is not visible on base config">
             <bean>serdeTestFacade</bean>
@@ -381,8 +406,7 @@
             <request></request>
             <request></request>
             <request></request>
-            <request>core</request>
-            <response>IllegalArgumentException: Unknown serde provider [record-only] for config [SerdeProperties]. Known providers for this config: [string, tagged, bytes, xml, json, platform-context, unrelated-context, platform-direct, yaml]. | Note: 'record-only' is only available with config: [[TestRecordProperties]]. | If you meant a Java class, use its fully qualified name (e.g. 'com.example.MySerializer'), not a simple name.</response>
+            <response>IllegalArgumentException: Unknown serde provider [record-only] for config [StandardSerdeProperties]. Known providers: [misbehaving, string, tagged, native-bridge, xml, bytes, roles, json, unrelated-context, platform-context, record-only, yaml]. | Note: 'record-only' is only available with config: [TestRecordProperties]. | If you meant a Java class, use its fully qualified name, not a simple name.</response>
         </test>
         <test type="Case" name="Unknown fully qualified class">
             <bean>serdeTestFacade</bean>
@@ -392,30 +416,17 @@
             <request></request>
             <request></request>
             <request></request>
-            <request>core</request>
-            <response>IllegalArgumentException: Serde class [com.example.Missing] not found, and no provider with this name. Known providers for this config: [string, tagged, bytes, xml, json, platform-context, unrelated-context, platform-direct, yaml].</response>
+            <response>IllegalArgumentException: Class [com.example.Missing] not found. If you meant a provider, its name must not contain a dot.</response>
         </test>
-        <test type="Case" name="No adapter found">
+        <test type="Case" name="Class without adapter">
             <bean>serdeTestFacade</bean>
             <method>errorOf</method>
             <request>base</request>
-            <request>java.lang.Object</request>
+            <request>java.lang.StringBuilder</request>
             <request></request>
             <request></request>
             <request></request>
-            <request>beta</request>
-            <response>IllegalArgumentException: No adapter found from [java.lang.Object] to [io.github.dimkich.integration.testing.serde.platform.BetaPlatformSerializer] under configuration [SerdeProperties]. Supported source types: [TestSerdeSerializer]</response>
-        </test>
-        <test type="Case" name="Ambiguous adapters">
-            <bean>serdeTestFacade</bean>
-            <method>errorOf</method>
-            <request>base</request>
-            <request>tagged</request>
-            <request></request>
-            <request></request>
-            <request></request>
-            <request>common</request>
-            <response>IllegalArgumentException: Ambiguous serde adapters for source [io.github.dimkich.integration.testing.serde.provider.TaggedSerializer] and target [io.github.dimkich.integration.testing.serde.platform.CommonPlatformSerializer]: [io.github.dimkich.integration.testing.serde.platform.adapter.AmbiguousAlphaAdapter, io.github.dimkich.integration.testing.serde.platform.adapter.AmbiguousBetaAdapter] (candidates have incomparable target classes). Declare a more specific adapter to disambiguate.</response>
+            <response>IllegalArgumentException: No adapter from [java.lang.StringBuilder] to [[B] under config [StandardSerdeProperties]. Known adapters: [io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreDeserializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeDeserializer -> [B/java.lang.Object], io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreSerializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeSerializer -> java.lang.Object/[B]]</response>
         </test>
         <test type="Case" name="Context mismatch">
             <bean>serdeTestFacade</bean>
@@ -425,8 +436,7 @@
             <request></request>
             <request></request>
             <request></request>
-            <request>platform</request>
-            <response>IllegalArgumentException: Provider [io.github.dimkich.integration.testing.serde.provider.UnrelatedContextSerdeProvider$UnrelatedContextSerializer] declares context type [io.github.dimkich.integration.testing.serde.platform.UnrelatedSerdeContext], but this adapter supplies [io.github.dimkich.integration.testing.serde.platform.TestPlatformContext]. Use a provider that accepts TestPlatformContext or work with the core TestSerdeSerializer directly.</response>
+            <response>IllegalArgumentException: No converter for [Object -> byte[]] under config [StandardSerdeProperties]</response>
         </test>
         <test type="Case" name="Bean ref and type together">
             <bean>serdeTestFacade</bean>
@@ -436,7 +446,6 @@
             <request>customSerdeSerializer</request>
             <request></request>
             <request></request>
-            <request>core</request>
             <response>IllegalArgumentException: Both 'beanRef' and 'type' are set on the same serde config. They are mutually exclusive: 'beanRef' points to an existing bean, 'type' points to a provider or a fully qualified class name. Remove one of them.</response>
         </test>
         <test type="Case" name="Bean ref with target class">
@@ -447,8 +456,7 @@
             <request>customSerdeSerializer</request>
             <request>java.lang.String</request>
             <request></request>
-            <request>core</request>
-            <response>IllegalArgumentException: Field 'targetClass'/'objectMapperRef' has no effect when 'beanRef' is set. 'beanRef' returns a ready-made bean as-is; no configuration is applied. Use 'type' (provider name) if you need these applied.</response>
+            <response>IllegalArgumentException: Field 'targetClass'/'objectMapperRef' has no effect when 'beanRef' is set: these fields are applied only to a provider.</response>
         </test>
         <test type="Case" name="Fully qualified class with target class">
             <bean>serdeTestFacade</bean>
@@ -458,8 +466,7 @@
             <request></request>
             <request>java.lang.String</request>
             <request></request>
-            <request>core</request>
-            <response>IllegalArgumentException: Field 'targetClass'/'objectMapperRef' has no effect when 'type' is a fully qualified class name (contains a dot). Use a provider if you need these applied.</response>
+            <response>IllegalArgumentException: Field 'targetClass'/'objectMapperRef' has no effect when 'type' is a fully qualified class name (contains a dot): these fields are applied only to a provider.</response>
         </test>
         <test type="Case" name="Missing object mapper ref">
             <bean>serdeTestFacade</bean>
@@ -469,8 +476,17 @@
             <request></request>
             <request></request>
             <request>noSuchMapper</request>
-            <request>core</request>
-            <response>NoSuchBeanDefinitionException: No bean named 'noSuchMapper' available</response>
+            <response>IllegalArgumentException: No bean named [noSuchMapper] of type [com.fasterxml.jackson.databind.ObjectMapper] found. Check 'objectMapperRef' in configuration.</response>
+        </test>
+        <test type="Case" name="Object mapper ref of wrong type">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>json</request>
+            <request></request>
+            <request></request>
+            <request>customSerdeSerializer</request>
+            <response>IllegalArgumentException: Bean named [customSerdeSerializer] is not of type [com.fasterxml.jackson.databind.ObjectMapper] but was actually of type [io.github.dimkich.integration.testing.serde.provider.TaggedSerializer]. Check 'objectMapperRef' in configuration.</response>
         </test>
         <test type="Case" name="Missing bean ref">
             <bean>serdeTestFacade</bean>
@@ -480,8 +496,801 @@
             <request>missingBean</request>
             <request></request>
             <request></request>
-            <request>core</request>
-            <response>NoSuchBeanDefinitionException: No bean named 'missingBean' available</response>
+            <response>IllegalArgumentException: No bean named [missingBean] found. Check 'beanRef' in configuration.</response>
+        </test>
+        <test type="Case" name="Null configuration">
+            <bean>serdeTestFacade</bean>
+            <method>errorOfNullConfiguration</method>
+            <response>IllegalArgumentException: Serde configuration must not be null</response>
+        </test>
+        <test type="Case" name="Null resolve configuration">
+            <bean>serdeTestFacade</bean>
+            <method>errorOfNullResolveConfiguration</method>
+            <response>IllegalArgumentException: Serde configuration must not be null</response>
+        </test>
+        <test type="Case" name="Null source to adapt">
+            <bean>serdeTestFacade</bean>
+            <method>errorOfNullSource</method>
+            <response>IllegalArgumentException: Source to adapt must not be null</response>
+        </test>
+        <test type="Case" name="Null props to tryAdapt">
+            <bean>serdeTestFacade</bean>
+            <method>tryAdaptNullProps</method>
+            <response>IllegalArgumentException: Serde configuration must not be null</response>
+        </test>
+        <test type="Case" name="Resolve multiple beans by type">
+            <bean>serdeTestFacade</bean>
+            <method>resolveByType</method>
+            <request>io.github.dimkich.integration.testing.serde.TestSerdeProviderFactory</request>
+            <response>IllegalArgumentException: Multiple beans of type [io.github.dimkich.integration.testing.serde.TestSerdeProviderFactory] found. Specify 'objectMapperRef' in configuration.</response>
+        </test>
+        <test type="Case" name="Resolve missing bean by type">
+            <bean>serdeTestFacade</bean>
+            <method>resolveByType</method>
+            <request>java.lang.StringBuilder</request>
+            <response>IllegalArgumentException: No bean of type [java.lang.StringBuilder] found. Define a bean of this type or specify 'objectMapperRef' in configuration.</response>
+        </test>
+        <test type="Case" name="Resolve bean by type">
+            <bean>serdeTestFacade</bean>
+            <method>resolveByType</method>
+            <request>io.github.dimkich.integration.testing.serde.provider.TaggedSerializer</request>
+            <response>TaggedSerializer</response>
+        </test>
+        <test type="Case" name="Resolve unknown class">
+            <bean>serdeTestFacade</bean>
+            <method>resolveByType</method>
+            <request>com.example.Missing</request>
+            <response>IllegalArgumentException: com.example.Missing</response>
+        </test>
+        <test type="Case" name="Misbehaving provider">
+            <bean>serdeTestFacade</bean>
+            <method>errorOf</method>
+            <request>base</request>
+            <request>misbehaving</request>
+            <request></request>
+            <request></request>
+            <request></request>
+            <response>IllegalArgumentException: Provider [io.github.dimkich.integration.testing.serde.provider.MisbehavingProvider] returned converter [any -> any] which does not satisfy request [java.lang.Object -> [B] under context [io.github.dimkich.integration.testing.serde.TestSerdeContext]</response>
+        </test>
+    </test>
+    <test type="Container" name="Adapt">
+        <test type="Case" name="Native bridge adapter">
+            <bean>serdeTestFacade</bean>
+            <method>adaptNativeBridge</method>
+            <request>hello</request>
+            <response>N:hello</response>
+        </test>
+        <test type="Case" name="Unrelated context round trip">
+            <bean>serdeTestFacade</bean>
+            <method>roundTripUnrelated</method>
+            <request>hello</request>
+            <response>hello</response>
+        </test>
+        <test type="Case" name="Unrelated context null round trip">
+            <bean>serdeTestFacade</bean>
+            <method>roundTripUnrelated</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response>&lt;null&gt;</response>
+        </test>
+    </test>
+    <test type="Container" name="binaryLayout">
+        <test type="Container" name="Redisson RMapCache Layout">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{FIX(8, 0)}{LEN(Long, LE)}{CONTENT}</request>
+                <request>7B2261223A317D</request>
+                <response>000000000000000007000000000000007B2261223A317D</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{FIX(8, 0)}{LEN(Long, LITTLE_ENDIAN)}{CONTENT}</request>
+                <request>000000000000000007000000000000007B2261223A317D</request>
+                <response>7B2261223A317D</response>
+            </test>
+        </test>
+        <test type="Container" name="Custom Protocol with Checksum">
+            <init type="DateTimeInit" dateTime="2026-01-01T00:00:00.001Z"/>
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{VER(1)}{TS(LONG, BE)}{LEN(INT, BE)}{CONTENT}{CRC32(BE)}</request>
+                <request>4F4B</request>
+                <response>010000019B76DAA801000000024F4B3F713439</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{VER(1)}{TS(LONG, BE)}{LEN(Integer, BE)}{CONTENT}{CRC32(BE)}</request>
+                <request>010000019B76DAA801000000024F4B3F713439</request>
+                <response>4F4B</response>
+            </test>
+            <test type="Case" name="Deserialize Corrupted Checksum">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{VER(1)}{TS(LONG, BE)}{LEN(Integer, BE)}{CONTENT}{CRC32(BE)}</request>
+                <request>010000019B76DAA801000000024F4B3F713438</request>
+                <response type="RuntimeException">
+                    <message>CRC32 mismatch. Expected: 3F713439, got: 3F713438</message>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="String Layout">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>AA{STR(io, Integer, BIG_ENDIAN)}{CONTENT}</request>
+                <request>FF</request>
+                <response>AA00000002696FFF</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>AA{STR(io, Integer, BE)}{CONTENT}</request>
+                <request>AA00000002696FFF</request>
+                <response>FF</response>
+            </test>
+            <test type="Case" name="Deserialize Wrong Static Bytes">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>AA{STR(io, Integer, BE)}{CONTENT}</request>
+                <request>AB00000002696FFF</request>
+                <response type="RuntimeException">
+                    <message>Static bytes mismatch. Expected: AA, got: AB</message>
+                </response>
+            </test>
+            <test type="Case" name="Deserialize Wrong String">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>AA{STR(io, Integer, BE)}{CONTENT}</request>
+                <request>AA00000002696EFF</request>
+                <response type="RuntimeException">
+                    <message>String mismatch. Expected: 696F, got: 696E</message>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="STR CONTENT FIX">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>AA{STR(12)}{CONTENT}{FIX(2)}</request>
+                <request>FF</request>
+                <response>AA3132FF0000</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>AA{STR(12)}{CONTENT}{FIX(2)}</request>
+                <request>AA3132FF0000</request>
+                <response>FF</response>
+            </test>
+        </test>
+        <test type="Container" name="No content">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>AA</request>
+                <request>FF</request>
+                <response type="IllegalArgumentException">
+                    <message>Missing {CONTENT} tag</message>
+                </response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>AA</request>
+                <request>AAFF</request>
+                <response type="IllegalArgumentException">
+                    <message>Missing {CONTENT} tag</message>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="Multiple content">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>AA{CONTENT}{CONTENT}</request>
+                <request>FF</request>
+                <response type="IllegalArgumentException">
+                    <message>Multiple {CONTENT} tags</message>
+                </response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>AA{CONTENT}{CONTENT}</request>
+                <request>AAFF</request>
+                <response type="IllegalArgumentException">
+                    <message>Multiple {CONTENT} tags</message>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="Len no params">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{LEN}{CONTENT}</request>
+                <request>FF</request>
+                <response>00000001FF</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN}{CONTENT}</request>
+                <request>00000001FF</request>
+                <response>FF</response>
+            </test>
+        </test>
+        <test type="Container" name="Len double">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{LEN(DOUBLE, BE)}{CONTENT}</request>
+                <request>68656C6C6F</request>
+                <response>401400000000000068656C6C6F</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(DOUBLE, BE)}{CONTENT}</request>
+                <request>401400000000000068656C6C6F</request>
+                <response>68656C6C6F</response>
+            </test>
+        </test>
+        <test type="Container" name="Len float">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{LEN(FLOAT, LE)}{CONTENT}</request>
+                <request>68656C6C6F</request>
+                <response>0000A04068656C6C6F</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(FLOAT, LE)}{CONTENT}</request>
+                <request>0000A04068656C6C6F</request>
+                <response>68656C6C6F</response>
+            </test>
+        </test>
+        <test type="Container" name="SHORT BYTE">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>AA{STR(io, SHORT, BE)}{LEN(BYTE)}{CONTENT}</request>
+                <request>FF</request>
+                <response>AA0002696F01FF</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>AA{STR(io, SHORT, BE)}{LEN(BYTE)}{CONTENT}</request>
+                <request>AA0002696F01FF</request>
+                <response>FF</response>
+            </test>
+        </test>
+        <test type="Container" name="Unknown type">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{LEN(I)}{CONTENT}</request>
+                <request>FF</request>
+                <response type="IllegalArgumentException">
+                    <message>Unknown type: I</message>
+                </response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(I)}{CONTENT}</request>
+                <request>FF</request>
+                <response type="IllegalArgumentException">
+                    <message>Unknown type: I</message>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="Unknown order">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{LEN(INT, LIT_END)}{CONTENT}</request>
+                <request>FF</request>
+                <response type="IllegalArgumentException">
+                    <message>Unknown byte order: LIT_END</message>
+                </response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(INT, LIT_END)}{CONTENT}</request>
+                <request>FF</request>
+                <response type="IllegalArgumentException">
+                    <message>Unknown byte order: LIT_END</message>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="Version Segment Validation">
+            <test type="Case" name="Serialize Version">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{VER(5)}{CONTENT}</request>
+                <request>FF</request>
+                <response>05FF</response>
+            </test>
+            <test type="Case" name="Deserialize Version Mismatch">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{VER(10)}{CONTENT}</request>
+                <request>09FF</request>
+                <response type="RuntimeException">
+                    <message>Protocol version mismatch. Expected: 10, got: 9</message>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="Corrupted frame">
+            <test type="Case" name="Deserialize Truncated With Len">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(INT, BE)}{CONTENT}</request>
+                <request>0000000AFFFF</request>
+                <response type="RuntimeException">
+                    <message>Corrupted frame: invalid payload length 10</message>
+                </response>
+            </test>
+            <test type="Case" name="Deserialize Truncated Without Len">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>AA{CONTENT}{FIX(2)}</request>
+                <request>AAFF</request>
+                <response type="RuntimeException">
+                    <message>Corrupted frame: invalid payload length -1</message>
+                </response>
+            </test>
+            <test type="Case" name="Deserialize Huge Payload Length">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(INT, BE)}{CONTENT}</request>
+                <request>7FFFFFFF</request>
+                <response type="RuntimeException">
+                    <message>Corrupted frame: invalid payload length 2147483647</message>
+                </response>
+            </test>
+            <test type="Case" name="Deserialize Negative Payload Length">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(INT, BE)}{CONTENT}</request>
+                <request>FFFFFFF6</request>
+                <response type="RuntimeException">
+                    <message>Corrupted frame: invalid payload length -10</message>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="Unsigned lengths">
+            <test type="Case" name="Serialize Byte Length Above Signed Range">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{LEN(BYTE)}{CONTENT}</request>
+                <request>FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</request>
+                <response>80FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</response>
+            </test>
+            <test type="Case" name="Deserialize Byte Length Above Signed Range">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(BYTE)}{CONTENT}</request>
+                <request>80FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</request>
+                <response>FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</response>
+            </test>
+            <test type="Case" name="Deserialize Byte Length Above Unsigned Range">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(BYTE)}{CONTENT}</request>
+                <request>FF</request>
+                <response type="RuntimeException">
+                    <message>Corrupted frame: invalid payload length 255</message>
+                </response>
+            </test>
+            <test type="Case" name="Deserialize Short Length Above Signed Range">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{LEN(SHORT, BE)}{CONTENT}</request>
+                <request>FFFF</request>
+                <response type="RuntimeException">
+                    <message>Corrupted frame: invalid payload length 65535</message>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="Null">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>00{CONTENT}</request>
+                <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>00{CONTENT}</request>
+                <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            </test>
+        </test>
+        <test type="Container" name="Double Quotes - Special Characters">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR("Data, Part 1")}{CONTENT}</request>
+                <request>FF</request>
+                <response>446174612C20506172742031FF</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{STR("Data, Part 1")}{CONTENT}</request>
+                <request>446174612C20506172742031FF</request>
+                <response>FF</response>
+            </test>
+        </test>
+        <test type="Container" name="Single Quotes - Basic">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR('Simple Text')}{CONTENT}</request>
+                <request>EE</request>
+                <response>53696D706C652054657874EE</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{STR('Simple Text')}{CONTENT}</request>
+                <request>53696D706C652054657874EE</request>
+                <response>EE</response>
+            </test>
+        </test>
+        <test type="Container" name="Escaped Quotes">
+            <test type="Case" name="Serialize Escaped Double">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR("He said \"Hi\"")}{CONTENT}</request>
+                <request>00</request>
+                <response>48652073616964202248692200</response>
+            </test>
+            <test type="Case" name="Deserialize Escaped Single">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{STR('It\'s me')}{CONTENT}</request>
+                <request>49742773206D6500</request>
+                <response>00</response>
+            </test>
+        </test>
+        <test type="Container" name="Nested Quotes">
+            <test type="Case" name="Single Inside Double">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR("It's logic")}{CONTENT}</request>
+                <request>AA</request>
+                <response>49742773206C6F676963AA</response>
+            </test>
+            <test type="Case" name="Double Inside Single">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{STR('Name: "Admin"')}{CONTENT}</request>
+                <request>4E616D653A202241646D696E22AA</request>
+                <response>AA</response>
+            </test>
+        </test>
+        <test type="Container" name="Quotes with Multiple Parameters">
+            <test type="Case" name="Serialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR("Prefix, Value", INT, LITTLE_ENDIAN)}{CONTENT}</request>
+                <request>FF</request>
+                <response>0D0000005072656669782C2056616C7565FF</response>
+            </test>
+            <test type="Case" name="Deserialize">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{STR("Prefix, Value", INT, LE)}{CONTENT}</request>
+                <request>0D0000005072656669782C2056616C7565FF</request>
+                <response>FF</response>
+            </test>
+        </test>
+        <test type="Container" name="Escaping and Special Characters">
+            <test type="Case" name="Escaped quotes in STR">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR("Header \"v1\"")}{CONTENT}</request>
+                <request>FF</request>
+                <response>4865616465722022763122FF</response>
+            </test>
+            <test type="Case" name="Structural characters inside quotes">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR("}{ ), (", INT, BE)}{CONTENT}</request>
+                <request>00</request>
+                <response>000000077D7B20292C202800</response>
+            </test>
+            <test type="Case" name="Single quote escaping">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>deserialize</method>
+                <request>{STR('It\'s working')}{CONTENT}</request>
+                <request>4974277320776F726B696E67AA</request>
+                <response>AA</response>
+            </test>
+            <test type="Case" name="Backslash literal">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR("C:\\Data")}{CONTENT}</request>
+                <request>EE</request>
+                <response>433A5C44617461EE</response>
+            </test>
+            <test type="Case" name="Comma inside quoted parameter">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR("a,b,c", BYTE, LE)}{CONTENT}</request>
+                <request>FF</request>
+                <response>05612C622C63FF</response>
+            </test>
+            <test type="Case" name="Nested brackets and braces mismatch">
+                <bean>binaryLayoutTestFacade</bean>
+                <method>serialize</method>
+                <request>{STR("Parameter ) with bracket")}{CONTENT}</request>
+                <request>00</request>
+                <response>506172616D657465722029207769746820627261636B657400</response>
+            </test>
+        </test>
+        <test type="Case" name="Unknown Tag Name">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{UNDEFINED_TAG}{CONTENT}</request>
+            <request>FF</request>
+            <response type="IllegalArgumentException">
+                <message>Unknown binary envelope tag: UNDEFINED_TAG</message>
+            </response>
+        </test>
+        <test type="Case" name="Missing Tag Name">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{(INT)}{CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Expected tag name after '{' in {(INT)}{CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Unclosed Tag Bracket">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{LEN(INT){CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Expected '}' at the end of tag in {LEN(INT){CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Malformed Parameters - Missing Comma">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{LEN(INT BE)}{CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Expected ',' or ')' in parameters of {LEN(INT BE)}{CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Invalid hex format">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>AA}BB{CONTENT}</request>
+            <request>FF</request>
+            <response type="IllegalArgumentException">
+                <message>string length not even: 5</message>
+            </response>
+        </test>
+        <test type="Case" name="Multiple Content Tags">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{CONTENT}{CONTENT}</request>
+            <request>FF</request>
+            <response type="IllegalArgumentException">
+                <message>Multiple {CONTENT} tags</message>
+            </response>
+        </test>
+        <test type="Case" name="Empty Tag">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{} {CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Expected tag name after '{' in {} {CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Empty Parameters">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{LEN()}{CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Expected parameter name in {LEN()}{CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Trailing Comma in Parameters">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{LEN(INT,)}{CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Expected parameter name in {LEN(INT,)}{CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Double Comma">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{LEN(INT,,BE)}{CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Expected parameter name in {LEN(INT,,BE)}{CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Empty Layout String">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request></request>
+            <request>FF</request>
+            <response type="IllegalArgumentException">
+                <message>Missing {CONTENT} tag</message>
+            </response>
+        </test>
+        <test type="Case" name="Blank Layout String">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request> </request>
+            <request>FF</request>
+            <response type="IllegalArgumentException">
+                <message>Missing {CONTENT} tag</message>
+            </response>
+        </test>
+        <test type="Case" name="Null Layout String">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request>FF</request>
+            <response type="IllegalArgumentException">
+                <message>Missing {CONTENT} tag</message>
+            </response>
+        </test>
+        <test type="Case" name="Unclosed Double Quote">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{STR("unclosed tag}{CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Unclosed quote ["] in {STR("unclosed tag}{CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Unclosed Single Quote">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{STR('wrong format}{CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Unclosed quote ['] in {STR('wrong format}{CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Unclosed Quote With Escaping">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{STR("escaped end \" )}{CONTENT}</request>
+            <request>FF</request>
+            <response type="RuntimeException">
+                <message>Unclosed quote ["] in {STR("escaped end \" )}{CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Crash on malformed escape">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{STR("error-here\")}{CONTENT}</request>
+            <request>01</request>
+            <response type="RuntimeException">
+                <message>Unclosed quote ["] in {STR("error-here\")}{CONTENT}</message>
+            </response>
+        </test>
+        <test type="Case" name="Invalid Hex diagnostic">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>GG{CONTENT}</request>
+            <request>01</request>
+            <response type="NumberFormatException">
+                <message>not a hexadecimal digit: "G" = 71</message>
+            </response>
+        </test>
+        <test type="Case" name="Spaces between tags">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>{LEN}   {CONTENT}</request>
+            <request>0102</request>
+            <response>000000020102</response>
+        </test>
+        <test type="Case" name="Odd length hex literal">
+            <bean>binaryLayoutTestFacade</bean>
+            <method>serialize</method>
+            <request>ABC{CONTENT}</request>
+            <request>01</request>
+            <response type="IllegalArgumentException">
+                <message>string length not even: 3</message>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="binaryEnvelope">
+        <test type="Case" name="Serialize with envelope">
+            <bean>serdeTestFacade</bean>
+            <method>serializeBinaryHex</method>
+            <request>string</request>
+            <request>{VER(1)}{LEN(INT, BE)}{CONTENT}</request>
+            <request>hello</request>
+            <response>010000000568656C6C6F</response>
+        </test>
+        <test type="Case" name="Deserialize with envelope">
+            <bean>serdeTestFacade</bean>
+            <method>deserializeBinaryHex</method>
+            <request>string</request>
+            <request>{VER(1)}{LEN(INT, BE)}{CONTENT}</request>
+            <request></request>
+            <request>010000000568656C6C6F</request>
+            <response>hello</response>
+        </test>
+        <test type="Case" name="Envelope through core provider">
+            <bean>serdeTestFacade</bean>
+            <method>serializeBinaryHex</method>
+            <request>string</request>
+            <request>{STR(hi)}{CONTENT}</request>
+            <request>hello</request>
+            <response>686968656C6C6F</response>
+        </test>
+        <test type="Case" name="Envelope after native adapter">
+            <bean>serdeTestFacade</bean>
+            <method>serializeBinaryHex</method>
+            <request>native-bridge</request>
+            <request>{STR(hi)}{CONTENT}</request>
+            <request>hello</request>
+            <response>68694E3A68656C6C6F</response>
+        </test>
+        <test type="Case" name="Deserialize after native adapter">
+            <bean>serdeTestFacade</bean>
+            <method>deserializeBinaryHex</method>
+            <request>native-bridge</request>
+            <request>{STR(hi)}{CONTENT}</request>
+            <request></request>
+            <request>68694E3A68656C6C6F</request>
+            <response>hello</response>
+        </test>
+        <test type="Case" name="Class without adapter cannot be adapted to core">
+            <bean>serdeTestFacade</bean>
+            <method>errorOfBinary</method>
+            <request>base</request>
+            <request>java.lang.StringBuilder</request>
+            <request>{LEN(INT, BE)}{CONTENT}</request>
+            <response>IllegalArgumentException: No adapter from [java.lang.StringBuilder] to [[B] under config [StandardSerdeProperties]. Known adapters: [io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreDeserializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeDeserializer -> [B/java.lang.Object], io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreSerializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeSerializer -> java.lang.Object/[B]]</response>
+        </test>
+        <test type="Case" name="Envelope after native adapter through adapt">
+            <bean>serdeTestFacade</bean>
+            <method>serializeAdaptedBinaryHex</method>
+            <request>nativeBridgeSerializer</request>
+            <request>{STR(hi)}{CONTENT}</request>
+            <request>hello</request>
+            <response>68694E3A68656C6C6F</response>
+        </test>
+        <test type="Case" name="Deserialize after native adapter through adapt">
+            <bean>serdeTestFacade</bean>
+            <method>deserializeAdaptedBinaryHex</method>
+            <request>nativeBridgeDeserializer</request>
+            <request>{STR(hi)}{CONTENT}</request>
+            <request>68694E3A68656C6C6F</request>
+            <response>hello</response>
+        </test>
+        <test type="Case" name="Envelope without source fails">
+            <bean>serdeTestFacade</bean>
+            <method>errorOfBinary</method>
+            <request>base</request>
+            <request></request>
+            <request>{LEN(INT, BE)}{CONTENT}</request>
+            <response>IllegalArgumentException: Field 'binaryEnvelope' has no effect without a source at the same config level: the binary envelope wraps the resolved serializer/deserializer, and there is no source to resolve. Put it next to the source it should wrap.</response>
         </test>
     </test>
 </test>

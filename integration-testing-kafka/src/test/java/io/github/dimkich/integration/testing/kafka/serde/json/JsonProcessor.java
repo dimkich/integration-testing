@@ -55,4 +55,13 @@ public class JsonProcessor {
         receivedMessageStorage.storeReceived("json-spring-json-no-type-in", key, message == null ? null : message.getPayload(), headers);
     }
 
+    @KafkaListener(topics = "json-spring-key-in", groupId = "json-spring-key-group",
+            containerFactory = "jsonKeySpringListenerContainerFactory")
+    public void listenSpringJsonKey(@Payload(required = false) Message<Object> message,
+                                    @Header(name = KafkaHeaders.RECEIVED_KEY, required = false) String key,
+                                    @Headers Map<String, Object> headers) {
+        log.debug("listenSpringJsonKey: received [key={}, payload={}]", key, message);
+        receivedMessageStorage.storeReceived("json-spring-key-in", key, message == null ? null : message.getPayload(), headers);
+    }
+
 }

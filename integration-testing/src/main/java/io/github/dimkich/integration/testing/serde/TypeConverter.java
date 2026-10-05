@@ -10,13 +10,14 @@ import org.springframework.util.StringUtils;
 import java.lang.reflect.Type;
 
 /**
- * Spring {@link Converter} that parses a textual type reference into a {@link Type}
- * using the configured {@link TypeParser}. Used to bind the {@code targetClass} field
- * of serde configuration properties.
+ * Spring {@link Converter} that parses a textual type reference into a {@link Type} using the
+ * configured {@link TypeParser}. Used to bind the {@code targetClass} field of serde configuration
+ * properties.
  */
 @ConfigurationPropertiesBinding
 @RequiredArgsConstructor
 public class TypeConverter implements Converter<String, Type> {
+
     private final ObjectProvider<TypeParser> typeParser;
 
     @Override

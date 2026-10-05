@@ -5,7 +5,7 @@ import io.github.dimkich.integration.testing.redis.model.RedisHash;
 import io.github.dimkich.integration.testing.redis.model.RedisKey;
 import io.github.dimkich.integration.testing.redis.model.RedisValue;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
-import io.github.dimkich.integration.testing.redis.registry.RedisKeyCodecMetadata;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataCodec;
 
 import java.time.ZonedDateTime;
 
@@ -20,7 +20,7 @@ import java.time.ZonedDateTime;
  */
 public class RedisPurgeBuilder {
     private final ZonedDateTime now;
-    private final RedisKeyCodecMetadata keyCodecMeta;
+    private final RedisDataCodec keyCodec;
     private final RedisPurgeTask globalTask;
 
     /**
@@ -30,26 +30,26 @@ public class RedisPurgeBuilder {
      */
     public RedisPurgeBuilder(String storageName, RedisDataSchemaRegistry registry, ZonedDateTime now) {
         this.now = now;
-        this.keyCodecMeta = registry.findKeyCodec(storageName);
-        this.globalTask = new RedisPurgeTask(storageName, registry, this.keyCodecMeta);
+        this.keyCodec = registry.findKeyCodec(storageName);
+        this.globalTask = new RedisPurgeTask(storageName, registry, this.keyCodec);
     }
 
     /**
      * Evaluates TTL on {@code rootEntry} and its nested hash fields; expired entries are queued for deletion.
      *
      * @param redisKey  key metadata (database, ignore flag, logical key)
-     * @param rootEntry root value entry whose {@link RedisEntry#setNow} drives expiry detection
+     * @param rootEntry root value entry whose {@link RedisEntry#isExpired} drives expiry detection
      */
     public void addCandidate(RedisKey redisKey, RedisEntry rootEntry) {
         int db = (redisKey.getDb() != null) ? redisKey.getDb() : 0;
         RedisDbPurgeTask dbTask = globalTask.getOrCreateDbTask(db);
-        if (rootEntry.setNow(now)) {
-            dbTask.addKey(keyCodecMeta.getCodec().serialize(redisKey.getKey()));
+        if (rootEntry.isExpired(now)) {
+            dbTask.addKey(keyCodec.serialize(redisKey.getKey()));
         }
         if (rootEntry.getData() instanceof RedisValue structuralValue) {
             int totalSize = (structuralValue instanceof RedisHash hash) ? hash.size() : 0;
             structuralValue.nestedEntries()
-                    .filter(entry -> entry.getValue().setNow(now))
+                    .filter(entry -> entry.getValue().isExpired(now))
                     .forEach(entry -> dbTask.addHashField(redisKey, entry.getKey(), totalSize));
         }
     }

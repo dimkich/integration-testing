@@ -3,13 +3,11 @@ package io.github.dimkich.integration.testing.serde;
 import io.github.dimkich.integration.testing.format.common.type.TypeParser;
 import io.github.dimkich.integration.testing.serde.platform.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
-@Component("serdeTestFacade")
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class SerdeTestFacade {
@@ -19,26 +17,34 @@ public class SerdeTestFacade {
 
     private final SerdeManager serdeManager;
     private final TypeParser typeParser;
+    private final BeanResolver beanResolver;
+    private final AdapterManager adapterManager;
 
     public Object roundTrip(String type, String targetClass, String objectMapperRef, Object data) {
-        Object serializer = resolveSerializer(config("base", type, null, targetClass, objectMapperRef), "core");
-        Object deserializer = resolveDeserializer(config("base", type, null, targetClass, objectMapperRef), "core");
-        return deserialize(deserializer, serialize(serializer, data));
+        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+                resolveSerializer(config("base", type, null, targetClass, objectMapperRef));
+        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
+                resolveDeserializer(config("base", type, null, targetClass, objectMapperRef));
+        return deserializer.convert(serializer.convert(data, TestSerdeContext.EMPTY), TestSerdeContext.EMPTY);
     }
 
     public String serializeText(String type, String targetClass, String objectMapperRef, Object data) {
-        Object serializer = resolveSerializer(config("base", type, null, targetClass, objectMapperRef), "core");
-        return bytesToText(serialize(serializer, data));
+        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+                resolveSerializer(config("base", type, null, targetClass, objectMapperRef));
+        return bytesToText(serializer.convert(data, TestSerdeContext.EMPTY));
     }
 
     public Object deserializeText(String type, String targetClass, String objectMapperRef, String text) {
-        Object deserializer = resolveDeserializer(config("base", type, null, targetClass, objectMapperRef), "core");
-        return deserialize(deserializer, text == null ? null : text.getBytes(StandardCharsets.UTF_8));
+        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
+                resolveDeserializer(config("base", type, null, targetClass, objectMapperRef));
+        return deserializer.convert(text == null ? null : text.getBytes(StandardCharsets.UTF_8),
+                TestSerdeContext.EMPTY);
     }
 
     public String serializeBytesHex(String type, String hex) {
-        Object serializer = resolveSerializer(config("base", type, null, null, null), "core");
-        return bytesToHex(serialize(serializer, hex == null ? null : HEX.parseHex(hex)));
+        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+                resolveSerializer(config("base", type, null, null, null));
+        return bytesToHex(serializer.convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY));
     }
 
     public String roundTripToString(String type, String targetClass, Object data) {
@@ -47,86 +53,241 @@ public class SerdeTestFacade {
     }
 
     public String roundTripBytesHex(String type, String hex) {
-        Object serializer = resolveSerializer(config("base", type, null, null, null), "core");
-        Object deserializer = resolveDeserializer(config("base", type, null, null, null), "core");
-        Object result = deserialize(deserializer, serialize(serializer, hex == null ? null : HEX.parseHex(hex)));
+        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+                resolveSerializer(config("base", type, null, null, null));
+        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
+                resolveDeserializer(config("base", type, null, null, null));
+        Object result = deserializer.convert(
+                serializer.convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY),
+                TestSerdeContext.EMPTY);
         if (result == null) {
             return NULL;
         }
         return result instanceof byte[] bytes ? bytesToHex(bytes) : String.valueOf(result);
     }
 
+    public String serializeByRef(String beanRef, Object data) {
+        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+                resolveSerializer(config("base", null, beanRef, null, null));
+        return bytesToText(serializer.convert(data, TestSerdeContext.EMPTY));
+    }
+
     public String serializePlatform(String configKind, String type, String objectMapperRef, Object data) {
-        Object serializer = resolveSerializer(config(configKind, type, null, null, objectMapperRef), "platform");
-        return bytesToText(((PlatformSerializer) serializer).serialize(CHANNEL, data));
-    }
-
-    public String serializePlatformByRef(String beanRef, Object data) {
-        Object serializer = resolveSerializer(config("base", null, beanRef, null, null), "platform");
-        return bytesToText(((PlatformSerializer) serializer).serialize(CHANNEL, data));
-    }
-
-    public String serializePlatformByFqcn(String fqcn, Object data) {
-        Object serializer = resolveSerializer(config("base", fqcn, null, null, null), "platform");
-        return bytesToText(((PlatformSerializer) serializer).serialize(CHANNEL, data));
+        TestSerdeConverter<Object, byte[], TestPlatformContext> serializer =
+                resolvePlatformSerializer(config(configKind, type, null, null, objectMapperRef));
+        return bytesToText(serializer.convert(data, new DefaultTestPlatformContext(CHANNEL)));
     }
 
     public Object deserializePlatformText(String configKind, String type, String targetClass, String objectMapperRef,
                                           String text) {
-        Object deserializer = resolveDeserializer(
-                config(configKind, type, null, targetClass, objectMapperRef), "platform");
-        return ((PlatformDeserializer) deserializer)
-                .deserialize(CHANNEL, text == null ? null : text.getBytes(StandardCharsets.UTF_8));
+        TestSerdeConverter<byte[], Object, TestPlatformContext> deserializer =
+                resolvePlatformDeserializer(config(configKind, type, null, targetClass, objectMapperRef));
+        return deserializer.convert(text == null ? null : text.getBytes(StandardCharsets.UTF_8),
+                new DefaultTestPlatformContext(CHANNEL));
     }
 
-    public String serializeRecord(String type, String keyPrefix, String headerName, String key, Object value) {
-        TestRecordProperties props = new TestRecordProperties();
-        props.setType(type);
-        props.setKeyPrefix(keyPrefix);
-        props.setHeaderName(headerName);
-        PlatformRecordSerializer serializer =
-                serdeManager.resolveAndAdaptSerializer(props, PlatformRecordSerializer.class, () -> null);
-        SerializedRecord record = serializer.serialize(CHANNEL, key, value);
-        return record.getChannel() + "|" + record.getKey() + "|" + record.getHeader() + "|"
-                + bytesToText(record.getPayload());
+    public String deserializePlatformToText(String type, String text) {
+        Object result = deserializePlatformText("base", type, null, null, text);
+        return result == null ? NULL : String.valueOf(result);
     }
 
-    public Object deserializeRecordText(String type, String text) {
-        TestRecordProperties props = new TestRecordProperties();
-        props.setType(type);
-        PlatformRecordDeserializer deserializer =
-                serdeManager.resolveAndAdaptDeserializer(props, PlatformRecordDeserializer.class, () -> null);
-        return deserializer.deserialize(CHANNEL, "k1", text == null ? null : text.getBytes(StandardCharsets.UTF_8));
+    public String roundTripUnrelated(String text) {
+        StandardSerdeProperties props = new StandardSerdeProperties();
+        props.setType("unrelated-context");
+        TestSerdeConverter<Object, byte[], UnrelatedSerdeContext> serializer =
+                serdeManager.resolve(props, Object.class, byte[].class, UnrelatedSerdeContext.class, null);
+        TestSerdeConverter<byte[], Object, UnrelatedSerdeContext> deserializer =
+                serdeManager.resolve(props, byte[].class, Object.class, UnrelatedSerdeContext.class, null);
+        UnrelatedSerdeContext context = new UnrelatedSerdeContext() {
+        };
+        Object result = deserializer.convert(serializer.convert(text, context), context);
+        return result == null ? NULL : String.valueOf(result);
     }
 
-    public String resolveClass(String configKind, String type, String objectMapperRef, String targetKind) {
-        Object resolved = resolveSerializer(config(configKind, type, null, null, objectMapperRef), targetKind);
-        return resolved == null ? NULL : resolved.getClass().getSimpleName();
+    public String adaptNativeBridge(Object data) {
+        TestSerdeConverter<Object, byte[], TestSerdeContext> converter =
+                serdeManager.adapt(new NativeBridgeSerializer(), new StandardSerdeProperties(),
+                        Object.class, byte[].class, TestSerdeContext.class, null);
+        return bytesToText(converter.convert(data, TestSerdeContext.EMPTY));
     }
 
-    public String resolveDefault(String configKind, String type) {
-        PlatformSerializer fallback = new DirectPlatformSerializer("DEF:");
-        PlatformSerializer serializer = serdeManager.resolveAndAdaptSerializer(
-                config(configKind, type, null, null, null), PlatformSerializer.class, () -> fallback);
-        return bytesToText(serializer.serialize(CHANNEL, "data"));
+    public String serializeBinaryHex(String type, String binaryEnvelope, Object data) {
+        StandardSerdeProperties props = config("base", type, null, null, null);
+        props.setBinaryEnvelope(binaryEnvelope);
+        return bytesToHex(resolveSerializer(props).convert(data, TestSerdeContext.EMPTY));
     }
 
-    public String errorOf(String configKind, String type, String beanRef, String targetClass,
-                          String objectMapperRef, String targetKind) {
+    public Object deserializeBinaryHex(String type, String binaryEnvelope, String targetClass, String hex) {
+        StandardSerdeProperties props = config("base", type, null, targetClass, null);
+        props.setBinaryEnvelope(binaryEnvelope);
+        return resolveDeserializer(props)
+                .convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY);
+    }
+
+    public String serializeAdaptedBinaryHex(String beanRef, String binaryEnvelope, Object data) {
+        StandardSerdeProperties props = config("base", null, beanRef, null, null);
+        props.setBinaryEnvelope(binaryEnvelope);
+        return bytesToHex(resolveSerializer(props).convert(data, TestSerdeContext.EMPTY));
+    }
+
+    public Object deserializeAdaptedBinaryHex(String beanRef, String binaryEnvelope, String hex) {
+        StandardSerdeProperties props = config("base", null, beanRef, null, null);
+        props.setBinaryEnvelope(binaryEnvelope);
+        return resolveDeserializer(props).convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY);
+    }
+
+    public String errorOfBinary(String configKind, String type, String binaryEnvelope) {
         try {
-            Object resolved = resolveSerializer(config(configKind, type, beanRef, targetClass, objectMapperRef),
-                    targetKind);
+            StandardSerdeProperties props = config(configKind, type, null, null, null);
+            props.setBinaryEnvelope(binaryEnvelope);
+            TestSerdeConverter<?, ?, ?> resolved = resolveSerializer(props);
             return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
         } catch (RuntimeException e) {
-            String message = e.getMessage() == null ? NULL
-                    : e.getMessage().replace("\r\n", " | ").replace("\n", " | ");
-            return e.getClass().getSimpleName() + ": " + message;
+            return formatError(e);
         }
     }
 
-    private SerdeProperties config(String configKind, String type, String beanRef, String targetClass,
-                                   String objectMapperRef) {
-        SerdeProperties props = "record".equals(configKind) ? new TestRecordProperties() : new SerdeProperties();
+    public String serializeRecord(String type, Object data) {
+        return bytesToText(resolveSerializer(record(type)).convert(data, TestSerdeContext.EMPTY));
+    }
+
+    public Object deserializeRecord(String type, String text) {
+        return resolveDeserializer(record(type))
+                .convert(text == null ? null : text.getBytes(StandardCharsets.UTF_8), TestSerdeContext.EMPTY);
+    }
+
+    public String resolveClass(String configKind, String type, String objectMapperRef) {
+        TestSerdeConverter<?, ?, ?> resolved =
+                resolveSerializer(config(configKind, type, null, null, objectMapperRef));
+        return resolved == null ? NULL : resolved.getClass().getSimpleName();
+    }
+
+    public String resolveDefaultFactoryClass(String format) {
+        TestSerdeConverter<?, ?, ?> resolved =
+                serdeManager.resolve(new PlainConfig(format), Object.class, byte[].class,
+                        TestSerdeContext.class, null);
+        return resolved == null ? NULL : resolved.getClass().getSimpleName();
+    }
+
+    public String serializeDefaultFactory(String format, String text) {
+        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+                serdeManager.resolve(new PlainConfig(format), Object.class, byte[].class,
+                        TestSerdeContext.class, null);
+        return bytesToText(serializer.convert(text, TestSerdeContext.EMPTY));
+    }
+
+    public String roundTripDefaultFactory(String format, String text) {
+        PlainConfig config = new PlainConfig(format);
+        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+                serdeManager.resolve(config, Object.class, byte[].class, TestSerdeContext.class, null);
+        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
+                serdeManager.resolve(config, byte[].class, Object.class, TestSerdeContext.class, null);
+        Object result = deserializer.convert(serializer.convert(text, TestSerdeContext.EMPTY),
+                TestSerdeContext.EMPTY);
+        return result == null ? NULL : String.valueOf(result);
+    }
+
+    public String roundTripDefaultFactoryBytes(String hex) {
+        PlainConfig config = new PlainConfig("bytes");
+        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+                serdeManager.resolve(config, Object.class, byte[].class, TestSerdeContext.class, null);
+        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
+                serdeManager.resolve(config, byte[].class, Object.class, TestSerdeContext.class, null);
+        Object result = deserializer.convert(
+                serializer.convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY),
+                TestSerdeContext.EMPTY);
+        if (result == null) {
+            return NULL;
+        }
+        return result instanceof byte[] bytes ? bytesToHex(bytes) : String.valueOf(result);
+    }
+
+    public String errorOfUnconfiguredConfig() {
+        try {
+            TestSerdeConverter<?, ?, ?> resolved =
+                    serdeManager.resolve(new UnconfiguredConfig(), Object.class, byte[].class,
+                            TestSerdeContext.class, null);
+            return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
+        } catch (RuntimeException e) {
+            return formatError(e);
+        }
+    }
+
+    public String errorOfNullConfiguration() {
+        try {
+            TestSerdeConverter<?, ?, ?> resolved =
+                    serdeManager.adapt(new Object(), null, Object.class, byte[].class,
+                            TestSerdeContext.class, null);
+            return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
+        } catch (RuntimeException e) {
+            return formatError(e);
+        }
+    }
+
+    public String errorOfNullResolveConfiguration() {
+        try {
+            TestSerdeConverter<?, ?, ?> resolved =
+                    serdeManager.resolve(null, Object.class, byte[].class, TestSerdeContext.class, null);
+            return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
+        } catch (RuntimeException e) {
+            return formatError(e);
+        }
+    }
+
+    public String errorOfNullSource() {
+        try {
+            TestSerdeConverter<?, ?, ?> resolved =
+                    serdeManager.adapt(null, new StandardSerdeProperties(), Object.class, byte[].class,
+                            TestSerdeContext.class, null);
+            return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
+        } catch (RuntimeException e) {
+            return formatError(e);
+        }
+    }
+
+    public String tryAdaptNullProps() {
+        try {
+            TestSerdeConverter<?, ?, ?> resolved =
+                    adapterManager.tryAdapt(new Object(), null, Object.class, byte[].class,
+                            TestSerdeContext.class, null);
+            return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
+        } catch (RuntimeException e) {
+            return formatError(e);
+        }
+    }
+
+    public String resolveByType(String className) {
+        try {
+            Object bean = beanResolver.resolve(null, Class.forName(className));
+            return bean == null ? NULL : bean.getClass().getSimpleName();
+        } catch (ClassNotFoundException e) {
+            return formatError(new IllegalArgumentException(e.getMessage(), e));
+        } catch (RuntimeException e) {
+            return formatError(e);
+        }
+    }
+
+    public String errorOf(String configKind, String type, String beanRef, String targetClass,
+                          String objectMapperRef) {
+        try {
+            TestSerdeConverter<?, ?, ?> resolved =
+                    resolveSerializer(config(configKind, type, beanRef, targetClass, objectMapperRef));
+            return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
+        } catch (RuntimeException e) {
+            return formatError(e);
+        }
+    }
+
+    private TestRecordProperties record(String type) {
+        TestRecordProperties props = new TestRecordProperties();
+        props.setType(type);
+        return props;
+    }
+
+    private StandardSerdeProperties config(String configKind, String type, String beanRef, String targetClass,
+                                           String objectMapperRef) {
+        StandardSerdeProperties props =
+                "record".equals(configKind) ? new TestRecordProperties() : new StandardSerdeProperties();
         if (StringUtils.hasText(type)) {
             props.setType(type);
         }
@@ -142,37 +303,28 @@ public class SerdeTestFacade {
         return props;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private byte[] serialize(Object serializer, Object data) {
-        return ((TestSerdeSerializer) serializer).serialize(data, SerdeContext.EMPTY);
+    private TestSerdeConverter<Object, byte[], TestSerdeContext> resolveSerializer(TestSerdeProperties props) {
+        return serdeManager.resolve(props, Object.class, byte[].class, TestSerdeContext.class, null);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private Object deserialize(Object deserializer, byte[] data) {
-        return ((TestSerdeDeserializer) deserializer).deserialize(data, SerdeContext.EMPTY);
+    private TestSerdeConverter<byte[], Object, TestSerdeContext> resolveDeserializer(TestSerdeProperties props) {
+        return serdeManager.resolve(props, byte[].class, Object.class, TestSerdeContext.class, null);
     }
 
-    private Object resolveSerializer(SerdeProperties props, String targetKind) {
-        return switch (targetKind) {
-            case "core" -> serdeManager.resolveAndAdaptSerializer(props, TestSerdeSerializer.class, () -> null);
-            case "platform" -> serdeManager.resolveAndAdaptSerializer(props, PlatformSerializer.class, () -> null);
-            case "record" -> serdeManager.resolveAndAdaptSerializer(props, PlatformRecordSerializer.class, () -> null);
-            case "common" -> serdeManager.resolveAndAdaptSerializer(props, CommonPlatformSerializer.class, () -> null);
-            case "alpha" -> serdeManager.resolveAndAdaptSerializer(props, AlphaPlatformSerializer.class, () -> null);
-            case "beta" -> serdeManager.resolveAndAdaptSerializer(props, BetaPlatformSerializer.class, () -> null);
-            case "runnable" -> serdeManager.resolveAndAdaptSerializer(props, Runnable.class, () -> null);
-            default -> throw new IllegalArgumentException("Unknown serializer target kind: " + targetKind);
-        };
+    private TestSerdeConverter<Object, byte[], TestPlatformContext> resolvePlatformSerializer(
+            TestSerdeProperties props) {
+        return serdeManager.resolve(props, Object.class, byte[].class, TestPlatformContext.class, null);
     }
 
-    private Object resolveDeserializer(SerdeProperties props, String targetKind) {
-        return switch (targetKind) {
-            case "core" -> serdeManager.resolveAndAdaptDeserializer(props, TestSerdeDeserializer.class, () -> null);
-            case "platform" -> serdeManager.resolveAndAdaptDeserializer(props, PlatformDeserializer.class, () -> null);
-            case "record" ->
-                    serdeManager.resolveAndAdaptDeserializer(props, PlatformRecordDeserializer.class, () -> null);
-            default -> throw new IllegalArgumentException("Unknown deserializer target kind: " + targetKind);
-        };
+    private TestSerdeConverter<byte[], Object, TestPlatformContext> resolvePlatformDeserializer(
+            TestSerdeProperties props) {
+        return serdeManager.resolve(props, byte[].class, Object.class, TestPlatformContext.class, null);
+    }
+
+    private String formatError(RuntimeException e) {
+        String message = e.getMessage() == null ? NULL
+                : e.getMessage().replace("\r\n", " | ").replace("\n", " | ");
+        return e.getClass().getSimpleName() + ": " + message;
     }
 
     private String bytesToText(byte[] data) {

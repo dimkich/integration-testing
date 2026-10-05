@@ -27,10 +27,9 @@ through `spring.kafka.bootstrap-servers`).
 
 * scalar values (`ignore`, `ignore-inbound`) are overridden by the child level;
 * sets (`excluded-fields`) are merged;
-* `serializer` and `deserializer` are merged recursively, but the
-  `type`/`bean-ref`/`key`/`value`/`headers` group is exclusive: if the child level sets at least one
-  member of the group, the other members are not inherited from the parent. This prevents mixing
-  "whole-record setup" from one level with "per-part setup" from another;
+* `serializer` and `deserializer` are merged recursively: `type`/`bean-ref` from the parent and the
+  child levels do not mix (two mutually exclusive ways to select the source), while `key`/`value`/
+  `headers` are inherited and merged field by field;
 * the `connections` and `topics` maps are not inherited — their keys are defined at their own level.
 
 Complete parameter reference
@@ -76,40 +75,38 @@ be created.
 
 ### Serde object (`serializer` and `deserializer`)
 
-| Field                       | Description                                                                                                                                      |
-|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`                      | format name (`json`, `xml`, `string`, `bytes`, `yaml`, `spring-json`, `spring-xml`) or a fully qualified class name (`com.example.MySerializer`) |
-| `bean-ref`                  | name of a ready Spring bean. The bean is used as is, other fields are ignored                                                                    |
-| `target-class`              | class to deserialize the value into. Only works together with a format name                                                                      |
-| `object-mapper-ref`         | name of an `ObjectMapper` bean for Jackson formats. Only works together with a format name                                                       |
-| `key` / `value` / `headers` | separate Serde settings for key, value and headers                                                                                               |
-| `add-type-info-headers`     | `spring-json`/`spring-xml`: add the type to headers during serialization                                                                         |
-| `use-type-info-headers`     | `spring-json`/`spring-xml`: read the type from headers during deserialization                                                                    |
-| `trusted-packages`          | `spring-json`/`spring-xml`: packages allowed for type resolution (`*` — all)                                                                     |
+The common fields (`type`, `bean-ref`, `target-class`, `object-mapper-ref`) and the
+source selection rules are described in the [Serde overview](../serde/README.md). The
+`binary-envelope` field is available only inside `key`/`value`. This section lists
+Kafka specifics only:
 
-The `spring-json` and `spring-xml` providers are available only in the whole-record
-`serializer`/`deserializer` — inside `key`/`value`/`headers` use `json`/`xml` (same format, but without
-type information).
+| Field                       | Description                                                                   |
+|-----------------------------|-------------------------------------------------------------------------------|
+| `key` / `value` / `headers` | separate Serde settings for key, value and headers                            |
+| `add-type-info-headers`     | `spring-json`/`spring-xml`: add the type to headers during serialization      |
+| `use-type-info-headers`     | `spring-json`/`spring-xml`: read the type from headers during deserialization |
+| `trusted-packages`          | `spring-json`/`spring-xml`: packages allowed for type resolution (`*` — all)  |
+
+The `spring-json` and `spring-xml` providers can be applied to individual parts as well: in
+`key`/`value` they work as Spring `JsonSerializer`/`JsonDeserializer` (`__KeyTypeId__` for the key),
+and in `headers` as the Spring header mapper (`DefaultKafkaHeaderMapper`).
 
 ### Allowed and forbidden combinations
 
-| Combination                                                                   | Result                                                                  |
-|-------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| `type: json`                                                                  | allowed                                                                 |
-| `type: json` + `target-class`                                                 | allowed                                                                 |
-| `type: json` + `key`/`headers`                                                | allowed: the provider assembles the record, the parts override defaults |
-| `type: <fully qualified class name>`                                          | allowed                                                                 |
-| `bean-ref: myBean`                                                            | allowed                                                                 |
-| `type: json` + `value`                                                        | forbidden: the record provider already defines value serialization      |
-| `bean-ref` + `key`/`value`/`headers`                                          | forbidden: the ready bean is used as a whole                            |
-| `bean-ref` + `type`                                                           | forbidden: these are mutually exclusive ways to select the source       |
-| `type: <fully qualified class name>` + `key`/`headers`                        | forbidden: the class handles the whole record                           |
-| `bean-ref` or fully qualified class name + `target-class`/`object-mapper-ref` | forbidden: these fields are not applied to them                         |
+| Combination                                                                   | Result                                                                                   |
+|-------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| record-level `type`/`bean-ref`/`target-class`/`object-mapper-ref`             | base for all parts: merged into `key`/`value`/`headers`, a part overrides field by field |
+| `type: json` + `key`/`value`/`headers`                                        | allowed: the base is applied to every part, the configured parts override it             |
+| `key`/`value`/`headers` without a base                                        | allowed: the record is assembled from the components only                                |
+| `type` (provider) + `value`                                                   | allowed: the base fills the undefined part fields (e.g. `binary-envelope`)               |
+| `bean-ref` + `type` at one level                                              | forbidden: mutually exclusive ways to select the source                                  |
+| `bean-ref` or fully qualified class name + `target-class`/`object-mapper-ref` | forbidden: these fields are not applied to them                                          |
+| `binary-envelope` in the whole-record `serializer`/`deserializer`             | forbidden: the envelope is applied to parts only (`key`/`value`)                         |
 
 An invalid combination fails at context startup, for example:
 
 ```text
-Invalid serializer config at connection[kafka1].topics[order-in]: Conflicting serde config: ...
+Invalid serializer config at connection[kafka1].topics[order-in]: Both 'beanRef' and 'type' are set on the same serde config. ...
 ```
 
 The message explains what conflicts and how to fix the configuration.
@@ -209,10 +206,10 @@ How it works:
 
 How readiness is determined depends on the mode:
 
-* `inflight = true` (default) — from the instrumented clients in memory: a group is ready when all of
-  its consumers have been assigned partitions (rebalance listener callbacks); with a manual `assign`
-  it is ready right after the call. The broker is not contacted; groups of external processes are not
-  visible — use `inflight = false` for them;
+* `inflight = true` (default) — from the application's client state: a group is ready when all of its
+  consumers have been assigned partitions; with a manual `assign` it is ready right after the call.
+  The broker is not contacted; groups of external processes are not visible — use `inflight = false`
+  for them;
 * `inflight = false` — through the Admin API: the group must be `STABLE` with live members holding
   assigned partitions.
 

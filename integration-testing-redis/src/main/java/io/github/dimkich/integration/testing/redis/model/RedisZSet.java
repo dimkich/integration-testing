@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.redis.model;
 
 import com.moilioncircle.redis.replicator.rdb.datatype.ZSetEntry;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import lombok.NonNull;
 
 import java.math.BigDecimal;

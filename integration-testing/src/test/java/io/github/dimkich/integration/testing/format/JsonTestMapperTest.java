@@ -195,7 +195,6 @@ class JsonTestMapperTest {
                         })
                 )), "{\"value\":[\"ParameterizedTypeReference\",\"LinkedHashMap<? extends Integer, ArrayList<? super String>>\"]}"},
                 {new Value(PeriodDuration.valueOf("P1Y1M2DT23H59M59.999S")), "{\"value\":[\"PeriodDuration\",\"P1Y1M2DT23H59M59.999S\"]}"},
-                // тест для json тестов
                 {TestMessage.testCase1(), "{\"type\":\"Case\",\"name\":\"BugRepro\",\"inboundMessage\":{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":\"k1\",\"headers\":{}},\"outboundMessage\":[{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":\"k2\",\"headers\":{}}]}"},
                 {TestMessage.testCase2(), "{\"type\":\"Case\",\"name\":\"EmptyByteKey\",\"inboundMessage\":{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":[\"byte[]\",\"\"],\"headers\":{}},\"outboundMessage\":[{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":[\"byte[]\",\"AQID\"],\"headers\":{}}]}"},
         };

@@ -16,9 +16,9 @@ Redis conventionally separates logical parts of a key with a colon, e.g.: `user:
 However, in XML the colon character is reserved for namespaces (`namespace:tag`). If you try to
 write a tag like `<user:profile:100>`, the XML parser will throw a syntax error.
 
-To avoid this, the framework uses a special data type `LinkedHashMapStringObject`. It allows you
-to pass the key name as a plain string in the `key="..."` attribute inside the `<entry>` tag.
-This enables you to use absolutely any characters in keys, including colons:
+That is why you should use the `LinkedHashMapStringObject` type for keys: the name is technical, but
+what matters is that the key is passed as a plain string in the `key="..."` attribute inside the
+`<entry>` tag, where any characters are allowed, including colons:
 
 ```xml
 <!-- Example of correctly writing a key with a colon -->
@@ -26,6 +26,9 @@ This enables you to use absolutely any characters in keys, including colons:
     <entry key="user:profile:100">ACTIVE</entry>
 </map>
 ```
+
+In the `<init>` examples below the key map is written exactly like this — just put your own keys
+into the `key` attribute.
 
 Initializing the Database via `<init>`
 --------------------------------------

@@ -90,6 +90,25 @@ public class JsonSerDeConfig {
         return template;
     }
 
+    @Bean
+    public ProducerFactory<String, Object> springJsonNoTypeProducerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+        JsonSerializer<Object> jsonSerializer = new JsonSerializer<>(jsonObjectMapper());
+        jsonSerializer.setAddTypeInfo(false);
+
+        return new DefaultKafkaProducerFactory<>(props, null, jsonSerializer);
+    }
+
+    @Bean
+    public KafkaTemplate<String, Object> springJsonNoTypeKafkaTemplate() {
+        KafkaTemplate<String, Object> template = new KafkaTemplate<>(springJsonNoTypeProducerFactory());
+        template.setMessageConverter(new MessagingMessageConverter());
+        return template;
+    }
+
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> jsonListenerContainerFactory() {
@@ -123,13 +142,43 @@ public class JsonSerDeConfig {
         return factory;
     }
 
+    /**
+     * Consumer factory whose key is deserialized by Spring Kafka {@link JsonDeserializer} in
+     * the key mode: it reads {@code __KeyTypeId__} written by the framework's key component.
+     */
+    @Bean
+    public ConsumerFactory<Object, Object> jsonKeySpringConsumerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+
+        ObjectMapper objectMapper = jsonObjectMapper();
+        JsonDeserializer<Object> keyDeserializer = new JsonDeserializer<>(Object.class, objectMapper, true);
+        keyDeserializer.addTrustedPackages("*");
+        JsonDeserializer<Object> valueDeserializer = new JsonDeserializer<>(
+                objectMapper.getTypeFactory().constructType(JsonTestDto.class), objectMapper);
+        valueDeserializer.addTrustedPackages("*");
+
+        return new DefaultKafkaConsumerFactory<>(props, keyDeserializer, valueDeserializer);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<Object, Object> jsonKeySpringListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<Object, Object> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(jsonKeySpringConsumerFactory());
+        factory.setRecordMessageConverter(jsonSpringJsonMessageConverter());
+        factory.getContainerProperties().setMissingTopicsFatal(false);
+        return factory;
+    }
+
     @Bean
     public KafkaAdmin.NewTopics jsonTopics() {
         return new KafkaAdmin.NewTopics(
                 topic("json-record-in"), topic("json-record-out"),
                 topic("json-parts-in"), topic("json-parts-out"),
                 topic("json-spring-json-in"), topic("json-spring-json-out"),
-                topic("json-spring-json-no-type-in"), topic("json-spring-json-no-type-out")
+                topic("json-spring-json-no-type-in"), topic("json-spring-json-no-type-out"),
+                topic("json-spring-key-in")
         );
     }
 

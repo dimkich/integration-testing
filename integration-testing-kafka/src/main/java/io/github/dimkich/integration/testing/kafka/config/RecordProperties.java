@@ -1,102 +1,106 @@
 package io.github.dimkich.integration.testing.kafka.config;
 
 import io.github.dimkich.integration.testing.config.PropertyInheritanceExclusive;
-import io.github.dimkich.integration.testing.serde.SerdeProperties;
+import io.github.dimkich.integration.testing.config.PropertyInheritanceMerger;
+import io.github.dimkich.integration.testing.serde.SerdeRoleCollector;
+import io.github.dimkich.integration.testing.serde.TestSerdeProperties;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.springframework.util.StringUtils;
+
+import java.lang.reflect.Type;
 
 /**
- * Record-level Kafka serde configuration.
- *
- * <p><b>Roles:</b> the record-level {@code type}/{@code beanRef} selects a
- * provider for the whole record. Nested {@code value}/{@code key}/{@code headers}
- * configure individual components.
- *
- * <p><b>Combinability:</b>
- * <ul>
- *   <li>{@code type} + {@code key}/{@code headers} — allowed when {@code type}
- *       is a provider name (e.g. {@code json}). The record-level provider
- *       assembles the record, and {@code key}/{@code headers} override their
- *       defaults. Rejected when {@code type} is a fully qualified class name
- *       (contains a dot): the class handles the whole record, so nested parts
- *       would be silently ignored.</li>
- *   <li>{@code type} + {@code value} — rejected. The record-level provider
- *       already defines value serialization.</li>
- *   <li>{@code beanRef} + any nested — rejected. {@code beanRef} returns a
- *       ready bean, bypassing the record factory; nested parts would be lost.</li>
- * </ul>
- *
- * <p><b>Spring providers:</b> {@code spring-json} and {@code spring-xml} are
- * available only at record level, because they write type-info into Kafka
- * {@code Headers}. On component level ({@code value}/{@code key}/{@code headers})
- * use {@code json}/{@code xml} instead — same formatting, no type-info headers.
- *
- * <p><b>Inheritance:</b> record-level {@code type}/{@code beanRef} and the three
- * nested parts {@code value}/{@code key}/{@code headers} form one exclusive group
- * ({@code @PropertyInheritanceExclusive("ref")}). Setting any of them on a child
- * level blocks inheritance of the other group members across levels: a child that
- * defines any part neither inherits record-level refs nor the other parts'
- * subtrees from the parent, so the merged config can never hold both record-level
- * and nested style from different levels.
+ * Kafka record-level serde configuration: the base settings for the {@code value}, {@code key}
+ * and {@code headers} components.
+ * <p>
+ * The record-level fields ({@code type}, {@code beanRef}, {@code targetClass},
+ * {@code objectMapperRef} and the Spring Kafka type-info settings) are a base for every
+ * component: {@link #prepare(PropertyInheritanceMerger)} merges them into the components when
+ * the configuration is loaded, and a component overrides the fields it defines itself. There is
+ * no record-level converter: the record is assembled strictly from the three components.
+ * <p>
+ * The {@code headers} component is typed as {@link KafkaHeaderComponentProperties}: a projection
+ * of the core source interfaces without the binary envelope, so {@code binary-envelope} cannot be
+ * configured for headers.
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class RecordProperties extends SerdeProperties {
-    @PropertyInheritanceExclusive("ref")
-    private SerdeProperties key;
+public class RecordProperties {
 
-    /**
-     * Nested single-value configuration. Mutually exclusive with the record-level
-     * {@code beanRef} and with record-level {@code type}; combining them at one
-     * level is rejected by {@link #validate()}.
-     */
+    private static final String DEFAULT_TYPE = "string";
+
     @PropertyInheritanceExclusive("ref")
-    private SerdeProperties value;
+    private String beanRef;
+
     @PropertyInheritanceExclusive("ref")
-    private SerdeProperties headers;
+    private String type;
+
+    private Type targetClass;
+    private String objectMapperRef;
+
+    private KafkaComponentProperties key;
+    private KafkaComponentProperties value;
+    private KafkaHeaderComponentProperties headers;
 
     private Boolean addTypeInfoHeaders;
     private Boolean useTypeInfoHeaders;
     private String trustedPackages;
 
-    @Override
-    public void validate() {
-        super.validate();
-        boolean hasRecordLevel = hasBeanRef() || hasType();
-        boolean hasNested = getValue() != null || getKey() != null || getHeaders() != null;
+    /**
+     * Materializes the components and merges the record-level base into each of them; a
+     * component overrides the fields it defines. Called once per connection and topic when the
+     * configuration is prepared, so converter resolution only assembles the already prepared
+     * components. Defaults are not applied here: see {@link #applyDefaultSource}.
+     *
+     * @param merger the inheritance merger used for the whole configuration
+     */
+    public void prepare(PropertyInheritanceMerger merger) {
+        if (value == null) {
+            value = new KafkaComponentProperties();
+        }
+        merger.merge(value, this);
+        if (key == null) {
+            key = new KafkaComponentProperties();
+        }
+        merger.merge(key, this);
+        if (headers == null) {
+            headers = new KafkaHeaderComponentProperties();
+        }
+        merger.merge(headers, this);
+    }
 
-        if (!hasRecordLevel || !hasNested) {
+    /**
+     * Applies the default {@code string} source to a final (terminal) configuration and merges
+     * it into the components: a component without its own source gets the default, an explicit
+     * source wins. Must only be called after the whole inheritance chain has been merged —
+     * applying defaults earlier would materialize them on parent levels and block record-level
+     * sources of child topics by the exclusive-group rule.
+     *
+     * @param merger the inheritance merger used for the whole configuration
+     */
+    public void applyDefaultSource(PropertyInheritanceMerger merger) {
+        if (!StringUtils.hasText(beanRef) && !StringUtils.hasText(type)) {
+            type = DEFAULT_TYPE;
+        }
+        prepare(merger);
+    }
+
+    /**
+     * Validates the nested components: only they take part in converter creation, so a valid
+     * component set means a valid record. The record-level fields are a base merged into the
+     * components; a conflict inside the base surfaces through the components that inherit it.
+     */
+    public void validate() {
+        validateLevel(getKey());
+        validateLevel(getValue());
+        validateLevel(getHeaders());
+    }
+
+    private static void validateLevel(TestSerdeProperties props) {
+        if (props == null) {
             return;
         }
-
-        if (hasBeanRef()) {
-            throw new IllegalArgumentException(
-                    "Conflicting serde config: record-level 'beanRef' cannot be combined "
-                            + "with nested 'value'/'key'/'headers' at the same level. "
-                            + "'beanRef' returns a ready bean as-is, bypassing the record factory, "
-                            + "so nested parts would be silently ignored. "
-                            + "Pick one style: either a single record-level bean, or assemble "
-                            + "the record from value/key/headers.");
-        }
-
-        if (getValue() != null) {
-            throw new IllegalArgumentException(
-                    "Conflicting serde config: record-level 'type' and nested 'value' "
-                            + "are mutually exclusive. The record-level provider already defines "
-                            + "how the value is serialized. Remove 'value', or drop the "
-                            + "record-level 'type' and configure 'value' explicitly.");
-        }
-
-        if (hasType() && getType().contains(".") && (getKey() != null || getHeaders() != null)) {
-            throw new IllegalArgumentException(String.format(
-                    "Conflicting serde config: record-level 'type: %s' is a fully qualified class name. "
-                            + "The class is created by Spring as-is and handles the whole record; if it "
-                            + "already implements KafkaRecordSerializer, nested 'key'/'headers' would be "
-                            + "silently ignored (the record factory is bypassed). "
-                            + "Use a provider name (e.g. 'json') if you want nested parts to be applied, "
-                            + "or move the FQCN to 'value' if it should only serialize the value part.",
-                    getType()));
-        }
-        // type is a provider name and key/headers are set — record factory handles it, OK
+        SerdeRoleCollector collector = new SerdeRoleCollector();
+        props.reportRoles(collector);
+        collector.validate();
     }
 }

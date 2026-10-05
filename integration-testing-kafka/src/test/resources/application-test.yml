@@ -7,6 +7,14 @@ integration:
           bootstrapServers: "${embedded.kafka.brokerList}"
           expected-groups:
             - text-record-group
+          # The test application uses string keys, so the record-level base must not
+          # change the key format (otherwise json/spring records would get json keys).
+          serializer:
+            key:
+              type: string
+          deserializer:
+            key:
+              type: string
           excluded-fields:
             - partition
             - offset
@@ -21,10 +29,10 @@ integration:
           topics:
             "text-record-in":
               serializer:
-                type: io.github.dimkich.integration.testing.kafka.serde.serialization.StringKafkaRecordSerializer
+                type: string
             "text-record-out":
               deserializer:
-                type: io.github.dimkich.integration.testing.kafka.serde.deserialization.StringKafkaRecordDeserializer
+                type: string
 
             "text-parts-in":
               serializer:
@@ -62,27 +70,31 @@ integration:
 
             "text-string-record-in":
               serializer:
-                type: string
+                bean-ref: textStringSerializer
             "text-string-record-out":
               deserializer:
-                type: string
+                bean-ref: textStringDeserializer
 
             "error-in":
               serializer:
                 type: java.util.ArrayList
 
-            # --- JSON СЦЕНАРИИ ---
+            # --- JSON SCENARIOS ---
 
             # KafkaRecord Serializer (type: json)
             "json-record-in":
               serializer:
                 type: json
+                headers:
+                  type: string
             "json-record-out":
               deserializer:
                 type: json
                 target-class: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto
+                headers:
+                  type: string
 
-            # Individually Configured Parts (Key, Value, Headers раздельно)
+            # Individually Configured Parts (Key, Value, Headers separately)
             "json-parts-in":
               serializer:
                 key:
@@ -122,17 +134,21 @@ integration:
                 target-class: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto
                 trusted-packages: "*"
 
-            # --- БИНАРНЫЕ СЦЕНАРИИ (BYTES) ---
+            # --- BINARY SCENARIOS (BYTES) ---
 
-            # Сценарий 4: KafkaRecord Serializer (ByteArray)
+            # Scenario 4: KafkaRecord Serializer (ByteArray)
             "byte-record-in":
               serializer:
                 type: bytes
+                headers:
+                  type: string
             "byte-record-out":
               deserializer:
                 type: bytes
+                headers:
+                  type: string
 
-            # Сценарий 5: Individually Configured Parts (Key, Value, Header)
+            # Scenario 5: Individually Configured Parts (Key, Value, Header)
             "byte-parts-in":
               serializer:
                 key:
@@ -150,7 +166,7 @@ integration:
                 headers:
                   type: io.github.dimkich.integration.testing.serde.impl.ByteArrayDeserializer
 
-            # Сценарий 6: Native Kafka SerDe Classes
+            # Scenario 6: Native Kafka SerDe Classes
             "byte-native-in":
               serializer:
                 key:
@@ -168,7 +184,55 @@ integration:
                 headers:
                   type: org.apache.kafka.common.serialization.ByteArrayDeserializer
 
-            # --- MISC СЦЕНАРИИ ---
+            # --- BINARY ENVELOPE ---
+
+            # Native Kafka serializer + envelope: the framework encodes,
+            # the SUT decodes it with its envelope deserializer.
+            "bin-envelope-in":
+              serializer:
+                key:
+                  type: org.apache.kafka.common.serialization.StringSerializer
+                value:
+                  type: org.apache.kafka.common.serialization.StringSerializer
+                  binary-envelope: '{VER(1)}{LEN(INT, BE)}{CONTENT}'
+              deserializer:
+                key:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                value:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                  binary-envelope: '{VER(1)}{LEN(INT, BE)}{CONTENT}'
+
+            # Native Kafka deserializer + envelope: the SUT encodes,
+            # the framework decodes.
+            "bin-envelope-out":
+              deserializer:
+                key:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                value:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                  binary-envelope: '{VER(1)}{LEN(INT, BE)}{CONTENT}'
+
+            # Record-level type is merged into every component: the value gets both
+            # StringSerializer and the binary envelope.
+            "bin-envelope-macro-in":
+              serializer:
+                type: org.apache.kafka.common.serialization.StringSerializer
+                value:
+                  binary-envelope: '{VER(1)}{LEN(INT, BE)}{CONTENT}'
+
+            # spring-json applied to the key component (KEY role, __KeyTypeId__)
+            "json-spring-key-in":
+              serializer:
+                key:
+                  type: spring-json
+                  add-type-info-headers: true
+                value:
+                  type: spring-json
+                  add-type-info-headers: true
+                headers:
+                  type: spring-json
+
+            # --- MISC SCENARIOS ---
 
             "misc-pattern-service-orders":
               serializer:
@@ -178,6 +242,8 @@ integration:
               deserializer:
                 type: json
                 target-class: io.github.dimkich.integration.testing.kafka.OrderEventDto
+                headers:
+                  type: string
 
             "misc-slow":
               serializer:
@@ -242,16 +308,20 @@ integration:
                 headers:
                   type: string
 
-            # --- XML СЦЕНАРИИ ---
+            # --- XML SCENARIOS ---
 
             # Plain XML (type: xml - KafkaRecord serializer)
             "xml-record-in":
               serializer:
                 type: xml
+                headers:
+                  type: string
             "xml-record-out":
               deserializer:
                 type: xml
                 target-class: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto
+                headers:
+                  type: string
 
             # Spring XML (type: spring-xml - Spring Kafka native classes)
 
@@ -285,6 +355,25 @@ integration:
             - partition
             - offset
             - timestamp
+          topics:
+            "bin-envelope-in":
+              ignoreInbound: false
+              deserializer:
+                value:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                  binary-envelope: '{VER(1)}{LEN(INT, BE)}{CONTENT}'
+            "bin-envelope-out":
+              ignoreInbound: false
+              deserializer:
+                value:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                  binary-envelope: '{VER(1)}{LEN(INT, BE)}{CONTENT}'
+            "bin-envelope-macro-in":
+              ignoreInbound: false
+              deserializer:
+                value:
+                  type: org.apache.kafka.common.serialization.StringDeserializer
+                  binary-envelope: '{VER(1)}{LEN(INT, BE)}{CONTENT}'
 
 logging:
   level:

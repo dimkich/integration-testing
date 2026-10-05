@@ -250,7 +250,7 @@
                 </test>
             </test>
         </test>
-        <test type="Container" name="String Record (type:string)">
+        <test type="Container" name="Bean-ref (native string)">
             <test type="Container" name="Base">
                 <test type="Case" name="Framework to SUT">
                     <inboundMessage type="KafkaRecord" connection="kafka1" topic="text-string-record-in">
@@ -676,6 +676,53 @@ b25UZXN0RHRv</__TypeId__>
                         </headers>
                     </outboundMessage>
                 </test>
+                <test type="Case" name="KEY role">
+                    <inboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-key-in">
+                        <key>jsj-key-1</key>
+                        <value type="JsonTestDto">
+                            <id>jsj-k-1</id>
+                            <name>spring json key</name>
+                            <amount>21</amount>
+                            <price>21.0</price>
+                            <active>true</active>
+                            <tags></tags>
+                            <timestamp>2026-05-31T11:30:00Z</timestamp>
+                            <localDateTime>2026-05-31T11:30:00</localDateTime>
+                        </value>
+                        <headers>
+                            <traceId>spring-json-key-1</traceId>
+                        </headers>
+                    </inboundMessage>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <receivedMessages type="MapStringKeyObjectValue">
+                            <msg-0 type="MapStringKeyObjectValue">
+                                <topic>json-spring-key-in</topic>
+                                <key>jsj-key-1</key>
+                                <value type="MapStringKeyObjectValue">
+                                    <id>jsj-k-1</id>
+                                    <name>spring json key</name>
+                                    <amount type="Integer">21</amount>
+                                    <price type="Double">21.0</price>
+                                </value>
+                                <headers type="MapStringKeyObjectValue">
+                                    <traceId type="ArrayList">
+                                        <traceId>spring-json-key-1</traceId>
+                                    </traceId>
+                                </headers>
+                            </msg-0>
+                        </receivedMessages>
+                    </dataStorageDiff>
+                    <outboundMessage type="KafkaRecord" connection="monitor" topic="json-spring-key-in">
+                        <key>"jsj-key-1"</key>
+                        <value>{"id":"jsj-k-1","name":"spring json key","amount":21,"price":21.0,"active":true,"tags":[""],"timestamp":"2026-05-31T11:30:00Z","localDateTime":"2026-05-31T11:30:00"}</value>
+                        <headers>
+                            <traceId>spring-json-key-1</traceId>
+                            <spring_json_header_types>{"traceId":"java.lang.String"}</spring_json_header_types>
+                            <__Key_TypeId__>java.lang.String</__Key_TypeId__>
+                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
+                        </headers>
+                    </outboundMessage>
+                </test>
                 <test type="Case" name="SUT to Framework">
                     <bean>testBean</bean>
                     <method>sendOutboundSpring</method>
@@ -919,7 +966,7 @@ b25UZXN0RHRv</__TypeId__>
                 <test type="Case" name="SUT to Framework">
                     <bean>testBean</bean>
                     <method>sendOutboundSpring</method>
-                    <request>springJsonKafkaTemplate</request>
+                    <request>springJsonNoTypeKafkaTemplate</request>
                     <request>json-spring-json-no-type-out</request>
                     <request>jsj-no-type-1</request>
                     <request type="JsonTestDto">
@@ -962,7 +1009,6 @@ b25UZXN0RHRv</__TypeId__>
                         <headers>
                             <test-header>json-base-header</test-header>
                             <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
-                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
                         </headers>
                     </outboundMessage>
                 </test>
@@ -981,10 +1027,10 @@ b25UZXN0RHRv</__TypeId__>
                     <message>Cannot construct instance of `io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('{invalid json}')
  at [Source: (byte[])""{invalid json}""; line: 1, column: 1]</message>
                 </exception>
-                <key>error-invalid-json</key>
-                <value>"{invalid json}"</value>
+                <key type="byte[]">ZXJyb3ItaW52YWxpZC1qc29u</key>
+                <value type="byte[]">IntpbnZhbGlkIGpzb259Ig==</value>
                 <headers>
-                    <__TypeId__>java.lang.String</__TypeId__>
+                    <__TypeId__ type="byte[]">amF2YS5sYW5nLlN0cmluZw==</__TypeId__>
                 </headers>
             </outboundMessage>
             <outboundMessage type="KafkaRecord" connection="monitor" topic="json-record-out">
@@ -1222,7 +1268,7 @@ b25UZXN0RHRv</__TypeId__>
                 <test type="Case" name="SUT to Framework">
                     <bean>testBean</bean>
                     <method>sendOutboundSpring</method>
-                    <request>springXmlKafkaTemplate</request>
+                    <request>springXmlNoTypeKafkaTemplate</request>
                     <request>xml-spring-xml-no-type-out</request>
                     <request>xml-no-type-1</request>
                     <request type="JsonTestDto">
@@ -1265,7 +1311,6 @@ b25UZXN0RHRv</__TypeId__>
                         <headers>
                             <test-header>xml-base-header</test-header>
                             <spring_json_header_types>{"test-header":"java.lang.String"}</spring_json_header_types>
-                            <__TypeId__>io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto</__TypeId__>
                         </headers>
                     </outboundMessage>
                 </test>
@@ -1383,10 +1428,10 @@ b25UZXN0RHRv</__TypeId__>
                     <message>Unrecognized field "" (class io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto), not marked as ignorable (8 known properties: "active", "amount", "price", "id", "timestamp", "tags", "name", "localDateTime"])
  at [Source: (byte[])"&lt;String>&amp;lt;&amp;lt;invalid>>xml&amp;lt;&amp;lt;&lt;/String>"; line: 1, column: 46] (through reference chain: io.github.dimkich.integration.testing.kafka.serde.json.JsonTestDto[""])</message>
                 </exception>
-                <key>error-invalid-xml</key>
-                <value>&lt;String>&amp;lt;&amp;lt;invalid>>xml&amp;lt;&amp;lt;&lt;/String></value>
+                <key type="byte[]">ZXJyb3ItaW52YWxpZC14bWw=</key>
+                <value type="byte[]">PFN0cmluZz4mbHQ7Jmx0O2ludmFsaWQ+PnhtbCZsdDsmbHQ7PC9TdHJpbmc+</value>
                 <headers>
-                    <__TypeId__>java.lang.String</__TypeId__>
+                    <__TypeId__ type="byte[]">amF2YS5sYW5nLlN0cmluZw==</__TypeId__>
                 </headers>
             </outboundMessage>
             <outboundMessage type="KafkaRecord" connection="monitor" topic="xml-record-out">
@@ -1684,6 +1729,157 @@ b25UZXN0RHRv</__TypeId__>
             </test>
         </test>
     </test>
+    <test type="Container" name="Binary Envelope">
+        <test type="Container" name="Base">
+            <test type="Case" name="Framework to SUT">
+                <inboundMessage type="KafkaRecord" connection="kafka1" topic="bin-envelope-in">
+                    <key>envelope-base-1</key>
+                    <value>envelope payload</value>
+                    <headers>
+                        <test-header>envelope-header</test-header>
+                    </headers>
+                </inboundMessage>
+                <dataStorageDiff type="MapStringKeyObjectValue">
+                    <receivedMessages type="MapStringKeyObjectValue">
+                        <msg-0 type="KafkaRecord" topic="bin-envelope-in">
+                            <key>envelope-base-1</key>
+                            <value>envelope payload</value>
+                            <headers>
+                                <test-header>envelope-header</test-header>
+                            </headers>
+                        </msg-0>
+                    </receivedMessages>
+                </dataStorageDiff>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="bin-envelope-in">
+                    <key>envelope-base-1</key>
+                    <value>envelope payload</value>
+                    <headers>
+                        <test-header>envelope-header</test-header>
+                    </headers>
+                </outboundMessage>
+            </test>
+            <test type="Case" name="SUT to Framework">
+                <bean>testBean</bean>
+                <method>sendOutbound</method>
+                <request>envelopeKafkaTemplate</request>
+                <request>bin-envelope-out</request>
+                <request>envelope-base-1</request>
+                <request>envelope payload-processed</request>
+                <request type="LinkedHashMap">
+                    <test-header>envelope-header</test-header>
+                </request>
+                <dataStorageDiff type="MapStringKeyObjectValue">
+                    <receivedMessages type="MapStringKeyObjectValue">
+                        <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </receivedMessages>
+                </dataStorageDiff>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="bin-envelope-out">
+                    <key>envelope-base-1</key>
+                    <value>envelope payload-processed</value>
+                    <headers>
+                        <test-header>envelope-header</test-header>
+                    </headers>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="bin-envelope-out">
+                    <key>envelope-base-1</key>
+                    <value>envelope payload-processed</value>
+                    <headers>
+                        <test-header>envelope-header</test-header>
+                    </headers>
+                </outboundMessage>
+            </test>
+            <test type="Case" name="Framework to SUT with record type macro">
+                <inboundMessage type="KafkaRecord" connection="kafka1" topic="bin-envelope-macro-in">
+                    <key>envelope-macro-1</key>
+                    <value>envelope payload-macro</value>
+                    <headers>
+                        <test-header>envelope-header</test-header>
+                    </headers>
+                </inboundMessage>
+                <dataStorageDiff type="MapStringKeyObjectValue">
+                    <receivedMessages type="MapStringKeyObjectValue">
+                        <msg-0 type="KafkaRecord" topic="bin-envelope-macro-in">
+                            <key>envelope-macro-1</key>
+                            <value>envelope payload-macro</value>
+                            <headers>
+                                <test-header>envelope-header</test-header>
+                            </headers>
+                        </msg-0>
+                    </receivedMessages>
+                </dataStorageDiff>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="bin-envelope-macro-in">
+                    <key>envelope-macro-1</key>
+                    <value>envelope payload-macro</value>
+                    <headers>
+                        <test-header>envelope-header</test-header>
+                    </headers>
+                </outboundMessage>
+            </test>
+            <test type="Case" name="SUT to Framework with invalid binary payload">
+                <bean>testBean</bean>
+                <method>sendOutbound</method>
+                <request>byteKafkaTemplate</request>
+                <request>bin-envelope-out</request>
+                <request>envelope-poison-1</request>
+                <request type="byte[]">/8Mo</request>
+                <dataStorageDiff type="MapStringKeyObjectValue">
+                    <receivedMessages type="MapStringKeyObjectValue">
+                        <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </receivedMessages>
+                </dataStorageDiff>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="bin-envelope-out">
+                    <exception>
+                        <exceptionType>RuntimeException</exceptionType>
+                        <message>Protocol version mismatch. Expected: 1, got: -1</message>
+                    </exception>
+                    <key type="byte[]">ZW52ZWxvcGUtcG9pc29uLTE=</key>
+                    <value type="byte[]">/8Mo</value>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="bin-envelope-out">
+                    <exception>
+                        <exceptionType>RuntimeException</exceptionType>
+                        <message>Protocol version mismatch. Expected: 1, got: -1</message>
+                    </exception>
+                    <key type="byte[]">ZW52ZWxvcGUtcG9pc29uLTE=</key>
+                    <value type="byte[]">/8Mo</value>
+                </outboundMessage>
+            </test>
+        </test>
+        <test type="Container" name="Tombstone">
+            <test type="Case" name="Framework to SUT">
+                <inboundMessage type="KafkaRecord" connection="kafka1" topic="bin-envelope-in">
+                </inboundMessage>
+                <dataStorageDiff type="MapStringKeyObjectValue">
+                    <receivedMessages type="MapStringKeyObjectValue">
+                        <msg-0 type="KafkaRecord" topic="bin-envelope-in">
+                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </msg-0>
+                    </receivedMessages>
+                </dataStorageDiff>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="bin-envelope-in">
+                </outboundMessage>
+            </test>
+            <test type="Case" name="SUT to Framework">
+                <bean>testBean</bean>
+                <method>sendOutbound</method>
+                <request>envelopeKafkaTemplate</request>
+                <request>bin-envelope-out</request>
+                <request>envelope-tombstone-1</request>
+                <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                <dataStorageDiff type="MapStringKeyObjectValue">
+                    <receivedMessages type="MapStringKeyObjectValue">
+                        <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </receivedMessages>
+                </dataStorageDiff>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="bin-envelope-out">
+                    <key>envelope-tombstone-1</key>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="bin-envelope-out">
+                    <key>envelope-tombstone-1</key>
+                </outboundMessage>
+            </test>
+        </test>
+    </test>
     <test type="Container" name="Misc">
         <test type="Case" name="Pattern Matching">
             <inboundMessage type="KafkaRecord" connection="kafka1" topic="misc-pattern-service-orders">
@@ -1775,7 +1971,7 @@ b25UZXN0RHRv</__TypeId__>
                 <value>val</value>
             </inboundMessage>
             <response type="IllegalArgumentException">
-                <message>No adapter found from [java.util.ArrayList] to [io.github.dimkich.integration.testing.kafka.serde.serialization.KafkaRecordSerializer] under configuration [RecordProperties]. Supported source types: [Serializer, TestSerdeSerializer]</message>
+                <message>No adapter from [java.util.ArrayList] to [[B] under config [KafkaComponentProperties]. Known adapters: [io.github.dimkich.integration.testing.kafka.serde.adapter.KafkaDeserializerToRecordPartDeserializerAdapter [org.apache.kafka.common.serialization.Deserializer -> [B/java.lang.Object], io.github.dimkich.integration.testing.kafka.serde.adapter.KafkaSerializerToRecordPartSerializerAdapter [org.apache.kafka.common.serialization.Serializer -> java.lang.Object/[B]]</message>
             </response>
         </test>
         <test type="Container" name="Transactions">
@@ -1828,7 +2024,7 @@ b25UZXN0RHRv</__TypeId__>
             </test>
             <test type="Case" name="Deprecated sendOffsetsToTransaction">
                 <bean>testBean</bean>
-                <method>sendOffsetsInTransaction</method>
+                <method>sendOffsetsInTransactionDeprecated</method>
                 <request>miscTxKafkaTemplate</request>
                 <request>misc-tx-out</request>
                 <request>tx-key-3</request>
@@ -1842,6 +2038,31 @@ b25UZXN0RHRv</__TypeId__>
                     <key>tx-key-3</key>
                     <value>tx-payload-3</value>
                 </outboundMessage>
+            </test>
+            <test type="Case" name="Modern sendOffsetsToTransaction">
+                <bean>testBean</bean>
+                <method>sendOffsetsInTransaction</method>
+                <request>miscTxKafkaTemplate</request>
+                <request>misc-tx-out</request>
+                <request>tx-key-4</request>
+                <request>tx-payload-4</request>
+                <request>misc-modern-group</request>
+                <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-tx-out">
+                    <key>tx-key-4</key>
+                    <value>tx-payload-4</value>
+                </outboundMessage>
+                <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-tx-out">
+                    <key>tx-key-4</key>
+                    <value>tx-payload-4</value>
+                </outboundMessage>
+            </test>
+            <test type="Case" name="Failed transaction commit">
+                <bean>testBean</bean>
+                <method>commitWithoutTransaction</method>
+                <request>miscTxKafkaTemplate</request>
+                <response type="IllegalStateException">
+                    <message>TransactionalId failed-commit-test: Invalid transition attempted from state UNINITIALIZED to state COMMITTING_TRANSACTION</message>
+                </response>
             </test>
         </test>
         <test type="Container" name="Uncommitted offsets">

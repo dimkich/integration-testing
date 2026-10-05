@@ -1,13 +1,9 @@
 package io.github.dimkich.integration.testing.redis.config;
 
-import io.github.dimkich.integration.testing.config.PropertyInheritanceExclusive;
 import io.github.dimkich.integration.testing.config.PropertyInheritanceMerger;
-import io.github.dimkich.integration.testing.redis.codec.StringRedisDataCodec;
-import io.github.dimkich.integration.testing.redis.schema.StringRedisDataSchema;
+import io.github.dimkich.integration.testing.serde.StandardSerdeProperties;
 import jakarta.annotation.PostConstruct;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,24 +13,18 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Configuration properties for Redis integration testing.
- * <p>
- * Bound from {@code integration.testing.redis.*} and enabled by
- * {@link io.github.dimkich.integration.testing.redis.EnableTestRedis} via
- * {@link RedisConfig}. Global settings apply as defaults for each named
- * {@link Connection}; per-connection {@link Schema} entries inherit from the
- * connection's {@link #defaultSchema} and global {@link #defaultSchema} through
- * {@link PropertyInheritanceMerger}.
- * <p>
- * Connection names match {@link org.springframework.data.redis.connection.RedisConnectionFactory}
- * bean names. Host, port, user, and password fall back to {@code embedded.redis.*} when not
- * overridden on a connection.
+ * Configuration properties for Redis integration testing, bound from
+ * {@code integration.testing.redis.*}. Global settings are defaults for each named
+ * {@link Connection}; connection names match
+ * {@link org.springframework.data.redis.connection.RedisConnectionFactory} bean names, and host,
+ * port, user and password fall back to {@code embedded.redis.*}.
  *
  * @see RedisConfig
+ * @see RedisSchemaProperties
  * @see io.github.dimkich.integration.testing.redis.EnableTestRedis
  */
 @Data
-@ConfigurationProperties(prefix = "integration.testing.redis")
+@ConfigurationProperties(prefix = "integration.testing.redis", ignoreUnknownFields = false)
 public class RedisProperties {
     @Setter(onMethod_ = @Autowired)
     private PropertyInheritanceMerger merger;
@@ -67,14 +57,16 @@ public class RedisProperties {
      */
     private long syncBarrierTimeoutMs = 5000;
 
-    /** Default key codec for all connections; defaults to {@link StringRedisDataCodec}. */
-    private Codec keyCodec;
+    /** Default key codec for all connections; defaults to the core {@code string} provider. */
+    private StandardSerdeProperties keyCodec;
 
     /**
-     * Global default {@link Schema} for all connections; merged into each {@link Connection#defaultSchema}.
-     * When unset, {@link #init()} configures {@link StringRedisDataSchema}.
+     * Global default schema for all connections; merged into each {@link Connection#defaultSchema}.
+     * Components not set here are defaulted by {@link #init()} to the core {@code string} provider.
+     * A connection may override individual components; the unconfigured ones are merged in from
+     * this schema.
      */
-    private Schema defaultSchema;
+    private RedisSchemaProperties defaultSchema;
 
     /** Field paths excluded globally when comparing or processing stored Redis data. */
     private Set<String> excludedFields;
@@ -83,29 +75,56 @@ public class RedisProperties {
      * Per-{@link org.springframework.data.redis.connection.RedisConnectionFactory} settings,
      * keyed by factory bean name.
      */
-    @Getter(value = AccessLevel.PACKAGE)
-    @Setter(value = AccessLevel.PACKAGE)
     private Map<String, Connection> connections;
 
     /**
-     * Normalizes credentials, applies default {@link #keyCodec} and {@link #defaultSchema},
-     * and merges each configured {@link #connections} entry with global defaults.
+     * Normalizes credentials, applies the default {@link #keyCodec}, merges each configured
+     * {@link #connections} entry with global defaults, and finalizes every configured schema:
+     * the record-level base is merged into the components, the default {@code string} source
+     * is applied and the result is validated. Defaults are applied after the whole inheritance
+     * chain has been merged, so the validated schema is final.
      */
     @PostConstruct
     public void init() {
         this.user = "root".equals(user) ? null : user;
         if (keyCodec == null) {
-            keyCodec = new Codec();
-            keyCodec.setClassRef(StringRedisDataCodec.class.getName());
+            keyCodec = new StandardSerdeProperties();
+            keyCodec.setType("string");
         }
         if (defaultSchema == null) {
-            defaultSchema = new Schema();
-            defaultSchema.setClassRef(StringRedisDataSchema.class.getName());
+            defaultSchema = new RedisSchemaProperties();
         }
         if (connections == null) {
             return;
         }
-        connections.forEach((name, conn) -> prepare(conn));
+        connections.forEach((name, conn) -> {
+            prepare(conn);
+            applyDefaultSource(conn.getDefaultSchema());
+            validate(conn.getDefaultSchema(), "connection[" + name + "].defaultSchema");
+            if (conn.getSchemas() != null) {
+                conn.getSchemas().forEach((pattern, schema) -> {
+                    applyDefaultSource(schema);
+                    validate(schema, "connection[" + name + "].schemas[" + pattern + "]");
+                });
+            }
+        });
+    }
+
+    private void applyDefaultSource(RedisSchemaProperties schema) {
+        if (schema != null) {
+            schema.applyDefaultSource(merger);
+        }
+    }
+
+    private static void validate(RedisSchemaProperties schema, String path) {
+        if (schema == null) {
+            return;
+        }
+        try {
+            schema.validate();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Invalid schema config at " + path + ": " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -131,29 +150,6 @@ public class RedisProperties {
     }
 
     /**
-     * Key codec configuration: Spring bean or class reference, field exclusions, and optional
-     * binary envelope format for serialized key bytes.
-     */
-    @Data
-    public static class Codec {
-        /** Spring bean name of a {@link io.github.dimkich.integration.testing.redis.codec.RedisDataCodec}. */
-        @PropertyInheritanceExclusive("ref")
-        private String beanRef;
-
-        /** Fully qualified class name of a {@link io.github.dimkich.integration.testing.redis.codec.RedisDataCodec}. */
-        @PropertyInheritanceExclusive("ref")
-        private String classRef;
-
-        /** Dot-separated field paths to exclude for keys using this codec. */
-        private Set<String> excludedFields;
-
-        /**
-         * Binary envelope format for key bytes (parsed by {@link io.github.dimkich.integration.testing.redis.codec.segment.BinaryFormatParser}).
-         */
-        private String valueBinaryFormat;
-    }
-
-    /**
      * Settings for a single Redis connection factory: endpoint credentials, database layout,
      * codecs, schemas, and per-key-pattern schema overrides.
      */
@@ -167,63 +163,30 @@ public class RedisProperties {
         /** Overrides global {@link RedisProperties#multipleDatabases} for this factory. */
         private Boolean multipleDatabases;
 
-        /** Key codec for this connection; inherits from global {@link RedisProperties#keyCodec}. */
-        private Codec keyCodec;
+        /**
+         * Key codec for this connection; inherits from global {@link RedisProperties#keyCodec}.
+         * A single-slot source: a core serde provider, a Spring Data {@code RedisSerializer}
+         * or a Redisson {@code Codec}/{@code RedissonClient}.
+         */
+        private StandardSerdeProperties keyCodec;
 
         /**
-         * Default {@link Schema} for keys that do not match any entry in {@link #schemas};
-         * inherits from global {@link RedisProperties#defaultSchema}.
+         * Default {@link RedisSchemaProperties} for keys that do not match any entry in
+         * {@link #schemas}; inherits from global {@link RedisProperties#defaultSchema} by the
+         * general property-merge rules. Individual components may be overridden; the
+         * unconfigured ones are merged in from the global schema.
          */
-        private Schema defaultSchema;
+        private RedisSchemaProperties defaultSchema;
 
         /** Field exclusions for this connection; merged with global {@link RedisProperties#excludedFields}. */
         private Set<String> excludedFields;
 
         /**
-         * Per-key-pattern {@link Schema} overrides; map keys are Redis key prefixes resolved by
-         * longest-prefix match in {@link io.github.dimkich.integration.testing.redis.registry.ConnectionSchemaRegistry}.
+         * Per-key-pattern {@link RedisSchemaProperties} overrides; map keys are Redis key prefixes
+         * resolved by longest-prefix match in
+         * {@link io.github.dimkich.integration.testing.redis.registry.ConnectionSchemaRegistry}.
          * Entries inherit from {@link #defaultSchema} and connection-level field exclusions.
          */
-        private Map<String, Schema> schemas;
-    }
-
-    /**
-     * Configuration for value and hash serialization on a connection or per-key pattern.
-     * <p>
-     * At runtime, {@link io.github.dimkich.integration.testing.redis.registry.RedisObjectFactory}
-     * resolves {@link #beanRef} or {@link #classRef} to a {@link io.github.dimkich.integration.testing.redis.schema.RedisDataSchema}
-     * (via {@link io.github.dimkich.integration.testing.redis.schema.RedisDataSchemaAdapter} when needed),
-     * optionally wraps codecs with binary envelopes, and registers the result as
-     * {@link io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaMetadata}.
-     * Per-pattern entries in {@link Connection#getSchemas()} are matched by
-     * {@link io.github.dimkich.integration.testing.redis.registry.ConnectionSchemaRegistry}.
-     *
-     * @see io.github.dimkich.integration.testing.redis.schema.RedisDataSchema
-     * @see io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry
-     */
-    @Data
-    public static class Schema {
-        /** Spring bean name of a {@link io.github.dimkich.integration.testing.redis.schema.RedisDataSchema}. */
-        @PropertyInheritanceExclusive("ref")
-        private String beanRef;
-
-        /** Fully qualified class name of a {@link io.github.dimkich.integration.testing.redis.schema.RedisDataSchema}. */
-        @PropertyInheritanceExclusive("ref")
-        private String classRef;
-
-        /** When {@code true}, matching keys are skipped in assertions and replication processing. */
-        private boolean ignore;
-
-        /** Dot-separated field paths to exclude for values under this schema. */
-        private Set<String> excludedFields;
-
-        /** Binary envelope format applied to string/value payloads. */
-        private String valueBinaryFormat;
-
-        /** Binary envelope format applied to hash field names. */
-        private String hashKeyBinaryFormat;
-
-        /** Binary envelope format applied to hash field values. */
-        private String hashValueBinaryFormat;
+        private Map<String, RedisSchemaProperties> schemas;
     }
 }

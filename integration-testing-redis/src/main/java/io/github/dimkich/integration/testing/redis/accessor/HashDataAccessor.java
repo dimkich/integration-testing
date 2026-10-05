@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.redis.accessor;
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
 import io.github.dimkich.integration.testing.redis.model.RedisEntry;
 import io.github.dimkich.integration.testing.redis.model.RedisHash;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;

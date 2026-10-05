@@ -231,7 +231,7 @@ public class RedisTestFacade<K, V> {
         );
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public List<Long> hTtl(K key, String[] fields) {
         String script = "return redis.call('HTTL', KEYS[1], 'FIELDS', #ARGV, unpack(ARGV))";
         RedisScript<List<Long>> redisScript = new DefaultRedisScript(script, List.class);
@@ -564,6 +564,13 @@ public class RedisTestFacade<K, V> {
         );
     }
 
+    public Long zRangeStoreByScoreRaw(K srcKey, K destKey, String min, String max, boolean rev) {
+        String script = "return redis.call('ZRANGESTORE', KEYS[1], KEYS[2], ARGV[1], ARGV[2], 'BYSCORE'"
+                + (rev ? ", 'REV'" : "") + ")";
+        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(script, Long.class);
+        return redisTemplate.execute(redisScript, List.of(destKey, srcKey), min, max);
+    }
+
     // --- Geo ---
 
     public Long geoAdd(K key, double lon, double lat, V member) {
@@ -600,6 +607,32 @@ public class RedisTestFacade<K, V> {
         byte[] script = "return redis.call('GEOSEARCHSTORE', KEYS[1], KEYS[2], 'FROMLONLAT', ARGV[1], ARGV[2], 'BYRADIUS', ARGV[3], 'mi')".getBytes(StandardCharsets.UTF_8);
         return executeGeoLua(script, Arrays.asList(destKey, srcKey),
                 String.valueOf(lon), String.valueOf(lat), String.valueOf(miles));
+    }
+
+    public Long geoSearchStoreUnit(K destKey, K srcKey, double lon, double lat, double radius, String unit) {
+        byte[] script = ("return redis.call('GEOSEARCHSTORE', KEYS[1], KEYS[2], 'FROMLONLAT', ARGV[1], ARGV[2], 'BYRADIUS', ARGV[3], '"
+                + unit + "')").getBytes(StandardCharsets.UTF_8);
+        return executeGeoLua(script, Arrays.asList(destKey, srcKey),
+                String.valueOf(lon), String.valueOf(lat), String.valueOf(radius));
+    }
+
+    public Long geoSearchStoreByMember(K destKey, K srcKey, V member, double radius) {
+        byte[] script = "return redis.call('GEOSEARCHSTORE', KEYS[1], KEYS[2], 'FROMMEMBER', ARGV[1], 'BYRADIUS', ARGV[2], 'km')".getBytes(StandardCharsets.UTF_8);
+        return executeGeoLua(script, Arrays.asList(destKey, srcKey),
+                String.valueOf(member), String.valueOf(radius));
+    }
+
+    public Long geoSearchStoreByMemberUnit(K destKey, K srcKey, V member, double radius, String unit) {
+        byte[] script = ("return redis.call('GEOSEARCHSTORE', KEYS[1], KEYS[2], 'FROMMEMBER', ARGV[1], 'BYRADIUS', ARGV[2], '"
+                + unit + "')").getBytes(StandardCharsets.UTF_8);
+        return executeGeoLua(script, Arrays.asList(destKey, srcKey),
+                String.valueOf(member), String.valueOf(radius));
+    }
+
+    public Long geoSearchStoreByMemberStoreDist(K destKey, K srcKey, V member, double radius) {
+        byte[] script = "return redis.call('GEOSEARCHSTORE', KEYS[1], KEYS[2], 'FROMMEMBER', ARGV[1], 'BYRADIUS', ARGV[2], 'km', 'STOREDIST')".getBytes(StandardCharsets.UTF_8);
+        return executeGeoLua(script, Arrays.asList(destKey, srcKey),
+                String.valueOf(member), String.valueOf(radius));
     }
 
     @SuppressWarnings("deprecation")

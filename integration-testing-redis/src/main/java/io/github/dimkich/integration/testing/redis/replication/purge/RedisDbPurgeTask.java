@@ -1,10 +1,9 @@
 package io.github.dimkich.integration.testing.redis.replication.purge;
 
-import io.github.dimkich.integration.testing.redis.codec.RedisDataCodec;
 import io.github.dimkich.integration.testing.redis.model.RedisKey;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaMetadata;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
-import io.github.dimkich.integration.testing.redis.registry.RedisKeyCodecMetadata;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataCodec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.RedisConnection;
 
@@ -48,10 +47,10 @@ public class RedisDbPurgeTask {
      * @param conn         open Redis connection (caller selects DB and pipeline)
      * @param storageName  connection name for schema lookup
      * @param registry     schema registry for hash-field serialization
-     * @param keyCodecMeta key codec for serializing logical keys to wire format
+     * @param keyCodec     key codec for serializing logical keys to wire format
      */
     public void execute(RedisConnection conn, String storageName, RedisDataSchemaRegistry registry,
-                        RedisKeyCodecMetadata keyCodecMeta) {
+                        RedisDataCodec keyCodec) {
 
         Iterator<Map.Entry<RedisKey, List<Object>>> iterator = hashFieldsToDel.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -59,7 +58,7 @@ public class RedisDbPurgeTask {
             RedisKey rootKey = entry.getKey();
             List<Object> fields = entry.getValue();
             if (fields.size() >= hashTotalSizes.getOrDefault(rootKey, 0)) {
-                keysToDel.add(keyCodecMeta.getCodec().serialize(rootKey.getKey()));
+                keysToDel.add(keyCodec.serialize(rootKey.getKey()));
                 iterator.remove();
             }
         }
@@ -72,7 +71,7 @@ public class RedisDbPurgeTask {
         hashFieldsToDel.forEach((rootKey, fields) -> {
             RedisDataSchemaMetadata schemaInfo = registry.findSchema(storageName, rootKey.getKey().toString());
             RedisDataCodec fieldCodec = schemaInfo.getSchema().getHashKeyCodec();
-            byte[] rootKeyRaw = keyCodecMeta.getCodec().serialize(rootKey.getKey());
+            byte[] rootKeyRaw = keyCodec.serialize(rootKey.getKey());
 
             List<byte[]> fieldsRaw = fields.stream()
                     .map(fieldCodec::serialize)

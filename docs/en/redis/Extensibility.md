@@ -10,29 +10,31 @@ database modules (e.g., RedisJSON), you can easily teach the framework to work w
 All custom components are registered as standard Spring beans (`@Component` or `@Bean`)
 and are automatically wired into the framework's data processing pipeline.
 
-Custom Codecs and Schemas (`RedisDataCodec`, `RedisDataSchema`)
----------------------------------------------------------------
+Custom Serialization Formats
+----------------------------
 
-If the standard string or byte array serializers are insufficient, you can implement your
-own.
+If the standard core providers (`string`, `bytes`, `json`, ...) are insufficient, a component
+source can be your own Spring Data `RedisSerializer` or Redisson `Codec`, or you can write a
+custom `TestSerdeAdapter` — see the "Source Adapters" section below. `RedisDataCodec` is an
+internal framework class (a pair of serde converters); there is no need to implement it.
 
-### Custom Codec (`RedisDataCodec`)
+### Custom Serializer (Spring Data `RedisSerializer`)
 
-A codec converts Java objects of a specific type to and from bytes. For example, a codec
-for Snappy-compressed strings:
+A serializer converts Java objects to and from bytes. For example, Snappy-compressed strings:
 
 ```java
-package com.example.redis.codec;
+package com.example.redis.serializer;
 
-import io.github.dimkich.integration.testing.redis.codec.RedisDataCodec;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.lang.Nullable;
 import org.xerial.snappy.Snappy;
 
 import java.nio.charset.StandardCharsets;
 
-public class SnappyStringCodec implements RedisDataCodec {
+public class SnappyStringSerializer implements RedisSerializer<Object> {
 
     @Override
-    public byte[] serialize(Object object) {
+    public byte[] serialize(@Nullable Object object) {
         if (object == null) return null;
         try {
             return Snappy.compress(object.toString().getBytes(StandardCharsets.UTF_8));
@@ -42,11 +44,10 @@ public class SnappyStringCodec implements RedisDataCodec {
     }
 
     @Override
-    public Object deserialize(byte[] data) {
+    public Object deserialize(@Nullable byte[] data) {
         if (data == null || data.length == 0) return null;
         try {
-            byte[] uncompressed = Snappy.uncompress(data);
-            return new String(uncompressed, StandardCharsets.UTF_8);
+            return new String(Snappy.uncompress(data), StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new RuntimeException("Data decompression error", e);
         }
@@ -54,35 +55,23 @@ public class SnappyStringCodec implements RedisDataCodec {
 }
 ```
 
-### Custom Schema (`RedisDataSchema`)
+### Schema Component from a Custom Serializer
 
-A schema combines codecs for plain values, hash keys, and hash values. You can write your
-own implementation from scratch or use the ready-made `ComposedRedisDataSchema` constructor:
-
-```java
-
-@Configuration
-public class MyTestConfig {
-
-    @Bean
-    public RedisDataSchema snappySchema() {
-        RedisDataCodec snappy = new SnappyStringCodec();
-        RedisDataCodec standardString = new StringRedisDataCodec();
-
-        // Compress values with Snappy, keep hash field keys as plain strings
-        return new ComposedRedisDataSchema(snappy, standardString, snappy);
-    }
-}
-```
-
-Once the bean is registered in the context, you can reference it in `application-test.yml`:
+A schema is assembled from three components (`value`/`hash-key`/`hash-value`), and each of them can
+use your serializer as its source. For example, compress values with Snappy and keep hash
+field keys as plain strings:
 
 ```yaml
 connections:
   redisConnectionFactory:
     schemas:
       "compressed:":
-        bean-ref: "snappySchema"
+        value:
+          type: "com.example.redis.serializer.SnappyStringSerializer"
+        hash-key:
+          type: string
+        hash-value:
+          type: "com.example.redis.serializer.SnappyStringSerializer"
 ```
 
 Custom Data Persistence Strategies (`RedisDataAccessor`)
@@ -98,7 +87,7 @@ Implement `RedisDataAccessor<D>` for this purpose.
 package com.example.redis.accessor;
 
 import io.github.dimkich.integration.testing.redis.accessor.RedisDataAccessor;
-import io.github.dimkich.integration.testing.redis.codec.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import io.github.dimkich.integration.testing.redis.model.RedisValue;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.stereotype.Component;
@@ -135,170 +124,115 @@ TestSetupModule testSetupModule() {
 
 After this, you can use `CustomBloomFilter` in XML tests by its short name.
 
-Codec and Schema Adapters (`RedisDataCodecAdapter`, `RedisDataSchemaAdapter`)
------------------------------------------------------------------------------
+Source Adapters (`TestSerdeAdapter`)
+------------------------------------
 
 Your application may already have complex Redis clients configured (e.g., proprietary
 Jedis wrappers or third-party clients) that hold serialization rules internally. To avoid
-duplicating their code in tests, write an **Adapter**.
+duplicating their code in tests, write an **adapter** that converts a native single-slot source
+(e.g., a Spring Data `RedisSerializer` or a Redisson `Codec`) into the serde contract — an
+"object ↔ byte[]" pair. The general adapter selection rules (class hierarchy traversal,
+candidate order, `null` = "not mine") are implemented by
+`io.github.dimkich.integration.testing.serde.AdapterManager`.
 
-An adapter teaches the `RedisObjectFactory` factory to extract serializers from your
-internal beans on the fly.
+The adapter implements `TestSerdeAdapter<S, I, O, C, R, P>` and returns an `input -> output` converter
+built via `TestSerdeConverter.of(...)`.
 
-### Example: Schema Adapter for a Custom Client
+### Example: Adapter for a Custom Serializer
 
-Suppose your application declares a custom client bean:
+Suppose your application declares a custom serializer bean:
 
 ```java
-public class CustomRedisClient {
-    private final MyCustomSerializer valueSerializer;
-    private final MyCustomSerializer hashSerializer;
-    // ...
+public class CustomSerializer {
+    public byte[] write(Object value) { ... }
+    public Object read(byte[] data) { ... }
 }
 ```
 
-Implement the `RedisDataSchemaAdapter` to convert this client into a framework-compatible
-schema:
+Implement a serialization adapter:
 
 ```java
 package com.example.redis.adapter;
 
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchemaAdapter;
-import io.github.dimkich.integration.testing.redis.schema.ComposedRedisDataSchema;
-import io.github.dimkich.integration.testing.redis.codec.RedisDataCodec;
-import com.example.CustomRedisClient;
+import com.example.CustomSerializer;
+import io.github.dimkich.integration.testing.serde.ComponentRole;
+import io.github.dimkich.integration.testing.serde.StandardSerdeProperties;
+import io.github.dimkich.integration.testing.serde.TestSerdeAdapter;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
-@Component // Adapter is automatically registered in the framework registry
-public class CustomClientSchemaAdapter implements RedisDataSchemaAdapter {
+@Component // The adapter is picked up by the adapter manager automatically
+@Getter
+public class CustomSerializerAdapter
+        implements TestSerdeAdapter<CustomSerializer, Object, byte[], TestSerdeContext, ComponentRole,
+        StandardSerdeProperties> {
+
+    private final Class<CustomSerializer> sourceClass = CustomSerializer.class;
+
+    private final Class<Object> inputClass = Object.class;
+
+    private final Class<byte[]> outputClass = byte[].class;
+
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
+    private final Class<StandardSerdeProperties> propertiesClass = StandardSerdeProperties.class;
 
     @Override
-    public RedisDataSchema tryCreateSchema(Object bean) {
-        if (bean instanceof CustomRedisClient client) {
-            // Create a codec wrapper for values
-            RedisDataCodec valueCodec = new RedisDataCodec() {
-                @Override
-                public byte[] serialize(Object obj) {
-                    return client.getValueSerializer().toBytes(obj);
-                }
-
-                @Override
-                public Object deserialize(byte[] bytes) {
-                    return client.getValueSerializer().fromBytes(bytes);
-                }
-            };
-
-            // Create a codec wrapper for hashes
-            RedisDataCodec hashCodec = new RedisDataCodec() {
-                @Override
-                public byte[] serialize(Object obj) {
-                    return client.getHashSerializer().toBytes(obj);
-                }
-
-                @Override
-                public Object deserialize(byte[] bytes) {
-                    return client.getHashSerializer().fromBytes(bytes);
-                }
-            };
-
-            return new ComposedRedisDataSchema(valueCodec, hashCodec, hashCodec);
+    @Nullable
+    public TestSerdeConverter<Object, byte[], TestSerdeContext> adapt(
+            CustomSerializer source, StandardSerdeProperties properties, Class<Object> inputClass,
+            Class<byte[]> outputClass, Class<TestSerdeContext> contextClass, ComponentRole role) {
+        if (!byte[].class.equals(outputClass)) {
+            return null;
         }
-        return null; // Pass to other adapters if the bean is not our type
+        return TestSerdeConverter.of(inputClass, outputClass, contextClass,
+                (input, context) -> source.write(input));
     }
 }
 ```
 
-Now in your YAML configuration you can directly pass your `customRedisClient` bean as
-a default schema or a prefix schema:
+A symmetric `byte[] -> Object` adapter calls `source.read(...)`. Once registered, the bean can be
+referenced from a schema component:
 
 ```yaml
 connections:
   redisConnectionFactory:
     defaultSchema:
-      bean-ref: "customRedisClientBean"  # Will be successfully converted by the adapter
+      value:
+        bean-ref: "customSerializerBean"
 ```
 
-Custom Binary Format Tags (`BinarySegmentProvider`, `BinarySegment`)
----------------------------------------------------------------------
+### Redisson codec slots
 
-If you need to wrap data in custom binary headers (e.g., unique hash sums, signatures,
-or dynamic authorization tokens), you can add a custom tag to the `BinaryFormatParser`
-syntax.
-
-To do this, implement the segment interface `BinarySegment` and its factory
-`BinarySegmentProvider`.
-
-### Example: Creating the `{XORMASK(mask)}` Tag
-
-**1. Create the segment (read/write byte logic):**
-
-```java
-package com.example.redis.segment;
-
-import io.github.dimkich.integration.testing.redis.codec.segment.BinarySegment;
-import io.github.dimkich.integration.testing.redis.codec.segment.ReadContext;
-
-import java.nio.ByteBuffer;
-
-public class XorMaskSegment implements BinarySegment {
-    private final byte mask;
-
-    public XorMaskSegment(byte mask) {
-        this.mask = mask;
-    }
-
-    @Override
-    public void read(ByteBuffer buffer, ReadContext ctx) {
-        byte maskedValue = buffer.get();
-        byte originalValue = (byte) (maskedValue ^ mask);
-    }
-
-    @Override
-    public void write(ByteBuffer buffer, byte[] payload) {
-        byte originalValue = 0x5A;
-        buffer.put((byte) (originalValue ^ mask));
-    }
-
-    @Override
-    public int length() {
-        return 1;
-    }
-}
-```
-
-**2. Register the segment provider as `@Component`:**
-
-```java
-package com.example.redis.segment;
-
-import io.github.dimkich.integration.testing.redis.codec.segment.BinarySegment;
-import io.github.dimkich.integration.testing.redis.codec.segment.BinarySegmentProvider;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
-
-@Component // Provider is automatically wired into the BinaryFormatParser
-public class XorMaskSegmentProvider implements BinarySegmentProvider {
-
-    @Override
-    public String getName() {
-        return "XORMASK"; // Tag name for use in YAML (case-insensitive)
-    }
-
-    @Override
-    public BinarySegment create(List<String> params) {
-        byte mask = (byte) Integer.decode(params.get(0)).intValue();
-        return new XorMaskSegment(mask);
-    }
-}
-```
-
-After this, you can use the `{XORMASK}` tag in binary format settings:
+When a schema component references a Redisson `Codec` (directly or via `RedissonClient`), the core
+passes the slot role to the adapter, and the adapter extracts the matching encoder/decoder pair:
+for `value` — `ValueEncoder`/`ValueDecoder`, for `hash-key` — `MapKeyEncoder`/`MapKeyDecoder`, for
+`hash-value` — `MapValueEncoder`/`MapValueDecoder`. That is why the same bean can be referenced
+from all three schema components, and hash fields are serialized with their own codecs:
 
 ```yaml
-valueBinaryFormat: "{XORMASK(0xAA)}{LEN(SHORT, BE)}{CONTENT}"
+connections:
+  redisConnectionFactory:
+    schemas:
+      "cache:":
+        value:
+          bean-ref: "redissonClient"
+        hash-key:
+          bean-ref: "redissonClient"
+        hash-value:
+          bean-ref: "redissonClient"
 ```
+
+Custom Binary Envelope Tags
+-------------------------
+
+Custom tags (`BinarySegmentProvider`/`BinarySegment`) are a shared capability of the serde core:
+implement the segment and its provider and register the provider as a `@Component`. An example of
+creating the `{XORMASK(mask)}` tag is described in
+[Serde Extensibility](../serde/Extensibility.md#custom-binary-envelope-tags-binarysegmentprovider-binarysegment).
+
 
 Custom Replication Command Handlers (`RedisSnapshotHandler`, `RedisStreamHandler`)
 ---------------------------------------------------------------------------------

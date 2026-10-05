@@ -6,6 +6,7 @@ import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.common.polymorphic.unwrapped.DisablePolymorphicUnwrappedModule;
 import io.github.dimkich.integration.testing.kafka.serde.ReceivedMessageStorage;
 import io.github.dimkich.integration.testing.kafka.serde.bytes.ByteSerDeConfig;
+import io.github.dimkich.integration.testing.kafka.serde.envelope.EnvelopeSerDeConfig;
 import io.github.dimkich.integration.testing.kafka.serde.json.JsonSerDeConfig;
 import io.github.dimkich.integration.testing.kafka.serde.misc.MiscSerDeConfig;
 import io.github.dimkich.integration.testing.kafka.serde.text.TextSerDeConfig;
@@ -25,7 +26,7 @@ import java.util.Map;
 
 @EnableKafka
 @Configuration
-@Import({ReceivedMessageStorage.class, TextSerDeConfig.class, JsonSerDeConfig.class, ByteSerDeConfig.class, MiscSerDeConfig.class, XmlSerDeConfig.class, UncommittedOffsetConfig.class})
+@Import({ReceivedMessageStorage.class, TextSerDeConfig.class, JsonSerDeConfig.class, ByteSerDeConfig.class, MiscSerDeConfig.class, XmlSerDeConfig.class, EnvelopeSerDeConfig.class, UncommittedOffsetConfig.class})
 public class KafkaTestConfig {
 
     @Value("${embedded.kafka.brokerList}")

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.moilioncircle.redis.replicator.rdb.datatype.ExpiredType;
 import com.moilioncircle.redis.replicator.rdb.datatype.KeyValuePair;
 import io.github.dimkich.integration.testing.date.time.PeriodDuration;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -102,17 +102,40 @@ public class RedisEntry {
     }
 
     /**
-     * Refreshes {@link #ttl} relative to {@code now} and reports whether the entry has expired.
+     * Refreshes {@link #ttl} relative to {@code now}.
      *
      * @param now current time
-     * @return {@code true} when {@link #expireAt} is set and TTL is zero or negative
      */
-    public boolean setNow(ZonedDateTime now) {
+    public void setNow(ZonedDateTime now) {
         if (expireAt == null) {
-            return false;
+            return;
         }
         ttl = PeriodDuration.between(now, expireAt);
-        return ttl.isNegative() || ttl.isZero();
+    }
+
+    /**
+     * Reports whether the entry has expired at {@code now} without modifying TTL metadata.
+     *
+     * @param now current time
+     * @return {@code true} when an expiration instant is set and is not after {@code now}
+     */
+    @JsonIgnore
+    public boolean isExpired(ZonedDateTime now) {
+        Instant expireInstant = getExpireInstant(now);
+        return expireInstant != null && !expireInstant.isAfter(now.toInstant());
+    }
+
+    /**
+     * Refreshes {@link #ttl} relative to {@code now} on this entry and all nested entries.
+     * Intended for cloned snapshots so that the shared in-memory mirror stays read-only.
+     *
+     * @param now current time
+     */
+    public void refreshTtl(ZonedDateTime now) {
+        setNow(now);
+        if (data instanceof RedisValue redisValue) {
+            redisValue.nestedEntries().forEach(entry -> entry.getValue().refreshTtl(now));
+        }
     }
 
     /**

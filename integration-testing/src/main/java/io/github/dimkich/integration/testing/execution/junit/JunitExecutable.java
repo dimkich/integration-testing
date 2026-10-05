@@ -13,7 +13,8 @@ import org.junit.jupiter.api.function.Executable;
  * <ol>
  *     <li>invoke {@link TestExecutor#before(Test)} for the test,</li>
  *     <li>invoke {@link TestExecutor#runTest()},</li>
- *     <li>invoke {@link TestExecutor#after()} in a finally block.</li>
+ *     <li>invoke {@link TestExecutor#after()} in a finally block, even when the before
+ *         phase fails, so that partial initialization is always rolled back.</li>
  * </ol>
  */
 @RequiredArgsConstructor
@@ -23,16 +24,25 @@ public class JunitExecutable implements Executable {
 
     /**
      * Executes the test using the associated {@link TestExecutor}.
+     * <p>
+     * The after phase is always invoked; if it also fails, its exception is attached to the
+     * original failure as a suppressed exception.
      *
      * @throws Throwable if the underlying test execution throws any exception
      */
     @Override
     public void execute() throws Throwable {
-        testExecutor.before(test);
         try {
+            testExecutor.before(test);
             testExecutor.runTest();
-        } finally {
-            testExecutor.after();
+        } catch (Throwable t) {
+            try {
+                testExecutor.after();
+            } catch (Throwable afterFailure) {
+                t.addSuppressed(afterFailure);
+            }
+            throw t;
         }
+        testExecutor.after();
     }
 }

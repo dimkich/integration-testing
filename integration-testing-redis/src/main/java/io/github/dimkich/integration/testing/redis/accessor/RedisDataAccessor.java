@@ -2,7 +2,7 @@ package io.github.dimkich.integration.testing.redis.accessor;
 
 import io.github.dimkich.integration.testing.redis.model.RedisEntry;
 import io.github.dimkich.integration.testing.redis.model.RedisValue;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import org.springframework.data.redis.connection.RedisConnection;
 
 /**

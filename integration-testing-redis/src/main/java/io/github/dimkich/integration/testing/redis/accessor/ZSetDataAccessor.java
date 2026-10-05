@@ -2,7 +2,7 @@ package io.github.dimkich.integration.testing.redis.accessor;
 
 import io.github.dimkich.integration.testing.redis.model.RedisZSet;
 import io.github.dimkich.integration.testing.redis.model.RedisZSetEntry;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.zset.DefaultTuple;
 import org.springframework.data.redis.connection.zset.Tuple;

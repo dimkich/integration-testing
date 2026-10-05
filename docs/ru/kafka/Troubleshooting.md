@@ -57,29 +57,23 @@ integration:
 подписочные группы: группы с ручным `assign` на брокере видны как `EMPTY`, и ожидание по ним не
 завершится.
 
-Ошибка: `No adapter found from [...] to [KafkaRecordSerializer]`
-----------------------------------------------------------------
+Ошибки разрешения serde
+-----------------------
 
-### Симптомы
+`No adapter from [...]`, `Unknown serde provider [...]`,
+`No converter for [...]`, `Field 'binaryEnvelope' ...`, конфликты настроек (`Both 'beanRef' and 'type' are set ...`)
+и другие ошибки serde — общие для всех платформ; их причины и решения собраны в
+[обзоре Serde](../serde/README.md#диагностика).
 
-При старте кейса падает:
+В Kafka в тексте ошибки дополнительно указывается путь до настройки:
 
 ```text
-No adapter found from [java.util.ArrayList] to [...KafkaRecordSerializer] under configuration
-[RecordProperties]. Supported source types: [Serializer, TestSerdeSerializer]
+Invalid serializer config at connection[kafka1].topics[order-in]: Both 'beanRef' and 'type' are set on the same serde config. ...
 ```
 
-### Причина
-
-В `serializer` указан `type`, который не умеет сериализовать сообщения (в примере — произвольный
-класс `java.util.ArrayList`), и фреймворк не знает, как его применить.
-
-### Решение
-
-Используйте поддерживаемый формат (`string`, `json`, `xml`, `bytes`, `yaml`, `spring-json`,
-`spring-xml`), нативный класс Kafka (`org.apache.kafka.common.serialization.*`) или свой
-сериализатор записи (см. [Расширяемость](Extensibility.md)). Список источников, которые принимает
-фреймворк, приведён в тексте ошибки.
+Полная таблица допустимых комбинаций — в [Конфигурации](Configuration.md). Если в `serializer`
+указан класс, который не умеет сериализовать сообщения, используйте поддерживаемый формат или свой
+сериализатор записи (см. [Расширяемость](Extensibility.md)).
 
 Ошибка при старте: `Connection [...] must have bootstrapServers configured`
 ---------------------------------------------------------------------------
@@ -119,36 +113,15 @@ integration:
 
 ### Причина
 
-Kafka-контекст собран раньше, чем JUnit-расширение фреймворка успело активировать инструментацию.
+Kafka-контекст собран раньше, чем JUnit-расширение фреймворка успело активировать свои плагины.
 Обычно это признак того, что тест запущен без `@EnableTestKafka` (или с несовместимым порядком
 расширений).
 
 ### Решение
 
 Запускайте тест через `@EnableTestKafka`; не переопределяйте порядок JUnit-расширений вручную. Если
-инструментация клиентов невозможна, используйте `@EnableTestKafka(inflight = false)` — это более
+клиенты приложения недоступны, используйте `@EnableTestKafka(inflight = false)` — это более
 медленный режим через Admin API.
-
-Ошибка при старте: `Invalid serializer config at connection[...]`
-----------------------------------------------------------------
-
-### Симптомы
-
-Контекст не поднимается, в сообщении есть путь до настройки:
-
-```text
-Invalid serializer config at connection[kafka1].topics[order-in]: Conflicting serde config: ...
-```
-
-### Причина
-
-Недопустимая комбинация настроек serde: например, `bean-ref` вместе с `key`/`value`/`headers` или
-`type: json` вместе с `value`.
-
-### Решение
-
-Приведите конфигурацию к одной из допустимых схем: «запись целиком» или «по частям». Полная таблица —
-в [Конфигурации](Configuration.md). Текст ошибки подсказывает, что именно конфликтует.
 
 Метод не вызывается, хотя указан в тесте
 ----------------------------------------
@@ -205,7 +178,7 @@ Invalid serializer config at connection[kafka1].topics[order-in]: Conflicting se
 
 ### Симптомы
 
-В Diff видно «сырую» запись (UTF-8) и `<exception>` с ошибкой Jackson.
+В Diff видно «сырую» запись (key/value как `byte[]` в Base64) и `<exception>` с ошибкой Jackson.
 
 ### Причина
 

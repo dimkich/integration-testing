@@ -7,7 +7,7 @@ import io.github.dimkich.integration.testing.redis.accessor.RedisAccessorCoordin
 import io.github.dimkich.integration.testing.redis.model.RedisKey;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.Cleanup;
@@ -110,7 +110,7 @@ public class RedisTestDataStorage implements KeyValueDataStorage, NowSetter {
                 connection.select(db);
                 currentDb = db;
             }
-            byte[] keyRaw = registry.findKeyCodec(name).getCodec().serialize(key);
+            byte[] keyRaw = registry.findKeyCodec(name).serialize(key);
             RedisDataSchema schema = registry.findSchema(name, entry.getKey().toString()).getSchema();
             accessorCoordinator.store(keyRaw, entry.getValue(), connection, schema);
         }

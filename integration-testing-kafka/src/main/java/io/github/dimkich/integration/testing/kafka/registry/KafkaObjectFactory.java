@@ -1,32 +1,47 @@
 package io.github.dimkich.integration.testing.kafka.registry;
 
+import io.github.dimkich.integration.testing.config.PropertyInheritanceMerger;
+import io.github.dimkich.integration.testing.kafka.KafkaRecord;
 import io.github.dimkich.integration.testing.kafka.config.RecordProperties;
 import io.github.dimkich.integration.testing.kafka.config.TopicProperties;
 import io.github.dimkich.integration.testing.kafka.serde.KafkaRecordSerdeFactory;
-import io.github.dimkich.integration.testing.kafka.serde.deserialization.KafkaRecordDeserializer;
-import io.github.dimkich.integration.testing.kafka.serde.deserialization.StringKafkaRecordDeserializer;
-import io.github.dimkich.integration.testing.kafka.serde.serialization.KafkaRecordSerializer;
-import io.github.dimkich.integration.testing.kafka.serde.serialization.StringKafkaRecordSerializer;
-import io.github.dimkich.integration.testing.serde.SerdeManager;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
 import io.github.dimkich.integration.testing.storage.exclusion.FieldExclusionProcessor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serializer;
-
-import static io.github.dimkich.integration.testing.kafka.serde.StringKafkaSerdeDefaults.*;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 /**
  * Creates {@link KafkaTopicMetadata} from {@link TopicProperties}: compiles the
- * excluded-fields tree and defers serde assembly until a serializer or deserializer is
- * actually requested.
+ * excluded-fields tree and defers serde resolution until a serializer or deserializer is
+ * actually requested. The record converter is always assembled by
+ * {@link KafkaRecordSerdeFactory} from the {@code value}/{@code key}/{@code headers}
+ * components; there is no record-level converter. Terminal defaults are applied here,
+ * after the whole inheritance chain has been merged.
  */
 @Slf4j
-@RequiredArgsConstructor
+@SuppressWarnings("rawtypes")
 public class KafkaObjectFactory {
     private final FieldExclusionProcessor fieldExclusionProcessor;
-    private final SerdeManager serdeManager;
     private final KafkaRecordSerdeFactory recordSerdeFactory;
+    private final PropertyInheritanceMerger merger;
+
+    /**
+     * Creates the factory.
+     *
+     * @param fieldExclusionProcessor compiles the excluded-fields configuration
+     * @param recordSerdeFactory      assembles record converters from components
+     * @param merger                  applies the default source to terminal record
+     *                                configurations without an explicit one
+     */
+    public KafkaObjectFactory(FieldExclusionProcessor fieldExclusionProcessor,
+                              KafkaRecordSerdeFactory recordSerdeFactory,
+                              PropertyInheritanceMerger merger) {
+        this.fieldExclusionProcessor = fieldExclusionProcessor;
+        this.recordSerdeFactory = recordSerdeFactory;
+        this.merger = merger;
+    }
 
     /**
      * Creates metadata for the given configuration, using defaults when the
@@ -46,29 +61,21 @@ public class KafkaObjectFactory {
         );
     }
 
-    @SuppressWarnings("unchecked")
-    private KafkaRecordSerializer resolveRecordSerializer(RecordProperties props) {
-        if (props == null) {
-            return new StringKafkaRecordSerializer();
-        }
-        return serdeManager.resolveAndAdaptSerializer(props, KafkaRecordSerializer.class, () -> {
-            log.debug("Kafka serde: no record-level serializer type/beanRef, assembling from value/key parts");
-            Serializer<Object> valueSer = serdeManager.resolveAndAdaptSerializer(
-                    props.getValue(), Serializer.class, () -> KEY_VALUE_SERIALIZER);
-            return recordSerdeFactory.createSerializer(props, valueSer, CORE_HEADER_SERIALIZER);
-        });
+    private TestSerdeConverter<KafkaRecord, ProducerRecord, TestSerdeContext> resolveRecordSerializer(
+            RecordProperties props) {
+        log.debug("Kafka serde: assembling serializer from value/key/headers components");
+        return recordSerdeFactory.createSerializer(withDefaults(props));
     }
 
-    @SuppressWarnings("unchecked")
-    private KafkaRecordDeserializer resolveRecordDeserializer(RecordProperties props) {
-        if (props == null) {
-            return new StringKafkaRecordDeserializer();
-        }
-        return serdeManager.resolveAndAdaptDeserializer(props, KafkaRecordDeserializer.class, () -> {
-            log.debug("Kafka serde: no record-level deserializer type/beanRef, assembling from value/key parts");
-            Deserializer<Object> valueDeser = serdeManager.resolveAndAdaptDeserializer(
-                    props.getValue(), Deserializer.class, () -> KEY_VALUE_DESERIALIZER);
-            return recordSerdeFactory.createDeserializer(props, valueDeser, CORE_HEADER_DESERIALIZER);
-        });
+    private TestSerdeConverter<ConsumerRecord, KafkaRecord, TestSerdeContext> resolveRecordDeserializer(
+            RecordProperties props) {
+        log.debug("Kafka serde: assembling deserializer from value/key/headers components");
+        return recordSerdeFactory.createDeserializer(withDefaults(props));
+    }
+
+    private RecordProperties withDefaults(RecordProperties props) {
+        RecordProperties effective = props != null ? props : new RecordProperties();
+        effective.applyDefaultSource(merger);
+        return effective;
     }
 }

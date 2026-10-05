@@ -1,12 +1,13 @@
 package io.github.dimkich.integration.testing.kafka.serde;
 
-import io.github.dimkich.integration.testing.serde.SerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
 import org.apache.kafka.common.header.Headers;
 
 /**
- * Typed Kafka context exposing topic and native Kafka {@link Headers}.
+ * Typed Kafka context exposing the topic and native Kafka {@link Headers}.
  */
-public interface KafkaSerdeContext extends SerdeContext {
+public interface KafkaSerdeContext extends TestSerdeContext {
+
     /**
      * Returns the topic of the record being serialized or deserialized.
      *

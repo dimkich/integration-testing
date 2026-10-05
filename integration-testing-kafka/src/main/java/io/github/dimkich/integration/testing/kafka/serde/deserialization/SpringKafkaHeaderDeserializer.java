@@ -1,8 +1,11 @@
 package io.github.dimkich.integration.testing.kafka.serde.deserialization;
 
-import lombok.RequiredArgsConstructor;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
 import org.apache.kafka.common.header.Headers;
 import org.springframework.kafka.support.KafkaHeaderMapper;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.util.HashMap;
@@ -10,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Deserializes Kafka headers via a {@link KafkaHeaderMapper}, typically
+ * Header deserializer converter using a {@link KafkaHeaderMapper}, typically
  * {@code DefaultKafkaHeaderMapper}.
  *
  * <p>The mapper handles duplicate keys and Spring Kafka's special headers
@@ -19,19 +22,32 @@ import java.util.Map;
  * generic duplicate collection without Spring-Kafka semantics, use
  * {@link CoreKafkaHeaderDeserializer} instead.
  */
-@RequiredArgsConstructor
-public class SpringKafkaHeaderDeserializer implements KafkaHeaderDeserializer {
+@Getter
+@SuppressWarnings("rawtypes")
+public class SpringKafkaHeaderDeserializer implements TestSerdeConverter<Headers, MultiValueMap, TestSerdeContext> {
 
     private final KafkaHeaderMapper delegate;
 
+    private final Class<Headers> inputClass = Headers.class;
+
+    private final Class<MultiValueMap> outputClass = MultiValueMap.class;
+
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
+
+    public SpringKafkaHeaderDeserializer(KafkaHeaderMapper delegate) {
+        this.delegate = delegate;
+    }
+
     @Override
-    public void deserialize(Headers source, MultiValueMap<String, Object> target) {
-        if (source == null) {
-            return;
+    public MultiValueMap convert(Headers headers, TestSerdeContext context) {
+        MultiValueMap<String, Object> target = new LinkedMultiValueMap<>();
+        if (headers == null) {
+            return target;
         }
         Map<String, Object> flat = new HashMap<>();
-        delegate.toHeaders(source, flat);
+        delegate.toHeaders(headers, flat);
         insertInto(flat, target);
+        return target;
     }
 
     /**

@@ -55,7 +55,7 @@ integration:
           port: 6380
 ```
 
-If your application uses standard Spring Boot auto-configuration and has only one database,
+If your application uses standard Spring Boot automatic configuration and has only one database,
 the default bean name is `redisConnectionFactory`.
 
 Inheritance and Deep Merge Pipeline
@@ -89,14 +89,13 @@ to bottom:
   `updatedAt`, and at Level 3 schema you added `hits` — the framework will automatically
   exclude all three fields: `createdAt`, `updatedAt`, and `hits`.
 
-**Exclusive Property Groups (`@PropertyInheritanceExclusive` annotation):**
+**Mutually Exclusive Fields (`bean-ref` and `type`):**
 
-* Fields that define how serializers are specified — the Spring bean name (`beanRef`) and
-  the fully qualified Java class name (`classRef`) — are grouped into an exclusive group `"ref"`.
-* Group rule: If a child configuration has at least one field from the exclusive group set,
-  then none of the fields from that group will be inherited from the parent. This prevents
-  conflicts (e.g., when a child wants to use a local `classRef` but also inherits a parent's
-  `beanRef`).
+* Inside the record base, each schema component and the key codec (`keyCodec`), `beanRef` and `type`
+  are two mutually exclusive ways to select the source: only one of them can be set.
+* If a child configuration sets at least one of these fields, the other one is not inherited from
+  the parent. This prevents a conflict where a child component defines `bean-ref` but also inherits
+  the parent's `type`.
 
 Complete Parameter Reference
 ----------------------------
@@ -113,62 +112,149 @@ These settings apply to all connections by default.
 | `password`             | String                    | Password for authentication                                            | `${embedded.redis.password}` |
 | `multipleDatabases`    | Boolean                   | Enable key separation by database index (`SELECT`)                     | `false`                      |
 | `syncBarrierTimeoutMs` | Long                      | Maximum wait time for the replication sync barrier in milliseconds     | `5000`                       |
-| `keyCodec`             | Codec                     | Global key codec configuration                                         | `StringRedisDataCodec`       |
-| `defaultSchema`        | Schema                    | Global default serialization schema                                    | `StringRedisDataSchema`      |
+| `keyCodec`             | Serde config              | Global key codec configuration                                         | `string`                     |
+| `defaultSchema`        | Schema                    | Global default serialization schema                                    | all components — `string`    |
 | `excludedFields`       | Set\<String\>             | Global list of fields to exclude from comparison in DTOs/maps          | Empty                        |
 | `connections`          | Map\<String, Connection\> | Map of Redis connections, keys are `RedisConnectionFactory` bean names | Empty                        |
 
-### Codec Object Structure (`keyCodec` or `Codec`)
+### Key Codec Structure (`keyCodec`)
 
-Used for configuring key encoding rules.
+The key codec is a single-slot source: a core serde provider (`string`, `json`, ...), a
+Spring Data `RedisSerializer` or a Redisson `Codec`/`RedissonClient`. The
+common fields and source selection rules are defined by the serde core config
+(`io.github.dimkich.integration.testing.serde.StandardSerdeProperties`).
 
-| Parameter           | Type          | Description                                                                         | Exclusivity   |
-|---------------------|---------------|-------------------------------------------------------------------------------------|---------------|
-| `beanRef`           | String        | Spring bean name of a `RedisDataCodec`                                              | Group `"ref"` |
-| `classRef`          | String        | Fully qualified class name of a `RedisDataCodec` to create via reflection           | Group `"ref"` |
-| `excludedFields`    | Set\<String\> | List of fields to exclude within the key structure (if the key is a complex object) | —             |
-| `valueBinaryFormat` | String        | Binary envelope template for keys                                                   | —             |
+| Parameter        | Type   | Description                                                                | Exclusivity   |
+|------------------|--------|----------------------------------------------------------------------------|---------------|
+| `type`           | String | Core provider name (`string`, `json`, ...) or source fully qualified class | Group `"ref"` |
+| `beanRef`        | String | Spring bean name of the source                                             | Group `"ref"` |
+| `binaryEnvelope` | String | Binary envelope template for keys                                          | —             |
 
-### Schema Object Structure (`defaultSchema`, `Schema`)
+### Schema Structure (`defaultSchema`, `schemas.*`)
 
-Used for configuring value serialization rules (plain values, collection elements, or hash
-fields).
+A schema is described by components — `value`, `hash-key`, `hash-value`, each with its own
+single-slot source (a core provider, a Spring Data `RedisSerializer` or a Redisson
+`Codec`/`RedissonClient`). Unset components are inherited from the parent schema by the property
+merge; a component may set only `binary-envelope` — the source comes from the parent schema.
 
-| Parameter               | Type          | Description                                                                    | Exclusivity   |
-|-------------------------|---------------|--------------------------------------------------------------------------------|---------------|
-| `beanRef`               | String        | Spring bean name of a `RedisDataSchema` or integration class (`RedisTemplate`) | Group `"ref"` |
-| `classRef`              | String        | Fully qualified class name of a `RedisDataSchema` to create via reflection     | Group `"ref"` |
-| `ignore`                | Boolean       | `true` — completely ignore keys matching this schema (hide from comparisons)   | —             |
-| `excludedFields`        | Set\<String\> | List of value fields to exclude from comparison                                | —             |
-| `valueBinaryFormat`     | String        | Binary envelope template for plain values and list/set elements                | —             |
-| `hashKeyBinaryFormat`   | String        | Binary envelope template for hash field keys                                   | —             |
-| `hashValueBinaryFormat` | String        | Binary envelope template for hash field values                                 | —             |
+| Parameter           | Type          | Description                                                                                          | Exclusivity   |
+|---------------------|---------------|------------------------------------------------------------------------------------------------------|---------------|
+| `type`              | String        | Core provider name (`string`, `json`, ...) or source fully qualified class — base for all components | Group `"ref"` |
+| `bean-ref`          | String        | Spring bean name of the source — base for all components                                             | Group `"ref"` |
+| `target-class`      | String        | Target value class for `json`/`xml`/`yaml` providers — base for all components                       | —             |
+| `object-mapper-ref` | String        | `ObjectMapper` bean name for `json`/`xml`/`yaml` providers — base for all components                 | —             |
+| `value`             | Serde config  | Codec for plain values and list/set/stream elements                                                  | —             |
+| `hash-key`          | Serde config  | Codec for hash field keys                                                                            | —             |
+| `hash-value`        | Serde config  | Codec for hash field values                                                                          | —             |
+| `ignore`            | Boolean       | `true` — completely ignore keys matching this schema (hide from comparisons)                         | —             |
+| `excludedFields`    | Set\<String\> | List of value fields to exclude from comparison                                                      | —             |
+
+### Record Base
+
+The `type`, `bean-ref`, `target-class` and `object-mapper-ref` fields can be set directly on the
+schema level — this is the base for all components: when the configuration is loaded they are
+merged into `value`, `hash-key` and `hash-value`, and a value set on a component overrides the
+base. If the base does not define a source, components use `string`. `binary-envelope` is not
+supported in the base: the envelope is set on each component separately.
+
+```yaml
+defaultSchema:
+  type: json
+  value:
+    type: bytes   # the component overrides the base
+```
+
+The base is inherited along the same chain (global schema → connection schema → prefix schema),
+and `bean-ref` and `type` remain mutually exclusive: a child schema source blocks the inheritance
+of the parent source.
+
+Each component is a regular serde core config
+(`io.github.dimkich.integration.testing.serde.StandardSerdeProperties`):
+
+| Parameter         | Type   | Description                                                                | Exclusivity   |
+|-------------------|--------|----------------------------------------------------------------------------|---------------|
+| `type`            | String | Core provider name (`string`, `json`, ...) or source fully qualified class | Group `"ref"` |
+| `beanRef`         | String | Spring bean name of the source                                             | Group `"ref"` |
+| `targetClass`     | String | Target value class for `json`/`xml`/`yaml` providers                       | —             |
+| `objectMapperRef` | String | `ObjectMapper` bean name for `json`/`xml`/`yaml` providers                 | —             |
+| `binaryEnvelope`  | String | Binary envelope template for this component                                | —             |
+
+`target-class` and `object-mapper-ref` can be set both in the record base and on a component (the
+component overrides); `binary-envelope` belongs to components only.
+
+Example: each component has its own source and envelope:
+
+```yaml
+schemas:
+  "redisson.value:":
+    value:
+      bean-ref: testValueSerializer
+      binary-envelope: "{FIX(8, 0)}{LEN(LONG, LE)}{CONTENT}"
+    hash-key:
+      type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
+    hash-value:
+      type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
+```
+
+The binary envelope format is described as a template of segments — see
+[Binary Envelopes](../serde/Binary-Envelopes.md).
+
+When the source is a Redisson `Codec` (including via `RedissonClient`), the core passes the slot
+role to the component: `hash-key` is encoded with the `MapKeyEncoder`/`MapKeyDecoder` pair,
+`hash-value` with `MapValueEncoder`/`MapValueDecoder`, and `value` with
+`ValueEncoder`/`ValueDecoder`. The same bean can be referenced from all three components — see
+[Redisson codec slots](Extensibility.md#redisson-codec-slots).
+
+### Schema Component Inheritance
+
+A schema may configure only some components: the missing ones are inherited from the parent schema
+by the property merge. Hierarchy: global `defaultSchema` → connection `defaultSchema` →
+`schemas.<prefix>`. By default, every component is the core `string` provider:
+
+```yaml
+integration:
+  testing:
+    redis:
+      connections:
+        redissonConnectionFactory:
+          schemas:
+            "user:":
+              value:
+                type: json        # values are JSON, hash-key/hash-value come from defaultSchema
+```
+
+The record base and components are inherited independently of each other, and inside the base and a
+component `bean-ref` and `type` are exclusive alternatives: if a child base or component defines its
+own source, the parent's source is not mixed in. `binary-envelope` is an ordinary component field: it
+can be set without a source, and the envelope is then applied to the inherited source.
+`excludedFields` are unioned.
 
 ### Connection Level Parameters (`connections.<ConnectionFactoryName>.*`)
 
 Describe settings for a specific `RedisConnectionFactory`. You can override any Global Level
 parameters here:
 
-| Parameter           | Type                                                                     | Description                                                                  | Inheritance                                      |
-|---------------------|--------------------------------------------------------------------------|------------------------------------------------------------------------------|--------------------------------------------------|
-| `host`              | String                                                                   | Host for connecting to Redis (the replicator connects here)                  | Overrides global `host`                          |
-| `port`              | Integer                                                                  | Port for connecting to Redis                                                 | Overrides global `port`                          |
-| `user`              | String                                                                   | Username for Redis authentication (root is treated as null)                  | Overrides global `user`                          |
-| `password`          | String                                                                   | Password for authentication                                                  | Overrides global `password`                      |
-| `multipleDatabases` | Boolean                                                                  | Enable key separation by database index (`SELECT`)                           | Overrides global `multipleDatabases`             |
-| `keyCodec`          | [`Codec`](#codec-object-structure-keycodec-or-codec)                     | Key codec configuration for this connection                                  | Fully replaces global `keyCodec`                 |
-| `defaultSchema`     | [`Schema`](#schema-object-structure-defaultschema-schema)                | Default serialization schema for this factory                                | Fully replaces global `defaultSchema`            |
-| `excludedFields`    | Set\<String\>                                                            | List of fields to exclude from comparison in DTOs/maps                       | Merged (Union) with global list                  |
-| `schemas`           | Map\<String, [`Schema`](#schema-object-structure-defaultschema-schema)\> | Map of individual schemas for key groups (Level 3). Keys are prefix patterns | Not inherited (defined only at connection level) |
+| Parameter           | Type                                                               | Description                                                                  | Inheritance                                                                |
+|---------------------|--------------------------------------------------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| `host`              | String                                                             | Host for connecting to Redis (the replicator connects here)                  | Overrides global `host`                                                    |
+| `port`              | Integer                                                            | Port for connecting to Redis                                                 | Overrides global `port`                                                    |
+| `user`              | String                                                             | Username for Redis authentication (root is treated as null)                  | Overrides global `user`                                                    |
+| `password`          | String                                                             | Password for authentication                                                  | Overrides global `password`                                                |
+| `multipleDatabases` | Boolean                                                            | Enable key separation by database index (`SELECT`)                           | Overrides global `multipleDatabases`                                       |
+| `keyCodec`          | Serde config                                                       | Key codec configuration for this connection                                  | Inherits global `keyCodec`; fields are overridden                          |
+| `defaultSchema`     | [`Schema`](#schema-structure-defaultschema-schemas)                | Default serialization schema for this factory                                | Inherits global `defaultSchema`; components can be overridden individually |
+| `excludedFields`    | Set\<String\>                                                      | List of fields to exclude from comparison in DTOs/maps                       | Merged (Union) with global list                                            |
+| `schemas`           | Map\<String, [`Schema`](#schema-structure-defaultschema-schemas)\> | Map of individual schemas for key groups (Level 3). Keys are prefix patterns | Not inherited (defined only at connection level)                           |
 
 Key Pattern Resolution (Longest-Prefix Match)
 ---------------------------------------------
 
-When any key is received from Redis, the framework must determine which schema to use. The
-`ConnectionSchemaRegistry` performs a trie-based search:
+When any key is received from Redis, the framework must determine which schema to use. The rule is
+simple: the most precise (longest) setting wins.
 
 1. The key is converted to a string representation using the key codec.
-2. The framework looks for the longest matching prefix among the keys in the `schemas` section.
+2. The framework looks for the longest matching prefix among the keys in the `schemas` section: the
+   more precise the key pattern, the higher its priority.
 3. If a match is found, that schema's configuration is applied.
 4. If no match is found, the connection's default schema (`defaultSchema`) is used.
 
@@ -179,7 +265,8 @@ Suppose the following schema configuration is set:
 ```yaml
 schemas:
   "redisson.TestRedisDto": # Schema A
-    bean-ref: testRedisTemplate
+    value:
+      bean-ref: testValueSerializer
   "redisson.TestRedisDto.backup": # Schema B
     ignore: true
 ```
@@ -198,7 +285,8 @@ in quotes and square brackets so the YAML parser recognizes them correctly:
 ```yaml
 schemas:
   "[redisson.bit]": # Required quotes and brackets when dots are present
-    class-ref: io.github.dimkich.integration.testing.redis.schema.ByteArrayRedisDataSchema
+    value:
+      type: bytes
 ```
 
 Ignoring Technical Noise (`ignore: true`)
@@ -241,24 +329,49 @@ integration:
         - "createdAt"
         - "updatedAt"
 
-      # All data is treated as plain strings by default
+      # All components use the core `string` provider by default (this is the default)
       defaultSchema:
-        class-ref: io.github.dimkich.integration.testing.redis.schema.StringRedisDataSchema
+        value:
+          type: string
+        hash-key:
+          type: string
+        hash-value:
+          type: string
 
       connections:
         # --- LEVEL 2: "redissonConnectionFactory" connection ---
         redissonConnectionFactory:
           defaultSchema:
-            # Override the default schema to RedissonClient
-            bean-ref: "redissonClient"
+            # Override the connection components (e.g. to Jdk serialization)
+            value:
+              type: "org.springframework.data.redis.serializer.JdkSerializationRedisSerializer"
+            hash-key:
+              type: "org.springframework.data.redis.serializer.JdkSerializationRedisSerializer"
+            hash-value:
+              type: "org.springframework.data.redis.serializer.JdkSerializationRedisSerializer"
           schemas:
             # --- LEVEL 3: Schemas for this connection ---
             "[redisson.TestRedisDto]":
-              bean-ref: "testRedisTemplate"
+              value:
+                bean-ref: "testValueSerializer"
               excludedFields:
                 - "metrics.hits"   # Additionally exclude the hit counter inside this DTO
             "[redisson.bit]":
-              class-ref: "io.github.dimkich.integration.testing.redis.schema.ByteArrayRedisDataSchema"
+              value:
+                type: bytes
+              hash-key:
+                type: bytes
+              hash-value:
+                type: bytes
+            "[redisson.envelope]":
+              # Components: each part has its own source and format
+              value:
+                bean-ref: "testValueSerializer"
+                binary-envelope: "{VER(1)}{LEN(INT, BE)}{CONTENT}"
+              hash-key:
+                type: "org.springframework.data.redis.serializer.JdkSerializationRedisSerializer"
+              hash-value:
+                type: "org.springframework.data.redis.serializer.JdkSerializationRedisSerializer"
             "redisson_lock:":
               ignore: true
 

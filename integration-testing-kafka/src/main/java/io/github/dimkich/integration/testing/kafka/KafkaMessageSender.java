@@ -3,9 +3,10 @@ package io.github.dimkich.integration.testing.kafka;
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
 import io.github.dimkich.integration.testing.kafka.registry.KafkaTopicMetadata;
 import io.github.dimkich.integration.testing.kafka.registry.KafkaTopicRegistry;
-import io.github.dimkich.integration.testing.kafka.serde.serialization.KafkaRecordSerializer;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
 import io.github.dimkich.integration.testing.message.TestMessageSender;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import java.util.Set;
  */
 @Slf4j
 @RequiredArgsConstructor
+@SuppressWarnings("rawtypes")
 public class KafkaMessageSender implements TestMessageSender {
     private final Set<String> connectionNames;
     private final KafkaProducer<byte[], byte[]> producer;
@@ -37,6 +39,7 @@ public class KafkaMessageSender implements TestMessageSender {
 
     @Override
     @SneakyThrows
+    @SuppressWarnings("unchecked")
     public void sendInboundMessage(AbstractMessage message) {
         if (!(message instanceof KafkaRecord kafkaRecord)) {
             throw new IllegalArgumentException("Expected KafkaRecord, got " + message.getClass());
@@ -46,11 +49,11 @@ public class KafkaMessageSender implements TestMessageSender {
         String connectionName = kafkaRecord.getConnection();
 
         KafkaTopicMetadata metadata = kafkaTopicRegistry.getMetadata(connectionName, topic);
-        KafkaRecordSerializer serializer = metadata.getSerializer();
+        TestSerdeConverter<KafkaRecord, ProducerRecord, TestSerdeContext> serializer = metadata.getSerializer();
 
         log.debug("Sending raw serialized message to topic [{}] via connection [{}]", topic, connectionName);
 
-        ProducerRecord<byte[], byte[]> record = serializer.serialize(kafkaRecord);
+        ProducerRecord<byte[], byte[]> record = serializer.convert(kafkaRecord, TestSerdeContext.EMPTY);
 
         if (record.timestamp() == null && dateTimeService.getDateTime() != null) {
             long fakeTimestamp = dateTimeService.getDateTime().toInstant().toEpochMilli();

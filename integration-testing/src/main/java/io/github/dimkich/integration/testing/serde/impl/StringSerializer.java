@@ -1,21 +1,25 @@
 package io.github.dimkich.integration.testing.serde.impl;
 
-import io.github.dimkich.integration.testing.serde.SerdeContext;
-import io.github.dimkich.integration.testing.serde.TestSerdeSerializer;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
 
 import java.nio.charset.StandardCharsets;
 
 /**
- * Serializes strings to UTF-8 bytes.
+ * Converter that encodes a value to UTF-8 bytes via {@code String.valueOf}.
  */
-public class StringSerializer implements TestSerdeSerializer<String, SerdeContext> {
-    @Override
-    public Class<SerdeContext> getContextClass() {
-        return SerdeContext.class;
-    }
+@Getter
+public class StringSerializer implements TestSerdeConverter<Object, byte[], TestSerdeContext> {
+
+    private final Class<Object> inputClass = Object.class;
+
+    private final Class<byte[]> outputClass = byte[].class;
+
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
     @Override
-    public byte[] serialize(String data, SerdeContext context) {
-        return data == null ? null : data.getBytes(StandardCharsets.UTF_8);
+    public byte[] convert(Object input, TestSerdeContext context) {
+        return input == null ? null : String.valueOf(input).getBytes(StandardCharsets.UTF_8);
     }
 }

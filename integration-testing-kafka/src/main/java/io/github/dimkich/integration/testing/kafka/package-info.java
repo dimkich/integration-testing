@@ -3,7 +3,7 @@
  *
  * <h2>Context model</h2>
  * <ul>
- *   <li>{@link io.github.dimkich.integration.testing.serde.SerdeContext} — marker interface,
+ *   <li>{@link io.github.dimkich.integration.testing.serde.TestSerdeContext} — marker interface,
  *       no methods. Prevents context-free serializers from touching transport metadata.</li>
  *   <li>{@link io.github.dimkich.integration.testing.kafka.serde.KafkaSerdeContext} —
  *       platform context exposing {@code getTopic()} and native {@code Headers}.</li>

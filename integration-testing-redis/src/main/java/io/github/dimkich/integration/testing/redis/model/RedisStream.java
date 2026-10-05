@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.redis.model;
 
 import com.moilioncircle.redis.replicator.rdb.datatype.Stream;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

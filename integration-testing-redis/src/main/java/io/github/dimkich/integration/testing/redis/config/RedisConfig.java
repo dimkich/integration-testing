@@ -3,12 +3,7 @@ package io.github.dimkich.integration.testing.redis.config;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.redis.RedisTestDataStorage;
 import io.github.dimkich.integration.testing.redis.accessor.*;
-import io.github.dimkich.integration.testing.redis.codec.RedissonCodecAdapter;
-import io.github.dimkich.integration.testing.redis.codec.SpringDataCodecAdapter;
-import io.github.dimkich.integration.testing.redis.codec.segment.*;
 import io.github.dimkich.integration.testing.redis.model.*;
-import io.github.dimkich.integration.testing.redis.registry.BinaryEnvelopeService;
-import io.github.dimkich.integration.testing.redis.registry.RedisAdapterResolver;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.redis.registry.RedisObjectFactory;
 import io.github.dimkich.integration.testing.redis.replication.*;
@@ -16,8 +11,11 @@ import io.github.dimkich.integration.testing.redis.replication.event.listener.Re
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisStreamHandler;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisSyncStateDelegator;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.UnknownPhaseListener;
-import io.github.dimkich.integration.testing.redis.schema.RedissonSchemaAdapter;
-import io.github.dimkich.integration.testing.redis.schema.SpringDataSchemaAdapter;
+import io.github.dimkich.integration.testing.redis.serde.RedisSchemaSerdeFactory;
+import io.github.dimkich.integration.testing.redis.serde.adapter.RedisRedissonDeserializerAdapter;
+import io.github.dimkich.integration.testing.redis.serde.adapter.RedisRedissonSerializerAdapter;
+import io.github.dimkich.integration.testing.redis.serde.adapter.RedisSpringDataDeserializerAdapter;
+import io.github.dimkich.integration.testing.redis.serde.adapter.RedisSpringDataSerializerAdapter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -55,14 +53,14 @@ import java.util.List;
 @EnableConfigurationProperties(RedisProperties.class)
 @ComponentScan(basePackages = {"io.github.dimkich.integration.testing.redis.replication.handler"})
 @Import({RedisConfig.PostProcessor.class, RedisDataSchemaRegistry.class, RedisObjectFactory.class,
+        RedisSchemaSerdeFactory.class,
         RedisAccessorCoordinator.class, StringDataAccessor.class, HashDataAccessor.class, ListDataAccessor.class,
-        SetDataAccessor.class, ZSetDataAccessor.class, StreamDataAccessor.class, RedissonCodecAdapter.class,
-        SpringDataCodecAdapter.class, SpringDataSchemaAdapter.class, RedissonSchemaAdapter.class,
-        RedisSyncManager.class, RedisReplicatorFactory.class, BinaryFormatParser.class, ContentSegmentProvider.class,
-        LengthSegmentProvider.class, TsSegmentProvider.class, FixSegmentProvider.class, Crc32SegmentProvider.class,
-        VersionSegmentProvider.class, StringSegmentProvider.class, HyperLogLogDataAccessor.class,
-        UnknownPhaseListener.class, RedisAdapterResolver.class, BinaryEnvelopeService.class,
-        RedisKeyResolver.class
+        SetDataAccessor.class, ZSetDataAccessor.class, StreamDataAccessor.class,
+        RedisSpringDataSerializerAdapter.class, RedisSpringDataDeserializerAdapter.class,
+        RedisRedissonSerializerAdapter.class,
+        RedisRedissonDeserializerAdapter.class,
+        RedisSyncManager.class, RedisReplicatorFactory.class, HyperLogLogDataAccessor.class,
+        UnknownPhaseListener.class, RedisKeyResolver.class
 })
 public class RedisConfig {
 
@@ -124,7 +122,6 @@ public class RedisConfig {
             }
         }
 
-        /** Bean definition for {@link RedisSyncBarrier} tied to {@code beans.factory}. */
         private BeanDefinition createBarrierDef(BeanNames beans) {
             return BeanDefinitionBuilder.genericBeanDefinition(RedisSyncBarrier.class)
                     .addConstructorArgValue(beans.factory)
@@ -132,7 +129,6 @@ public class RedisConfig {
                     .getBeanDefinition();
         }
 
-        /** Bean definition for {@link RedisInMemoryStore}. */
         private BeanDefinition createMemStoreDef(BeanNames beans) {
             AbstractBeanDefinition def = BeanDefinitionBuilder
                     .genericBeanDefinition(RedisInMemoryStore.class)
@@ -145,7 +141,6 @@ public class RedisConfig {
             return def;
         }
 
-        /** Bean definition for {@link RedisTestDataStorage}. */
         private BeanDefinition createStorageDef(BeanNames beans) {
             AbstractBeanDefinition def = BeanDefinitionBuilder
                     .genericBeanDefinition(RedisTestDataStorage.class)
@@ -157,7 +152,6 @@ public class RedisConfig {
             return def;
         }
 
-        /** Bean definition for {@link RedisSyncStateDelegator}. */
         private BeanDefinition createDelegatorDef(BeanNames beans) {
             AbstractBeanDefinition def = BeanDefinitionBuilder
                     .genericBeanDefinition(RedisSyncStateDelegator.class)
@@ -168,9 +162,6 @@ public class RedisConfig {
             return def;
         }
 
-        /**
-         * Bean definition for the replicator created by {@link RedisReplicatorFactory}.
-         */
         private BeanDefinition createReplicatorDef(BeanNames beans) {
             return BeanDefinitionBuilder.rootBeanDefinition(RedisReplicatorFactory.class)
                     .setFactoryMethodOnBean("createReplicator", beans.replicatorFactory)

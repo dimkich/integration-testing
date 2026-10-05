@@ -1,28 +1,30 @@
 package io.github.dimkich.integration.testing.serde.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.dimkich.integration.testing.serde.SerdeContext;
-import io.github.dimkich.integration.testing.serde.TestSerdeSerializer;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
 /**
- * Serializes values to bytes with a Jackson {@link ObjectMapper}.
- *
- * @param <T> the value type
+ * Converter that serializes values to bytes with a Jackson {@link ObjectMapper}.
  */
+@Getter
 @RequiredArgsConstructor
-public class JacksonSerializer<T> implements TestSerdeSerializer<T, SerdeContext> {
+public class JacksonSerializer implements TestSerdeConverter<Object, byte[], TestSerdeContext> {
+
     private final ObjectMapper objectMapper;
 
-    @Override
-    public Class<SerdeContext> getContextClass() {
-        return SerdeContext.class;
-    }
+    private final Class<Object> inputClass = Object.class;
+
+    private final Class<byte[]> outputClass = byte[].class;
+
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
     @Override
     @SneakyThrows
-    public byte[] serialize(T data, SerdeContext context) {
-        return data == null ? null : objectMapper.writeValueAsBytes(data);
+    public byte[] convert(Object input, TestSerdeContext context) {
+        return input == null ? null : objectMapper.writeValueAsBytes(input);
     }
 }

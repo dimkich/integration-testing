@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.redis.replication.purge;
 
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
-import io.github.dimkich.integration.testing.redis.registry.RedisKeyCodecMetadata;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataCodec;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -23,7 +23,7 @@ import java.util.Map;
 public class RedisPurgeTask {
     private final String storageName;
     private final RedisDataSchemaRegistry registry;
-    private final RedisKeyCodecMetadata keyCodecMeta;
+    private final RedisDataCodec keyCodec;
     private final Map<Integer, RedisDbPurgeTask> dbTasks = new HashMap<>();
 
     /** @param db Redis logical database index */
@@ -50,7 +50,7 @@ public class RedisPurgeTask {
                 }
                 conn.openPipeline();
                 try {
-                    task.execute(conn, storageName, registry, keyCodecMeta);
+                    task.execute(conn, storageName, registry, keyCodec);
                 } finally {
                     conn.closePipeline();
                 }

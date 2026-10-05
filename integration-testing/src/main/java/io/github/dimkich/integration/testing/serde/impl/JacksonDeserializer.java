@@ -2,46 +2,46 @@ package io.github.dimkich.integration.testing.serde.impl;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.dimkich.integration.testing.serde.SerdeContext;
-import io.github.dimkich.integration.testing.serde.TestSerdeDeserializer;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Type;
 
 /**
- * Deserializes bytes to the target type with a Jackson {@link ObjectMapper}.
- *
- * @param <T> the value type
+ * Converter that deserializes bytes to the target type with a Jackson {@link ObjectMapper}.
  */
-public class JacksonDeserializer<T> implements TestSerdeDeserializer<T, SerdeContext> {
+@Getter
+public class JacksonDeserializer implements TestSerdeConverter<byte[], Object, TestSerdeContext> {
+
+    @Getter(AccessLevel.NONE)
     private final ObjectMapper objectMapper;
+
+    @Getter(AccessLevel.NONE)
     private final JavaType javaType;
 
+    private final Class<byte[]> inputClass = byte[].class;
+
+    private final Class<Object> outputClass = Object.class;
+
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
+
     /**
-     * Creates the deserializer.
+     * Creates the converter.
      *
      * @param objectMapper the mapper to read values with
-     * @param targetType the type to deserialize to; when {@code null},
-     *                   {@link Object} is used
+     * @param targetType   the type to deserialize to; when {@code null}, {@link Object} is used
      */
     public JacksonDeserializer(ObjectMapper objectMapper, Type targetType) {
         this.objectMapper = objectMapper;
-        this.javaType = targetType != null
-                ? objectMapper.constructType(targetType)
-                : objectMapper.constructType(Object.class);
-    }
-
-    @Override
-    public Class<SerdeContext> getContextClass() {
-        return SerdeContext.class;
+        this.javaType = objectMapper.constructType(targetType != null ? targetType : Object.class);
     }
 
     @Override
     @SneakyThrows
-    public T deserialize(byte[] data, SerdeContext context) {
-        if (data == null) {
-            return null;
-        }
-        return objectMapper.readValue(data, javaType);
+    public Object convert(byte[] input, TestSerdeContext context) {
+        return input == null ? null : objectMapper.readValue(input, javaType);
     }
 }

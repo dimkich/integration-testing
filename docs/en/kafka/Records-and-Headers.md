@@ -112,6 +112,11 @@ Here `receivedMessages` is an example storage: in the module tests this is the b
 stores the messages it received. In your project it can be any storage (a database, a cache, a bean
 collection). See [Test Initialization](../Initialization.md) for more about diffs.
 
+`<dataStorageDiff>` is a diff against the **previous case**, not the absolute state of the storage. If the
+previous case left a record in the storage, the next case describes only the changes relative to it
+(deleted fields use `xsi:nil`). A case that leaves data behind therefore affects the next case's
+expectation.
+
 Headers
 -------
 
@@ -133,7 +138,7 @@ Notes:
 
 * in XML, repeated tags with the same name accumulate into a list (in JSON, use an array);
 * during serialization, headers are written "as is" (plain format) or through the Spring mapper —
-  this depends on the `headers` setting (see [Serde](Serde.md));
+  this depends on the record base and the `headers` setting (see [Serde](Serde.md));
 * Spring formats may add service headers (`__TypeId__`, `spring_json_header_types`) and Kafka
   technical headers (`kafka_offset`, `kafka_receivedTimestamp`, etc.) — they are usually excluded via
   `excluded-fields`.
@@ -152,8 +157,11 @@ Deserialization errors
 ----------------------
 
 If the sniffer cannot parse an application message, the case does not fail immediately: the record is
-stored "raw" (UTF-8) together with the error description, and the exception is rethrown later, during
-assertions. In an expectation, such a record is described with an `<exception>` block:
+stored together with the error description, and the exception is rethrown later, during assertions.
+The original bytes are kept as is: key, value and header values are written as `byte[]`, so binary
+payloads (Protobuf, Avro, gzip, ...) are not corrupted by a UTF-8 conversion. In XML, `byte[]` is
+rendered as Base64 (`type="byte[]"`); in JSON — as `["byte[]", "<Base64>"]`. In an expectation, such
+a record is described with an `<exception>` block:
 
 ```xml
 
@@ -162,8 +170,8 @@ assertions. In an expectation, such a record is described with an `<exception>` 
         <exceptionType>MismatchedInputException</exceptionType>
         <message>Cannot construct instance of `com.example.OrderEvent` ...</message>
     </exception>
-    <key>error-invalid-json</key>
-    <value>"{invalid json}"</value>
+    <key type="byte[]">ZXJyb3ItaW52YWxpZC1qc29u</key>
+    <value type="byte[]">IntpbnZhbGlkIGpzb259Ig==</value>
 </outboundMessage>
 ```
 

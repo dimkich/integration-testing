@@ -9,7 +9,7 @@ import io.github.dimkich.integration.testing.redis.model.RedisKey;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaMetadata;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.redis.replication.purge.RedisPurgeBuilder;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import io.github.sugarcubes.cloner.Cloner;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +17,9 @@ import lombok.Setter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 
 /**
@@ -58,6 +56,7 @@ public class RedisInMemoryStore {
     private volatile ZonedDateTime now = ZonedDateTime.now();
 
     private final Map<RedisKey, RedisEntry> currentValue = new ConcurrentHashMap<>();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Registers a listener on the backing {@link Replicator} (for example sync-phase hooks).
@@ -144,13 +143,18 @@ public class RedisInMemoryStore {
      * @param consumer schema-aware mutation
      */
     public void compute(long db, byte[] key, BiConsumer<RedisDataSchema, RedisEntry> consumer) {
-        RedisKey redisKey = getKey(db, key);
-        RedisDataSchemaMetadata metadata = registry.findSchema(name, redisKey.getKey().toString());
-        RedisEntry entry = currentValue.computeIfAbsent(redisKey, k -> new RedisEntry());
-        redisKey.setIgnored(metadata.isIgnore());
-        consumer.accept(metadata.getSchema(), entry);
-        if (entry.isEmpty()) {
-            currentValue.remove(redisKey);
+        lock.writeLock().lock();
+        try {
+            RedisKey redisKey = getKey(db, key);
+            RedisDataSchemaMetadata metadata = registry.findSchema(name, redisKey.getKey().toString());
+            RedisEntry entry = currentValue.computeIfAbsent(redisKey, k -> new RedisEntry());
+            redisKey.setIgnored(metadata.isIgnore());
+            consumer.accept(metadata.getSchema(), entry);
+            if (entry.isEmpty()) {
+                currentValue.remove(redisKey);
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -160,7 +164,12 @@ public class RedisInMemoryStore {
      * @param key raw Redis key bytes
      */
     public void remove(byte[] key) {
-        currentValue.remove(getKey(currentDb, key));
+        lock.writeLock().lock();
+        try {
+            currentValue.remove(getKey(currentDb, key));
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -178,11 +187,16 @@ public class RedisInMemoryStore {
      * @param newKeyRaw new key bytes
      */
     public void rename(byte[] oldKeyRaw, byte[] newKeyRaw) {
-        RedisKey oldKeyIdentity = getKey(currentDb, oldKeyRaw);
-        RedisKey newKey = getKey(currentDb, newKeyRaw);
-        RedisEntry val = currentValue.remove(oldKeyIdentity);
-        if (val != null) {
-            currentValue.put(newKey, val);
+        lock.writeLock().lock();
+        try {
+            RedisKey oldKeyIdentity = getKey(currentDb, oldKeyRaw);
+            RedisKey newKey = getKey(currentDb, newKeyRaw);
+            RedisEntry val = currentValue.remove(oldKeyIdentity);
+            if (val != null) {
+                currentValue.put(newKey, val);
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -195,31 +209,51 @@ public class RedisInMemoryStore {
      * @param replace    if {@code true}, overwrite an existing destination entry
      */
     public void copy(byte[] srcKeyRaw, byte[] destKeyRaw, boolean replace) {
-        RedisKey srcKey = getKey(currentDb, srcKeyRaw);
-        RedisKey destKey = getKey(currentDb, destKeyRaw);
-        RedisEntry val = currentValue.get(srcKey);
-        if (val != null) {
-            if (replace || !currentValue.containsKey(destKey)) {
-                currentValue.put(destKey, cloner.clone(val));
+        lock.writeLock().lock();
+        try {
+            RedisKey srcKey = getKey(currentDb, srcKeyRaw);
+            RedisKey destKey = getKey(currentDb, destKeyRaw);
+            RedisEntry val = currentValue.get(srcKey);
+            if (val != null) {
+                if (replace || !currentValue.containsKey(destKey)) {
+                    currentValue.put(destKey, cloner.clone(val));
+                }
             }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
     /** Drops all in-memory keys belonging to {@link #currentDb}. */
     public void flushDb() {
-        currentValue.keySet().removeIf(key -> Objects.equals(key.getDb(), currentDb));
+        lock.writeLock().lock();
+        try {
+            currentValue.keySet().removeIf(key -> Objects.equals(key.getDb(), currentDb));
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /** Clears the entire in-memory keyspace across all logical databases. */
     public void flushAll() {
-        currentValue.clear();
+        lock.writeLock().lock();
+        try {
+            currentValue.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
      * @param key resolved key identity (DB + string key)
      */
     public void removeKey(RedisKey key) {
-        currentValue.remove(key);
+        lock.writeLock().lock();
+        try {
+            currentValue.remove(key);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -227,27 +261,47 @@ public class RedisInMemoryStore {
      * @param entry entry to store (not cloned)
      */
     public void putKey(RedisKey key, RedisEntry entry) {
-        currentValue.put(key, entry);
+        lock.writeLock().lock();
+        try {
+            currentValue.put(key, entry);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
-     * @return unmodifiable view of the live key-to-entry map (for tests and diagnostics)
+     * @return consistent unmodifiable copy of the key-to-entry map (for tests and diagnostics);
+     *         entries themselves are live values
      */
     public Map<RedisKey, RedisEntry> getCurrentValue() {
-        return Collections.unmodifiableMap(currentValue);
+        lock.readLock().lock();
+        try {
+            return Collections.unmodifiableMap(new LinkedHashMap<>(currentValue));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**
      * Advances the virtual clock, detects expired entries in memory, and applies matching {@code DEL}/{@code HDEL}
      * on the backing Redis via {@link RedisPurgeBuilder}.
+     * <p>
+     * The in-memory mirror is never mutated here: expired entries are only read (under the read
+     * lock) and the actual deletions arrive back through replication.
      *
      * @param newTime            new virtual time used for TTL evaluation
      * @param connectionFactory  connection to the Redis instance under test
      */
     public void updateTimeAndPurge(ZonedDateTime newTime, RedisConnectionFactory connectionFactory) {
+        barrier.awaitSynchronized(properties.getSyncBarrierTimeoutMs());
         this.now = newTime;
         RedisPurgeBuilder builder = new RedisPurgeBuilder(name, registry, now);
-        currentValue.forEach(builder::addCandidate);
+        lock.readLock().lock();
+        try {
+            currentValue.forEach(builder::addCandidate);
+        } finally {
+            lock.readLock().unlock();
+        }
         builder.build().execute(connectionFactory);
     }
 
@@ -259,21 +313,27 @@ public class RedisInMemoryStore {
      * @return snapshot keyed by {@link RedisKey#toString()}; empty map if the store is empty
      */
     public Map<String, Object> getSnapshot() {
-        barrier.triggerAndAwait(properties.getSyncBarrierTimeoutMs());
-        if (currentValue.isEmpty()) {
-            return Map.of();
-        }
-        Map<String, Object> snapshot = new HashMap<>();
-        currentValue.forEach((redisKey, entry) -> {
-            if (redisKey.isIgnored()) {
-                return;
+        barrier.awaitSynchronized(properties.getSyncBarrierTimeoutMs());
+        lock.readLock().lock();
+        try {
+            if (currentValue.isEmpty()) {
+                return Map.of();
             }
-            Object clonedValue = cloner.clone(entry);
-            RedisDataSchemaMetadata metadata = registry.findSchema(name, redisKey.getKey().toString());
-            metadata.getFieldExclusion().process(clonedValue);
-            snapshot.put(redisKey.toString(), clonedValue);
-        });
-        return snapshot;
+            Map<String, Object> snapshot = new HashMap<>();
+            currentValue.forEach((redisKey, entry) -> {
+                if (redisKey.isIgnored()) {
+                    return;
+                }
+                RedisEntry clonedEntry = cloner.clone(entry);
+                clonedEntry.refreshTtl(now);
+                RedisDataSchemaMetadata metadata = registry.findSchema(name, redisKey.getKey().toString());
+                metadata.getFieldExclusion().process(clonedEntry);
+                snapshot.put(redisKey.toString(), clonedEntry);
+            });
+            return snapshot;
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**

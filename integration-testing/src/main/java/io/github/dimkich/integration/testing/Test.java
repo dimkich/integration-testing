@@ -169,7 +169,9 @@ public abstract class Test {
      * <p>
      * If the test is already initialized, it will fix the after hooks for subtests.
      * Otherwise, it recursively calls before on the parent test, validates the test structure,
-     * executes the before consumer, and marks the test as initialized.
+     * executes the before consumer, and marks the test as initialized. The test is marked
+     * initialized even when the before consumer fails, so the after hook still cleans up
+     * partial initialization.
      *
      * @param before the consumer to execute before the test runs
      * @param after the consumer to execute after the test runs (used for fixing subtests)
@@ -183,8 +185,11 @@ public abstract class Test {
                 parentTest.before(before, after);
             }
             check();
-            before.accept(this);
-            initialized = true;
+            try {
+                before.accept(this);
+            } finally {
+                initialized = true;
+            }
         }
     }
 
@@ -408,7 +413,7 @@ public abstract class Test {
      * @return Optional.of(this) if predicate matches, Optional.empty() otherwise
      * @throws NullPointerException if predicate is null
      */
-    public Optional<Test> filter(Predicate<Test> predicate) throws Exception {
+    public Optional<Test> filter(Predicate<Test> predicate) {
         Objects.requireNonNull(predicate);
         return predicate.test(this) ? Optional.of(this) : Optional.empty();
     }

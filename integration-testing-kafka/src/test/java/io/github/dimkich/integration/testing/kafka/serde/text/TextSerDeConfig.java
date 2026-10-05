@@ -126,6 +126,16 @@ public class TextSerDeConfig {
         return new KafkaTemplate<>(textProducerFactory);
     }
 
+    @Bean
+    public StringSerializer textStringSerializer() {
+        return new StringSerializer();
+    }
+
+    @Bean
+    public StringDeserializer textStringDeserializer() {
+        return new StringDeserializer();
+    }
+
 
     @Bean
     public KafkaAdmin.NewTopics topics() {

@@ -90,6 +90,25 @@ public class XmlSerDeConfig {
     }
 
     @Bean
+    public ProducerFactory<String, Object> springXmlNoTypeProducerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+        JsonSerializer<Object> jsonSerializer = new JsonSerializer<>(xmlObjectMapper());
+        jsonSerializer.setAddTypeInfo(false);
+
+        return new DefaultKafkaProducerFactory<>(props, null, jsonSerializer);
+    }
+
+    @Bean
+    public KafkaTemplate<String, Object> springXmlNoTypeKafkaTemplate() {
+        KafkaTemplate<String, Object> template = new KafkaTemplate<>(springXmlNoTypeProducerFactory());
+        template.setMessageConverter(new MessagingMessageConverter());
+        return template;
+    }
+
+    @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> xmlListenerContainerFactory() {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, Object>();
         factory.setConsumerFactory(byteConsumerFactory());

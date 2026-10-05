@@ -19,7 +19,8 @@ import java.util.Map;
  * manual {@code Binder} used during {@code BeanDefinitionRegistryPostProcessor}
  * does not see {@code @ConfigurationPropertiesBinding} beans (in particular, the
  * {@code TypeConverter} for {@code java.lang.reflect.Type} fields declared in
- * {@link io.github.dimkich.integration.testing.serde.SerdeProperties}). Binding
+ * {@link RecordProperties} and
+ * {@link io.github.dimkich.integration.testing.serde.StandardSerdeProperties}). Binding
  * only the primitive fields avoids the conversion entirely.
  */
 @Data

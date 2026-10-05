@@ -1,26 +1,30 @@
 package io.github.dimkich.integration.testing.serde.provider;
 
-import io.github.dimkich.integration.testing.serde.SerdeContext;
-import io.github.dimkich.integration.testing.serde.TestSerdeDeserializer;
-import lombok.RequiredArgsConstructor;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
 
 import java.nio.charset.StandardCharsets;
 
-@RequiredArgsConstructor
-public class TaggedDeserializer implements TestSerdeDeserializer<Object, SerdeContext> {
+@Getter
+public class TaggedDeserializer implements TestSerdeConverter<byte[], Object, TestSerdeContext> {
+
+    private final Class<byte[]> inputClass = byte[].class;
+    private final Class<Object> outputClass = Object.class;
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
+
     private final String prefix;
 
-    @Override
-    public Class<SerdeContext> getContextClass() {
-        return SerdeContext.class;
+    public TaggedDeserializer(String prefix) {
+        this.prefix = prefix;
     }
 
     @Override
-    public Object deserialize(byte[] data, SerdeContext context) {
-        if (data == null) {
+    public Object convert(byte[] input, TestSerdeContext context) {
+        if (input == null) {
             return null;
         }
-        String text = new String(data, StandardCharsets.UTF_8);
+        String text = new String(input, StandardCharsets.UTF_8);
         String tag = prefix + ":";
         return text.startsWith(tag) ? text.substring(tag.length()) : text;
     }

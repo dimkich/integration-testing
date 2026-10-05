@@ -1,7 +1,10 @@
 package io.github.dimkich.integration.testing.kafka.serde.serialization;
 
-import lombok.RequiredArgsConstructor;
+import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
+import lombok.Getter;
 import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.springframework.kafka.support.KafkaHeaderMapper;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.util.MultiValueMap;
@@ -11,16 +14,29 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * {@link KafkaHeaderSerializer} delegating to a Spring Kafka {@link KafkaHeaderMapper}.
+ * Header serializer converter delegating to a Spring Kafka {@link KafkaHeaderMapper}.
  */
-@RequiredArgsConstructor
-public class SpringKafkaHeaderSerializer implements KafkaHeaderSerializer {
+@Getter
+@SuppressWarnings("rawtypes")
+public class SpringKafkaHeaderSerializer implements TestSerdeConverter<MultiValueMap, Headers, TestSerdeContext> {
 
     private final KafkaHeaderMapper delegate;
 
+    private final Class<MultiValueMap> inputClass = MultiValueMap.class;
+
+    private final Class<Headers> outputClass = Headers.class;
+
+    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
+
+    public SpringKafkaHeaderSerializer(KafkaHeaderMapper delegate) {
+        this.delegate = delegate;
+    }
+
     @Override
-    public void serialize(MultiValueMap<String, Object> source, Headers target) {
-        delegate.fromHeaders(new MessageHeaders(flattenSingleValues(source)), target);
+    public Headers convert(MultiValueMap source, TestSerdeContext context) {
+        Headers headers = new RecordHeaders();
+        delegate.fromHeaders(new MessageHeaders(flattenSingleValues(source)), headers);
+        return headers;
     }
 
     /**
@@ -30,12 +46,13 @@ public class SpringKafkaHeaderSerializer implements KafkaHeaderSerializer {
      * does today). Nulls inside a multi-element list are preserved; a single
      * null value is skipped.
      */
-    public static Map<String, Object> flattenSingleValues(MultiValueMap<String, Object> source) {
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> flattenSingleValues(MultiValueMap source) {
         Map<String, Object> flat = new HashMap<>();
         if (source == null) {
             return flat;
         }
-        for (Map.Entry<String, List<Object>> entry : source.entrySet()) {
+        for (Map.Entry<String, List<Object>> entry : ((Map<String, List<Object>>) source).entrySet()) {
             List<Object> values = entry.getValue();
             if (values.isEmpty()) {
                 continue;

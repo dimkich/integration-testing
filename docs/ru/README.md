@@ -23,6 +23,16 @@
 * **[Конфигурация TestSetupModule](TestSetupModule.md)** — Регистрация типов, алиасов и настройка клонирования.
 * **[Инициализация тестов](Initialization.md)** — Настройка окружения: время, БД, кэши, моки.
 
+### Сериализация (Serde)
+
+* **[Обзор Serde](serde/README.md)** — Выбор источника, `target-class`/`object-mapper-ref`, ядровые провайдеры,
+  наследование настроек, диагностика.
+* **[Бинарные упаковки](serde/Binary-Envelopes.md)** — Envelope-структура,
+  теги `{CONTENT}`, `{LEN}`, `{VER}`, `{TS}`, `{CRC32}`, `{FIX}`, `{STR}`, примеры для Redis и Kafka.
+* **[Расширяемость Serde](serde/Extensibility.md)** — Свои форматы (`TestSerdeProviderFactory`), фабрики
+  конвертеров (`TestSerdeConverterFactory`),
+  адаптеры (`TestSerdeAdapter`), декораторы (`TestSerdeDecoratorFactory`), теги `BinarySegment`.
+
 ### Redis
 
 * **[Обзор Redis](redis/README.md)** — Настройка `@EnableTestRedis`, XML-примеры, типы данных.
@@ -30,12 +40,10 @@
   Stream, HyperLogLog.
 * **[Конфигурация](redis/Configuration.md)** — Подключения, Deep Merge, Longest-Prefix Match,
   полный `application-test.yml`.
-* **[Бинарные упаковки](redis/Binary-Envelopes.md)** — Envelope-структура,
-  теги `{CONTENT}`, `{LEN}`, `{VER}`, `{TS}`, `{CRC32}`, `{FIX}`, `{STR}`, кастомные теги.
 * **[TTL и Time Shift](redis/TTL-Time-Shift.md)** — Виртуальное время, TTL хэш-полей (Redis 7.4+), пошаговый сценарий.
 * **[Устранение неполадок](redis/Troubleshooting.md)** — `Method not found`, `No handler`, `Redis Sync Timeout`,
   пустой `dataStorageDiff`.
-* **[Расширяемость](redis/Extensibility.md)** — Кастомные кодек/схема/доступ к данным, теги `BinarySegment`, обработчики
+* **[Расширяемость](redis/Extensibility.md)** — Кастомные кодек/схема/доступ к данным, обработчики
   потоков и событий, `TestSetupModule.addSubTypes()`.
 
 ### Kafka
@@ -45,15 +53,15 @@
   `ignore`/`ignore-inbound`, `excluded-fields`.
 * **[Записи и заголовки](kafka/Records-and-Headers.md)** — `<inboundMessage>`/`<outboundMessage>`, заголовки,
   tombstone, ошибки десериализации.
-* **[Сериализация (Serde)](kafka/Serde.md)** — Форматы String/JSON/XML/bytes, настройка по частям,
-  `spring-json`/`spring-xml`, заголовки с информацией о типе.
+* **[Сериализация (Serde в Kafka)](kafka/Serde.md)** — Настройка записи целиком и по частям,
+  `spring-json`/`spring-xml`, заголовки с информацией о типе; общие правила — в [обзоре Serde](serde/README.md).
 * **[In-Flight и лаг](kafka/In-Flight-and-Lag.md)** — Ожидание обработки, два режима, таймауты, Cold Start, транзакции.
 * **[Устранение неполадок](kafka/Troubleshooting.md)** — Timeout ожидания, ошибки serde-конфига, пропавшие
   сообщения, Docker.
 * **[Сценарии с ошибками](kafka/Error-Handling.md)** — Незакоммиченные offset'ы, пропущенные упавшие сообщения,
   принудительный коммит из теста.
-* **[Расширяемость](kafka/Extensibility.md)** — Свои сериализаторы, заголовки и форматы через `bean-ref` и
-  `TestSerdeProvider`.
+* **[Расширяемость](kafka/Extensibility.md)** — Свои сериализаторы, десериализаторы и заголовки через
+  `bean-ref`; свои форматы — в [расширяемости Serde](serde/Extensibility.md).
 
 ### Инструменты и Интеграция
 

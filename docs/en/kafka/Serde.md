@@ -25,52 +25,71 @@ This is enough for a quick start and text messages.
 Two configuration styles
 ------------------------
 
-**Whole record.** Configured once for the entire message:
+**Record base.** The record-level fields `type`, `bean-ref`, `target-class`, `object-mapper-ref`
+and the `spring-json`/`spring-xml` settings are a base for all parts: when the configuration is
+loaded they are merged into the `value`, `key` and `headers` components, and a value configured
+in a component overrides the base. When the base does not define a format, the parts use the
+defaults: `key` and `value` are strings, `headers` are plain.
 
 ```yaml
 "order-out":
   deserializer:
     type: json
     target-class: com.example.kafka.OrderEvent
+    key:
+      type: string
 ```
 
-**Per part.** Key, value and headers are configured separately:
+**Per part.** Key, value and headers are configured separately; parts override the base field by
+field:
 
 ```yaml
 "order-out":
   deserializer:
+    type: json
+    target-class: com.example.kafka.OrderEvent
     key:
       type: string
-    value:
-      type: json
-      target-class: com.example.kafka.OrderEvent
     headers:
       type: org.springframework.kafka.support.DefaultKafkaHeaderMapper
 ```
 
-The styles cannot be mixed at one level: `bean-ref` does not combine with parts, `type` does not
-combine with `value`, etc. The full table of allowed combinations is in
-[Configuration](Configuration.md).
+Components may also be configured explicitly — the base fills their undefined fields:
+for example, `value: {binary-envelope: ...}` works together with the record-level `type: json`.
 
 Provider reference
 ------------------
 
-| `type`                     | Available at      | What it does                                                               |
-|----------------------------|-------------------|----------------------------------------------------------------------------|
-| `string`                   | record and parts  | UTF-8 strings                                                              |
-| `json`                     | record and parts  | Jackson JSON, supports `target-class` and `object-mapper-ref`              |
-| `xml`                      | record and parts  | Jackson XML, supports `target-class` and `object-mapper-ref`               |
-| `yaml`                     | record and parts  | YAML                                                                       |
-| `bytes`                    | record and parts  | raw bytes                                                                  |
-| `spring-json`              | whole record only | Spring Kafka `JsonSerializer`/`JsonDeserializer` with type info in headers |
-| `spring-xml`               | whole record only | the same for XML                                                           |
-| fully qualified class name | record and parts  | the class is created and used as is                                        |
-| `bean-ref`                 | record and parts  | a ready Spring bean is used as is                                          |
+The providers shared by all platforms (`string`, `json`, `xml`, `yaml`, `bytes`), the
+`target-class`/`object-mapper-ref` fields and the source selection rules are described in the
+[Serde overview](../serde/README.md). In Kafka the core formats are available both as a whole
+record and as parts; platform providers are whole-record only:
 
-The `spring-json`/`spring-xml` providers do not work inside `key`/`value`/`headers`: for parts use
-`json`/`xml` — same format, but without type information.
+| `type`                                   | Available at     | What it does                                                                                                        |
+|------------------------------------------|------------------|---------------------------------------------------------------------------------------------------------------------|
+| `string`, `json`, `xml`, `yaml`, `bytes` | record and parts | core formats — see the [Serde overview](../serde/README.md)                                                         |
+| `spring-json`                            | record and parts | Spring Kafka `JsonSerializer`/`JsonDeserializer` with type info in headers; in `headers` — the Spring header mapper |
+| `spring-xml`                             | record and parts | the same for XML                                                                                                    |
+| fully qualified class name               | record and parts | the class is created and used as is                                                                                 |
+| `bean-ref`                               | record and parts | a ready Spring bean is used as is                                                                                   |
 
-If only `value` is configured for a part, the `key` stays a string and `headers` stay plain.
+At the record level, `type`/`bean-ref` may also point to a native Kafka `Serializer`/`Deserializer`:
+after the merge it becomes the serde of every part, unless the part is overridden by its own
+configuration.
+
+`spring-json`/`spring-xml` can be applied to individual parts as well: in `key`/`value` they work as
+`JsonSerializer`/`JsonDeserializer` (`__KeyTypeId__` for the key, `__TypeId__` for the value), and in
+`headers` as the Spring header mapper.
+
+If the base is not set and only `value` is configured, the `key` stays a string and `headers` stay
+plain.
+
+`binary-envelope` — a binary envelope template (see [Binary Envelopes](../serde/Binary-Envelopes.md)) —
+can be added only to the `key`/`value` parts: a core provider (`json`/`xml`/…) or a native Kafka
+`Serializer`/`Deserializer` (FQCN `type` or `bean-ref`). A whole-record `binary-envelope` is not
+supported: to wrap the value, configure the envelope on `value` (for example,
+`value: {binary-envelope: ...}` together with the record-level `type: json`). `binary-envelope`
+is not supported for `headers`: headers are serialized per value.
 
 The `spring-json` and `spring-xml` settings
 -------------------------------------------
@@ -119,8 +138,9 @@ Header serialization
 
 Headers can be described in two ways:
 
-* **plain format (default)** — each value is written as a string; repeated values are preserved in
-  order of appearance. Suitable for simple text headers.
+* **plain format (the default when the base does not define a header format)** — each value is
+  written as a string; repeated values are preserved in order of appearance. Suitable for simple
+  text headers.
 * **`DefaultKafkaHeaderMapper`** — a Spring mapper that understands types and correctly handles the
   service headers `__TypeId__`, `spring_json_header_types`. It is specified explicitly:
 
@@ -130,7 +150,8 @@ headers:
 ```
 
 Only context-free serializers are allowed for headers (strings, JSON, XML, bytes, native classes).
-Using a whole-record provider there fails at startup with a clear error.
+`spring-json`/`spring-xml` in headers produce the Spring header mapper; `binary-envelope` is not
+supported for headers.
 
 Configuration examples
 ----------------------

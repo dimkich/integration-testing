@@ -6,7 +6,7 @@ import com.moilioncircle.redis.replicator.event.Event;
 import io.github.dimkich.integration.testing.redis.model.*;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisStreamHandler;
-import io.github.dimkich.integration.testing.redis.schema.RedisDataSchema;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

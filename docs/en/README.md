@@ -1,6 +1,6 @@
 # Integration Testing Framework Documentation
 
-[Русская версия](../ru/README.md)
+[Russian Version](../ru/README.md)
 
 A high-level framework for Spring Boot integration testing that allows you to define test scenarios declaratively in
 XML/JSON with full control over the environment (Database, Time, Mocks, and Asynchrony).
@@ -23,6 +23,16 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
 * **[TestSetupModule Configuration](TestSetupModule.md)** — Type registration, aliases, and cloning setup.
 * **[Test Initialization](Initialization.md)** — Environment setup: Time, DB, Caches, and Mocks.
 
+### Serialization (Serde)
+
+* **[Serde Overview](serde/README.md)** — Source selection, `target-class`/`object-mapper-ref`, core providers,
+  settings inheritance, diagnostics.
+* **[Binary Envelopes](serde/Binary-Envelopes.md)** — Envelope structure,
+  tags `{CONTENT}`, `{LEN}`, `{VER}`, `{TS}`, `{CRC32}`, `{FIX}`, `{STR}`, examples for Redis and Kafka.
+* **[Serde Extensibility](serde/Extensibility.md)** — Custom formats (`TestSerdeProviderFactory`), converter
+  factories (`TestSerdeConverterFactory`),
+  adapters (`TestSerdeAdapter`), decorators (`TestSerdeDecoratorFactory`), `BinarySegment` tags.
+
 ### Redis
 
 * **[Redis Overview](redis/README.md)** — `@EnableTestRedis` setup, XML examples, data types.
@@ -30,12 +40,10 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
   Stream, HyperLogLog.
 * **[Configuration](redis/Configuration.md)** — Connections, Deep Merge, Longest-Prefix Match,
   full `application-test.yml`.
-* **[Binary Envelopes](redis/Binary-Envelopes.md)** — Envelope structure,
-  tags `{CONTENT}`, `{LEN}`, `{VER}`, `{TS}`, `{CRC32}`, `{FIX}`, `{STR}`, custom tags.
 * **[TTL & Time Shift](redis/TTL-Time-Shift.md)** — Virtual time, hash-field TTL (Redis 7.4+), step-by-step scenario.
 * **[Troubleshooting](redis/Troubleshooting.md)** — `Method not found`, `No handler`, `Redis Sync Timeout`,
   empty `dataStorageDiff`.
-* **[Extensibility](redis/Extensibility.md)** — Custom codec/schema/data access, `BinarySegment` tags, stream & event
+* **[Extensibility](redis/Extensibility.md)** — Custom codec/schema/data access, stream & event
   handlers, `TestSetupModule.addSubTypes()`.
 
 ### Kafka
@@ -45,15 +53,15 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
   `ignore`/`ignore-inbound`, `excluded-fields`.
 * **[Records & Headers](kafka/Records-and-Headers.md)** — `<inboundMessage>`/`<outboundMessage>`, headers,
   tombstones, deserialization errors.
-* **[Serialization (Serde)](kafka/Serde.md)** — String/JSON/XML/bytes formats, per-part setup,
-  `spring-json`/`spring-xml`, type-info headers.
+* **[Serialization (Serde in Kafka)](kafka/Serde.md)** — Whole-record and per-part setup,
+  `spring-json`/`spring-xml`, type-info headers; shared rules are in the [Serde overview](serde/README.md).
 * **[In-Flight & Lag](kafka/In-Flight-and-Lag.md)** — Waiting for processing, two modes, timeouts, Cold Start,
   transactions.
 * **[Troubleshooting](kafka/Troubleshooting.md)** — Wait timeouts, serde config errors, missing messages, Docker.
 * **[Error Handling](kafka/Error-Handling.md)** — Uncommitted offsets, skipped failed messages, forcing a commit in
   tests.
-* **[Extensibility](kafka/Extensibility.md)** — Custom serializers, headers and formats via `bean-ref` and
-  `TestSerdeProvider`.
+* **[Extensibility](kafka/Extensibility.md)** — Custom serializers, deserializers and headers via
+  `bean-ref`; custom formats are in [Serde Extensibility](serde/Extensibility.md).
 
 ### Tools & Integration
 

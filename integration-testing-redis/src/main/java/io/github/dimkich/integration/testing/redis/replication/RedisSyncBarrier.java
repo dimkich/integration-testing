@@ -42,17 +42,60 @@ public class RedisSyncBarrier {
     private final AtomicReference<String> expectedToken = new AtomicReference<>();
     private final AtomicReference<CompletableFuture<Void>> syncFuture = new AtomicReference<>();
     private final AtomicLong tokenSequence = new AtomicLong(0);
+    private final Object activationMonitor = new Object();
     private volatile boolean active;
+    private volatile boolean activatedOnce;
     private volatile Throwable fatalError;
 
     /** Enables barrier waits; invoked when live command replication starts. */
     public void activate() {
-        this.active = true;
+        synchronized (activationMonitor) {
+            this.active = true;
+            this.activatedOnce = true;
+            activationMonitor.notifyAll();
+        }
     }
 
     /** Disables barrier waits; {@link #triggerAndAwait(long)} returns immediately without publishing. */
     public void deactivate() {
         this.active = false;
+    }
+
+    /**
+     * Waits for live command sync (when it is expected) and then for the replication stream
+     * to catch up to a barrier token.
+     * <p>
+     * If the barrier has never been activated — for example, a manually driven test replicator
+     * without a real connection — activation is not awaited and this method behaves exactly like
+     * {@link #triggerAndAwait(long)}.
+     *
+     * @param timeoutMs maximum wait in milliseconds for activation and for the barrier token
+     * @throws RuntimeException if command sync does not resume or the token is not replicated
+     */
+    public void awaitSynchronized(long timeoutMs) {
+        if (activatedOnce) {
+            awaitActivation(timeoutMs);
+        }
+        triggerAndAwait(timeoutMs);
+    }
+
+    @SneakyThrows
+    private void awaitActivation(long timeoutMs) {
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
+        synchronized (activationMonitor) {
+            while (!active) {
+                Throwable error = fatalError;
+                if (error != null) {
+                    fatalError = null;
+                    throw error;
+                }
+                long remainingNanos = deadline - System.nanoTime();
+                if (remainingNanos <= 0) {
+                    throw new RuntimeException("Redis Sync Timeout for [" + name + "]: command sync did not resume");
+                }
+                activationMonitor.wait(TimeUnit.NANOSECONDS.toMillis(remainingNanos) + 1);
+            }
+        }
     }
 
     /**
