@@ -31,7 +31,6 @@ public class KafkaWaitCompletion implements WaitCompletion {
     private final KafkaSnifferConsumer sniffer;
     private final KafkaStateChecker stateChecker;
     private final KafkaProperties kafkaProperties;
-    private final InboundMessageRegistry inboundMessageRegistry;
     private volatile boolean anyLag = false;
 
     @Override
@@ -72,7 +71,6 @@ public class KafkaWaitCompletion implements WaitCompletion {
                     stateChecker.describe());
         }
         stateChecker.reset();
-        inboundMessageRegistry.reset();
     }
 
     @Override

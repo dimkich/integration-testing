@@ -41,4 +41,12 @@ public class KafkaRecord extends AbstractMessage {
     private Long offset;
 
     private Long timestamp;
+
+    /**
+     * Identifies the record by its position on the broker, as observed by the sniffer.
+     */
+    @Override
+    public Object identity() {
+        return new KafkaRecordIdentity(topic, partition, offset);
+    }
 }

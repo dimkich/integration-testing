@@ -6,8 +6,7 @@ import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
-import io.github.dimkich.integration.testing.message.TestMessagePoller;
-import io.github.dimkich.integration.testing.message.TestMessageSender;
+import io.github.dimkich.integration.testing.message.TestMessages;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletionList;
 import io.github.sugarcubes.cloner.Cloner;
@@ -82,10 +81,6 @@ public class TestExecutor {
      */
     private final List<AfterTest> afterTests;
     /**
-     * List of message senders for handling inbound test messages.
-     */
-    private final List<TestMessageSender> testMessageSenders;
-    /**
      * Mapper for formatting and mapping test information.
      */
     private final CompositeTestMapper testMapper;
@@ -93,6 +88,11 @@ public class TestExecutor {
      * Cloner for deep copying test results to avoid side effects.
      */
     private final Cloner cloner;
+    /**
+     * Message store for sending inbound messages and retrieving outbound messages
+     * during test execution.
+     */
+    private final TestMessages testMessages;
     /**
      * Service for initializing and cleaning up test state before and after tests.
      */
@@ -111,11 +111,6 @@ public class TestExecutor {
      */
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private TestDataStorages testDataStorages;
-    /**
-     * Optional message poller for retrieving outbound messages during test execution.
-     */
-    @Setter(onMethod_ = @Autowired(required = false))
-    private TestMessagePoller testMessagePoller;
     /**
      * Directory path where test temporary files are stored.
      * Only set for root-level tests when test temporary directory is enabled.
@@ -183,6 +178,7 @@ public class TestExecutor {
         test.setResponse(null);
         test.setDataStorageDiff(null);
         test.setOutboundMessages(null);
+        testMessages.resetInbound();
         this.test.before(this::beforeConsumer, this::afterConsumer);
         if (testDataStorages != null) {
             testDataStorages.setNewCurrentValue();
@@ -233,10 +229,10 @@ public class TestExecutor {
      * The execution flow:
      * <ol>
      *   <li>Starts the wait completion tracker for asynchronous operations</li>
-     *   <li>If the test has an inbound message, sends it using the appropriate message sender</li>
+     *   <li>If the test has an inbound message, sends it through the message store</li>
      *   <li>Otherwise, executes the test method using reflection on Spring beans</li>
      *   <li>Waits for all asynchronous operations to complete</li>
-     *   <li>Polls for outbound messages if a message poller is configured</li>
+     *   <li>Polls for outbound messages if a message store is configured</li>
      *   <li>Captures data storage differences if test data storages are configured</li>
      *   <li>Applies all test converters to transform the test data</li>
      *   <li>Performs assertions comparing expected and actual test results</li>
@@ -255,11 +251,7 @@ public class TestExecutor {
                 AbstractMessage message = test.getInboundMessage();
                 if (message != null) {
                     try {
-                        testMessageSenders.stream()
-                                .filter(s -> s.canSend(message))
-                                .findFirst()
-                                .orElseThrow(() -> new RuntimeException("No service found for message " + message))
-                                .sendInboundMessage(message);
+                        testMessages.send(message);
                     } catch (Exception e) {
                         log.error("", e);
                         if (selfTesting) {
@@ -276,10 +268,8 @@ public class TestExecutor {
             }
         });
 
-        if (testMessagePoller != null) {
-            List<AbstractMessage> messages = testMessagePoller.pollMessages();
-            test.setOutboundMessages(messages.isEmpty() ? null : messages);
-        }
+        List<AbstractMessage> messages = testMessages.pollMessages();
+        test.setOutboundMessages(messages.isEmpty() ? null : messages);
         if (testDataStorages != null) {
             test.setDataStorageDiff(testDataStorages.getMapDiff());
         }
@@ -302,8 +292,7 @@ public class TestExecutor {
      *   <li>Clears the current test reference</li>
      * </ul>
      * <p>
-     * The cleanup is performed in a finally block to ensure the test reference
-     * is always cleared, even if an exception occurs.
+     * The test reference is always cleared, even if an exception occurs during the hooks.
      *
      * @throws Exception if an error occurs during cleanup
      */
@@ -373,19 +362,19 @@ public class TestExecutor {
      * Aligns actual messages to the order defined in expected messages using multiset matching.
      * Unmatched actual messages are appended at the end in a deterministic (canonical) order.
      *
-     * @param expectedMsgs expected messages in the order they are defined in the test file
-     * @param actualMsgs   captured messages in their arrival order
+     * @param expectedMessages expected messages in the order they are defined in the test file
+     * @param actualMessages   captured messages in their arrival order
      * @return actual messages aligned to the expected order
      * @throws Exception if a message cannot be serialized to a canonical form
      */
-    private List<AbstractMessage> alignActualToExpected(List<AbstractMessage> expectedMsgs,
-                                                        List<AbstractMessage> actualMsgs) throws Exception {
-        if (expectedMsgs == null || expectedMsgs.isEmpty()) {
-            return canonicalSort(actualMsgs);
+    private List<AbstractMessage> alignActualToExpected(List<AbstractMessage> expectedMessages,
+                                                        List<AbstractMessage> actualMessages) throws Exception {
+        if (expectedMessages == null || expectedMessages.isEmpty()) {
+            return canonicalSort(actualMessages);
         }
         List<AbstractMessage> aligned = new ArrayList<>();
-        List<AbstractMessage> remainingActual = new LinkedList<>(actualMsgs);
-        for (AbstractMessage expected : expectedMsgs) {
+        List<AbstractMessage> remainingActual = new LinkedList<>(actualMessages);
+        for (AbstractMessage expected : expectedMessages) {
             String expectedKey = getMessageKey(expected);
             Iterator<AbstractMessage> iterator = remainingActual.iterator();
             while (iterator.hasNext()) {

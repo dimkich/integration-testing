@@ -22,7 +22,6 @@ class KafkaWaitCompletionTest {
     private KafkaSnifferConsumer sniffer;
     private KafkaStateChecker stateChecker;
     private KafkaProperties kafkaProperties;
-    private InboundMessageRegistry inboundMessageRegistry;
     private KafkaWaitCompletion waitCompletion;
 
     @BeforeEach
@@ -30,8 +29,7 @@ class KafkaWaitCompletionTest {
         sniffer = mock(KafkaSnifferConsumer.class);
         stateChecker = mock(KafkaStateChecker.class);
         kafkaProperties = mock(KafkaProperties.class);
-        inboundMessageRegistry = mock(InboundMessageRegistry.class);
-        waitCompletion = new KafkaWaitCompletion(sniffer, stateChecker, kafkaProperties, inboundMessageRegistry);
+        waitCompletion = new KafkaWaitCompletion(sniffer, stateChecker, kafkaProperties);
 
         when(sniffer.getConnectionNames()).thenReturn(List.of("kafka1"));
         when(sniffer.getAssignment()).thenReturn(Set.of(PARTITION));
@@ -56,7 +54,6 @@ class KafkaWaitCompletionTest {
 
         verify(sniffer).setLastException(null);
         verify(stateChecker).reset();
-        verify(inboundMessageRegistry).reset();
     }
 
     @Test
@@ -79,7 +76,6 @@ class KafkaWaitCompletionTest {
         waitCompletion.start();
 
         verify(stateChecker).reset();
-        verify(inboundMessageRegistry).reset();
     }
 
     @Test

@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.kafka;
 import io.github.dimkich.integration.testing.kafka.registry.KafkaTopicMetadata;
 import io.github.dimkich.integration.testing.kafka.registry.KafkaTopicRegistry;
 import io.github.dimkich.integration.testing.message.ExceptionDto;
-import io.github.dimkich.integration.testing.message.TestMessagePoller;
+import io.github.dimkich.integration.testing.message.TestMessages;
 import io.github.dimkich.integration.testing.serde.TestSerdeContext;
 import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
 import lombok.Getter;
@@ -27,13 +27,13 @@ import java.util.regex.Pattern;
 /**
  * Background consumer that reads all non-internal topics, deserializes records with
  * the per-topic deserializer and puts the resulting {@link KafkaRecord} messages into
- * the {@link TestMessagePoller} for assertions.
+ * the {@link TestMessages} for assertions.
  *
- * <p>Offsets of messages sent by the test itself are tracked by
- * {@link InboundMessageRegistry} and skipped when the topic is configured with
- * {@code ignoreInbound}. Deserialization failures are captured as poison records with
- * an attached {@link ExceptionDto} instead of aborting the poll loop; the original key,
- * value and header bytes are preserved so binary payloads are not corrupted.</p>
+ * <p>Messages sent by the test itself are filtered by {@link TestMessages} unless the
+ * topic is configured with {@code ignoreInbound=false}. Deserialization failures are
+ * captured as poison records with an attached {@link ExceptionDto} instead of aborting
+ * the poll loop; the original key, value and header bytes are preserved so binary payloads
+ * are not corrupted.</p>
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -60,8 +60,7 @@ public class KafkaSnifferConsumer {
     private final SnifferRebalanceListener rebalanceListener;
 
     private final KafkaTopicRegistry topicRegistry;
-    private final TestMessagePoller testMessagePoller;
-    private final InboundMessageRegistry inboundMessageRegistry;
+    private final TestMessages testMessages;
 
     private volatile boolean metadataNeedsRefresh = false;
     @Getter
@@ -115,7 +114,7 @@ public class KafkaSnifferConsumer {
                             // A single bad record must not abort the batch. If it did, the loop
                             // would exit before commitSync(), leaving the committed offset behind
                             // and the unprocessed tail of the batch to be re-read after a restart
-                            // or rebalance — producing duplicates in TestMessagePoller. The failure
+                            // or rebalance — producing duplicates in TestMessages. The failure
                             // is still surfaced through lastException so KafkaWaitCompletion fails
                             // the test.
                             log.error("Sniffer [{}] failed to process record [{}@{}]",
@@ -168,18 +167,12 @@ public class KafkaSnifferConsumer {
             }
             kafkaRecord.setConnection(connectionName);
 
-            if (metadata.isIgnoreInbound()) {
-                if (inboundMessageRegistry.contains(topic, record.partition(), record.offset())) {
-                    log.debug("Sniffer [{}]: Skipping inbound test message on topic [{}] at offset [{}]",
-                            connectionName, topic, record.offset());
-                    continue;
-                }
-            }
+            // putMessage reads the record identity (topic/partition/offset) before excluded
+            // fields such as partition and offset are removed from the captured record.
+            log.debug("Sniffer [{}]: Captured message on topic [{}] at offset [{}]", connectionName, topic, record.offset());
+            testMessages.putMessage(kafkaRecord, metadata.isIgnoreInbound());
 
             metadata.getExcludedFields().process(kafkaRecord);
-
-            log.debug("Sniffer [{}]: Captured message on topic [{}] at offset [{}]", connectionName, topic, record.offset());
-            testMessagePoller.putMessage(kafkaRecord);
         }
     }
 

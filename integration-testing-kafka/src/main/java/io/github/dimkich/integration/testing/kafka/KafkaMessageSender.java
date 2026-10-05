@@ -12,6 +12,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 
 import java.util.Set;
 
@@ -26,7 +27,6 @@ public class KafkaMessageSender implements TestMessageSender {
     private final Set<String> connectionNames;
     private final KafkaProducer<byte[], byte[]> producer;
     private final KafkaTopicRegistry kafkaTopicRegistry;
-    private final InboundMessageRegistry inboundMessageRegistry;
     private final DateTimeService dateTimeService;
 
     @Override
@@ -40,7 +40,7 @@ public class KafkaMessageSender implements TestMessageSender {
     @Override
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    public void sendInboundMessage(AbstractMessage message) {
+    public Object sendInboundMessage(AbstractMessage message) {
         if (!(message instanceof KafkaRecord kafkaRecord)) {
             throw new IllegalArgumentException("Expected KafkaRecord, got " + message.getClass());
         }
@@ -62,6 +62,8 @@ public class KafkaMessageSender implements TestMessageSender {
         }
 
         ProducerRecord<byte[], byte[]> finalRecord = record;
-        inboundMessageRegistry.sendAndRegister(() -> producer.send(finalRecord).get());
+        RecordMetadata recordMetadata = producer.send(finalRecord).get();
+        return new KafkaRecordIdentity(recordMetadata.topic(), recordMetadata.partition(),
+                recordMetadata.offset());
     }
 }

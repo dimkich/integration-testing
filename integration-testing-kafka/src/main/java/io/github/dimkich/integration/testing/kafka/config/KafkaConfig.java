@@ -155,9 +155,6 @@ public class KafkaConfig {
                 registry.registerBeanDefinition(group.messageSender, createBootstrapSenderDef(group.producer, group.names));
             }
 
-            registry.registerBeanDefinition("inboundMessageRegistry",
-                    BeanDefinitionBuilder.genericBeanDefinition(InboundMessageRegistry.class).getBeanDefinition());
-
             if (inflight) {
                 // InFlightLedger keys clusters by normalized bootstrap only.
                 // Multiple groups on the same bootstrap (different client

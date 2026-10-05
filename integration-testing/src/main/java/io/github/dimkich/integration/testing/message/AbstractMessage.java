@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
  * Data Transfer Object representing a message with headers and payload for integration testing.
  * <p>
  * This generic class is used to represent messages in integration tests, supporting both
- * inbound (received) and outbound (sent) messages. It provides structured access to message
+ * inbound (received) and outbound messages. It provides structured access to message
  * metadata through headers and the actual message content through the payload.
  * <p>
  * The class is designed for serialization/deserialization from XML and JSON formats using
@@ -38,4 +38,15 @@ public abstract class AbstractMessage {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private ExceptionDto exception;
+
+    /**
+     * Identity of the message as it is observed on the transport, such as a broker offset.
+     * <p>
+     * Transports return it from captured messages; {@link TestMessages} uses it to filter
+     * messages produced by the test itself out of the captured outbound messages.
+     *
+     * @return transport identity of the message, or {@code null} when the transport
+     *         does not assign one
+     */
+    public abstract Object identity();
 }

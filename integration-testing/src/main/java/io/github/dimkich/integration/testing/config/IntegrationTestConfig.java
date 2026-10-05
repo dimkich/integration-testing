@@ -8,6 +8,7 @@ import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
 import io.github.dimkich.integration.testing.format.TestFormatConfig;
 import io.github.dimkich.integration.testing.initialization.InitializationConfig;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
+import io.github.dimkich.integration.testing.message.MessageConfig;
 import io.github.dimkich.integration.testing.openapi.OpenApiConfig;
 import io.github.dimkich.integration.testing.serde.SerdeConfig;
 import io.github.dimkich.integration.testing.storage.StorageConfig;
@@ -33,7 +34,7 @@ import java.util.List;
 @Import({DynamicTestBuilder.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeConfig.class,
         InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class,
         WebConfig.class, TestFormatConfig.class, PropertyInheritanceMerger.class, SerdeConfig.class,
-        PluginSpringIntegrator.class})
+        MessageConfig.class, PluginSpringIntegrator.class})
 public class IntegrationTestConfig {
     @Bean
     TestSetupModule integrationTestModule() {

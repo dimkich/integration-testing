@@ -2,7 +2,6 @@ package io.github.dimkich.integration.testing.kafka;
 
 import io.github.dimkich.integration.testing.IntegrationTesting;
 import io.github.dimkich.integration.testing.kafka.config.KafkaConfig;
-import io.github.dimkich.integration.testing.message.MessageConfig;
 import io.github.dimkich.integration.testing.wait.completion.FutureLikeAwait;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
@@ -14,10 +13,9 @@ import java.lang.annotation.*;
  * configuration, points the bootstrap servers to the test Kafka instance and makes
  * the framework wait for completed {@code KafkaProducer.send(...)} calls.
  *
- * <p>The message and wait-completion subsystems are activated automatically through
- * {@code kafka.properties} ({@code integration.testing.message.enabled} and
- * {@code integration.testing.wait.completion.enabled}), so no extra test properties
- * are required.</p>
+ * <p>The wait-completion subsystem is activated automatically through
+ * {@code kafka.properties} ({@code integration.testing.wait.completion.enabled}),
+ * so no extra test properties are required.</p>
  *
  * <p>See the module documentation for the supported serde configurations.</p>
  */
@@ -29,7 +27,7 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @IntegrationTesting
-@Import({MessageConfig.class, KafkaConfig.class})
+@Import(KafkaConfig.class)
 @TestPropertySource("classpath:kafka.properties")
 public @interface EnableTestKafka {
     /**

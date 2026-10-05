@@ -20,6 +20,8 @@ public interface TestMessageSender {
      * Sends the given message as an inbound message into the system under test.
      *
      * @param message the message to send
+     * @return transport identity of the message on the transport, or {@code null} when it
+     *         must not be filtered out of the captured outbound messages
      */
-    void sendInboundMessage(AbstractMessage message);
+    Object sendInboundMessage(AbstractMessage message);
 }

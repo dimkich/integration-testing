@@ -58,4 +58,9 @@ public class TestMessage extends AbstractMessage {
 
     private Object key;
     private Map<String, Object> headers = new TreeMap<>();
+
+    @Override
+    public Object identity() {
+        return null;
+    }
 }
