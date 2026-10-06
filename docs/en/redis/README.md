@@ -123,20 +123,27 @@ Create the file `src/test/resources/tests/redis-user.xml`. In this example we wi
 </test>
 ```
 
+Pub/Sub Push Messages
+----------------------
+
+The module also captures Redis Pub/Sub pushes (`PUBLISH`/`SPUBLISH`) as messages: they can be
+asserted in `<outboundMessage>` and sent from a test with `<inboundMessage>`. Channels are
+matched by the same `schemas` as keys; see [Push Messages](Push-Messages.md) for details.
+
 Supported Redis Data Types
 --------------------------
 
 You can work with all major Redis data types:
 
-| Redis Type | Description |
-|-----------|-------------|
-| **String** | Plain text |
-| **Hash** | A set of field-value pairs (like folders with files). Each field can have its own TTL |
-| **List** | An ordered list of elements where insertion order matters |
-| **Set** | A collection of unique elements (no duplicates) |
-| **Sorted Set** (ZSet) | Elements with a numeric score that determines sorting order |
-| **Stream** | A message queue where each message has a unique ID (e.g., `1698400000000-0`) and a set of fields |
-| **HyperLogLog** (HLL) | A structure for estimating unique element count (displayed as a regular unique set in tests) |
+| Redis Type            | Description                                                                                      |
+|-----------------------|--------------------------------------------------------------------------------------------------|
+| **String**            | Plain text                                                                                       |
+| **Hash**              | A set of field-value pairs (like folders with files). Each field can have its own TTL            |
+| **List**              | An ordered list of elements where insertion order matters                                        |
+| **Set**               | A collection of unique elements (no duplicates)                                                  |
+| **Sorted Set** (ZSet) | Elements with a numeric score that determines sorting order                                      |
+| **Stream**            | A message queue where each message has a unique ID (e.g., `1698400000000-0`) and a set of fields |
+| **HyperLogLog** (HLL) | A structure for estimating unique element count (displayed as a regular unique set in tests)     |
 
 ---
 [← Back to Home](../README.md)

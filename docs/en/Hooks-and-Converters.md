@@ -277,7 +277,7 @@ static class Config {
 
 ```
 
-### Using Test.custom
+### Using `Test.custom`
 
 The `Test.custom` field is designed to store **additional readable data** about the test. This is especially useful
 with `TestConverter`:
@@ -359,9 +359,11 @@ Complete Test Lifecycle Diagram
 │                    TestExecutor.before()                    │  
 │  ├── test = expectedTest                                    │  
 │  ├── assertion.setExpected(test)                            │  
+│  ├── waitCompletion.start()                                 │  
 │  ├── test.before()                                          │  
 │  │   ├── initializationService.beforeTest()                 │  
 │  │   └── BeforeTest.before() ← Hook 1 (for Container/Case/Part)│  
+│  ├── waitCompletion.waitCompletion()                        │  
 │  └── testDataStorages.setNewCurrentValue()                  │  
 └─────────────────────────────────────────────────────────────┘  
                             ↓  

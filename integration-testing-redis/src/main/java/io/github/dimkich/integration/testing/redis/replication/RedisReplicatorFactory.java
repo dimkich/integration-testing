@@ -15,13 +15,13 @@ import java.util.List;
 /**
  * Builds and configures a {@link Replicator} for a named Redis connection in integration tests.
  * <p>
- * Spring registers one factory bean and invokes {@link #createReplicator(String, RedisConnectionFactory, RedisSyncBarrier)}
+ * Spring registers one factory bean and invokes {@link #createReplicator(String, RedisConnectionFactory, RedisSyncState)}
  * per {@link org.springframework.data.redis.connection.RedisConnectionFactory} (see
  * {@link io.github.dimkich.integration.testing.redis.config.RedisConfig}). Before connecting, the
  * target Redis instance is tuned for fast, in-process replication ({@code repl-diskless-sync},
  * zero output-buffer limits for replicas). The returned replicator is a {@link FastHeartbeatReplicator}
  * with auth from {@link RedisProperties}, all {@link NamedCommandParser} beans registered, and
- * replication errors forwarded to the sync barrier.
+ * replication errors forwarded to the sync state.
  *
  * @see FastHeartbeatReplicator
  * @see NamedCommandParser
@@ -36,13 +36,13 @@ public class RedisReplicatorFactory {
      *
      * @param factoryName        connection name as defined in {@link RedisProperties}
      * @param connectionFactory  factory used to apply server config and reach the Redis instance
-     * @param barrier            receives fatal replication errors via an exception listener
+     * @param state              receives fatal replication errors via an exception listener
      * @return configured {@link Replicator} ready to {@link Replicator#open()}
      * @throws IllegalStateException if host is missing or port is not positive
      */
     public Replicator createReplicator(String factoryName,
                                        RedisConnectionFactory connectionFactory,
-                                       RedisSyncBarrier barrier) {
+                                       RedisSyncState state) {
         RedisProperties.Connection conn = properties.getConnection(factoryName);
         if (conn.getHost() == null || conn.getHost().isEmpty()) {
             throw new IllegalStateException("Connection host is missing.");
@@ -66,7 +66,7 @@ public class RedisReplicatorFactory {
         for (NamedCommandParser<?> parser : customParsers) {
             replicator.addCommandParser(CommandName.name(parser.getCommandName()), parser);
         }
-        replicator.addExceptionListener((rep, ex, event) -> barrier.setFatalError(ex));
+        replicator.addExceptionListener((rep, ex, event) -> state.setFatalError(ex));
 
         return replicator;
     }

@@ -16,7 +16,9 @@ public interface WaitCompletion {
      * Marks the beginning of the waiting lifecycle.
      * <p>
      * Implementations may use this to start tracking asynchronous tasks or register
-     * listeners that will be awaited in {@link #waitCompletion()}.
+     * listeners that will be awaited in {@link #waitCompletion()}. This method must
+     * not block waiting for external readiness (started consumers, connections and
+     * the like): all waiting belongs to {@link #waitCompletion()}.
      */
     void start();
 

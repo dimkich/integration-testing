@@ -40,6 +40,8 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
   Stream, HyperLogLog.
 * **[Configuration](redis/Configuration.md)** — Connections, Deep Merge, Longest-Prefix Match,
   full `application-test.yml`.
+* **[Push Messages](redis/Push-Messages.md)** — Capturing `PUBLISH`/`SPUBLISH` pushes,
+  `<inboundMessage>`/`<outboundMessage>`, channel schemas, deduplication.
 * **[TTL & Time Shift](redis/TTL-Time-Shift.md)** — Virtual time, hash-field TTL (Redis 7.4+), step-by-step scenario.
 * **[Troubleshooting](redis/Troubleshooting.md)** — `Method not found`, `No handler`, `Redis Sync Timeout`,
   empty `dataStorageDiff`.

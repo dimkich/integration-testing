@@ -12,8 +12,8 @@
 ненулевой. Режим `inflight = false` задаёт тот же вопрос брокеру через Admin API.
 
 Ожидание ограничено `lag-polling-timeout-ms` (по умолчанию 10000 мс; не путайте с
-`startup-stabilization-timeout-seconds`, 30 секунд — этот таймаут ждёт готовности групп потребителей
-перед каждым тестом). Когда время выходит, кейс падает:
+`startup-stabilization-timeout-seconds`, 30 секунд — этот таймаут ждёт готовности SUT перед проверкой
+лага). Когда время выходит, кейс падает:
 
 ```text
 Kafka wait completion timeout. Unprocessed messages remaining on broker.

@@ -99,12 +99,12 @@ allotted time (default 5 seconds).
 **How to fix:**
 
 1. **Check the console logs above the error:** If the background replication thread failed
-   (e.g., due to an incorrect password or authentication error), the barrier will catch
-   this error and print its real stack trace to the console. Fix the root cause (e.g.,
-   provide the correct password in `application-test.yml`).
+   (e.g., due to an incorrect password or authentication error), the error is recorded in the
+   sync state and rethrown with its real stack trace. Fix the root cause (e.g., provide the
+   correct password in `application-test.yml`).
 2. **Check that the database is running:** Ensure the Docker Redis container started
    successfully and is responding to requests.
-3. **Increase the timeout:** If the database is overloaded or you are running tests on a
+3. **Increase the timeout:** If the database is overloaded, or you are running tests on a
    slow machine (e.g., in CI/CD), increase the barrier timeout in `application-test.yml`:
 
 ```yaml
@@ -173,6 +173,48 @@ connections:
   redisConnectionFactory:
     multipleDatabases: true   # <-- Enables correct key separation by database
 ```
+
+Problem: Push messages missing from `outboundMessage`
+------------------------------------------------------
+
+### Symptoms
+
+The application published a Pub/Sub message (or the test sent an `<inboundMessage>`), but the
+push does not appear in `<outboundMessage>` — or, conversely, an unexpected push appears.
+
+### Cause 1: The channel is ignored (`ignore: true`)
+
+A schema prefix matching the channel has `ignore: true`, so capture is skipped. This is the
+intended way to hide technical channels.
+
+**How to fix:** Check the `schemas` section in `application-test.yml` and remove or narrow the
+ignore prefix for the channel under test.
+
+### Cause 2: The push belongs to another connection
+
+`connection` in the assertion must be the `RedisConnectionFactory` bean name the push was
+observed on. When several factories share one Redis, each captures the same push; ignored
+prefixes hide the copies you do not assert.
+
+**How to fix:** Specify `connection` explicitly in `<inboundMessage>`/`<outboundMessage>` and
+mark duplicate captures with `ignore: true`.
+
+### Cause 3: The SUT has not processed the inbound push yet
+
+The application handles a push asynchronously. The framework waits for the replication stream
+to catch up, but not for the SUT side.
+
+**How to fix:** Await the SUT reaction explicitly in the test (for example, with a facade
+method) before asserting.
+
+### Cause 4: The push was sent by the test itself
+
+A push sent from a test is filtered out by its transport identity and does not appear in
+`<outboundMessage>`. Pushes published during application startup are not filtered: hide
+technical channels with `ignore: true` if they should not be asserted.
+
+**How to fix:** Publish pushes inside the test and assert only SUT-produced messages. See
+[Push-Messages.md](Push-Messages.md).
 
 ---
 [← Back to Home](../README.md)

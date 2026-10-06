@@ -40,6 +40,8 @@
   Stream, HyperLogLog.
 * **[Конфигурация](redis/Configuration.md)** — Подключения, Deep Merge, Longest-Prefix Match,
   полный `application-test.yml`.
+* **[Push-сообщения](redis/Push-Messages.md)** — Перехват `PUBLISH`/`SPUBLISH`,
+  `<inboundMessage>`/`<outboundMessage>`, схемы каналов, дедупликация.
 * **[TTL и Time Shift](redis/TTL-Time-Shift.md)** — Виртуальное время, TTL хэш-полей (Redis 7.4+), пошаговый сценарий.
 * **[Устранение неполадок](redis/Troubleshooting.md)** — `Method not found`, `No handler`, `Redis Sync Timeout`,
   пустой `dataStorageDiff`.

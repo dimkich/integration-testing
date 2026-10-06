@@ -37,18 +37,18 @@ Complete parameter reference
 
 ### Global level (`integration.testing.kafka.*`)
 
-| Parameter                               | Type            | Default | Description                                                    |
-|-----------------------------------------|-----------------|---------|----------------------------------------------------------------|
-| `serializer`                            | Serde object    | not set | default serialization of messages the test sends               |
-| `deserializer`                          | Serde object    | not set | default deserialization of captured messages                   |
-| `ignore`                                | boolean         | `false` | exclude topics from sniffer capture                            |
-| `ignore-inbound`                        | boolean         | `true`  | hide messages sent by the test itself from assertions          |
-| `excluded-fields`                       | list of strings | not set | fields excluded from message comparison                        |
-| `lag-polling-interval-ms`               | long            | `5`     | pause between lag checks, ms                                   |
-| `lag-polling-timeout-ms`                | long            | `10000` | total time to wait for lag to clear, ms                        |
-| `readiness-polling-interval-ms`         | long            | `100`   | pause between readiness checks of expected consumer groups, ms |
-| `startup-stabilization-timeout-seconds` | long            | `30`    | time to wait for consumer group stabilization at startup, s    |
-| `connections`                           | map             | not set | broker connections                                             |
+| Parameter                               | Type            | Default | Description                                                             |
+|-----------------------------------------|-----------------|---------|-------------------------------------------------------------------------|
+| `serializer`                            | Serde object    | not set | default serialization of messages the test sends                        |
+| `deserializer`                          | Serde object    | not set | default deserialization of captured messages                            |
+| `ignore`                                | boolean         | `false` | exclude topics from sniffer capture                                     |
+| `ignore-inbound`                        | boolean         | `true`  | hide messages sent by the test itself from assertions                   |
+| `excluded-fields`                       | list of strings | not set | fields excluded from message comparison                                 |
+| `lag-polling-interval-ms`               | long            | `5`     | pause between lag checks, ms                                            |
+| `lag-polling-timeout-ms`                | long            | `10000` | total time to wait for lag to clear, ms                                 |
+| `readiness-polling-interval-ms`         | long            | `100`   | pause between readiness checks of expected consumer groups, ms          |
+| `startup-stabilization-timeout-seconds` | long            | `30`    | time to wait for SUT readiness (sniffer + groups) before lag polling, s |
+| `connections`                           | map             | not set | broker connections                                                      |
 
 ### Connection level (`integration.testing.kafka.connections.<NAME>.*`)
 
@@ -194,14 +194,18 @@ connections:
 
 How it works:
 
-* before every test (`start()`) the framework waits up to `startup-stabilization-timeout-seconds`
-  for each group to become ready — live members holding assigned partitions ("running + assigned").
-  On timeout the test fails with `Kafka startup stabilization timeout ...`;
-* every poll iteration after a message is sent (`waitCompletion()`) repeats the check: while the
-  expected groups are not ready, "no lag" is not treated as completion. Readiness checks run no more
-  often than once per `readiness-polling-interval-ms`;
-* an empty or missing list keeps the previous behavior: only known groups are awaited, and an empty
-  listing does not block;
+* `start()` only resets the tracking state and never blocks; readiness is awaited when the wait
+  completion runs after test initialization, so SUT listeners started by initialization have time to
+  come up;
+* every poll iteration (`waitCompletion()`) first waits up to `startup-stabilization-timeout-seconds`
+  for the sniffer assignment and for each expected group to become ready — live members holding
+  assigned partitions ("running + assigned") — and, when groups are listed, for all known groups to
+  stop rebalancing. On timeout the test fails with
+  `Kafka wait completion timeout. expected consumer groups are not ready: ...`;
+* only then the lag is awaited, up to `lag-polling-timeout-ms`. Readiness checks run no more often than
+  once per `readiness-polling-interval-ms`;
+* an empty or missing list does not block: no expected group is required, so group readiness is not
+  awaited at all — only the sniffer assignment and the lag are;
 * several connections to the same cluster join their lists.
 
 How readiness is determined depends on the mode:

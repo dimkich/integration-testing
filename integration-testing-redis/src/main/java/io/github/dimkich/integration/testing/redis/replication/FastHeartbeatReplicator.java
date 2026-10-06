@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * {@code heartbeatPeriod} intervals, which keeps the master informed while reducing startup latency
  * when waiting for replication to catch up.
  *
- * @see RedisReplicatorFactory#createReplicator(String, org.springframework.data.redis.connection.RedisConnectionFactory, RedisSyncBarrier)
+ * @see RedisReplicatorFactory#createReplicator(String, org.springframework.data.redis.connection.RedisConnectionFactory, RedisSyncState)
  */
 public class FastHeartbeatReplicator extends RedisSocketReplicator {
 

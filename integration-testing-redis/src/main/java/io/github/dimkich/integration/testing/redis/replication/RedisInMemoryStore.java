@@ -3,7 +3,6 @@ package io.github.dimkich.integration.testing.redis.replication;
 import com.moilioncircle.redis.replicator.Replicator;
 import com.moilioncircle.redis.replicator.event.EventListener;
 import com.moilioncircle.redis.replicator.rdb.datatype.KeyValuePair;
-import io.github.dimkich.integration.testing.redis.config.RedisProperties;
 import io.github.dimkich.integration.testing.redis.model.RedisEntry;
 import io.github.dimkich.integration.testing.redis.model.RedisKey;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaMetadata;
@@ -42,7 +41,6 @@ public class RedisInMemoryStore {
     private final String name;
     @Getter
     private final RedisSyncBarrier barrier;
-    private final RedisProperties properties;
     @Getter
     private final Replicator replicator;
     private final Cloner cloner;
@@ -293,7 +291,6 @@ public class RedisInMemoryStore {
      * @param connectionFactory  connection to the Redis instance under test
      */
     public void updateTimeAndPurge(ZonedDateTime newTime, RedisConnectionFactory connectionFactory) {
-        barrier.awaitSynchronized(properties.getSyncBarrierTimeoutMs());
         this.now = newTime;
         RedisPurgeBuilder builder = new RedisPurgeBuilder(name, registry, now);
         lock.readLock().lock();
@@ -306,14 +303,15 @@ public class RedisInMemoryStore {
     }
 
     /**
-     * Waits for replication to catch up via {@link RedisSyncBarrier}, then returns a deep-cloned
-     * map of non-ignored keys suitable for assertions. Field exclusions from schema metadata are
-     * applied to each value.
+     * Returns a deep-cloned map of non-ignored keys suitable for assertions. Field exclusions
+     * from schema metadata are applied to each value.
+     * <p>
+     * The snapshot reflects the in-memory mirror as is: replication is awaited by the
+     * wait-completion phases (after initialization and after the test action), not here.
      *
      * @return snapshot keyed by {@link RedisKey#toString()}; empty map if the store is empty
      */
     public Map<String, Object> getSnapshot() {
-        barrier.awaitSynchronized(properties.getSyncBarrierTimeoutMs());
         lock.readLock().lock();
         try {
             if (currentValue.isEmpty()) {

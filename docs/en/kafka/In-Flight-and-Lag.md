@@ -77,17 +77,16 @@ How the framework waits for completion
 
 1. **Application sends.** `@EnableTestKafka` waits for the sends made by the application within the
    case to complete.
-2. **Startup stabilization.** Before every test the framework waits until consumer groups stop
-   rebalancing (`startup-stabilization-timeout-seconds`, 30 seconds by default) and the groups listed
-   in `expected-groups` appear with partitions assigned. If the expected groups are not ready by the
-   timeout, the test fails with `Kafka startup stabilization timeout ...`. An empty listing alone does
-   not block — waiting for groups only makes sense when `expected-groups` is configured (see
+2. **Readiness.** The wait completion runs after test initialization, so SUT listeners started by
+   initialization have time to come up. It first waits up to `startup-stabilization-timeout-seconds`
+   (30 seconds by default) for the sniffer assignment and for the groups listed in `expected-groups` to
+   appear with partitions assigned; when groups are listed, all known groups must also stop rebalancing.
+   If readiness is not reached by the timeout, the test fails with
+   `Kafka wait completion timeout. expected consumer groups are not ready: ...` (see
    [Configuration](Configuration.md)).
-3. **Polling loop.** Then, every `lag-polling-interval-ms` (5 ms by default) the framework verifies
-   that the sniffer is assigned to all partitions of interest and the expected groups are ready
-   (readiness checks run no more often than once per `readiness-polling-interval-ms`). While the
-   sniffer or the application is not ready, "lag cleared" is not treated as completion. Otherwise, lag
-   is checked until it clears or `lag-polling-timeout-ms` (10 seconds by default) expires.
+3. **Polling loop.** Readiness is re-checked every `lag-polling-interval-ms` (5 ms by default), but no
+   more often than once per `readiness-polling-interval-ms`. Once ready, lag is checked until it clears
+   or `lag-polling-timeout-ms` (10 seconds by default) expires.
 4. **Result.** As soon as lag clears and all consumers are ready, the case continues. If time runs
    out, the case fails with:
 
@@ -129,7 +128,7 @@ integration:
       lag-polling-timeout-ms: 10000
       # pause between readiness checks of expected groups
       readiness-polling-interval-ms: 100
-      # wait for consumer group stabilization at startup
+      # wait for SUT readiness before lag polling
       startup-stabilization-timeout-seconds: 30
 ```
 

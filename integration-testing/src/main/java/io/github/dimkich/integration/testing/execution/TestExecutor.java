@@ -151,6 +151,8 @@ public class TestExecutor {
      *   <li>Skips disabled tests</li>
      *   <li>Resets test state (response, data storage diff, outbound messages)</li>
      *   <li>Executes test's before hooks and before-test extensions</li>
+     *   <li>Waits for asynchronous work started during initialization, so data storage
+     *       snapshots are taken from a synchronized state</li>
      *   <li>Initializes test data storages if available</li>
      * </ul>
      * <p>
@@ -179,7 +181,9 @@ public class TestExecutor {
         test.setDataStorageDiff(null);
         test.setOutboundMessages(null);
         testMessages.resetInbound();
+        waitCompletion.start();
         this.test.before(this::beforeConsumer, this::afterConsumer);
+        waitCompletion.waitCompletion();
         if (testDataStorages != null) {
             testDataStorages.setNewCurrentValue();
         }

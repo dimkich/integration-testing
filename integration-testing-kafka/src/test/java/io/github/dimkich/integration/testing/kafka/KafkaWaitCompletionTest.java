@@ -54,33 +54,12 @@ class KafkaWaitCompletionTest {
 
         verify(sniffer).setLastException(null);
         verify(stateChecker).reset();
-    }
-
-    @Test
-    void startThrowsWhenExpectedGroupsNotReady() {
-        connectionWithExpectedGroups("g1");
-        when(kafkaProperties.getStartupStabilizationTimeoutSeconds()).thenReturn(0L);
-        when(stateChecker.areExpectedGroupsReady(any())).thenReturn(false);
-
-        assertThatThrownBy(() -> waitCompletion.start())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("expected consumer groups are not ready")
-                .hasMessageContaining("g1=missing");
-    }
-
-    @Test
-    void startProceedsWithoutExpectedGroupsWhenGroupsNotStable() {
-        when(stateChecker.areAllConsumerGroupsStable(any())).thenReturn(false);
-        when(kafkaProperties.getStartupStabilizationTimeoutSeconds()).thenReturn(0L);
-
-        waitCompletion.start();
-
-        verify(stateChecker).reset();
+        verify(stateChecker, never()).areExpectedGroupsReady(any());
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void startAwaitsUnionOfExpectedGroupsFromAllConnections() {
+    void waitCompletionAwaitsUnionOfExpectedGroupsFromAllConnections() {
         ConnectionProperties first = new ConnectionProperties();
         first.setExpectedGroups(Set.of("g1"));
         ConnectionProperties second = new ConnectionProperties();
@@ -89,7 +68,7 @@ class KafkaWaitCompletionTest {
         when(kafkaProperties.getConnection("kafka1")).thenReturn(first);
         when(kafkaProperties.getConnection("monitor")).thenReturn(second);
 
-        waitCompletion.start();
+        waitCompletion.waitCompletion();
 
         ArgumentCaptor<Set<String>> captor = ArgumentCaptor.forClass(Set.class);
         verify(stateChecker, atLeast(1)).areExpectedGroupsReady(captor.capture());
@@ -99,7 +78,7 @@ class KafkaWaitCompletionTest {
     @Test
     void waitCompletionTimesOutWhenExpectedGroupsNotReady() {
         connectionWithExpectedGroups("g1");
-        when(kafkaProperties.getLagPollingTimeoutMs()).thenReturn(30L);
+        when(kafkaProperties.getStartupStabilizationTimeoutSeconds()).thenReturn(0L);
         when(stateChecker.areExpectedGroupsReady(any())).thenReturn(false);
         when(stateChecker.checkLag()).thenReturn(new LagCheckResult(false, Set.of(PARTITION)));
 
@@ -111,7 +90,7 @@ class KafkaWaitCompletionTest {
 
     @Test
     void waitCompletionTimesOutWhenSnifferNotAssigned() {
-        when(kafkaProperties.getLagPollingTimeoutMs()).thenReturn(30L);
+        when(kafkaProperties.getStartupStabilizationTimeoutSeconds()).thenReturn(0L);
         when(sniffer.getAssignment()).thenReturn(Collections.emptySet());
         when(stateChecker.checkLag()).thenReturn(new LagCheckResult(false, Set.of(PARTITION)));
 
@@ -148,6 +127,17 @@ class KafkaWaitCompletionTest {
         waitCompletion.waitCompletion();
 
         verify(stateChecker, atLeast(3)).areExpectedGroupsReady(any());
+    }
+
+    @Test
+    void waitCompletionWaitsUntilAllGroupsStable() {
+        connectionWithExpectedGroups("g1");
+        when(stateChecker.areAllConsumerGroupsStable(any())).thenReturn(false, false, true);
+        when(stateChecker.checkLag()).thenReturn(new LagCheckResult(false, Set.of(PARTITION)));
+
+        waitCompletion.waitCompletion();
+
+        verify(stateChecker, atLeast(3)).areAllConsumerGroupsStable(any());
     }
 
     @Test

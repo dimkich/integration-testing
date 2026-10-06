@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.redis.facade;
 
 import com.moilioncircle.redis.replicator.Replicator;
 import io.github.dimkich.integration.testing.redis.replication.RedisSyncBarrier;
+import io.github.dimkich.integration.testing.redis.replication.RedisSyncState;
 import lombok.NonNull;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.stereotype.Component;
@@ -17,8 +18,13 @@ public class RedisReplicatorSpyProcessor implements BeanPostProcessor {
         }
         if (bean instanceof RedisSyncBarrier && "snapshotTestFactorySyncBarrier".equals(beanName)) {
             RedisSyncBarrier spyBarrier = spy((RedisSyncBarrier) bean);
-            doNothing().when(spyBarrier).activate();
+            doNothing().when(spyBarrier).triggerAndAwait(anyLong());
             return spyBarrier;
+        }
+        if (bean instanceof RedisSyncState && "snapshotTestFactorySyncState".equals(beanName)) {
+            RedisSyncState spyState = spy((RedisSyncState) bean);
+            doNothing().when(spyState).awaitActive(anyLong());
+            return spyState;
         }
         return bean;
     }

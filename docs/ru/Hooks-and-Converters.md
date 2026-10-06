@@ -240,9 +240,11 @@ static class Config {
 │                    TestExecutor.before()                    │  
 │  ├── test = expectedTest                                    │  
 │  ├── assertion.setExpected(test)                            │  
+│  ├── waitCompletion.start()                                 │  
 │  ├── test.before()                                          │  
 │  │   ├── initializationService.beforeTest()                 │  
 │  │   └── BeforeTest.before() ← Для Container, Case, Part    │  
+│  ├── waitCompletion.waitCompletion()                        │  
 │  └── testDataStorages.setNewCurrentValue()                  │  
 └─────────────────────────────────────────────────────────────┘  
                             ↓  

@@ -47,8 +47,8 @@ messages are intentionally not counted as processed.
 The application starts its Kafka containers asynchronously, and at check time the SUT group does not
 exist on the broker yet (or is rebalancing). When the groups are listed in
 [`expected-groups`](Configuration.md#waiting-for-sut-readiness-expected-groups), the framework waits
-for them up to `startup-stabilization-timeout-seconds` and then fails with
-`Kafka startup stabilization timeout ...` or
+for them up to `startup-stabilization-timeout-seconds` while waiting for completion after test
+initialization, and then fails with
 `Kafka wait completion timeout. expected consumer groups are not ready: ...`.
 
 **Fix:** verify that the SUT containers actually start and increase

@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing.redis.replication.handler.stream;
 
-import com.moilioncircle.redis.replicator.cmd.impl.PublishCommand;
+import com.moilioncircle.redis.replicator.cmd.impl.SPublishCommand;
 import com.moilioncircle.redis.replicator.event.Event;
 import io.github.dimkich.integration.testing.redis.message.RedisPushCapture;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
@@ -10,17 +10,16 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class PublishCommandHandler implements RedisStreamHandler<PublishCommand> {
+public class SPublishCommandHandler implements RedisStreamHandler<SPublishCommand> {
     private final RedisPushCapture redisPushCapture;
 
     @Override
     public boolean canHandle(Class<? extends Event> eventClass) {
-        return eventClass == PublishCommand.class;
+        return eventClass == SPublishCommand.class;
     }
 
     @Override
-    public void handle(PublishCommand event, RedisInMemoryStore store) {
-        store.getBarrier().release(event.getChannel(), event.getMessage());
+    public void handle(SPublishCommand event, RedisInMemoryStore store) {
         redisPushCapture.capture(store, event.getChannel(), event.getMessage());
     }
 }

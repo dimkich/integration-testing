@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.redis.replication.event.listener;
 import com.moilioncircle.redis.replicator.Replicator;
 import com.moilioncircle.redis.replicator.event.*;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
-import io.github.dimkich.integration.testing.redis.replication.RedisSyncBarrier;
+import io.github.dimkich.integration.testing.redis.replication.RedisSyncState;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,14 +12,14 @@ import lombok.extern.slf4j.Slf4j;
  * Replicator {@link EventListener} that routes events by Redis sync phase.
  * <p>
  * On {@code PreRdbSyncEvent} the store is flushed and snapshot handlers take over; on
- * {@code PreCommandSyncEvent} the {@link RedisSyncBarrier} is activated and stream handlers
+ * {@code PreCommandSyncEvent} the {@link RedisSyncState} is activated and stream handlers
  * process live commands; between phases {@link UnknownPhaseListener} rejects stray data.
  */
 @Slf4j
 @RequiredArgsConstructor
 public class RedisSyncStateDelegator implements EventListener {
     private final RedisInMemoryStore memStore;
-    private final RedisSyncBarrier barrier;
+    private final RedisSyncState state;
     private final UnknownPhaseListener unknownPhaseListener;
     private final RedisEventHandler<Event> snapshotDispatcher;
     private final RedisEventHandler<Event> streamDispatcher;
@@ -50,10 +50,10 @@ public class RedisSyncStateDelegator implements EventListener {
                 this.switchToUnknown();
                 return;
             }
-            log.trace("Receive event " + memStore.getName() + " " + event);
+            log.trace("Receive event {} {}", memStore.getName(), event);
             currentHandler.handle(event, memStore);
         } catch (Throwable e) {
-            barrier.setFatalError(e);
+            state.setFatalError(e);
             log.error("Error during event processing: {}", event, e);
         }
     }
@@ -61,19 +61,19 @@ public class RedisSyncStateDelegator implements EventListener {
     /** Clears the store and delegates subsequent data events to snapshot handlers. */
     public void switchToSnapshot() {
         memStore.flushAll();
-        barrier.deactivate();
+        state.deactivate();
         this.currentHandler = snapshotDispatcher;
     }
 
-    /** Deactivates the sync barrier and rejects data until the next phase begins. */
+    /** Deactivates the sync state and rejects data until the next phase begins. */
     public void switchToUnknown() {
-        barrier.deactivate();
+        state.deactivate();
         this.currentHandler = unknownPhaseListener;
     }
 
-    /** Enables the sync barrier and delegates subsequent command events to stream handlers. */
+    /** Enables the sync state and delegates subsequent command events to stream handlers. */
     public void switchToStream() {
-        barrier.activate();
+        state.activate();
         this.currentHandler = streamDispatcher;
     }
 }

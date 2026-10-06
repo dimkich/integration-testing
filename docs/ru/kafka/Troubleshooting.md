@@ -48,8 +48,8 @@ integration:
 Приложение поднимает Kafka-контейнеры асинхронно, и на момент проверки группы SUT ещё нет на брокере
 (или она перестраивается). Если группы перечислены в
 [`expected-groups`](Configuration.md#ожидание-готовности-sut-expected-groups), фреймворк ждёт их
-появления до `startup-stabilization-timeout-seconds`, а затем падает с сообщением
-`Kafka startup stabilization timeout ...` или
+появления до `startup-stabilization-timeout-seconds` в момент ожидания завершения после инициализации
+теста, а затем падает с сообщением
 `Kafka wait completion timeout. expected consumer groups are not ready: ...`.
 
 **Решение:** проверьте, что контейнеры SUT действительно запускаются, и при необходимости увеличьте

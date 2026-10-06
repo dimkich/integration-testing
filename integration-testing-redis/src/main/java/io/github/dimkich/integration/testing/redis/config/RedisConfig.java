@@ -1,8 +1,13 @@
 package io.github.dimkich.integration.testing.redis.config;
 
 import io.github.dimkich.integration.testing.TestSetupModule;
+import io.github.dimkich.integration.testing.message.TestMessages;
 import io.github.dimkich.integration.testing.redis.RedisTestDataStorage;
+import io.github.dimkich.integration.testing.redis.RedisWaitCompletion;
 import io.github.dimkich.integration.testing.redis.accessor.*;
+import io.github.dimkich.integration.testing.redis.message.RedisPush;
+import io.github.dimkich.integration.testing.redis.message.RedisPushCapture;
+import io.github.dimkich.integration.testing.redis.message.RedisPushSender;
 import io.github.dimkich.integration.testing.redis.model.*;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.redis.registry.RedisObjectFactory;
@@ -42,8 +47,8 @@ import java.util.List;
  * Imported by {@link io.github.dimkich.integration.testing.redis.EnableTestRedis}.
  * Registers codecs, schemas, accessors, replication handlers, and supporting infrastructure.
  * For each {@link RedisConnectionFactory} bean in the context, {@link PostProcessor} registers a
- * per-factory stack of sync barrier, connection settings, in-memory store, test data storage,
- * sync-state delegator, and replicator beans (see {@link BeanNames} for naming).
+ * per-factory stack of sync state, sync barrier, connection settings, in-memory store, test data
+ * storage, sync-state delegator, and replicator beans (see {@link BeanNames} for naming).
  *
  * @see RedisProperties
  * @see io.github.dimkich.integration.testing.redis.EnableTestRedis
@@ -72,7 +77,17 @@ public class RedisConfig {
     TestSetupModule redisModule() {
         return new TestSetupModule().addParentType(RedisValue.class).addSubTypes(RedisHash.class, RedisList.class,
                 RedisSet.class, RedisStream.class, RedisStreamEntry.class, RedisZSet.class, RedisEntry.class,
-                RedisZSetEntry.class, RedisKey.class, RedisHyperLogLog.class);
+                RedisZSetEntry.class, RedisKey.class, RedisHyperLogLog.class, RedisPush.class);
+    }
+
+    /**
+     * Captures Pub/Sub pushes observed on the replication stream for all connections and
+     * puts them into the test message store.
+     */
+    @Bean
+    public RedisPushCapture redisPushCapture(RedisDataSchemaRegistry redisDataSchemaRegistry,
+                                             TestMessages testMessages) {
+        return new RedisPushCapture(redisDataSchemaRegistry, testMessages);
     }
 
     /**
@@ -94,8 +109,8 @@ public class RedisConfig {
     /**
      * Registers per-{@link RedisConnectionFactory} beans before the context refreshes.
      * <p>
-     * For each connection factory, creates definitions for sync barrier, in-memory store,
-     * test data storage, sync-state delegator, and replicator.
+     * For each connection factory, creates definitions for sync state, sync barrier, in-memory
+     * store, test data storage, sync-state delegator, and replicator.
      * The delegator subscribes itself to the replicator in {@code @PostConstruct}.
      */
     public static class PostProcessor implements BeanDefinitionRegistryPostProcessor {
@@ -114,18 +129,28 @@ public class RedisConfig {
 
             for (String factoryName : factoryNames) {
                 BeanNames beans = new BeanNames(factoryName, propertiesName);
+                registry.registerBeanDefinition(beans.syncState, createSyncStateDef(beans));
                 registry.registerBeanDefinition(beans.barrier, createBarrierDef(beans));
                 registry.registerBeanDefinition(beans.memStore, createMemStoreDef(beans));
                 registry.registerBeanDefinition(beans.storage, createStorageDef(beans));
                 registry.registerBeanDefinition(beans.delegator, createDelegatorDef(beans));
                 registry.registerBeanDefinition(beans.replicator, createReplicatorDef(beans));
+                registry.registerBeanDefinition(beans.pushSender, createPushSenderDef(beans));
+                registry.registerBeanDefinition(beans.waitCompletion, createWaitCompletionDef(beans));
             }
+        }
+
+        private BeanDefinition createSyncStateDef(BeanNames beans) {
+            return BeanDefinitionBuilder.genericBeanDefinition(RedisSyncState.class)
+                    .addConstructorArgValue(beans.factory)
+                    .getBeanDefinition();
         }
 
         private BeanDefinition createBarrierDef(BeanNames beans) {
             return BeanDefinitionBuilder.genericBeanDefinition(RedisSyncBarrier.class)
                     .addConstructorArgValue(beans.factory)
                     .addConstructorArgReference(beans.factory)
+                    .addConstructorArgReference(beans.syncState)
                     .getBeanDefinition();
         }
 
@@ -136,8 +161,7 @@ public class RedisConfig {
             def.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
             def.getConstructorArgumentValues().addIndexedArgumentValue(0, beans.factory);
             def.getConstructorArgumentValues().addIndexedArgumentValue(1, new RuntimeBeanReference(beans.barrier));
-            def.getConstructorArgumentValues().addIndexedArgumentValue(2, new RuntimeBeanReference(beans.properties));
-            def.getConstructorArgumentValues().addIndexedArgumentValue(3, new RuntimeBeanReference(beans.replicator));
+            def.getConstructorArgumentValues().addIndexedArgumentValue(2, new RuntimeBeanReference(beans.replicator));
             return def;
         }
 
@@ -158,7 +182,7 @@ public class RedisConfig {
                     .getBeanDefinition();
             def.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
             def.getConstructorArgumentValues().addIndexedArgumentValue(0, new RuntimeBeanReference(beans.memStore));
-            def.getConstructorArgumentValues().addIndexedArgumentValue(1, new RuntimeBeanReference(beans.barrier));
+            def.getConstructorArgumentValues().addIndexedArgumentValue(1, new RuntimeBeanReference(beans.syncState));
             return def;
         }
 
@@ -167,8 +191,28 @@ public class RedisConfig {
                     .setFactoryMethodOnBean("createReplicator", beans.replicatorFactory)
                     .addConstructorArgValue(beans.factory)
                     .addConstructorArgReference(beans.factory)
+                    .addConstructorArgReference(beans.syncState)
+                    .getBeanDefinition();
+        }
+
+        private BeanDefinition createPushSenderDef(BeanNames beans) {
+            AbstractBeanDefinition def = BeanDefinitionBuilder
+                    .genericBeanDefinition(RedisPushSender.class)
+                    .addConstructorArgValue(beans.factory)
+                    .addConstructorArgReference(beans.factory)
+                    .getBeanDefinition();
+            def.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+            return def;
+        }
+
+        private BeanDefinition createWaitCompletionDef(BeanNames beans) {
+            AbstractBeanDefinition def = BeanDefinitionBuilder
+                    .genericBeanDefinition(RedisWaitCompletion.class)
+                    .addConstructorArgReference(beans.syncState)
                     .addConstructorArgReference(beans.barrier)
                     .getBeanDefinition();
+            def.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+            return def;
         }
 
         @Override
@@ -187,6 +231,8 @@ public class RedisConfig {
         final String factory;
         /** Name of the {@link RedisProperties} bean. */
         final String properties;
+        /** Sync state bean name ({@code factory + "SyncState"}). */
+        final String syncState;
         /** Sync barrier bean name ({@code factory + "SyncBarrier"}). */
         final String barrier;
         /** In-memory store bean name ({@code factory + "InMemoryStore"}). */
@@ -197,6 +243,10 @@ public class RedisConfig {
         final String replicator;
         /** Sync-state delegator bean name ({@code factory + "SyncStateDelegator"}). */
         final String delegator;
+        /** Pub/Sub push sender bean name ({@code factory + "RedisPushSender"}). */
+        final String pushSender;
+        /** Wait-completion bean name ({@code factory + "RedisWaitCompletion"}). */
+        final String waitCompletion;
         /** Fully qualified name of {@link RedisReplicatorFactory} for factory-method lookup. */
         final String replicatorFactory;
 
@@ -207,11 +257,14 @@ public class RedisConfig {
         BeanNames(String factoryName, String propertiesName) {
             this.factory = factoryName;
             this.properties = propertiesName;
+            this.syncState = factoryName + "SyncState";
             this.barrier = factoryName + "SyncBarrier";
             this.memStore = factoryName + "InMemoryStore";
             this.storage = factoryName + "TestDataStorage";
             this.replicator = factoryName + "Replicator";
             this.delegator = factoryName + "SyncStateDelegator";
+            this.pushSender = factoryName + "RedisPushSender";
+            this.waitCompletion = factoryName + "RedisWaitCompletion";
             this.replicatorFactory = RedisReplicatorFactory.class.getName();
         }
     }

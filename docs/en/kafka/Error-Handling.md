@@ -12,8 +12,8 @@ while `endOffset > committedOffset` for at least one subscribed partition of a l
 non-zero. The `inflight = false` mode asks the broker the same question through the Admin API.
 
 The wait is bounded by `lag-polling-timeout-ms` (10000 ms by default; do not confuse it with
-`startup-stabilization-timeout-seconds`, 30 s — that timeout awaits consumer-group readiness before
-every test). When the time is up, the case fails:
+`startup-stabilization-timeout-seconds`, 30 s — that timeout awaits SUT readiness before the lag is
+polled). When the time is up, the case fails:
 
 ```text
 Kafka wait completion timeout. Unprocessed messages remaining on broker.

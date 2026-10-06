@@ -10,6 +10,7 @@ import com.moilioncircle.redis.replicator.rdb.datatype.KeyValuePair;
 import io.github.dimkich.integration.testing.TestConverter;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.common.type.TypeParser;
+import io.github.dimkich.integration.testing.redis.facade.RedisPushTestFacade;
 import io.github.dimkich.integration.testing.redis.facade.RedisReplicationMockFacade;
 import io.github.dimkich.integration.testing.redis.facade.RedisReplicatorSpyProcessor;
 import io.github.dimkich.integration.testing.redis.facade.RedisSerdeTestFacade;
@@ -138,6 +139,13 @@ public class RedisTestConfig {
     }
 
     @Bean
+    public RedisPushTestFacade redisPushTestFacade(RedisConnectionFactory redissonConnectionFactory,
+                                                   RedisConnectionFactory jedisConnectionFactory,
+                                                   RedisSerializer<TestRedisDto> testValueSerializer) {
+        return new RedisPushTestFacade(redissonConnectionFactory, jedisConnectionFactory, testValueSerializer);
+    }
+
+    @Bean
     public RedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
         if (!redisPassword.isEmpty()) {
@@ -225,7 +233,8 @@ public class RedisTestConfig {
                 .addSubTypes(XDelExCommand.class, "XDelExCommand")
                 .addSubTypes(XSetIdCommand.class, "XSetIdCommand")
                 .addSubTypes(ExpireCommand.class, ExpireAtCommand.class, PExpireCommand.class,
-                        SetExCommand.class, PSetExCommand.class, GetSetCommand.class, PingCommand.class)
+                        SetExCommand.class, PSetExCommand.class, GetSetCommand.class, PingCommand.class,
+                        SPublishCommand.class)
                 .addJacksonModule(new SimpleModule()
                         .setMixInAnnotation(AbstractEvent.class, AbstractEventMixIn.class)
                         .setMixInAnnotation(KeyValuePair.class, AbstractEventMixIn.class)

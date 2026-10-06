@@ -26,14 +26,14 @@ public class MyRedisAppConfig {
 
     @Bean
     public RedisConnectionFactory redissonConnectionFactory() {
-        return new RedissonConnectionFactory(...);
+        return new RedissonConnectionFactory(...)
     }
 
     @Bean
     public RedisConnectionFactory jedisConnectionFactory() {
         return new JedisConnectionFactory(...);
     }
-}
+
 ```
 
 Then in `application-test.yml` you describe the connections using the same bean names as keys
@@ -276,6 +276,20 @@ schemas:
 | `redisson.TestRedisDto:123`        | `redisson.TestRedisDto`        | Schema A is applied               |
 | `redisson.TestRedisDto.backup:999` | `redisson.TestRedisDto.backup` | Schema B is applied (key ignored) |
 | `redisson.otherKey`                | No match                       | `defaultSchema` is applied        |
+
+### Pub/Sub Channels
+
+Pub/Sub channels are resolved by the same rules: the channel name is matched against the same
+`schemas` prefixes with the same fallback to `defaultSchema`, and the matched `value` codec is
+used to (de)serialize the payload. The channel name itself is encoded and decoded with the
+connection's `keyCodec`, like key names. This is how pushes are captured and sent; see
+[Push-Messages.md](Push-Messages.md) for details.
+
+Replication is awaited through the wait-completion subsystem: after initialization (so data
+storage snapshots and diffs are read from a caught-up mirror) and after the test action (so
+pushes and mutations are captured before assertions). This requires
+`integration.testing.wait.completion.enabled=true`; `redis.properties` already sets it, so no
+extra test properties are needed. With an explicit `false` the module does not await replication.
 
 ### Escaping Special Characters in YAML
 

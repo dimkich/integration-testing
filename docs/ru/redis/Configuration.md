@@ -24,14 +24,14 @@ public class MyRedisAppConfig {
 
     @Bean
     public RedisConnectionFactory redissonConnectionFactory() {
-        return new RedissonConnectionFactory(...);
+        return new RedissonConnectionFactory(...)
     }
 
     @Bean
     public RedisConnectionFactory jedisConnectionFactory() {
         return new JedisConnectionFactory(...);
     }
-}
+
 ```
 
 То в файле `application-test.yml` вы описываете подключение, используя эти же имена бинов в качестве
@@ -274,6 +274,20 @@ schemas:
 | `redisson.TestRedisDto:123`        | `redisson.TestRedisDto`        | Применяется Схема А                     |
 | `redisson.TestRedisDto.backup:999` | `redisson.TestRedisDto.backup` | Применяется Схема Б (ключ игнорируется) |
 | `redisson.otherKey`                | Совпадений нет                 | Применяется `defaultSchema`             |
+
+### Каналы Pub/Sub
+
+Каналы Pub/Sub разрешаются по тем же правилам: имя канала матчится по тем же префиксам
+`schemas` с тем же фолбэком на `defaultSchema`, а кодек `value` подходящей схемы используется
+для (де)сериализации полезной нагрузки. Само имя канала кодируется и декодируется кодеком
+`keyCodec` подключения, как и имена ключей. Так захватываются и отправляются push-сообщения; подробности —
+в [Push-Messages.md](Push-Messages.md).
+
+Репликация ожидается через подсистему wait-completion: после инициализации (чтобы снапшоты и
+диффы хранилищ читались из догнанного зеркала) и после действия теста (чтобы push-сообщения и
+изменения были захвачены до проверок). Для этого нужно
+`integration.testing.wait.completion.enabled=true`; в `redis.properties` оно уже задано, так что
+дополнительные свойства в тестах не требуются. При явном `false` модуль не ожидает репликацию.
 
 ### Экранирование спецсимволов в YAML
 

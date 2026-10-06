@@ -10666,6 +10666,94 @@
             </dataStorageDiff>
         </test>
     </test>
+    <test type="Container" name="push messages">
+        <init type="BeanInit" applyTo="TestCase">
+            <bean name="redisPushTestFacade" method="clear"/>
+        </init>
+        <test type="Case" name="SUT publishes string push">
+            <bean>redisPushTestFacade</bean>
+            <method>publishString</method>
+            <request>redisson.push.string</request>
+            <request>hello push</request>
+            <outboundMessage type="RedisPush" connection="redissonConnectionFactory" channel="redisson.push.string">
+                <value>hello push</value>
+            </outboundMessage>
+        </test>
+        <test type="Case" name="SUT publishes typed push">
+            <bean>redisPushTestFacade</bean>
+            <method>publishDto</method>
+            <request>redisson.TestRedisDto.push</request>
+            <request type="TestRedisDto">
+                <id>push-1</id>
+                <createdAt>2023-10-27T10:00:00Z</createdAt>
+                <tags>push</tags>
+                <metrics>
+                    <hits>1</hits>
+                </metrics>
+                <active>true</active>
+            </request>
+            <outboundMessage type="RedisPush" connection="redissonConnectionFactory" channel="redisson.TestRedisDto.push">
+                <value type="TestRedisDto">
+                    <id>push-1</id>
+                    <createdAt>2023-10-27T10:00:00Z</createdAt>
+                    <tags>push</tags>
+                    <metrics>
+                        <hits>1</hits>
+                    </metrics>
+                    <active>true</active>
+                </value>
+            </outboundMessage>
+        </test>
+        <test type="Case" name="Ignored channel is not captured">
+            <bean>redisPushTestFacade</bean>
+            <method>publishString</method>
+            <request>redisson.hidden.push</request>
+            <request>hidden</request>
+        </test>
+        <test type="Case" name="Framework to SUT string push">
+            <test type="Part" name="Send">
+                <inboundMessage type="RedisPush" connection="redissonConnectionFactory" channel="redisson.push.string">
+                    <value>from-test</value>
+                </inboundMessage>
+            </test>
+            <test type="Part" name="SUT received">
+                <bean>redisPushTestFacade</bean>
+                <method>awaitString</method>
+                <response>from-test</response>
+            </test>
+        </test>
+        <test type="Case" name="Framework to SUT typed push">
+            <test type="Part" name="Send">
+                <inboundMessage type="RedisPush" connection="redissonConnectionFactory" channel="redisson.TestRedisDto.push">
+                    <value type="TestRedisDto">
+                        <id>in-1</id>
+                        <createdAt>2023-10-27T10:00:00Z</createdAt>
+                        <tags>in</tags>
+                        <active>false</active>
+                    </value>
+                </inboundMessage>
+            </test>
+            <test type="Part" name="SUT received">
+                <bean>redisPushTestFacade</bean>
+                <method>awaitDto</method>
+                <response type="TestRedisDto">
+                    <id>in-1</id>
+                    <createdAt>2023-10-27T10:00:00Z</createdAt>
+                    <tags>in</tags>
+                    <active>false</active>
+                </response>
+            </test>
+        </test>
+        <test type="Case" name="SPUBLISH is captured">
+            <bean>redisPushTestFacade</bean>
+            <method>sPublishString</method>
+            <request>redisson.push.sharded</request>
+            <request>sharded push</request>
+            <outboundMessage type="RedisPush" connection="redissonConnectionFactory" channel="redisson.push.sharded">
+                <value>sharded push</value>
+            </outboundMessage>
+        </test>
+    </test>
     <test type="Container" name="Serde">
         <test type="Container" name="component source">
             <test type="Case" name="Core provider">

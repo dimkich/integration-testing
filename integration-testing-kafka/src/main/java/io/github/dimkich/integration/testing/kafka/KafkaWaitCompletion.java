@@ -18,12 +18,14 @@ import java.util.concurrent.TimeUnit;
  * live consumer groups have caught up (no lag remains), so all outbound and inbound
  * messages are captured before assertions run.
  *
- * <p>Consumer groups listed in
- * {@code integration.testing.kafka.connections.<name>.expected-groups} are awaited
- * explicitly: before each test ({@link #start()}) and on every poll iteration
- * ({@link #waitCompletion()}). This covers SUT consumers that start asynchronously
- * after the Spring context has been refreshed — an empty group listing alone is not
- * treated as "nothing to wait for" anymore.
+ * <p>{@link #start()} only resets the tracking state and never blocks. Consumer groups
+ * listed in {@code integration.testing.kafka.connections.<name>.expected-groups} are
+ * awaited in {@link #waitCompletion()}: it first waits up to
+ * {@code startup-stabilization-timeout-seconds} for the sniffer assignment and for the
+ * expected groups to become ready and all known groups stable (covering SUT consumers
+ * that start asynchronously, possibly triggered by test initialization), and only then
+ * waits up to {@code lag-polling-timeout-ms} for the lag to drain. An empty group
+ * listing alone is not treated as "nothing to wait for".
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -34,42 +36,8 @@ public class KafkaWaitCompletion implements WaitCompletion {
     private volatile boolean anyLag = false;
 
     @Override
-    @SneakyThrows
-    @SuppressWarnings("BusyWait")
     public void start() {
         sniffer.setLastException(null);
-        Set<String> expectedGroups = expectedGroups();
-        long checkIntervalNanos = TimeUnit.MILLISECONDS.toNanos(
-                Math.max(kafkaProperties.getReadinessPollingIntervalMs(), kafkaProperties.getLagPollingIntervalMs()));
-        long startedNanos = System.nanoTime();
-        long deadlineNanos = startedNanos
-                + TimeUnit.SECONDS.toNanos(kafkaProperties.getStartupStabilizationTimeoutSeconds());
-        long nextCheckNanos = 0;
-        boolean expectedReady = expectedGroups.isEmpty();
-        while (System.nanoTime() < deadlineNanos) {
-            if (System.nanoTime() >= nextCheckNanos) {
-                expectedReady = stateChecker.areExpectedGroupsReady(expectedGroups);
-                if (expectedReady && stateChecker.areAllConsumerGroupsStable(expectedGroups)) {
-                    break;
-                }
-                nextCheckNanos = System.nanoTime() + checkIntervalNanos;
-            }
-            Thread.sleep(kafkaProperties.getLagPollingIntervalMs());
-        }
-        if (!expectedReady) {
-            throw new IllegalStateException("Kafka startup stabilization timeout after "
-                    + kafkaProperties.getStartupStabilizationTimeoutSeconds()
-                    + "s: expected consumer groups are not ready ["
-                    + stateChecker.describeExpectedGroups(expectedGroups) + "], all groups ["
-                    + stateChecker.describeGroupStates() + "]. Check that the SUT listeners have started.");
-        }
-        if (log.isTraceEnabled()) {
-            log.trace("Startup stabilization finished after {} ms, sniffer assignment: {}, groups: {}, state: {}",
-                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedNanos),
-                    sniffer.getAssignment().size(),
-                    stateChecker.describeGroupStates(),
-                    stateChecker.describe());
-        }
         stateChecker.reset();
     }
 
@@ -82,16 +50,18 @@ public class KafkaWaitCompletion implements WaitCompletion {
     @SneakyThrows
     @SuppressWarnings("BusyWait")
     public void waitCompletion() {
-        long deadlineNanos = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(kafkaProperties.getLagPollingTimeoutMs());
+        long readinessDeadlineNanos = System.nanoTime()
+                + TimeUnit.SECONDS.toNanos(kafkaProperties.getStartupStabilizationTimeoutSeconds());
+        long lagDeadlineNanos = 0;
         anyLag = false;
         Set<String> expectedGroups = expectedGroups();
         long readinessRecheckNanos = TimeUnit.MILLISECONDS.toNanos(
                 Math.max(kafkaProperties.getReadinessPollingIntervalMs(), kafkaProperties.getLagPollingIntervalMs()));
         long nextReadinessCheckNanos = 0;
-        boolean snifferReady = false;
+        boolean snifferReady;
         boolean sutReady = false;
 
-        while (System.nanoTime() < deadlineNanos) {
+        while (true) {
             Exception snifferError = sniffer.getLastException();
             if (snifferError != null) {
                 throw snifferError;
@@ -104,12 +74,17 @@ public class KafkaWaitCompletion implements WaitCompletion {
                 sniffer.signalMetadataNeedsRefresh();
             }
 
-            if (!sutReady && System.nanoTime() >= nextReadinessCheckNanos) {
-                sutReady = stateChecker.areExpectedGroupsReady(expectedGroups);
-                nextReadinessCheckNanos = System.nanoTime() + readinessRecheckNanos;
+            long nowNanos = System.nanoTime();
+            if (!sutReady && nowNanos >= nextReadinessCheckNanos) {
+                sutReady = stateChecker.areExpectedGroupsReady(expectedGroups)
+                        && (expectedGroups.isEmpty() || stateChecker.areAllConsumerGroupsStable(expectedGroups));
+                nextReadinessCheckNanos = nowNanos + readinessRecheckNanos;
             }
 
             if (!snifferReady || !sutReady) {
+                if (nowNanos >= readinessDeadlineNanos) {
+                    break;
+                }
                 if (log.isTraceEnabled()) {
                     log.trace("WaitCompletion: not ready yet. sniffer assigned: {}, expected groups ready: {}",
                             sniffer.getAssignment().size(), sutReady);
@@ -118,14 +93,20 @@ public class KafkaWaitCompletion implements WaitCompletion {
                 continue;
             }
 
-            boolean currentLag = result.isHasLag();
-            if (currentLag) {
-                anyLag = true;
-            } else {
+            if (lagDeadlineNanos == 0) {
+                lagDeadlineNanos = nowNanos + TimeUnit.MILLISECONDS.toNanos(kafkaProperties.getLagPollingTimeoutMs());
+            }
+
+            if (!result.isHasLag()) {
                 if (log.isTraceEnabled()) {
                     log.trace("WaitCompletion: no lag. {}", stateChecker.describe());
                 }
                 return;
+            }
+            anyLag = true;
+
+            if (nowNanos >= lagDeadlineNanos) {
+                break;
             }
 
             Thread.sleep(kafkaProperties.getLagPollingIntervalMs());
@@ -140,7 +121,8 @@ public class KafkaWaitCompletion implements WaitCompletion {
         }
         if (!sutReady && !expectedGroups.isEmpty()) {
             problems.add("expected consumer groups are not ready: "
-                    + stateChecker.describeExpectedGroups(expectedGroups));
+                    + stateChecker.describeExpectedGroups(expectedGroups)
+                    + ", groups: " + stateChecker.describeGroupStates());
         }
         if (problems.isEmpty()) {
             throw new RuntimeException("Kafka wait completion timeout. Unprocessed messages remaining on broker.");

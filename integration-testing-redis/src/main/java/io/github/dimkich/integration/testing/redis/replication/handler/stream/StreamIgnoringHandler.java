@@ -14,7 +14,7 @@ public class StreamIgnoringHandler implements RedisStreamHandler<Command> {
     private static final Set<Class<? extends Command>> ignored = Set.of(PingCommand.class, MultiCommand.class,
             ExecCommand.class, ReplConfGetAckCommand.class, FunctionLoadCommand.class, FunctionDeleteCommand.class,
             FunctionFlushCommand.class, FunctionRestoreCommand.class, BLMoveCommand.class, MSetExCommand.class,
-            HSetExCommand.class, SPublishCommand.class,
+            HSetExCommand.class,
             XGroupCreateCommand.class, XGroupDestroyCommand.class, XGroupCreateConsumerCommand.class,
             XGroupDelConsumerCommand.class, XGroupSetIdCommand.class, XAckCommand.class,
             XAckDelCommand.class, XClaimCommand.class, XSetIdCommand.class);
