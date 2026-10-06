@@ -1,7 +1,5 @@
 package io.github.dimkich.integration.testing.format;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
@@ -23,7 +21,6 @@ import io.github.dimkich.integration.testing.format.dto.*;
 import io.github.dimkich.integration.testing.format.dto.map.*;
 import io.github.dimkich.integration.testing.format.xml.XmlConfig;
 import io.github.dimkich.integration.testing.format.xml.XmlTestMapper;
-import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributes;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
@@ -32,7 +29,6 @@ import io.github.dimkich.integration.testing.web.jackson.LinkedMultiValueMapStri
 import io.github.dimkich.integration.testing.web.jackson.LinkedMultiValueMapStringString;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -783,12 +779,6 @@ class XmlTestMapperTest {
     <name>s</name>
 </TypeTest>
 """},
-                {new BeanAsAttr(new Attr().put("id", "1").put("data", "d"), "s", 12), """
-<BeanAsAttr id="1" data="d">
-    <name>s</name>
-    <id>12</id>
-</BeanAsAttr>
-"""},
                 {new TypeTest(null, null, ""), """
 <TypeTest>
     <name></name>
@@ -851,9 +841,6 @@ class XmlTestMapperTest {
     @ParameterizedTest
     @MethodSource("data")
     void deserializeTokens(Object o, String xml) throws IOException {
-        if (o instanceof BeanAsAttr) {
-            return;
-        }
         JsonParser p = xmlMapper.createParser(xml);
         p.nextToken();
         TokenBuffer buffer = xmlMapper.getDeserializationContext().bufferForInputBuffering(p);
@@ -906,29 +893,6 @@ class XmlTestMapperTest {
         private List<TypeTest> list = new ArrayList<>();
         private Map<String, TypeTest> map = new LinkedHashMap<>();
     }
-
-    @Data
-    @AllArgsConstructor
-    public static class BeanAsAttr {
-        @BeanAsAttributes
-        private Attr attr;
-        private String name;
-        private Integer id;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class Attr {
-        @Getter(onMethod_ = @JsonAnyGetter)
-        private Map<String, Object> map = new LinkedHashMap<>();
-
-        @JsonAnySetter
-        public Attr put(String name, Object value) {
-            map.put(name, value);
-            return this;
-        }
-    }
-
 
     @SuppressWarnings("unchecked")
     static <K, V> Map<K, V> map(Map<K, V> map, Object... keyValues) {

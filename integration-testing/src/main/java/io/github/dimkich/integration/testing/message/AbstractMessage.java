@@ -3,7 +3,6 @@ package io.github.dimkich.integration.testing.message;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributes;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,7 +14,7 @@ import lombok.NoArgsConstructor;
  * metadata through headers and the actual message content through the payload.
  * <p>
  * The class is designed for serialization/deserialization from XML and JSON formats using
- * Jackson annotations. Headers are serialized as XML attributes when using {@link BeanAsAttributes},
+ * Jackson annotations. Internal metadata such as the connection is serialized as an XML attribute,
  * while the payload is unwrapped in JSON representation.
  * <p>
  * Message headers can include standard properties such as topic, source, and key, as well as

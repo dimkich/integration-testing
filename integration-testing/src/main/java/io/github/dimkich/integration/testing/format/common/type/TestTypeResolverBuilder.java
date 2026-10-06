@@ -18,15 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Custom {@link StdTypeResolverBuilder} used in tests to configure Jackson's
  * polymorphic type handling in a centralized way.
  * <p>
  * The builder delegates all decisions about type ids and subtype registration
- * to {@link TypeResolverFactory} and exposes the names of JSON properties that
- * carry type information (regular and "unwrapped" payloads).
+ * to {@link TypeResolverFactory} and exposes the name of the type property used
+ * for unwrapped payloads.
  */
 @Component("testTypeResolverBuilder")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -67,17 +66,6 @@ public class TestTypeResolverBuilder extends StdTypeResolverBuilder {
         inclusion(JsonTypeInfo.As.PROPERTY);
         typeProperty("type");
         unwrappedTypeProperty = "utype";
-    }
-
-    /**
-     * Returns the set of JSON attribute names that may contain type information
-     * for objects handled by this builder.
-     *
-     * @return immutable set containing {@link #getTypeProperty()} and
-     * {@link #getUnwrappedTypeProperty()}
-     */
-    public Set<String> getTypeAttributes() {
-        return Set.of(getTypeProperty(), getUnwrappedTypeProperty());
     }
 
     /**

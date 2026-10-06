@@ -12,7 +12,6 @@ import com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter;
 import io.github.dimkich.integration.testing.format.common.CommonFormatConfig;
 import io.github.dimkich.integration.testing.format.common.ObjectMapperConfigurer;
 import io.github.dimkich.integration.testing.format.common.scalar.ScalarTypeModule;
-import io.github.dimkich.integration.testing.format.xml.attributes.BeanAsAttributesModule;
 import io.github.dimkich.integration.testing.format.xml.config.jackson.Lf4SpacesIndenter;
 import io.github.dimkich.integration.testing.format.xml.fixed.DefaultXmlPrettyPrinterFixed;
 import io.github.dimkich.integration.testing.format.xml.fixed.XmlFactoryFixed;
@@ -64,7 +63,7 @@ public class XmlConfig {
 
         builder.addModules(new SimpleModule()
                         .setDeserializerModifier(new WrapperHandlingModifier()),
-                new BeanAsAttributesModule(resolverBuilder), new PolymorphicUnwrappedModule(resolverBuilder),
+                new PolymorphicUnwrappedModule(resolverBuilder),
                 new ScalarTypeModule(Set.of(Boolean.class, Integer.class, Double.class)),
                 new WrapperModule());
 

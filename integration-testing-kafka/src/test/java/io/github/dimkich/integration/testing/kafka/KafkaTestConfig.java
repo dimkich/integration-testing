@@ -3,7 +3,6 @@ package io.github.dimkich.integration.testing.kafka;
 import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.github.dimkich.integration.testing.TestSetupModule;
-import io.github.dimkich.integration.testing.format.common.polymorphic.unwrapped.DisablePolymorphicUnwrappedModule;
 import io.github.dimkich.integration.testing.kafka.serde.ReceivedMessageStorage;
 import io.github.dimkich.integration.testing.kafka.serde.bytes.ByteSerDeConfig;
 import io.github.dimkich.integration.testing.kafka.serde.envelope.EnvelopeSerDeConfig;
@@ -36,8 +35,7 @@ public class KafkaTestConfig {
     public TestSetupModule testModule() {
         return new TestSetupModule()
                 .addSubTypes(OrderDto.class, OrderEventDto.class, KafkaNull.class,
-                        MismatchedInputException.class, InvalidDefinitionException.class)
-                .addJacksonModule(new DisablePolymorphicUnwrappedModule());
+                        MismatchedInputException.class, InvalidDefinitionException.class);
     }
 
     @Bean
