@@ -28,6 +28,27 @@ public interface TestSerdeDecoratorFactory<I, O, C extends TestSerdeContext, P e
     TestSerdeConverter<I, O, C> decorate(TestSerdeConverter<I, O, C> converter, P config);
 
     /**
+     * Checks whether the decorator applies to a request. Decorators are invariant: a decorator
+     * wraps a converter of exactly the declared signature, so the requested input/output pair must
+     * be equal to the declared one ({@code null} means "any type"). This narrows the polymorphic
+     * matching of {@link TestSerdeComponent#matches}.
+     *
+     * @param propsClass   configuration class of the request
+     * @param contextClass context class of the request
+     * @param inputClass   input class of the request
+     * @param outputClass  output class of the request
+     * @param role         requested role, or {@code null}
+     * @return {@code true} when the decorator matches the request
+     */
+    @Override
+    default boolean matches(Class<?> propsClass, Class<?> contextClass, Class<?> inputClass, Class<?> outputClass,
+                            @Nullable ComponentRole role) {
+        return TestSerdeComponent.super.matches(propsClass, contextClass, inputClass, outputClass, role)
+                && (getInputClass() == null || getInputClass().equals(inputClass))
+                && (getOutputClass() == null || getOutputClass().equals(outputClass));
+    }
+
+    /**
      * Casts the converter and the configuration to the declared types and delegates to
      * {@link #decorate}.
      *

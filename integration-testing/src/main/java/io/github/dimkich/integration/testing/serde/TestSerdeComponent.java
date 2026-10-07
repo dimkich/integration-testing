@@ -8,10 +8,9 @@ import org.springframework.lang.Nullable;
  *
  * <p>Describes the signature used to match a resolution request — input, output, context,
  * properties and role — plus ordering ({@link #compare}) and the shared checks
- * ({@link #matches}, {@link #fitsContext},
- * {@link #verify}). A {@code null} input or output class means "any type", a {@code null}
- * properties class matches every configuration, and a non-null role restricts the component to
- * requests with the same {@link ComponentRole#name()}.
+ * ({@link #matches}, {@link #verify}). A {@code null} input or output class means "any type", a
+ * {@code null} properties class matches every configuration, and a non-null role restricts the
+ * component to requests with the same {@link ComponentRole#name()}.
  *
  * @param <I> input type the component produces converters for
  * @param <O> output type the component produces converters for
@@ -83,6 +82,12 @@ public interface TestSerdeComponent<I, O, C extends TestSerdeContext, R extends 
     /**
      * Checks whether the component handles a request with the given types and role.
      *
+     * <p>The input/output pair is matched by the Liskov substitution principle: the declared
+     * input must be a supertype of the requested input (contravariance), and the declared output
+     * must be a subtype of the requested output (covariance). A {@code null} declared type means
+     * "any type". Decorators override this to invariant matching, because a decorator wraps a
+     * converter of exactly its declared signature.
+     *
      * @param propsClass   configuration class of the request
      * @param contextClass context class of the request
      * @param inputClass   input class of the request
@@ -94,9 +99,9 @@ public interface TestSerdeComponent<I, O, C extends TestSerdeContext, R extends 
                             @Nullable ComponentRole role) {
         return matchesRole(role)
                 && getPropertiesClass().isAssignableFrom(propsClass)
-                && fitsContext(getContextClass(), contextClass)
-                && (getInputClass() == null || getInputClass().equals(inputClass))
-                && (getOutputClass() == null || getOutputClass().equals(outputClass));
+                && getContextClass().isAssignableFrom(contextClass)
+                && (getInputClass() == null || getInputClass().isAssignableFrom(inputClass))
+                && (getOutputClass() == null || outputClass.isAssignableFrom(getOutputClass()));
     }
 
     /**
@@ -160,17 +165,6 @@ public interface TestSerdeComponent<I, O, C extends TestSerdeContext, R extends 
     private boolean matchesRole(@Nullable ComponentRole requestedRole) {
         R role = getRole();
         return role == null || (requestedRole != null && role.name().equals(requestedRole.name()));
-    }
-
-    /**
-     * Checks that the requested context is assignable to the component context.
-     *
-     * @param candidate context class declared by the component
-     * @param requested context class of the request
-     * @return {@code true} when the component can work with the requested context
-     */
-    default boolean fitsContext(Class<?> candidate, Class<?> requested) {
-        return candidate.isAssignableFrom(requested);
     }
 
     private static String typeName(Class<?> type) {

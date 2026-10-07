@@ -69,17 +69,18 @@ Rules:
 * provider names are matched exactly, case-sensitively; two providers with the same name, config,
   direction (`getInputClass()`/`getOutputClass()`) and role do not conflict but form a fallback
   chain, like adapters: ordered by specificity, and by bean order (`@Order`) when fully equal;
-* `getInputClass()`/`getOutputClass()` describe the provider's type pair: the core compares it with
-  the requested one strictly (`equals`) — compatibility and inheritance are not considered, and
-  `null` means "any type" and is allowed only for really universal components; declare the free
-  (data) side as `Object`, and use concrete types only for converters bound via `beanRef`/FQCN
-  (retype adapters bridge them). Build the converter via
-  `TestSerdeConverter.of(...)` with the request's types — then it satisfies the request by
-  construction; if a `null/null` pair makes the provider bidirectional, check the requested direction
-  in `create` and return `null` when a concrete pair is not supported;
-* a provider that returns a non-`null` converter must satisfy the request (`satisfies`); otherwise
-  the core throws an `IllegalArgumentException`, a sign of a wrongly written provider. `null` is the
-  only way to say "not mine";
+* `getInputClass()`/`getOutputClass()` describe the provider's type pair: the pair is matched by
+  the Liskov substitution principle — the declared input must be a supertype of the requested
+  input and the declared output a subtype of the requested output; `null` means "any type" and is
+  allowed only for really universal components. Declare the free (data) side as `Object`, and use
+  concrete types only for converters bound via `beanRef`/FQCN (retype adapters bridge them). Build
+  the converter via `TestSerdeConverter.of(...)` with the request's types — then it satisfies the
+  request by construction; if a `null/null` pair makes the provider bidirectional, check the
+  requested direction in `create` and return `null` when a concrete pair is not supported;
+* a provider that returns a non-`null` converter must satisfy the request (`satisfies`): the
+  converter may declare a wider input or a narrower output than the request; otherwise the core
+  throws an `IllegalArgumentException`, a sign of a wrongly written provider. `null` is the only way
+  to say "not mine";
 * the context (`C`) is part of the contract: a converter with an incompatible context is never
   selected. For transport-free sources (headers, record parts) use `TestSerdeContext`;
 * the role (`R`) is also part of the contract: a platform enum may be inspected in `create` to
@@ -125,13 +126,15 @@ Rules:
 
 * the factory is selected by the config class or its closest ancestor: `ConverterManager` walks the
   superclass and interface chain;
-* `getInputClass()`/`getOutputClass()` declare the component direction: the pair is compared with the
-  requested one strictly (`equals`, `null` means any type); for a component that handles both
-  directions declare `null/null` and validate the concrete pair in `create` by returning `null` for
-  unsupported requests;
-* if `create` returns a non-`null` converter, it must satisfy the request (`satisfies`); otherwise
-  the core throws an `IllegalArgumentException`, a sign of a wrongly written factory. `null` is the
-  only way to say "not mine";
+* `getInputClass()`/`getOutputClass()` declare the component direction: the pair is matched by the
+  Liskov substitution principle — the declared input must be a supertype of the requested
+  input and the declared output a subtype of the requested output; `null` means any type. For a
+  component that handles both directions declare `null/null` and validate the concrete pair in
+  `create` by returning `null` for unsupported requests;
+* if `create` returns a non-`null` converter, it must satisfy the request (`satisfies`): the
+  converter may declare a wider input or a narrower output than the request; otherwise the core
+  throws an `IllegalArgumentException`, a sign of a wrongly written factory. `null` is the only way
+  to say "not mine";
 * `P` is free: the config may be a custom POJO and does not have to extend `StandardSerdeProperties`;
 * several factories may share the same config class: they are distinguished by direction and role,
   and when specificity is equal the bean order is preserved;
@@ -148,6 +151,9 @@ Common selection rules:
 
 * candidates are ordered by specificity: a subtype source goes before its ancestors, a concrete
   input/output pair before `null`, an explicit role before a universal one;
+* the input/output pair is matched by the Liskov substitution principle, as for providers and
+  factories: the declared input must be a supertype of the requested input and the declared output a
+  subtype of the requested output;
 * the first adapter returning non-`null` wins. `null` means "not mine" and the manager tries the
   next one; an exception aborts the resolution;
 * the candidate order is deterministic: specificity (the role, source, config class, input, output
@@ -217,11 +223,11 @@ A custom converter decorator (TestSerdeDecoratorFactory)
 
 A decorator wraps an already resolved converter — this is how the core applies the binary envelope
 (`BinaryEnvelopeSerializerDecorator`/`BinaryEnvelopeDeserializerDecorator`). A decorator is selected by
-the config class, context and direction: the declared `getInputClass()`/`getOutputClass()` pair is
-compared with the requested one strictly (`equals`, `null` means any type), otherwise the decorator
-is not applied to that resolution. That is why the serializing decorator only receives `* → byte[]`
-requests and the deserializing one only `byte[] → *`; return the original converter when the
-decorator is not applicable per its configuration.
+the config class, context and direction, and unlike converters it is invariant: the declared
+`getInputClass()`/`getOutputClass()` pair must be equal to the requested one (`equals`, `null` means
+any type), otherwise the decorator is not applied to that resolution. That is why the serializing
+decorator only receives `* → byte[]` requests and the deserializing one only `byte[] → *`; return the
+original converter when the decorator is not applicable per its configuration.
 
 ```java
 @Component

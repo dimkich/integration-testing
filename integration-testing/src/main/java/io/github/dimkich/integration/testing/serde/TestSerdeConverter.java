@@ -68,8 +68,11 @@ public interface TestSerdeConverter<I, O, C extends TestSerdeContext> {
     O convert(I input, C context);
 
     /**
-     * Checks whether the converter matches the requested types: the context must be assignable to
-     * {@link #getContextClass()}, and declared input/output types must be equal to the requested ones.
+     * Checks whether the converter satisfies the requested types by the Liskov substitution
+     * principle: the context must be assignable to {@link #getContextClass()}, the declared input
+     * type must be a supertype of the requested input (contravariance), and the declared output
+     * type must be a subtype of the requested output (covariance). A {@code null} declared type
+     * means "any type".
      *
      * @param inputClass   requested input type
      * @param outputClass  requested output type
@@ -78,8 +81,8 @@ public interface TestSerdeConverter<I, O, C extends TestSerdeContext> {
      */
     default boolean satisfies(Class<?> inputClass, Class<?> outputClass, Class<?> contextClass) {
         return getContextClass().isAssignableFrom(contextClass)
-                && (getInputClass() == null || getInputClass().equals(inputClass))
-                && (getOutputClass() == null || getOutputClass().equals(outputClass));
+                && (getInputClass() == null || getInputClass().isAssignableFrom(inputClass))
+                && (getOutputClass() == null || outputClass.isAssignableFrom(getOutputClass()));
     }
 
     /**
