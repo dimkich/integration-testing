@@ -12,6 +12,7 @@ import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
 
+import java.nio.ByteBuffer;
 import java.util.HexFormat;
 
 /**
@@ -43,22 +44,22 @@ public class RedisSerdeTestFacade {
     /** Component-level round-trip: serialize and deserialize {@code data}. */
     public String roundTripComponent(String beanRef, String type, String binaryEnvelope, String data) {
         StandardSerdeProperties props = component(beanRef, type, binaryEnvelope);
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer = componentSerializer(props);
-        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer = componentDeserializer(props);
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer = componentSerializer(props);
+        TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> deserializer = componentDeserializer(props);
         return text(deserializer.convert(serializer.convert(data, TestSerdeContext.EMPTY), TestSerdeContext.EMPTY));
     }
 
     /** Component-level round-trip of a typed value through a provider. */
     public Object roundTripComponentTyped(String type, String targetClass, String objectMapperRef, Object data) {
         StandardSerdeProperties props = componentTyped(type, targetClass, objectMapperRef);
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer = componentSerializer(props);
-        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer = componentDeserializer(props);
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer = componentSerializer(props);
+        TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> deserializer = componentDeserializer(props);
         return deserializer.convert(serializer.convert(data, TestSerdeContext.EMPTY), TestSerdeContext.EMPTY);
     }
 
     /** Component-level serialization; returns the bytes as uppercase hex. */
     public String serializeComponentHex(String beanRef, String type, String binaryEnvelope, String data) {
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer =
                 componentSerializer(component(beanRef, type, binaryEnvelope));
         return hex(serializer.convert(data, TestSerdeContext.EMPTY));
     }
@@ -107,12 +108,12 @@ public class RedisSerdeTestFacade {
         }
     }
 
-    private TestSerdeConverter<Object, byte[], TestSerdeContext> componentSerializer(StandardSerdeProperties props) {
-        return serdeManager.resolve(props, Object.class, byte[].class, TestSerdeContext.class, null);
+    private TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> componentSerializer(StandardSerdeProperties props) {
+        return serdeManager.resolve(props, Object.class, ByteBuffer.class, TestSerdeContext.class, null);
     }
 
-    private TestSerdeConverter<byte[], Object, TestSerdeContext> componentDeserializer(StandardSerdeProperties props) {
-        return serdeManager.resolve(props, byte[].class, Object.class, TestSerdeContext.class, null);
+    private TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> componentDeserializer(StandardSerdeProperties props) {
+        return serdeManager.resolve(props, ByteBuffer.class, Object.class, TestSerdeContext.class, null);
     }
 
     private RedisDataCodec componentCodec(RedisDataSchema schema, String component) {
@@ -155,6 +156,10 @@ public class RedisSerdeTestFacade {
 
     private String text(Object value) {
         return value == null ? NULL : String.valueOf(value);
+    }
+
+    private String hex(ByteBuffer data) {
+        return data == null ? NULL : hex(TestSerdeConverter.toByteArray(data));
     }
 
     private String hex(byte[] data) {

@@ -12,16 +12,15 @@ import io.github.dimkich.integration.testing.kafka.serde.KafkaHeaderDeserializer
 import io.github.dimkich.integration.testing.kafka.serde.KafkaHeaderSerializerConverterFactory;
 import io.github.dimkich.integration.testing.kafka.serde.KafkaRecordSerdeFactory;
 import io.github.dimkich.integration.testing.kafka.serde.adapter.*;
+import io.github.dimkich.integration.testing.kafka.serde.deserialization.KafkaByteBufferDeserializer;
 import io.github.dimkich.integration.testing.kafka.serde.provider.*;
+import io.github.dimkich.integration.testing.kafka.serde.serialization.KafkaByteBufferSerializer;
 import io.github.dimkich.integration.testing.kafka.util.BootstrapUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -39,6 +38,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.kafka.support.DefaultKafkaHeaderMapper;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -90,24 +90,21 @@ public class KafkaConfig {
         return new DefaultKafkaHeaderMapper();
     }
 
-    static KafkaProducer<byte[], byte[]> createProducer(ConnectionProperties connectionProperties) {
+    static KafkaProducer<ByteBuffer, ByteBuffer> createProducer(ConnectionProperties connectionProperties) {
         Properties props = new Properties();
         props.putAll(connectionProperties.toClientProperties());
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
-
-        return new KafkaProducer<>(props);
+        return new KafkaProducer<>(props, new KafkaByteBufferSerializer(), new KafkaByteBufferSerializer());
     }
 
-    static KafkaConsumer<byte[], byte[]> createConsumer(ConnectionProperties connectionProperties) {
+    static KafkaConsumer<ByteBuffer, ByteBuffer> createConsumer(ConnectionProperties connectionProperties) {
         Properties props = new Properties();
         props.putAll(connectionProperties.toClientProperties());
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "test-sniffer-" + UUID.randomUUID());
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         props.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
-        ByteArrayDeserializer byteArrayDeserializer = new ByteArrayDeserializer();
-        return new KafkaConsumer<>(props, byteArrayDeserializer, byteArrayDeserializer);
+        KafkaByteBufferDeserializer deserializer = new KafkaByteBufferDeserializer();
+        return new KafkaConsumer<>(props, deserializer, deserializer);
     }
 
     static AdminClient createAdminClient(ConnectionProperties connectionProperties) {

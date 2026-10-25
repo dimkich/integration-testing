@@ -7,6 +7,8 @@ import io.github.dimkich.integration.testing.serde.TestSerdeContext;
 import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
 import lombok.RequiredArgsConstructor;
 
+import java.nio.ByteBuffer;
+
 /**
  * Single assembly point for Redis key codecs and data schemas: resolves each configured
  * component of a {@link RedisSchemaProperties} through {@link SerdeManager} and joins the
@@ -58,8 +60,8 @@ public class RedisSchemaSerdeFactory {
 
     private RedisDataCodec codec(StandardSerdeProperties props, RedisComponentRole role) {
         return new RedisDataCodec(
-                resolve(props, role, Object.class, byte[].class),
-                resolve(props, role, byte[].class, Object.class));
+                resolve(props, role, Object.class, ByteBuffer.class),
+                resolve(props, role, ByteBuffer.class, Object.class));
     }
 
     private <I, O> TestSerdeConverter<I, O, TestSerdeContext> resolve(

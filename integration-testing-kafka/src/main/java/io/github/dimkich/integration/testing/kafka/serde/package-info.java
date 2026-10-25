@@ -6,8 +6,8 @@
  * <ul>
  *   <li>record converters:
  *       {@link io.github.dimkich.integration.testing.serde.TestSerdeConverter} from
- *       {@code KafkaRecord} to {@code ProducerRecord<byte[], byte[]>} and back from
- *       {@code ConsumerRecord<byte[], byte[]>} to {@code KafkaRecord};</li>
+ *       {@code KafkaRecord} to {@code ProducerRecord<ByteBuffer, ByteBuffer>} and back from
+ *       {@code ConsumerRecord<ByteBuffer, ByteBuffer>} to {@code KafkaRecord};</li>
  *   <li>header converters:
  *       {@link io.github.dimkich.integration.testing.serde.TestSerdeConverter} between message
  *       header maps and native Kafka {@code Headers};</li>

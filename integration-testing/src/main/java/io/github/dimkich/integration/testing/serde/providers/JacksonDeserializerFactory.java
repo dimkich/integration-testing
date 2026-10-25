@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 
 /**
  * Base of Jackson-based deserializer providers: resolves the mapper bean (by
@@ -22,14 +23,15 @@ import java.lang.reflect.Type;
 @Getter
 @RequiredArgsConstructor
 public abstract class JacksonDeserializerFactory
-        implements TestSerdeProviderFactory<byte[], Object, TestSerdeContext, ComponentRole, ProviderProperties> {
+        implements TestSerdeProviderFactory<ByteBuffer, Object, TestSerdeContext, ComponentRole,
+        ProviderProperties> {
 
     @Getter(AccessLevel.NONE)
     protected final BeanResolver beanResolver;
 
     private final String name;
 
-    private final Class<byte[]> inputClass = byte[].class;
+    private final Class<ByteBuffer> inputClass = ByteBuffer.class;
 
     private final Class<Object> outputClass = Object.class;
 
@@ -38,10 +40,9 @@ public abstract class JacksonDeserializerFactory
     private final Class<ProviderProperties> propertiesClass = ProviderProperties.class;
 
     @Override
-    public TestSerdeConverter<byte[], Object, TestSerdeContext> create(ProviderProperties config, Class<byte[]> inputClass,
-                                                                       Class<Object> outputClass,
-                                                                       Class<TestSerdeContext> contextClass,
-                                                                       @Nullable ComponentRole role) {
+    public TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> create(
+            ProviderProperties config, Class<ByteBuffer> inputClass, Class<Object> outputClass,
+            Class<TestSerdeContext> contextClass, @Nullable ComponentRole role) {
         Type targetType = config.getTargetClass() != null ? config.getTargetClass() : outputClass;
         return new JacksonDeserializer(beanResolver.resolve(config.getObjectMapperRef(), getMapperClass()), targetType);
     }

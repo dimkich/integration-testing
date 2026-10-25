@@ -47,6 +47,7 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 import static org.mockito.Mockito.doReturn;
@@ -119,10 +120,10 @@ public class RedisTestConfig {
         StandardSerdeProperties props = new StandardSerdeProperties();
         props.setBeanRef("testValueSerializer");
         props.setBinaryEnvelope(BINARY_VALUE_ENVELOPE);
-        TestSerdeConverter<Object, byte[], TestSerdeContext> envelopedSerializer =
-                serdeManager.resolve(props, Object.class, byte[].class, TestSerdeContext.class, null);
-        TestSerdeConverter<byte[], Object, TestSerdeContext> envelopedDeserializer =
-                serdeManager.resolve(props, byte[].class, Object.class, TestSerdeContext.class, null);
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> envelopedSerializer =
+                serdeManager.resolve(props, Object.class, ByteBuffer.class, TestSerdeContext.class, null);
+        TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> envelopedDeserializer =
+                serdeManager.resolve(props, ByteBuffer.class, Object.class, TestSerdeContext.class, null);
         template.setValueSerializer(new EnvelopedRedisSerializer(envelopedSerializer, envelopedDeserializer));
         return template;
     }
@@ -303,17 +304,18 @@ public class RedisTestConfig {
      */
     @RequiredArgsConstructor
     static class EnvelopedRedisSerializer implements RedisSerializer<TestRedisDto> {
-        private final TestSerdeConverter<Object, byte[], TestSerdeContext> serializer;
-        private final TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer;
+        private final TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer;
+        private final TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> deserializer;
 
         @Override
         public byte[] serialize(TestRedisDto value) {
-            return serializer.convert(value, TestSerdeContext.EMPTY);
+            return TestSerdeConverter.toByteArray(serializer.convert(value, TestSerdeContext.EMPTY));
         }
 
         @Override
         public TestRedisDto deserialize(byte[] bytes) {
-            return (TestRedisDto) deserializer.convert(bytes, TestSerdeContext.EMPTY);
+            return (TestRedisDto) deserializer.convert(bytes == null ? null : ByteBuffer.wrap(bytes),
+                    TestSerdeContext.EMPTY);
         }
     }
 

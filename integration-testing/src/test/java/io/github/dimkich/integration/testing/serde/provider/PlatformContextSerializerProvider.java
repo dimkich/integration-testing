@@ -1,5 +1,7 @@
 package io.github.dimkich.integration.testing.serde.provider;
 
+import java.nio.ByteBuffer;
+
 import io.github.dimkich.integration.testing.serde.ComponentRole;
 import io.github.dimkich.integration.testing.serde.StandardSerdeProperties;
 import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
@@ -12,34 +14,35 @@ import java.nio.charset.StandardCharsets;
 
 @Getter
 public class PlatformContextSerializerProvider
-        implements TestSerdeProviderFactory<Object, byte[], TestPlatformContext, ComponentRole,
+        implements TestSerdeProviderFactory<Object, ByteBuffer, TestPlatformContext, ComponentRole,
         StandardSerdeProperties> {
 
     private final Class<Object> inputClass = Object.class;
-    private final Class<byte[]> outputClass = byte[].class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
     private final Class<TestPlatformContext> contextClass = TestPlatformContext.class;
     private final Class<StandardSerdeProperties> propertiesClass = StandardSerdeProperties.class;
     private final String name = "platform-context";
 
     @Override
-    public TestSerdeConverter<Object, byte[], TestPlatformContext> create(StandardSerdeProperties config,
+    public TestSerdeConverter<Object, ByteBuffer, TestPlatformContext> create(StandardSerdeProperties config,
                                                                           Class<Object> inputClass,
-                                                                          Class<byte[]> outputClass,
+                                                                          Class<ByteBuffer> outputClass,
                                                                           Class<TestPlatformContext> contextClass,
                                                                           @Nullable ComponentRole role) {
         return new PlatformContextSerializer();
     }
 
     @Getter
-    public static class PlatformContextSerializer implements TestSerdeConverter<Object, byte[], TestPlatformContext> {
+    public static class PlatformContextSerializer implements TestSerdeConverter<Object, ByteBuffer, TestPlatformContext> {
 
         private final Class<Object> inputClass = Object.class;
-        private final Class<byte[]> outputClass = byte[].class;
+        private final Class<ByteBuffer> outputClass = ByteBuffer.class;
         private final Class<TestPlatformContext> contextClass = TestPlatformContext.class;
 
         @Override
-        public byte[] convert(Object input, TestPlatformContext context) {
-            return input == null ? null : (context.getChannel() + ":" + input).getBytes(StandardCharsets.UTF_8);
+        public ByteBuffer convert(Object input, TestPlatformContext context) {
+            return input == null ? null
+                    : TestSerdeConverter.wrap((context.getChannel() + ":" + input).getBytes(StandardCharsets.UTF_8));
         }
     }
 }

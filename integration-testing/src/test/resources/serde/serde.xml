@@ -183,7 +183,7 @@
             <request>base</request>
             <request>bytes</request>
             <request></request>
-            <response>ByteArraySerializer</response>
+            <response>BytesSerializer</response>
         </test>
         <test type="Case" name="Custom provider">
             <bean>serdeTestFacade</bean>
@@ -209,7 +209,7 @@
             <request></request>
             <request></request>
             <request></request>
-            <response>IllegalArgumentException: No converter for [Object -> byte[]] under config [StandardSerdeProperties]</response>
+            <response>IllegalArgumentException: No converter for [Object -> ByteBuffer] under config [StandardSerdeProperties]</response>
         </test>
         <test type="Case" name="Bean ref">
             <bean>serdeTestFacade</bean>
@@ -239,7 +239,7 @@
             <bean>serdeTestFacade</bean>
             <method>resolveDefaultFactoryClass</method>
             <request>bytes</request>
-            <response>ByteArraySerializer</response>
+            <response>BytesSerializer</response>
         </test>
         <test type="Case" name="Serialize through default factory">
             <bean>serdeTestFacade</bean>
@@ -277,7 +277,7 @@
         <test type="Case" name="No default factory for config">
             <bean>serdeTestFacade</bean>
             <method>errorOfUnconfiguredConfig</method>
-            <response>IllegalArgumentException: No converter for [Object -> byte[]] under config [UnconfiguredConfig]</response>
+            <response>IllegalArgumentException: No converter for [Object -> ByteBuffer] under config [UnconfiguredConfig]</response>
         </test>
     </test>
     <test type="Container" name="Platform context">
@@ -426,7 +426,7 @@
             <request></request>
             <request></request>
             <request></request>
-            <response>IllegalArgumentException: No adapter from [java.lang.StringBuilder] to [[B] under config [StandardSerdeProperties]. Known adapters: [io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreDeserializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeDeserializer -> [B/java.lang.Object], io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreSerializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeSerializer -> java.lang.Object/[B]]</response>
+            <response>IllegalArgumentException: No adapter from [java.lang.StringBuilder] to [java.nio.ByteBuffer] under config [StandardSerdeProperties]. Known adapters: [io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreDeserializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeDeserializer -> java.nio.ByteBuffer/java.lang.Object], io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreSerializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeSerializer -> java.lang.Object/java.nio.ByteBuffer]]</response>
         </test>
         <test type="Case" name="Context mismatch">
             <bean>serdeTestFacade</bean>
@@ -436,7 +436,7 @@
             <request></request>
             <request></request>
             <request></request>
-            <response>IllegalArgumentException: No converter for [Object -> byte[]] under config [StandardSerdeProperties]</response>
+            <response>IllegalArgumentException: No converter for [Object -> ByteBuffer] under config [StandardSerdeProperties]</response>
         </test>
         <test type="Case" name="Bean ref and type together">
             <bean>serdeTestFacade</bean>
@@ -550,7 +550,7 @@
             <request></request>
             <request></request>
             <request></request>
-            <response>IllegalArgumentException: Provider [io.github.dimkich.integration.testing.serde.provider.MisbehavingProvider] returned converter [any -> any] which does not satisfy request [java.lang.Object -> [B] under context [io.github.dimkich.integration.testing.serde.TestSerdeContext]</response>
+            <response>IllegalArgumentException: Provider [io.github.dimkich.integration.testing.serde.provider.MisbehavingProvider] returned converter [any -> any] which does not satisfy request [java.lang.Object -> java.nio.ByteBuffer] under context [io.github.dimkich.integration.testing.serde.TestSerdeContext]</response>
         </test>
     </test>
     <test type="Container" name="Adapt">
@@ -1266,7 +1266,7 @@
             <request>base</request>
             <request>java.lang.StringBuilder</request>
             <request>{LEN(INT, BE)}{CONTENT}</request>
-            <response>IllegalArgumentException: No adapter from [java.lang.StringBuilder] to [[B] under config [StandardSerdeProperties]. Known adapters: [io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreDeserializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeDeserializer -> [B/java.lang.Object], io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreSerializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeSerializer -> java.lang.Object/[B]]</response>
+            <response>IllegalArgumentException: No adapter from [java.lang.StringBuilder] to [java.nio.ByteBuffer] under config [StandardSerdeProperties]. Known adapters: [io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreDeserializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeDeserializer -> java.nio.ByteBuffer/java.lang.Object], io.github.dimkich.integration.testing.serde.platform.adapter.NativeBridgeToCoreSerializerAdapter [io.github.dimkich.integration.testing.serde.platform.NativeBridgeSerializer -> java.lang.Object/java.nio.ByteBuffer]]</response>
         </test>
         <test type="Case" name="Envelope after native adapter through adapt">
             <bean>serdeTestFacade</bean>

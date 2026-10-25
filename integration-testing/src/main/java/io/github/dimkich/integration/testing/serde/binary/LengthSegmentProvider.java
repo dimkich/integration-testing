@@ -30,9 +30,9 @@ public class LengthSegmentProvider implements BinarySegmentProvider {
         }
 
         @Override
-        public void write(ByteBuffer buffer, byte[] payload) {
+        public void write(ByteBuffer buffer, ByteBuffer payload) {
             order.apply(buffer);
-            type.write(buffer, payload.length);
+            type.write(buffer, payload.remaining());
         }
 
         @Override

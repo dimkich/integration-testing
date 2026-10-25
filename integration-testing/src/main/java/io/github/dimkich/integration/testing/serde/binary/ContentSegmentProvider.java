@@ -10,6 +10,9 @@ import java.util.List;
  * length comes from {@link ReadContext#getPayloadLength()} when set, otherwise the remaining
  * bytes minus the suffix size are consumed. A negative length or a length exceeding the
  * remaining bytes is rejected as a corrupted frame. Accepts no parameters.
+ *
+ * <p>On read the segment returns a {@link ByteBuffer} view over the input and does not copy the
+ * payload; on write it copies the payload bytes into the envelope buffer.
  */
 @Getter
 public class ContentSegmentProvider implements BinarySegmentProvider {
@@ -32,13 +35,14 @@ public class ContentSegmentProvider implements BinarySegmentProvider {
                 throw new RuntimeException("Corrupted frame: invalid payload length " + length);
             }
 
-            byte[] payload = new byte[length];
-            buffer.get(payload);
+            ByteBuffer payload = buffer.slice();
+            payload.limit(length);
+            buffer.position(buffer.position() + length);
             ctx.setPayload(payload);
         }
 
         @Override
-        public void write(ByteBuffer buffer, byte[] payload) {
+        public void write(ByteBuffer buffer, ByteBuffer payload) {
             buffer.put(payload);
         }
 

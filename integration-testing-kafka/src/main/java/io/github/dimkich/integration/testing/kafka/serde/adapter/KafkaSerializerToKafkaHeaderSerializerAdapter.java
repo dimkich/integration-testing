@@ -12,6 +12,8 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.springframework.lang.Nullable;
 import org.springframework.util.MultiValueMap;
 
+import java.nio.ByteBuffer;
+
 /**
  * Adapts a native Kafka {@link Serializer} used for headers: every value of a
  * {@link MultiValueMap} entry is serialized by the native serializer, and the result is
@@ -38,9 +40,9 @@ public class KafkaSerializerToKafkaHeaderSerializerAdapter
             Serializer source, KafkaHeaderProperties properties, Class<MultiValueMap> inputClass,
             Class<Headers> outputClass, Class<TestSerdeContext> contextClass,
             @Nullable ComponentRole role) {
-        TestSerdeConverter<Object, byte[], TestSerdeContext> bytes =
-                TestSerdeConverter.of(Object.class, byte[].class, TestSerdeContext.class,
-                        (input, context) -> source.serialize(null, null, input));
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> bytes =
+                TestSerdeConverter.of(Object.class, ByteBuffer.class, TestSerdeContext.class,
+                        (input, context) -> TestSerdeConverter.wrap(source.serialize(null, null, input)));
         return new CoreKafkaHeaderSerializer(bytes);
     }
 }

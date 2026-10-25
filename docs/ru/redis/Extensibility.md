@@ -132,7 +132,7 @@ TestSetupModule testSetupModule() {
 или сторонние клиенты), которые хранят внутри себя правила сериализации. Чтобы не дублировать их
 код в тестах, напишите **адаптер**, который приводит нативный однослотовый источник (например,
 Spring Data `RedisSerializer` или Redisson `Codec`) к системному контракту serde — паре
-«объект ↔ byte[]». Общие
+«объект ↔ ByteBuffer». Общие
 правила выбора адаптеров (обход иерархии классов, порядок кандидатов, `null` = «не моё») задаёт
 `io.github.dimkich.integration.testing.serde.AdapterManager`.
 
@@ -168,33 +168,34 @@ import org.springframework.stereotype.Component;
 @Component // Адаптер автоматически подхватывается менеджером адаптеров
 @Getter
 public class CustomSerializerAdapter
-        implements TestSerdeAdapter<CustomSerializer, Object, byte[], TestSerdeContext, ComponentRole,
+        implements TestSerdeAdapter<CustomSerializer, Object, ByteBuffer, TestSerdeContext, ComponentRole,
         StandardSerdeProperties> {
 
     private final Class<CustomSerializer> sourceClass = CustomSerializer.class;
 
     private final Class<Object> inputClass = Object.class;
 
-    private final Class<byte[]> outputClass = byte[].class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
 
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
     private final Class<StandardSerdeProperties> propertiesClass = StandardSerdeProperties.class;
 
     @Override
     @Nullable
-    public TestSerdeConverter<Object, byte[], TestSerdeContext> adapt(
+    public TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> adapt(
             CustomSerializer source, StandardSerdeProperties properties, Class<Object> inputClass,
-            Class<byte[]> outputClass, Class<TestSerdeContext> contextClass, ComponentRole role) {
-        if (!byte[].class.equals(outputClass)) {
+            Class<ByteBuffer> outputClass, Class<TestSerdeContext> contextClass, ComponentRole role) {
+        if (!ByteBuffer.class.equals(outputClass)) {
             return null;
         }
         return TestSerdeConverter.of(inputClass, outputClass, contextClass,
-                (input, context) -> source.write(input));
+                (input, context) -> TestSerdeConverter.wrap(source.write(input)));
     }
 }
 ```
 
-Симметричный адаптер `byte[] -> Object` вызывает `source.read(...)`. После регистрации бин можно
+Симметричный адаптер `ByteBuffer -> Object` вызывает `source.read(TestSerdeConverter.toByteArray(input))`.
+После регистрации бин можно
 указывать в компоненте схемы:
 
 ```yaml

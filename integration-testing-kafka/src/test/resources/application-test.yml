@@ -152,19 +152,19 @@ integration:
             "byte-parts-in":
               serializer:
                 key:
-                  type: io.github.dimkich.integration.testing.serde.impl.ByteArraySerializer
+                  type: io.github.dimkich.integration.testing.serde.impl.BytesSerializer
                 value:
-                  type: io.github.dimkich.integration.testing.serde.impl.ByteArraySerializer
+                  type: io.github.dimkich.integration.testing.serde.impl.BytesSerializer
                 headers:
-                  type: io.github.dimkich.integration.testing.serde.impl.ByteArraySerializer
+                  type: io.github.dimkich.integration.testing.serde.impl.BytesSerializer
             "byte-parts-out":
               deserializer:
                 key:
-                  type: io.github.dimkich.integration.testing.serde.impl.ByteArrayDeserializer
+                  type: io.github.dimkich.integration.testing.serde.impl.BytesDeserializer
                 value:
-                  type: io.github.dimkich.integration.testing.serde.impl.ByteArrayDeserializer
+                  type: io.github.dimkich.integration.testing.serde.impl.BytesDeserializer
                 headers:
-                  type: io.github.dimkich.integration.testing.serde.impl.ByteArrayDeserializer
+                  type: io.github.dimkich.integration.testing.serde.impl.BytesDeserializer
 
             # Scenario 6: Native Kafka SerDe Classes
             "byte-native-in":

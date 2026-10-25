@@ -11,16 +11,20 @@ import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.springframework.util.MultiValueMap;
 
+import java.nio.ByteBuffer;
+
 /**
- * Record serializer that converts a {@link KafkaRecord} into a {@link ProducerRecord} using the
- * configured key, value and header serializers.
+ * Record serializer that converts a {@link KafkaRecord} into a
+ * {@link ProducerRecord}{@code <ByteBuffer, ByteBuffer>} using the configured key, value and
+ * header serializers. The framework's Kafka producer converts the buffers to {@code byte[]}
+ * inside its native serializer at the client boundary.
  */
 @Getter
 @SuppressWarnings("rawtypes")
 public class SpringKafkaRecordSerializer implements TestSerdeConverter<KafkaRecord, ProducerRecord, TestSerdeContext> {
 
-    protected final TestSerdeConverter<Object, byte[], KafkaSerdeContext> keySerializer;
-    protected final TestSerdeConverter<Object, byte[], KafkaSerdeContext> valueSerializer;
+    protected final TestSerdeConverter<Object, ByteBuffer, KafkaSerdeContext> keySerializer;
+    protected final TestSerdeConverter<Object, ByteBuffer, KafkaSerdeContext> valueSerializer;
     protected final TestSerdeConverter<MultiValueMap, Headers, TestSerdeContext> headerSerializer;
 
     private final Class<KafkaRecord> inputClass = KafkaRecord.class;
@@ -34,8 +38,8 @@ public class SpringKafkaRecordSerializer implements TestSerdeConverter<KafkaReco
      * @param valueSerializer  serializer of the record value
      * @param headerSerializer serializer of the record headers, may be {@code null}
      */
-    public SpringKafkaRecordSerializer(TestSerdeConverter<Object, byte[], KafkaSerdeContext> keySerializer,
-                                       TestSerdeConverter<Object, byte[], KafkaSerdeContext> valueSerializer,
+    public SpringKafkaRecordSerializer(TestSerdeConverter<Object, ByteBuffer, KafkaSerdeContext> keySerializer,
+                                       TestSerdeConverter<Object, ByteBuffer, KafkaSerdeContext> valueSerializer,
                                        TestSerdeConverter<MultiValueMap, Headers, TestSerdeContext> headerSerializer) {
         this.keySerializer = keySerializer;
         this.valueSerializer = valueSerializer;
@@ -43,7 +47,7 @@ public class SpringKafkaRecordSerializer implements TestSerdeConverter<KafkaReco
     }
 
     @Override
-    public ProducerRecord convert(KafkaRecord record, TestSerdeContext context) {
+    public ProducerRecord<ByteBuffer, ByteBuffer> convert(KafkaRecord record, TestSerdeContext context) {
         String topic = record.getTopic();
         Object rawKey = record.getKey();
         Object rawValue = record.getValue();
@@ -55,8 +59,8 @@ public class SpringKafkaRecordSerializer implements TestSerdeConverter<KafkaReco
         }
 
         DefaultKafkaSerdeContext serdeContext = new DefaultKafkaSerdeContext(topic, headers);
-        byte[] keyBytes = rawKey != null ? keySerializer.convert(rawKey, serdeContext) : null;
-        byte[] valueBytes = rawValue != null ? valueSerializer.convert(rawValue, serdeContext) : null;
+        ByteBuffer keyBytes = rawKey != null ? keySerializer.convert(rawKey, serdeContext) : null;
+        ByteBuffer valueBytes = rawValue != null ? valueSerializer.convert(rawValue, serdeContext) : null;
 
         return new ProducerRecord<>(topic, record.getPartition(), record.getTimestamp(), keyBytes, valueBytes,
                 headers);

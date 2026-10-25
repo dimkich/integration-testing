@@ -35,7 +35,7 @@ public class StaticHexSegment implements BinarySegment {
     }
 
     @Override
-    public void write(ByteBuffer buffer, byte[] payload) {
+    public void write(ByteBuffer buffer, ByteBuffer payload) {
         buffer.put(staticBytes);
     }
 

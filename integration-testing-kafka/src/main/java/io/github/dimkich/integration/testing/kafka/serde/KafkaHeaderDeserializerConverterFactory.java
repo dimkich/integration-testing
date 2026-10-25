@@ -9,9 +9,11 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.lang.Nullable;
 import org.springframework.util.MultiValueMap;
 
+import java.nio.ByteBuffer;
+
 /**
  * Fallback converter factory for the Kafka {@code headers} component: resolves the configured
- * format as a value-shaped converter ({@code byte[] -> Object}) and wraps it into the plain
+ * format as a value-shaped converter ({@code ByteBuffer -> Object}) and wraps it into the plain
  * header deserializer. Native header sources ({@code spring-json}, {@code spring-xml},
  * FQCN/beanRef deserializers, header mappers) are claimed earlier by providers and adapters;
  * this factory handles the formats that have no header-shaped converter of their own.
@@ -50,6 +52,6 @@ public class KafkaHeaderDeserializerConverterFactory
             return null;
         }
         return new CoreKafkaHeaderDeserializer(serdeManager.getObject()
-                .resolve(config, byte[].class, Object.class, TestSerdeContext.class, role));
+                .resolve(config, ByteBuffer.class, Object.class, TestSerdeContext.class, role));
     }
 }

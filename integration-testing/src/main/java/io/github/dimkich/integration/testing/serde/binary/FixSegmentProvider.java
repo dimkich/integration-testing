@@ -28,7 +28,7 @@ public class FixSegmentProvider implements BinarySegmentProvider {
         }
 
         @Override
-        public void write(ByteBuffer buffer, byte[] payload) {
+        public void write(ByteBuffer buffer, ByteBuffer payload) {
             for (int i = 0; i < size; i++) {
                 buffer.put(value);
             }

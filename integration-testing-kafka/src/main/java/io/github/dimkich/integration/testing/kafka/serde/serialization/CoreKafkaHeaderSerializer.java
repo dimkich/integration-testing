@@ -7,6 +7,7 @@ import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.springframework.util.MultiValueMap;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
@@ -17,12 +18,15 @@ import java.util.Map;
  * multi-value entry expands into N headers sharing the same key. No
  * {@code spring_json_header_types} or other Spring-Kafka metadata is emitted.
  * A {@code null} value becomes a header with a null value (tombstone header).
+ * <p>
+ * The delegate produces a {@link ByteBuffer}; Kafka headers store {@code byte[]}, so the
+ * buffer is converted at this boundary.
  */
 @Getter
 @SuppressWarnings("rawtypes")
 public class CoreKafkaHeaderSerializer implements TestSerdeConverter<MultiValueMap, Headers, TestSerdeContext> {
 
-    private final TestSerdeConverter<Object, byte[], TestSerdeContext> delegate;
+    private final TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> delegate;
 
     private final Class<MultiValueMap> inputClass = MultiValueMap.class;
 
@@ -30,7 +34,7 @@ public class CoreKafkaHeaderSerializer implements TestSerdeConverter<MultiValueM
 
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
-    public CoreKafkaHeaderSerializer(TestSerdeConverter<Object, byte[], TestSerdeContext> delegate) {
+    public CoreKafkaHeaderSerializer(TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> delegate) {
         this.delegate = delegate;
     }
 
@@ -46,7 +50,7 @@ public class CoreKafkaHeaderSerializer implements TestSerdeConverter<MultiValueM
                     headers.add(entry.getKey(), null);
                     continue;
                 }
-                byte[] bytes = delegate.convert(item, TestSerdeContext.EMPTY);
+                byte[] bytes = TestSerdeConverter.toByteArray(delegate.convert(item, TestSerdeContext.EMPTY));
                 if (bytes != null) {
                     headers.add(entry.getKey(), bytes);
                 }

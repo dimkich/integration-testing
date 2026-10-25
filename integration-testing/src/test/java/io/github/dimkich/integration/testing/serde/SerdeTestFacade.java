@@ -5,6 +5,7 @@ import io.github.dimkich.integration.testing.serde.platform.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
@@ -21,28 +22,29 @@ public class SerdeTestFacade {
     private final AdapterManager adapterManager;
 
     public Object roundTrip(String type, String targetClass, String objectMapperRef, Object data) {
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer =
                 resolveSerializer(config("base", type, null, targetClass, objectMapperRef));
-        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
+        TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> deserializer =
                 resolveDeserializer(config("base", type, null, targetClass, objectMapperRef));
         return deserializer.convert(serializer.convert(data, TestSerdeContext.EMPTY), TestSerdeContext.EMPTY);
     }
 
     public String serializeText(String type, String targetClass, String objectMapperRef, Object data) {
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer =
                 resolveSerializer(config("base", type, null, targetClass, objectMapperRef));
         return bytesToText(serializer.convert(data, TestSerdeContext.EMPTY));
     }
 
     public Object deserializeText(String type, String targetClass, String objectMapperRef, String text) {
-        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
+        TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> deserializer =
                 resolveDeserializer(config("base", type, null, targetClass, objectMapperRef));
-        return deserializer.convert(text == null ? null : text.getBytes(StandardCharsets.UTF_8),
+        return deserializer.convert(
+                TestSerdeConverter.wrap(text == null ? null : text.getBytes(StandardCharsets.UTF_8)),
                 TestSerdeContext.EMPTY);
     }
 
     public String serializeBytesHex(String type, String hex) {
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer =
                 resolveSerializer(config("base", type, null, null, null));
         return bytesToHex(serializer.convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY));
     }
@@ -53,9 +55,9 @@ public class SerdeTestFacade {
     }
 
     public String roundTripBytesHex(String type, String hex) {
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer =
                 resolveSerializer(config("base", type, null, null, null));
-        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
+        TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> deserializer =
                 resolveDeserializer(config("base", type, null, null, null));
         Object result = deserializer.convert(
                 serializer.convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY),
@@ -67,22 +69,23 @@ public class SerdeTestFacade {
     }
 
     public String serializeByRef(String beanRef, Object data) {
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer =
                 resolveSerializer(config("base", null, beanRef, null, null));
         return bytesToText(serializer.convert(data, TestSerdeContext.EMPTY));
     }
 
     public String serializePlatform(String configKind, String type, String objectMapperRef, Object data) {
-        TestSerdeConverter<Object, byte[], TestPlatformContext> serializer =
+        TestSerdeConverter<Object, ByteBuffer, TestPlatformContext> serializer =
                 resolvePlatformSerializer(config(configKind, type, null, null, objectMapperRef));
         return bytesToText(serializer.convert(data, new DefaultTestPlatformContext(CHANNEL)));
     }
 
     public Object deserializePlatformText(String configKind, String type, String targetClass, String objectMapperRef,
                                           String text) {
-        TestSerdeConverter<byte[], Object, TestPlatformContext> deserializer =
+        TestSerdeConverter<ByteBuffer, Object, TestPlatformContext> deserializer =
                 resolvePlatformDeserializer(config(configKind, type, null, targetClass, objectMapperRef));
-        return deserializer.convert(text == null ? null : text.getBytes(StandardCharsets.UTF_8),
+        return deserializer.convert(
+                TestSerdeConverter.wrap(text == null ? null : text.getBytes(StandardCharsets.UTF_8)),
                 new DefaultTestPlatformContext(CHANNEL));
     }
 
@@ -94,10 +97,10 @@ public class SerdeTestFacade {
     public String roundTripUnrelated(String text) {
         StandardSerdeProperties props = new StandardSerdeProperties();
         props.setType("unrelated-context");
-        TestSerdeConverter<Object, byte[], UnrelatedSerdeContext> serializer =
-                serdeManager.resolve(props, Object.class, byte[].class, UnrelatedSerdeContext.class, null);
-        TestSerdeConverter<byte[], Object, UnrelatedSerdeContext> deserializer =
-                serdeManager.resolve(props, byte[].class, Object.class, UnrelatedSerdeContext.class, null);
+        TestSerdeConverter<Object, ByteBuffer, UnrelatedSerdeContext> serializer =
+                serdeManager.resolve(props, Object.class, ByteBuffer.class, UnrelatedSerdeContext.class, null);
+        TestSerdeConverter<ByteBuffer, Object, UnrelatedSerdeContext> deserializer =
+                serdeManager.resolve(props, ByteBuffer.class, Object.class, UnrelatedSerdeContext.class, null);
         UnrelatedSerdeContext context = new UnrelatedSerdeContext() {
         };
         Object result = deserializer.convert(serializer.convert(text, context), context);
@@ -105,9 +108,9 @@ public class SerdeTestFacade {
     }
 
     public String adaptNativeBridge(Object data) {
-        TestSerdeConverter<Object, byte[], TestSerdeContext> converter =
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> converter =
                 serdeManager.adapt(new NativeBridgeSerializer(), new StandardSerdeProperties(),
-                        Object.class, byte[].class, TestSerdeContext.class, null);
+                        Object.class, ByteBuffer.class, TestSerdeContext.class, null);
         return bytesToText(converter.convert(data, TestSerdeContext.EMPTY));
     }
 
@@ -121,7 +124,7 @@ public class SerdeTestFacade {
         StandardSerdeProperties props = config("base", type, null, targetClass, null);
         props.setBinaryEnvelope(binaryEnvelope);
         return resolveDeserializer(props)
-                .convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY);
+                .convert(TestSerdeConverter.wrap(hex == null ? null : HEX.parseHex(hex)), TestSerdeContext.EMPTY);
     }
 
     public String serializeAdaptedBinaryHex(String beanRef, String binaryEnvelope, Object data) {
@@ -133,7 +136,8 @@ public class SerdeTestFacade {
     public Object deserializeAdaptedBinaryHex(String beanRef, String binaryEnvelope, String hex) {
         StandardSerdeProperties props = config("base", null, beanRef, null, null);
         props.setBinaryEnvelope(binaryEnvelope);
-        return resolveDeserializer(props).convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY);
+        return resolveDeserializer(props)
+                .convert(TestSerdeConverter.wrap(hex == null ? null : HEX.parseHex(hex)), TestSerdeContext.EMPTY);
     }
 
     public String errorOfBinary(String configKind, String type, String binaryEnvelope) {
@@ -153,7 +157,8 @@ public class SerdeTestFacade {
 
     public Object deserializeRecord(String type, String text) {
         return resolveDeserializer(record(type))
-                .convert(text == null ? null : text.getBytes(StandardCharsets.UTF_8), TestSerdeContext.EMPTY);
+                .convert(TestSerdeConverter.wrap(text == null ? null : text.getBytes(StandardCharsets.UTF_8)),
+                        TestSerdeContext.EMPTY);
     }
 
     public String resolveClass(String configKind, String type, String objectMapperRef) {
@@ -164,24 +169,24 @@ public class SerdeTestFacade {
 
     public String resolveDefaultFactoryClass(String format) {
         TestSerdeConverter<?, ?, ?> resolved =
-                serdeManager.resolve(new PlainConfig(format), Object.class, byte[].class,
+                serdeManager.resolve(new PlainConfig(format), Object.class, ByteBuffer.class,
                         TestSerdeContext.class, null);
         return resolved == null ? NULL : resolved.getClass().getSimpleName();
     }
 
     public String serializeDefaultFactory(String format, String text) {
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
-                serdeManager.resolve(new PlainConfig(format), Object.class, byte[].class,
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer =
+                serdeManager.resolve(new PlainConfig(format), Object.class, ByteBuffer.class,
                         TestSerdeContext.class, null);
         return bytesToText(serializer.convert(text, TestSerdeContext.EMPTY));
     }
 
     public String roundTripDefaultFactory(String format, String text) {
         PlainConfig config = new PlainConfig(format);
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
-                serdeManager.resolve(config, Object.class, byte[].class, TestSerdeContext.class, null);
-        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
-                serdeManager.resolve(config, byte[].class, Object.class, TestSerdeContext.class, null);
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer =
+                serdeManager.resolve(config, Object.class, ByteBuffer.class, TestSerdeContext.class, null);
+        TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> deserializer =
+                serdeManager.resolve(config, ByteBuffer.class, Object.class, TestSerdeContext.class, null);
         Object result = deserializer.convert(serializer.convert(text, TestSerdeContext.EMPTY),
                 TestSerdeContext.EMPTY);
         return result == null ? NULL : String.valueOf(result);
@@ -189,10 +194,10 @@ public class SerdeTestFacade {
 
     public String roundTripDefaultFactoryBytes(String hex) {
         PlainConfig config = new PlainConfig("bytes");
-        TestSerdeConverter<Object, byte[], TestSerdeContext> serializer =
-                serdeManager.resolve(config, Object.class, byte[].class, TestSerdeContext.class, null);
-        TestSerdeConverter<byte[], Object, TestSerdeContext> deserializer =
-                serdeManager.resolve(config, byte[].class, Object.class, TestSerdeContext.class, null);
+        TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer =
+                serdeManager.resolve(config, Object.class, ByteBuffer.class, TestSerdeContext.class, null);
+        TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> deserializer =
+                serdeManager.resolve(config, ByteBuffer.class, Object.class, TestSerdeContext.class, null);
         Object result = deserializer.convert(
                 serializer.convert(hex == null ? null : HEX.parseHex(hex), TestSerdeContext.EMPTY),
                 TestSerdeContext.EMPTY);
@@ -205,7 +210,7 @@ public class SerdeTestFacade {
     public String errorOfUnconfiguredConfig() {
         try {
             TestSerdeConverter<?, ?, ?> resolved =
-                    serdeManager.resolve(new UnconfiguredConfig(), Object.class, byte[].class,
+                    serdeManager.resolve(new UnconfiguredConfig(), Object.class, ByteBuffer.class,
                             TestSerdeContext.class, null);
             return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
         } catch (RuntimeException e) {
@@ -216,7 +221,7 @@ public class SerdeTestFacade {
     public String errorOfNullConfiguration() {
         try {
             TestSerdeConverter<?, ?, ?> resolved =
-                    serdeManager.adapt(new Object(), null, Object.class, byte[].class,
+                    serdeManager.adapt(new Object(), null, Object.class, ByteBuffer.class,
                             TestSerdeContext.class, null);
             return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
         } catch (RuntimeException e) {
@@ -227,7 +232,7 @@ public class SerdeTestFacade {
     public String errorOfNullResolveConfiguration() {
         try {
             TestSerdeConverter<?, ?, ?> resolved =
-                    serdeManager.resolve(null, Object.class, byte[].class, TestSerdeContext.class, null);
+                    serdeManager.resolve(null, Object.class, ByteBuffer.class, TestSerdeContext.class, null);
             return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
         } catch (RuntimeException e) {
             return formatError(e);
@@ -237,7 +242,7 @@ public class SerdeTestFacade {
     public String errorOfNullSource() {
         try {
             TestSerdeConverter<?, ?, ?> resolved =
-                    serdeManager.adapt(null, new StandardSerdeProperties(), Object.class, byte[].class,
+                    serdeManager.adapt(null, new StandardSerdeProperties(), Object.class, ByteBuffer.class,
                             TestSerdeContext.class, null);
             return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
         } catch (RuntimeException e) {
@@ -248,7 +253,7 @@ public class SerdeTestFacade {
     public String tryAdaptNullProps() {
         try {
             TestSerdeConverter<?, ?, ?> resolved =
-                    adapterManager.tryAdapt(new Object(), null, Object.class, byte[].class,
+                    adapterManager.tryAdapt(new Object(), null, Object.class, ByteBuffer.class,
                             TestSerdeContext.class, null);
             return "no error: " + (resolved == null ? NULL : resolved.getClass().getSimpleName());
         } catch (RuntimeException e) {
@@ -303,22 +308,22 @@ public class SerdeTestFacade {
         return props;
     }
 
-    private TestSerdeConverter<Object, byte[], TestSerdeContext> resolveSerializer(TestSerdeProperties props) {
-        return serdeManager.resolve(props, Object.class, byte[].class, TestSerdeContext.class, null);
+    private TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> resolveSerializer(TestSerdeProperties props) {
+        return serdeManager.resolve(props, Object.class, ByteBuffer.class, TestSerdeContext.class, null);
     }
 
-    private TestSerdeConverter<byte[], Object, TestSerdeContext> resolveDeserializer(TestSerdeProperties props) {
-        return serdeManager.resolve(props, byte[].class, Object.class, TestSerdeContext.class, null);
+    private TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> resolveDeserializer(TestSerdeProperties props) {
+        return serdeManager.resolve(props, ByteBuffer.class, Object.class, TestSerdeContext.class, null);
     }
 
-    private TestSerdeConverter<Object, byte[], TestPlatformContext> resolvePlatformSerializer(
+    private TestSerdeConverter<Object, ByteBuffer, TestPlatformContext> resolvePlatformSerializer(
             TestSerdeProperties props) {
-        return serdeManager.resolve(props, Object.class, byte[].class, TestPlatformContext.class, null);
+        return serdeManager.resolve(props, Object.class, ByteBuffer.class, TestPlatformContext.class, null);
     }
 
-    private TestSerdeConverter<byte[], Object, TestPlatformContext> resolvePlatformDeserializer(
+    private TestSerdeConverter<ByteBuffer, Object, TestPlatformContext> resolvePlatformDeserializer(
             TestSerdeProperties props) {
-        return serdeManager.resolve(props, byte[].class, Object.class, TestPlatformContext.class, null);
+        return serdeManager.resolve(props, ByteBuffer.class, Object.class, TestPlatformContext.class, null);
     }
 
     private String formatError(RuntimeException e) {
@@ -327,8 +332,12 @@ public class SerdeTestFacade {
         return e.getClass().getSimpleName() + ": " + message;
     }
 
-    private String bytesToText(byte[] data) {
-        return data == null ? NULL : new String(data, StandardCharsets.UTF_8);
+    private String bytesToText(ByteBuffer data) {
+        return data == null ? NULL : StandardCharsets.UTF_8.decode(data.duplicate()).toString();
+    }
+
+    private String bytesToHex(ByteBuffer data) {
+        return data == null ? NULL : bytesToHex(TestSerdeConverter.toByteArray(data));
     }
 
     private String bytesToHex(byte[] data) {

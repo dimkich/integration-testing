@@ -18,6 +18,7 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +57,7 @@ public class KafkaSnifferConsumer {
 
     @Getter
     private final List<String> connectionNames;
-    private final KafkaConsumer<byte[], byte[]> consumer;
+    private final KafkaConsumer<ByteBuffer, ByteBuffer> consumer;
     private final SnifferRebalanceListener rebalanceListener;
 
     private final KafkaTopicRegistry topicRegistry;
@@ -101,13 +102,13 @@ public class KafkaSnifferConsumer {
                 consumer.enforceRebalance();
             }
             try {
-                ConsumerRecords<byte[], byte[]> records = consumer.poll(Duration.ofMillis(100));
+                ConsumerRecords<ByteBuffer, ByteBuffer> records = consumer.poll(Duration.ofMillis(100));
                 metadataNeedsRefresh = false;
                 assignment = consumer.assignment();
                 if (!records.isEmpty()) {
                     log.debug("Sniffer [{}] received {} records", connectionNames, records.count());
 
-                    for (ConsumerRecord<byte[], byte[]> record : records) {
+                    for (ConsumerRecord<ByteBuffer, ByteBuffer> record : records) {
                         try {
                             processRecord(record);
                         } catch (Exception e) {
@@ -144,7 +145,7 @@ public class KafkaSnifferConsumer {
         }
     }
 
-    private void processRecord(ConsumerRecord<byte[], byte[]> record) {
+    private void processRecord(ConsumerRecord<ByteBuffer, ByteBuffer> record) {
         String topic = record.topic();
         TopicPartition tp = new TopicPartition(topic, record.partition());
         rebalanceListener.updateOffset(tp, record.offset() + 1);
@@ -186,7 +187,8 @@ public class KafkaSnifferConsumer {
      * deserializer would corrupt the headers observed by the others — including the
      * {@code monitor} connection, whose purpose is to capture the untouched raw record.
      */
-    private static ConsumerRecord<byte[], byte[]> withCopiedHeaders(ConsumerRecord<byte[], byte[]> record) {
+    private static ConsumerRecord<ByteBuffer, ByteBuffer> withCopiedHeaders(
+            ConsumerRecord<ByteBuffer, ByteBuffer> record) {
         return new ConsumerRecord<>(record.topic(), record.partition(), record.offset(), record.timestamp(),
                 record.timestampType(), record.serializedKeySize(), record.serializedValueSize(),
                 record.key(), record.value(), new RecordHeaders(record.headers()), record.leaderEpoch());
@@ -197,14 +199,14 @@ public class KafkaSnifferConsumer {
      * deserialization failure never corrupts a binary payload with a lossy UTF-8 conversion.
      * In XML expectations such values are written as Base64 with {@code type="byte[]"}.
      */
-    private static KafkaRecord createPoisonRecord(ConsumerRecord<byte[], byte[]> record, Exception exception) {
+    private static KafkaRecord createPoisonRecord(ConsumerRecord<ByteBuffer, ByteBuffer> record, Exception exception) {
         KafkaRecord dto = new KafkaRecord();
         dto.setTopic(record.topic());
         dto.setPartition(record.partition());
         dto.setOffset(record.offset());
         dto.setTimestamp(record.timestamp());
-        dto.setKey(record.key());
-        dto.setValue(record.value());
+        dto.setKey(TestSerdeConverter.toByteArray(record.key()));
+        dto.setValue(TestSerdeConverter.toByteArray(record.value()));
         for (Header header : record.headers()) {
             dto.getHeaders().add(header.key(), header.value());
         }

@@ -11,17 +11,19 @@ import org.apache.kafka.common.header.Headers;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.nio.ByteBuffer;
+
 /**
- * Record deserializer that converts a {@link ConsumerRecord} into a {@link KafkaRecord} using the
- * configured key, value and header deserializers.
+ * Record deserializer that converts a {@link ConsumerRecord}{@code <ByteBuffer, ByteBuffer>}
+ * into a {@link KafkaRecord} using the configured key, value and header deserializers.
  */
 @Getter
 @SuppressWarnings("rawtypes")
 public class SpringKafkaRecordDeserializer
         implements TestSerdeConverter<ConsumerRecord, KafkaRecord, TestSerdeContext> {
 
-    protected final TestSerdeConverter<byte[], Object, KafkaSerdeContext> keyDeserializer;
-    protected final TestSerdeConverter<byte[], Object, KafkaSerdeContext> valueDeserializer;
+    protected final TestSerdeConverter<ByteBuffer, Object, KafkaSerdeContext> keyDeserializer;
+    protected final TestSerdeConverter<ByteBuffer, Object, KafkaSerdeContext> valueDeserializer;
     protected final TestSerdeConverter<Headers, MultiValueMap, TestSerdeContext> headerDeserializer;
 
     private final Class<ConsumerRecord> inputClass = ConsumerRecord.class;
@@ -35,8 +37,8 @@ public class SpringKafkaRecordDeserializer
      * @param valueDeserializer  deserializer of the record value
      * @param headerDeserializer deserializer of the record headers, may be {@code null}
      */
-    public SpringKafkaRecordDeserializer(TestSerdeConverter<byte[], Object, KafkaSerdeContext> keyDeserializer,
-                                         TestSerdeConverter<byte[], Object, KafkaSerdeContext> valueDeserializer,
+    public SpringKafkaRecordDeserializer(TestSerdeConverter<ByteBuffer, Object, KafkaSerdeContext> keyDeserializer,
+                                         TestSerdeConverter<ByteBuffer, Object, KafkaSerdeContext> valueDeserializer,
                                          TestSerdeConverter<Headers, MultiValueMap, TestSerdeContext> headerDeserializer) {
         this.keyDeserializer = keyDeserializer;
         this.valueDeserializer = valueDeserializer;
@@ -49,8 +51,8 @@ public class SpringKafkaRecordDeserializer
         String topic = consumerRecord.topic();
         DefaultKafkaSerdeContext serdeContext = new DefaultKafkaSerdeContext(topic, consumerRecord.headers());
 
-        Object key = keyDeserializer.convert((byte[]) consumerRecord.key(), serdeContext);
-        Object value = valueDeserializer.convert((byte[]) consumerRecord.value(), serdeContext);
+        Object key = keyDeserializer.convert((ByteBuffer) consumerRecord.key(), serdeContext);
+        Object value = valueDeserializer.convert((ByteBuffer) consumerRecord.value(), serdeContext);
 
         MultiValueMap<String, Object> headersMap = new LinkedMultiValueMap<>();
         if (consumerRecord.headers() != null && headerDeserializer != null) {

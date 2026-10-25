@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class SnifferRebalanceListener implements ConsumerRebalanceListener {
     private final List<String> connectionNames;
-    private final KafkaConsumer<byte[], byte[]> consumer;
+    private final KafkaConsumer<ByteBuffer, ByteBuffer> consumer;
     private final Set<TopicPartition> initializedPartitions = ConcurrentHashMap.newKeySet();
     private final Map<TopicPartition, Long> lastReadOffsets = new ConcurrentHashMap<>();
 

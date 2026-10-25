@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 
+import java.nio.ByteBuffer;
+
 /**
  * Base of Jackson-based serializer providers: resolves the mapper bean (by
  * {@code objectMapperRef} or as the single bean of {@link #getMapperClass()}) and creates a
@@ -19,7 +21,8 @@ import org.springframework.lang.Nullable;
 @Getter
 @RequiredArgsConstructor
 public abstract class JacksonSerializerFactory
-        implements TestSerdeProviderFactory<Object, byte[], TestSerdeContext, ComponentRole, ProviderProperties> {
+        implements TestSerdeProviderFactory<Object, ByteBuffer, TestSerdeContext, ComponentRole,
+        ProviderProperties> {
 
     @Getter(AccessLevel.NONE)
     protected final BeanResolver beanResolver;
@@ -28,17 +31,16 @@ public abstract class JacksonSerializerFactory
 
     private final Class<Object> inputClass = Object.class;
 
-    private final Class<byte[]> outputClass = byte[].class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
 
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
     private final Class<ProviderProperties> propertiesClass = ProviderProperties.class;
 
     @Override
-    public TestSerdeConverter<Object, byte[], TestSerdeContext> create(ProviderProperties config, Class<Object> inputClass,
-                                                                       Class<byte[]> outputClass,
-                                                                       Class<TestSerdeContext> contextClass,
-                                                                       @Nullable ComponentRole role) {
+    public TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> create(
+            ProviderProperties config, Class<Object> inputClass, Class<ByteBuffer> outputClass,
+            Class<TestSerdeContext> contextClass, @Nullable ComponentRole role) {
         return new JacksonSerializer(beanResolver.resolve(config.getObjectMapperRef(), getMapperClass()));
     }
 

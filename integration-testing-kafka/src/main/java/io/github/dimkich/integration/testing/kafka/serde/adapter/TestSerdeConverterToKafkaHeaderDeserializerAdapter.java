@@ -11,8 +11,10 @@ import org.apache.kafka.common.header.Headers;
 import org.springframework.lang.Nullable;
 import org.springframework.util.MultiValueMap;
 
+import java.nio.ByteBuffer;
+
 /**
- * Wraps a byte-array converter into a plain-style header deserializer.
+ * Wraps a binary converter ({@code ByteBuffer -> Object}) into a plain-style header deserializer.
  */
 @Getter
 @SuppressWarnings("rawtypes")
@@ -37,7 +39,7 @@ public class TestSerdeConverterToKafkaHeaderDeserializerAdapter
             TestSerdeConverter source, KafkaHeaderProperties properties, Class<Headers> inputClass,
             Class<MultiValueMap> outputClass, Class<TestSerdeContext> contextClass,
             @Nullable ComponentRole role) {
-        if (!byte[].class.equals(source.getInputClass())) {
+        if (!ByteBuffer.class.equals(source.getInputClass())) {
             return null;
         }
         return new CoreKafkaHeaderDeserializer(source);

@@ -4,9 +4,13 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
- * Applies a parsed binary envelope layout ({@link BinaryEnvelopeParser}) to payload bytes: {@link #wrap}
- * writes header and footer segments around the payload, {@link #unwrap} reads them back and extracts
- * the payload. The layout must contain exactly one {@code {CONTENT}} segment.
+ * Applies a parsed binary envelope layout ({@link BinaryEnvelopeParser}) to a payload buffer:
+ * {@link #wrap} writes header and footer segments around the payload, {@link #unwrap} reads them
+ * back and extracts the payload. The layout must contain exactly one {@code {CONTENT}} segment.
+ *
+ * <p>Both methods work with the remaining bytes of the given buffer and do not change its
+ * position or limit. {@link #unwrap} extracts the payload as a {@link ByteBuffer} view, so no
+ * payload bytes are copied.
  *
  * @see BinaryEnvelopeParser
  * @see BinarySegment
@@ -25,24 +29,36 @@ public class BinaryEnvelope {
                 .mapToInt(BinarySegment::length).sum();
     }
 
-    public byte[] wrap(byte[] payload) {
+    /**
+     * Wraps the payload into the envelope.
+     *
+     * @param payload read-ready payload buffer, may be {@code null}
+     * @return a read-ready buffer with the envelope, or {@code null} when the payload is {@code null}
+     */
+    public ByteBuffer wrap(ByteBuffer payload) {
         if (payload == null) {
             return null;
         }
-        ByteBuffer buffer = ByteBuffer.allocate(headerSize + payload.length + footerSize);
+        ByteBuffer buffer = ByteBuffer.allocate(headerSize + payload.remaining() + footerSize);
         for (BinarySegment segment : segments) {
-            segment.write(buffer, payload);
+            segment.write(buffer, payload.duplicate());
         }
-        return buffer.array();
+        return buffer.flip();
     }
 
-    public byte[] unwrap(byte[] input) {
+    /**
+     * Unwraps the envelope and returns its payload as a view over the input buffer.
+     *
+     * @param input buffer with the envelope; its remaining bytes are read, may be {@code null}
+     * @return a read-ready payload view, or {@code null} when the input is {@code null}
+     */
+    public ByteBuffer unwrap(ByteBuffer input) {
         if (input == null) {
             return null;
         }
         ReadContext readContext = new ReadContext();
         readContext.setSuffixSize(footerSize);
-        ByteBuffer buffer = ByteBuffer.wrap(input);
+        ByteBuffer buffer = input.slice();
         for (BinarySegment segment : segments) {
             segment.read(buffer, readContext);
         }

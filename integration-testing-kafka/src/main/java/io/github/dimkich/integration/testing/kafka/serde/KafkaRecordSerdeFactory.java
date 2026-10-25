@@ -14,6 +14,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Headers;
 import org.springframework.util.MultiValueMap;
 
+import java.nio.ByteBuffer;
+
 /**
  * Single assembly point for record converters from the {@code value}, {@code key} and
  * {@code headers} components. A record converter is always assembled from the components;
@@ -36,9 +38,9 @@ public class KafkaRecordSerdeFactory {
 
     public TestSerdeConverter<KafkaRecord, ProducerRecord, TestSerdeContext> createSerializer(RecordProperties props) {
         return new SpringKafkaRecordSerializer(
-                resolve(props.getKey(), KafkaComponentRole.KEY, Object.class, byte[].class,
+                resolve(props.getKey(), KafkaComponentRole.KEY, Object.class, ByteBuffer.class,
                         KafkaSerdeContext.class),
-                resolve(props.getValue(), KafkaComponentRole.VALUE, Object.class, byte[].class,
+                resolve(props.getValue(), KafkaComponentRole.VALUE, Object.class, ByteBuffer.class,
                         KafkaSerdeContext.class),
                 resolve(props.getHeaders(), KafkaComponentRole.HEADERS, MultiValueMap.class, Headers.class,
                         TestSerdeContext.class));
@@ -46,9 +48,9 @@ public class KafkaRecordSerdeFactory {
 
     public TestSerdeConverter<ConsumerRecord, KafkaRecord, TestSerdeContext> createDeserializer(RecordProperties props) {
         return new SpringKafkaRecordDeserializer(
-                resolve(props.getKey(), KafkaComponentRole.KEY, byte[].class, Object.class,
+                resolve(props.getKey(), KafkaComponentRole.KEY, ByteBuffer.class, Object.class,
                         KafkaSerdeContext.class),
-                resolve(props.getValue(), KafkaComponentRole.VALUE, byte[].class, Object.class,
+                resolve(props.getValue(), KafkaComponentRole.VALUE, ByteBuffer.class, Object.class,
                         KafkaSerdeContext.class),
                 resolve(props.getHeaders(), KafkaComponentRole.HEADERS, Headers.class, MultiValueMap.class,
                         TestSerdeContext.class));

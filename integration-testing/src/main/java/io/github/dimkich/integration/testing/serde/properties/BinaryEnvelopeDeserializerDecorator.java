@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 
+import java.nio.ByteBuffer;
+
 /**
  * Decorator that unwraps the configured binary envelope (see {@link BinaryEnvelope}) before the
  * deserializer is applied.
@@ -20,11 +22,11 @@ import org.springframework.lang.Nullable;
 @Getter
 @RequiredArgsConstructor
 public class BinaryEnvelopeDeserializerDecorator
-        implements TestSerdeDecoratorFactory<byte[], Object, TestSerdeContext, BinaryEnvelopeProperties> {
+        implements TestSerdeDecoratorFactory<ByteBuffer, Object, TestSerdeContext, BinaryEnvelopeProperties> {
 
     private final BinaryEnvelopeParser parser;
 
-    private final Class<byte[]> inputClass = byte[].class;
+    private final Class<ByteBuffer> inputClass = ByteBuffer.class;
 
     private final Class<Object> outputClass = Object.class;
 
@@ -34,15 +36,15 @@ public class BinaryEnvelopeDeserializerDecorator
 
     @Override
     @Nullable
-    public TestSerdeConverter<byte[], Object, TestSerdeContext> decorate(
-            TestSerdeConverter<byte[], Object, TestSerdeContext> converter, BinaryEnvelopeProperties config) {
+    public TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> decorate(
+            TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> converter, BinaryEnvelopeProperties config) {
         if (!config.hasBinaryEnvelope()) {
             return converter;
         }
         BinaryEnvelope envelope = new BinaryEnvelope(parser.parse(config.getBinaryEnvelope()));
-        return TestSerdeConverter.of(byte[].class, converter.getOutputClass(), converter.getContextClass(),
+        return TestSerdeConverter.of(ByteBuffer.class, converter.getOutputClass(), converter.getContextClass(),
                 (input, context) -> {
-                    byte[] payload = envelope.unwrap(input);
+                    ByteBuffer payload = envelope.unwrap(input);
                     return payload == null ? null : converter.convert(payload, context);
                 });
     }

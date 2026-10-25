@@ -25,28 +25,30 @@ import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.util.Base64;
 
 @Component
 @Getter
-public class Base64SerdeProvider implements TestSerdeProviderFactory<byte[], Object, TestSerdeContext,
+public class Base64SerdeProvider implements TestSerdeProviderFactory<ByteBuffer, Object, TestSerdeContext,
         ComponentRole, StandardSerdeProperties> {
 
-    private final Class<byte[]> inputClass = byte[].class;
+    private final Class<ByteBuffer> inputClass = ByteBuffer.class;
     private final Class<Object> outputClass = Object.class;
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
     private final Class<StandardSerdeProperties> propertiesClass = StandardSerdeProperties.class;
     private final String name = "base64";
 
     @Override
-    public TestSerdeConverter<byte[], Object, TestSerdeContext> create(StandardSerdeProperties config,
-                                                                       Class<byte[]> inputClass,
-                                                                       Class<Object> outputClass,
-                                                                       Class<TestSerdeContext> contextClass,
-                                                                       ComponentRole role) {
+    public TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> create(StandardSerdeProperties config,
+                                                                           Class<ByteBuffer> inputClass,
+                                                                           Class<Object> outputClass,
+                                                                           Class<TestSerdeContext> contextClass,
+                                                                           ComponentRole role) {
         return TestSerdeConverter.of(inputClass, outputClass, contextClass, (input, context) ->
                 input == null ? null
-                        : new String(Base64.getDecoder().decode(input), StandardCharsets.UTF_8));
+                        : new String(Base64.getDecoder().decode(TestSerdeConverter.toByteArray(input)),
+                                StandardCharsets.UTF_8));
     }
 }
 ```
@@ -57,6 +59,24 @@ public class Base64SerdeProvider implements TestSerdeProviderFactory<byte[], Obj
     value:
       type: base64
 ```
+
+Binary-side contract
+--------------------
+
+The binary side of every converter is `java.nio.ByteBuffer`:
+
+* a serializer returns a read-ready buffer: `position` at the first payload byte, `limit` at its
+  end; `null` means a tombstone;
+* a deserializer reads the remaining bytes (`position..limit`) and must not change the position;
+  start with `input.slice()` or `input.duplicate()` and work with the view;
+* never assume that data starts at position zero: use `remaining()`;
+* use the static helpers `TestSerdeConverter.wrap(byte[])` and
+  `TestSerdeConverter.toByteArray(ByteBuffer)`. `toByteArray` always returns a defensive copy of
+  the remaining bytes and does not change the buffer position.
+
+The domain value of the `bytes` format remains `byte[]`: it is a business value, not transport.
+XML tests therefore keep `type="byte[]"`, while `ByteBuffer` lives only inside the serde pipeline
+and at the Kafka/Redis boundary.
 
 Rules:
 
@@ -171,25 +191,25 @@ Example (native serializer → core converter):
 @Component
 @Getter
 public class NativeSerializerToCoreAdapter implements TestSerdeAdapter<
-        NativeSerializer, Object, byte[], TestSerdeContext, ComponentRole, StandardSerdeProperties> {
+        NativeSerializer, Object, ByteBuffer, TestSerdeContext, ComponentRole, StandardSerdeProperties> {
 
     private final Class<NativeSerializer> sourceClass = NativeSerializer.class;
     private final Class<Object> inputClass = Object.class;
-    private final Class<byte[]> outputClass = byte[].class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
     private final Class<StandardSerdeProperties> propertiesClass = StandardSerdeProperties.class;
 
     @Override
-    public TestSerdeConverter<Object, byte[], TestSerdeContext> adapt(
+    public TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> adapt(
             NativeSerializer source, StandardSerdeProperties properties,
-            Class<Object> inputClass, Class<byte[]> outputClass, Class<TestSerdeContext> contextClass,
+            Class<Object> inputClass, Class<ByteBuffer> outputClass, Class<TestSerdeContext> contextClass,
             ComponentRole role) {
 
-        if (!byte[].class.equals(outputClass)) {
+        if (!ByteBuffer.class.equals(outputClass)) {
             return null;
         }
         return TestSerdeConverter.of(inputClass, outputClass, contextClass,
-                (input, context) -> source.serialize(input));
+                (input, context) -> TestSerdeConverter.wrap(source.serialize(input)));
     }
 }
 ```
@@ -226,7 +246,7 @@ A decorator wraps an already resolved converter — this is how the core applies
 the config class, context and direction, and unlike converters it is invariant: the declared
 `getInputClass()`/`getOutputClass()` pair must be equal to the requested one (`equals`, `null` means
 any type), otherwise the decorator is not applied to that resolution. That is why the serializing
-decorator only receives `* → byte[]` requests and the deserializing one only `byte[] → *`; return the
+decorator only receives `* → ByteBuffer` requests and the deserializing one only `ByteBuffer → *`; return the
 original converter when the decorator is not applicable per its configuration.
 
 ```java
@@ -289,7 +309,7 @@ public class XorMaskSegment implements BinarySegment {
     }
 
     @Override
-    public void write(ByteBuffer buffer, byte[] payload) {
+    public void write(ByteBuffer buffer, ByteBuffer payload) {
         byte originalValue = 0x5A;
         buffer.put((byte) (originalValue ^ mask));
     }

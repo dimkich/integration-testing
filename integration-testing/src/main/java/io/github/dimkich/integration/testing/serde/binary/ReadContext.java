@@ -2,6 +2,8 @@ package io.github.dimkich.integration.testing.serde.binary;
 
 import lombok.Data;
 
+import java.nio.ByteBuffer;
+
 /**
  * Mutable context passed to {@link BinarySegment#read} during envelope deserialization: segments
  * use and update these fields to coordinate reading header, payload and footer.
@@ -25,7 +27,8 @@ public class ReadContext {
     private int suffixSize = 0;
 
     /**
-     * The extracted payload bytes, set by {@link ContentSegmentProvider} after reading the content segment.
+     * The extracted payload as a read-ready view over the input buffer, set by
+     * {@link ContentSegmentProvider} after reading the content segment.
      */
-    private byte[] payload;
+    private ByteBuffer payload;
 }

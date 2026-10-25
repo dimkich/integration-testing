@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.serde;
 
 import org.springframework.lang.Nullable;
 
+import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
 
 /**
@@ -10,6 +11,13 @@ import java.util.function.BiFunction;
  *
  * <p>Converters are independent of how they were obtained (provider, converter factory, adapter or
  * decorator) and are validated against the request by {@link #satisfies}.
+ *
+ * <p>The binary side of the serde pipeline is {@link ByteBuffer}: serializers return a read-ready
+ * buffer ({@code position} at the first payload byte, {@code limit} at its end, or {@code null} for
+ * a tombstone), while deserializers read the remaining bytes of the given buffer and must not
+ * change its position. Platform adapters convert between {@link ByteBuffer} and the native
+ * {@code byte[]} of Kafka, Redis and other external APIs. Use {@link #wrap(byte[])} and
+ * {@link #toByteArray(ByteBuffer)} for these conversions.
  *
  * @param <I> input type
  * @param <O> output type
@@ -137,6 +145,38 @@ public interface TestSerdeConverter<I, O, C extends TestSerdeContext> {
                 return function.apply(input, context);
             }
         };
+    }
+
+    /**
+     * Wraps raw bytes into a read-ready buffer without copying them.
+     *
+     * <p>The returned buffer shares the given array: a serializer must not mutate the array or
+     * reuse the buffer after returning it.
+     *
+     * @param bytes raw bytes, may be {@code null}
+     * @return a read-ready buffer over the given bytes, or {@code null} when the input is {@code null}
+     */
+    @Nullable
+    static ByteBuffer wrap(@Nullable byte[] bytes) {
+        return bytes == null ? null : ByteBuffer.wrap(bytes);
+    }
+
+    /**
+     * Returns a defensive copy of the bytes remaining in the buffer, from its position to its
+     * limit. The position and limit of the given buffer are not changed.
+     *
+     * @param buffer binary value, may be {@code null}
+     * @return a copy of the remaining bytes, or {@code null} when the input is {@code null}
+     */
+    @Nullable
+    static byte[] toByteArray(@Nullable ByteBuffer buffer) {
+        if (buffer == null) {
+            return null;
+        }
+        ByteBuffer source = buffer.duplicate();
+        byte[] bytes = new byte[source.remaining()];
+        source.get(bytes);
+        return bytes;
     }
 
     private static String typeName(Class<?> type) {

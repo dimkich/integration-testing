@@ -29,7 +29,7 @@ public class TsSegmentProvider implements BinarySegmentProvider {
         }
 
         @Override
-        public void write(ByteBuffer buffer, byte[] payload) {
+        public void write(ByteBuffer buffer, ByteBuffer payload) {
             order.apply(buffer);
             type.write(buffer, Instant.now().toEpochMilli());
         }

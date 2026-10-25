@@ -1,5 +1,7 @@
 package io.github.dimkich.integration.testing.serde.provider;
 
+import java.nio.ByteBuffer;
+
 import io.github.dimkich.integration.testing.serde.ComponentRole;
 import io.github.dimkich.integration.testing.serde.TestSerdeContext;
 import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
@@ -10,19 +12,19 @@ import org.springframework.lang.Nullable;
 
 @Getter
 public class TaggedRecordSerializerProvider
-        implements TestSerdeProviderFactory<Object, byte[], TestSerdeContext, ComponentRole,
+        implements TestSerdeProviderFactory<Object, ByteBuffer, TestSerdeContext, ComponentRole,
         TestRecordProperties> {
 
     private final Class<Object> inputClass = Object.class;
-    private final Class<byte[]> outputClass = byte[].class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
     private final Class<TestRecordProperties> propertiesClass = TestRecordProperties.class;
     private final String name = "tagged";
 
     @Override
-    public TestSerdeConverter<Object, byte[], TestSerdeContext> create(TestRecordProperties config,
+    public TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> create(TestRecordProperties config,
                                                                        Class<Object> inputClass,
-                                                                       Class<byte[]> outputClass,
+                                                                       Class<ByteBuffer> outputClass,
                                                                        Class<TestSerdeContext> contextClass,
                                                                        @Nullable ComponentRole role) {
         return new TaggedSerializer("REC");

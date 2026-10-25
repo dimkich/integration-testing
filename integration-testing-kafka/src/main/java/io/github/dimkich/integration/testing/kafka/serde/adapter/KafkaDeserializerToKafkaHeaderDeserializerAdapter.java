@@ -12,6 +12,8 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.springframework.lang.Nullable;
 import org.springframework.util.MultiValueMap;
 
+import java.nio.ByteBuffer;
+
 /**
  * Adapts a native Kafka {@link Deserializer} used for headers: every Kafka header is
  * deserialized by the native deserializer and collected into a {@link MultiValueMap}.
@@ -37,9 +39,9 @@ public class KafkaDeserializerToKafkaHeaderDeserializerAdapter
             Deserializer source, KafkaHeaderProperties properties, Class<Headers> inputClass,
             Class<MultiValueMap> outputClass, Class<TestSerdeContext> contextClass,
             @Nullable ComponentRole role) {
-        TestSerdeConverter<byte[], Object, TestSerdeContext> bytes =
-                TestSerdeConverter.of(byte[].class, Object.class, TestSerdeContext.class,
-                        (input, context) -> source.deserialize(null, null, input));
+        TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> bytes =
+                TestSerdeConverter.of(ByteBuffer.class, Object.class, TestSerdeContext.class,
+                        (input, context) -> source.deserialize(null, null, TestSerdeConverter.toByteArray(input)));
         return new CoreKafkaHeaderDeserializer(bytes);
     }
 }

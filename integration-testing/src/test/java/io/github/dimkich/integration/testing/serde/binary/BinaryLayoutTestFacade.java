@@ -1,7 +1,9 @@
 package io.github.dimkich.integration.testing.serde.binary;
 
+import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
 import lombok.RequiredArgsConstructor;
 
+import java.nio.ByteBuffer;
 import java.util.HexFormat;
 
 @RequiredArgsConstructor
@@ -17,17 +19,14 @@ public class BinaryLayoutTestFacade {
         return formatHex(new BinaryEnvelope(parser.parse(layout)).unwrap(parseHex(payloadHex)));
     }
 
-    private byte[] parseHex(String hex) {
+    private ByteBuffer parseHex(String hex) {
         if (hex == null) {
             return null;
         }
-        return HexFormat.of().parseHex(hex);
+        return TestSerdeConverter.wrap(HexFormat.of().parseHex(hex));
     }
 
-    private String formatHex(byte[] data) {
-        if (data == null) {
-            return null;
-        }
-        return hexFormat.formatHex(data);
+    private String formatHex(ByteBuffer data) {
+        return data == null ? null : hexFormat.formatHex(TestSerdeConverter.toByteArray(data));
     }
 }

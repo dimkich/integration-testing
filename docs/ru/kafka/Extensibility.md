@@ -10,7 +10,7 @@
 ------------------------
 
 Запись целиком — это обычный конвертер ядра. Реализуйте `TestSerdeConverter<KafkaRecord, ProducerRecord,
-TestSerdeContext>`:
+TestSerdeContext>`; key и value записи — `ByteBuffer`:
 
 ```java
 package com.example.kafka;
@@ -22,6 +22,7 @@ import lombok.Getter;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.stereotype.Component;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -33,19 +34,19 @@ public class PlainTextRecordSerializer implements TestSerdeConverter<KafkaRecord
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
     @Override
-    public ProducerRecord convert(KafkaRecord record, TestSerdeContext context) {
+    public ProducerRecord<ByteBuffer, ByteBuffer> convert(KafkaRecord record, TestSerdeContext context) {
         return new ProducerRecord<>(
                 record.getTopic(),
                 record.getPartition(),
-                toBytes(record.getKey()),
-                toBytes(record.getValue()));
+                toBuffer(record.getKey()),
+                toBuffer(record.getValue()));
     }
 
-    private byte[] toBytes(Object value) {
+    private ByteBuffer toBuffer(Object value) {
         if (value == null) {
             return null;
         }
-        return value.toString().getBytes(StandardCharsets.UTF_8);
+        return TestSerdeConverter.wrap(value.toString().getBytes(StandardCharsets.UTF_8));
     }
 }
 ```
@@ -73,6 +74,7 @@ import lombok.Getter;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.stereotype.Component;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -88,19 +90,19 @@ public class PlainTextRecordDeserializer
     public KafkaRecord convert(ConsumerRecord record, TestSerdeContext context) {
         KafkaRecord message = new KafkaRecord();
         message.setTopic(record.topic());
-        message.setKey(toString(record.key()));
-        message.setValue(toString(record.value()));
+        message.setKey(toString((ByteBuffer) record.key()));
+        message.setValue(toString((ByteBuffer) record.value()));
         message.setPartition(record.partition());
         message.setOffset(record.offset());
         message.setTimestamp(record.timestamp());
         return message;
     }
 
-    private String toString(byte[] data) {
+    private String toString(ByteBuffer data) {
         if (data == null) {
             return null;
         }
-        return new String(data, StandardCharsets.UTF_8);
+        return StandardCharsets.UTF_8.decode(data.duplicate()).toString();
     }
 }
 ```
@@ -163,8 +165,10 @@ headers:
 типов создаёт конвертер `input -> output`. Реализуйте `TestSerdeProviderFactory<I, O, C, R, P>`
 (имя формата — `getName()`, класс конфигурации — `P`) и зарегистрируйте бин — он станет
 доступен под своим именем и в настройке целиком, и в частях. Примеры:
-`io.github.dimkich.integration.testing.serde.providers.JsonProviderFactory`,
-`StringProviderFactory`.
+`io.github.dimkich.integration.testing.serde.providers.JsonSerializerFactory` /
+`JsonDeserializerFactory`, `StringSerializerFactory` / `StringDeserializerFactory`.
+Бинарная сторона такого конвертера — `ByteBuffer`; на границе с Kafka она превращается в
+`byte[]` нативным сериализатором записи.
 
 В Kafka провайдер можно указывать и в настройке целиком, и в частях. Провайдеры, созданные для
 заголовков, не должны зависеть от контекста сообщения — иначе при старте будет ошибка с подсказкой.

@@ -9,16 +9,19 @@ import io.github.dimkich.integration.testing.serde.properties.ProviderProperties
 import lombok.Getter;
 import org.springframework.lang.Nullable;
 
+import java.nio.ByteBuffer;
+
 /**
- * Provider {@code string}: serializes values to UTF-8 bytes via {@code String.valueOf}.
+ * Provider {@code string}: serializes values to a UTF-8 {@link ByteBuffer}.
  */
 @Getter
 public class StringSerializerFactory
-        implements TestSerdeProviderFactory<Object, byte[], TestSerdeContext, ComponentRole, ProviderProperties> {
+        implements TestSerdeProviderFactory<Object, ByteBuffer, TestSerdeContext, ComponentRole,
+        ProviderProperties> {
 
     private final Class<Object> inputClass = Object.class;
 
-    private final Class<byte[]> outputClass = byte[].class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
 
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
@@ -27,10 +30,9 @@ public class StringSerializerFactory
     private final String name = "string";
 
     @Override
-    public TestSerdeConverter<Object, byte[], TestSerdeContext> create(ProviderProperties config, Class<Object> inputClass,
-                                                                       Class<byte[]> outputClass,
-                                                                       Class<TestSerdeContext> contextClass,
-                                                                       @Nullable ComponentRole role) {
+    public TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> create(
+            ProviderProperties config, Class<Object> inputClass, Class<ByteBuffer> outputClass,
+            Class<TestSerdeContext> contextClass, @Nullable ComponentRole role) {
         return new StringSerializer();
     }
 }

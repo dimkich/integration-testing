@@ -14,6 +14,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 /**
@@ -25,7 +26,7 @@ import java.util.Set;
 @SuppressWarnings("rawtypes")
 public class KafkaMessageSender implements TestMessageSender {
     private final Set<String> connectionNames;
-    private final KafkaProducer<byte[], byte[]> producer;
+    private final KafkaProducer<ByteBuffer, ByteBuffer> producer;
     private final KafkaTopicRegistry kafkaTopicRegistry;
     private final DateTimeService dateTimeService;
 
@@ -53,7 +54,8 @@ public class KafkaMessageSender implements TestMessageSender {
 
         log.debug("Sending raw serialized message to topic [{}] via connection [{}]", topic, connectionName);
 
-        ProducerRecord<byte[], byte[]> record = serializer.convert(kafkaRecord, TestSerdeContext.EMPTY);
+        ProducerRecord<ByteBuffer, ByteBuffer> record =
+                (ProducerRecord<ByteBuffer, ByteBuffer>) serializer.convert(kafkaRecord, TestSerdeContext.EMPTY);
 
         if (record.timestamp() == null && dateTimeService.getDateTime() != null) {
             long fakeTimestamp = dateTimeService.getDateTime().toInstant().toEpochMilli();
@@ -61,7 +63,7 @@ public class KafkaMessageSender implements TestMessageSender {
                     record.key(), record.value(), record.headers());
         }
 
-        ProducerRecord<byte[], byte[]> finalRecord = record;
+        ProducerRecord<ByteBuffer, ByteBuffer> finalRecord = record;
         RecordMetadata recordMetadata = producer.send(finalRecord).get();
         return new KafkaRecordIdentity(recordMetadata.topic(), recordMetadata.partition(),
                 recordMetadata.offset());

@@ -1971,7 +1971,7 @@ b25UZXN0RHRv</__TypeId__>
                 <value>val</value>
             </inboundMessage>
             <response type="IllegalArgumentException">
-                <message>No adapter from [java.util.ArrayList] to [[B] under config [KafkaComponentProperties]. Known adapters: [io.github.dimkich.integration.testing.kafka.serde.adapter.KafkaDeserializerToRecordPartDeserializerAdapter [org.apache.kafka.common.serialization.Deserializer -> [B/java.lang.Object], io.github.dimkich.integration.testing.kafka.serde.adapter.KafkaSerializerToRecordPartSerializerAdapter [org.apache.kafka.common.serialization.Serializer -> java.lang.Object/[B]]</message>
+                <message>No adapter from [java.util.ArrayList] to [java.nio.ByteBuffer] under config [KafkaComponentProperties]. Known adapters: [io.github.dimkich.integration.testing.kafka.serde.adapter.KafkaDeserializerToRecordPartDeserializerAdapter [org.apache.kafka.common.serialization.Deserializer -> java.nio.ByteBuffer/java.lang.Object], io.github.dimkich.integration.testing.kafka.serde.adapter.KafkaSerializerToRecordPartSerializerAdapter [org.apache.kafka.common.serialization.Serializer -> java.lang.Object/java.nio.ByteBuffer]]</message>
             </response>
         </test>
         <test type="Container" name="Transactions">

@@ -131,7 +131,7 @@ Your application may already have complex Redis clients configured (e.g., propri
 Jedis wrappers or third-party clients) that hold serialization rules internally. To avoid
 duplicating their code in tests, write an **adapter** that converts a native single-slot source
 (e.g., a Spring Data `RedisSerializer` or a Redisson `Codec`) into the serde contract — an
-"object ↔ byte[]" pair. The general adapter selection rules (class hierarchy traversal,
+"object ↔ ByteBuffer" pair. The general adapter selection rules (class hierarchy traversal,
 candidate order, `null` = "not mine") are implemented by
 `io.github.dimkich.integration.testing.serde.AdapterManager`.
 
@@ -167,33 +167,34 @@ import org.springframework.stereotype.Component;
 @Component // The adapter is picked up by the adapter manager automatically
 @Getter
 public class CustomSerializerAdapter
-        implements TestSerdeAdapter<CustomSerializer, Object, byte[], TestSerdeContext, ComponentRole,
+        implements TestSerdeAdapter<CustomSerializer, Object, ByteBuffer, TestSerdeContext, ComponentRole,
         StandardSerdeProperties> {
 
     private final Class<CustomSerializer> sourceClass = CustomSerializer.class;
 
     private final Class<Object> inputClass = Object.class;
 
-    private final Class<byte[]> outputClass = byte[].class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
 
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
     private final Class<StandardSerdeProperties> propertiesClass = StandardSerdeProperties.class;
 
     @Override
     @Nullable
-    public TestSerdeConverter<Object, byte[], TestSerdeContext> adapt(
+    public TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> adapt(
             CustomSerializer source, StandardSerdeProperties properties, Class<Object> inputClass,
-            Class<byte[]> outputClass, Class<TestSerdeContext> contextClass, ComponentRole role) {
-        if (!byte[].class.equals(outputClass)) {
+            Class<ByteBuffer> outputClass, Class<TestSerdeContext> contextClass, ComponentRole role) {
+        if (!ByteBuffer.class.equals(outputClass)) {
             return null;
         }
         return TestSerdeConverter.of(inputClass, outputClass, contextClass,
-                (input, context) -> source.write(input));
+                (input, context) -> TestSerdeConverter.wrap(source.write(input)));
     }
 }
 ```
 
-A symmetric `byte[] -> Object` adapter calls `source.read(...)`. Once registered, the bean can be
+A symmetric `ByteBuffer -> Object` adapter calls `source.read(TestSerdeConverter.toByteArray(input))`.
+Once registered, the bean can be
 referenced from a schema component:
 
 ```yaml

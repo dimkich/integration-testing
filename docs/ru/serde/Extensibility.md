@@ -25,28 +25,30 @@ import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.util.Base64;
 
 @Component
 @Getter
-public class Base64SerdeProvider implements TestSerdeProviderFactory<byte[], Object, TestSerdeContext,
+public class Base64SerdeProvider implements TestSerdeProviderFactory<ByteBuffer, Object, TestSerdeContext,
         ComponentRole, StandardSerdeProperties> {
 
-    private final Class<byte[]> inputClass = byte[].class;
+    private final Class<ByteBuffer> inputClass = ByteBuffer.class;
     private final Class<Object> outputClass = Object.class;
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
     private final Class<StandardSerdeProperties> propertiesClass = StandardSerdeProperties.class;
     private final String name = "base64";
 
     @Override
-    public TestSerdeConverter<byte[], Object, TestSerdeContext> create(StandardSerdeProperties config,
-                                                                       Class<byte[]> inputClass,
-                                                                       Class<Object> outputClass,
-                                                                       Class<TestSerdeContext> contextClass,
-                                                                       ComponentRole role) {
+    public TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> create(StandardSerdeProperties config,
+                                                                           Class<ByteBuffer> inputClass,
+                                                                           Class<Object> outputClass,
+                                                                           Class<TestSerdeContext> contextClass,
+                                                                           ComponentRole role) {
         return TestSerdeConverter.of(inputClass, outputClass, contextClass, (input, context) ->
                 input == null ? null
-                        : new String(Base64.getDecoder().decode(input), StandardCharsets.UTF_8));
+                        : new String(Base64.getDecoder().decode(TestSerdeConverter.toByteArray(input)),
+                                StandardCharsets.UTF_8));
     }
 }
 ```
@@ -57,6 +59,24 @@ public class Base64SerdeProvider implements TestSerdeProviderFactory<byte[], Obj
     value:
       type: base64
 ```
+
+Бинарная сторона контракта
+--------------------------
+
+Бинарная сторона любого конвертера — `java.nio.ByteBuffer`:
+
+* сериализатор возвращает буфер, готовый к чтению: `position` стоит на первом байте полезной
+  нагрузки, `limit` — на конце; `null` означает tombstone;
+* десериализатор читает остаток буфера (`position..limit`) и не должен менять его позицию;
+  первым делом сделайте `input.slice()` или `input.duplicate()` и работайте с представлением;
+* не рассчитывайте, что данные начинаются с нулевой позиции: используйте `remaining()`;
+* для преобразований используйте статические хелперы `TestSerdeConverter.wrap(byte[])` и
+  `TestSerdeConverter.toByteArray(ByteBuffer)`. `toByteArray` всегда делает защитную копию
+  остатка буфера и не меняет его позицию.
+
+Доменное значение формата `bytes` остаётся `byte[]`: это значение предметной области, а не
+транспорт. Поэтому в XML тестов по-прежнему пишется `type="byte[]"`, а `ByteBuffer` живёт только
+внутри serde-конвейера и на границе с Kafka/Redis.
 
 Правила:
 
@@ -171,25 +191,25 @@ Spring Data `RedisSerializer`) в `TestSerdeConverter`.
 @Component
 @Getter
 public class NativeSerializerToCoreAdapter implements TestSerdeAdapter<
-        NativeSerializer, Object, byte[], TestSerdeContext, ComponentRole, StandardSerdeProperties> {
+        NativeSerializer, Object, ByteBuffer, TestSerdeContext, ComponentRole, StandardSerdeProperties> {
 
     private final Class<NativeSerializer> sourceClass = NativeSerializer.class;
     private final Class<Object> inputClass = Object.class;
-    private final Class<byte[]> outputClass = byte[].class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
     private final Class<StandardSerdeProperties> propertiesClass = StandardSerdeProperties.class;
 
     @Override
-    public TestSerdeConverter<Object, byte[], TestSerdeContext> adapt(
+    public TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> adapt(
             NativeSerializer source, StandardSerdeProperties properties,
-            Class<Object> inputClass, Class<byte[]> outputClass, Class<TestSerdeContext> contextClass,
+            Class<Object> inputClass, Class<ByteBuffer> outputClass, Class<TestSerdeContext> contextClass,
             ComponentRole role) {
 
-        if (!byte[].class.equals(outputClass)) {
+        if (!ByteBuffer.class.equals(outputClass)) {
             return null;
         }
         return TestSerdeConverter.of(inputClass, outputClass, contextClass,
-                (input, context) -> source.serialize(input));
+                (input, context) -> TestSerdeConverter.wrap(source.serialize(input)));
     }
 }
 ```
@@ -225,7 +245,7 @@ generic-параметр `R extends ComponentRole` (такой же, как `C e
 классу конфига, контексту и направлению, и в отличие от конвертеров он инвариантен: объявленная
 пара `getInputClass()`/`getOutputClass()` должна быть равна запрошенной (`equals`, `null` — «любой
 тип»), иначе декоратор к этому разрешению не применяется. Благодаря этому сериализующий декоратор
-получает только запросы `* → byte[]`, а десериализующий — только `byte[] → *`; верните исходный
+получает только запросы `* → ByteBuffer`, а десериализующий — только `ByteBuffer → *`; верните исходный
 конвертер, если декоратор не применим по своей конфигурации.
 
 ```java
@@ -284,7 +304,7 @@ public class XorMaskSegment implements BinarySegment {
     }
 
     @Override
-    public void write(ByteBuffer buffer, byte[] payload) {
+    public void write(ByteBuffer buffer, ByteBuffer payload) {
         byte originalValue = 0x5A;
         buffer.put((byte) (originalValue ^ mask));
     }

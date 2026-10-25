@@ -9,12 +9,15 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 
 /**
- * Converter that deserializes bytes to the target type with a Jackson {@link ObjectMapper}.
+ * Converter that deserializes a {@link ByteBuffer} to the target type with a Jackson
+ * {@link ObjectMapper}. For array-backed buffers the mapper reads directly from the backing
+ * array; only direct or read-only buffers are copied.
  */
 @Getter
-public class JacksonDeserializer implements TestSerdeConverter<byte[], Object, TestSerdeContext> {
+public class JacksonDeserializer implements TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> {
 
     @Getter(AccessLevel.NONE)
     private final ObjectMapper objectMapper;
@@ -22,7 +25,7 @@ public class JacksonDeserializer implements TestSerdeConverter<byte[], Object, T
     @Getter(AccessLevel.NONE)
     private final JavaType javaType;
 
-    private final Class<byte[]> inputClass = byte[].class;
+    private final Class<ByteBuffer> inputClass = ByteBuffer.class;
 
     private final Class<Object> outputClass = Object.class;
 
@@ -41,7 +44,14 @@ public class JacksonDeserializer implements TestSerdeConverter<byte[], Object, T
 
     @Override
     @SneakyThrows
-    public Object convert(byte[] input, TestSerdeContext context) {
-        return input == null ? null : objectMapper.readValue(input, javaType);
+    public Object convert(ByteBuffer input, TestSerdeContext context) {
+        if (input == null) {
+            return null;
+        }
+        if (input.hasArray()) {
+            return objectMapper.readValue(input.array(), input.arrayOffset() + input.position(),
+                    input.remaining(), javaType);
+        }
+        return objectMapper.readValue(TestSerdeConverter.toByteArray(input), javaType);
     }
 }

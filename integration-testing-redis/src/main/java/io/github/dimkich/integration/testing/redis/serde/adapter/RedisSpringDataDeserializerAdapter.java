@@ -5,21 +5,24 @@ import lombok.Getter;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.lang.Nullable;
 
+import java.nio.ByteBuffer;
+
 /**
  * Adapts a single-slot Spring Data {@link RedisSerializer} bean to a core deserializer
- * converter (component level).
+ * converter (component level). The binary value is copied to {@code byte[]} only at the native
+ * deserializer boundary.
  *
  * @see RedisSpringDataSerializerAdapter
  */
 @Getter
 @SuppressWarnings("rawtypes")
 public class RedisSpringDataDeserializerAdapter
-        implements TestSerdeAdapter<RedisSerializer, byte[], Object, TestSerdeContext, ComponentRole,
+        implements TestSerdeAdapter<RedisSerializer, ByteBuffer, Object, TestSerdeContext, ComponentRole,
         StandardSerdeProperties> {
 
     private final Class<RedisSerializer> sourceClass = RedisSerializer.class;
 
-    private final Class<byte[]> inputClass = byte[].class;
+    private final Class<ByteBuffer> inputClass = ByteBuffer.class;
 
     private final Class<Object> outputClass = Object.class;
 
@@ -29,10 +32,11 @@ public class RedisSpringDataDeserializerAdapter
 
     @Override
     @Nullable
-    public TestSerdeConverter<byte[], Object, TestSerdeContext> adapt(
-            RedisSerializer source, StandardSerdeProperties properties, Class<byte[]> inputClass,
+    public TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> adapt(
+            RedisSerializer source, StandardSerdeProperties properties, Class<ByteBuffer> inputClass,
             Class<Object> outputClass, Class<TestSerdeContext> contextClass, @Nullable ComponentRole role) {
         return TestSerdeConverter.of(inputClass, outputClass, contextClass,
-                (input, context) -> input == null ? null : source.deserialize(input));
+                (input, context) -> input == null ? null
+                        : source.deserialize(TestSerdeConverter.toByteArray(input)));
     }
 }

@@ -25,12 +25,13 @@ public interface BinarySegment {
     /**
      * Writes this segment to the buffer.
      * For fixed/header segments (version, length, checksum) writes their bytes; for content segments
-     * writes the payload.
+     * writes the payload. The payload is passed as a read-ready buffer; the envelope gives every
+     * segment its own duplicate, so a segment may consume it without affecting other segments.
      *
      * @param buffer  the target buffer (position advances as bytes are written)
-     * @param payload the serialized payload; used by content segment and length-prefix segments
+     * @param payload the read-ready payload buffer; used by content segment and length-prefix segments
      */
-    void write(ByteBuffer buffer, byte[] payload);
+    void write(ByteBuffer buffer, ByteBuffer payload);
 
     /**
      * Returns the fixed byte size of this segment when encoding.

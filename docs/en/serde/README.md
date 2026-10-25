@@ -57,6 +57,20 @@ a schema component inherits its source from the parent schema by the property me
 may set only `binary-envelope` — see
 [Redis Configuration](../redis/Configuration.md#schema-component-inheritance).
 
+Binary representation
+---------------------
+
+Inside the serde pipeline the binary side of every converter is `java.nio.ByteBuffer`:
+
+* a serializer returns a read-ready buffer (`position` at the first byte, `limit` at the end);
+* a deserializer reads `position..limit` and does not change the position of the input buffer;
+* at the Kafka and Redis boundary the buffer becomes `byte[]`: Kafka requires it in its
+  `Serializer`/`Deserializer` and headers, Spring Data Redis — in `RedisConnection` and
+  `RedisSerializer`.
+
+The domain value of the `bytes` format is still `byte[]`. XML tests therefore keep
+`type="byte[]"`, and `ByteBuffer` does not leak into test data.
+
 Core providers
 --------------
 

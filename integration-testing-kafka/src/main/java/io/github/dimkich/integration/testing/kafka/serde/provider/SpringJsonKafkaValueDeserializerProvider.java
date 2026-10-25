@@ -17,6 +17,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.lang.Nullable;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +29,7 @@ import java.util.Map;
 @Getter
 @ConditionalOnClass({ObjectMapper.class, JsonDeserializer.class})
 public class SpringJsonKafkaValueDeserializerProvider
-        implements TestSerdeProviderFactory<byte[], Object, KafkaSerdeContext, KafkaComponentRole,
+        implements TestSerdeProviderFactory<ByteBuffer, Object, KafkaSerdeContext, KafkaComponentRole,
         KafkaComponentProperties> {
 
     @Getter(AccessLevel.NONE)
@@ -39,7 +40,7 @@ public class SpringJsonKafkaValueDeserializerProvider
 
     private final String name;
 
-    private final Class<byte[]> inputClass = byte[].class;
+    private final Class<ByteBuffer> inputClass = ByteBuffer.class;
 
     private final Class<Object> outputClass = Object.class;
 
@@ -61,8 +62,8 @@ public class SpringJsonKafkaValueDeserializerProvider
     }
 
     @Override
-    public TestSerdeConverter<byte[], Object, KafkaSerdeContext> create(
-            KafkaComponentProperties config, Class<byte[]> inputClass, Class<Object> outputClass,
+    public TestSerdeConverter<ByteBuffer, Object, KafkaSerdeContext> create(
+            KafkaComponentProperties config, Class<ByteBuffer> inputClass, Class<Object> outputClass,
             Class<KafkaSerdeContext> contextClass, @Nullable KafkaComponentRole role) {
 
         ObjectMapper mapper = beanResolver.resolve(config.getObjectMapperRef(), getMapperClass());

@@ -1,5 +1,7 @@
 package io.github.dimkich.integration.testing.serde.provider;
 
+import java.nio.ByteBuffer;
+
 import io.github.dimkich.integration.testing.serde.ComponentRole;
 import io.github.dimkich.integration.testing.serde.TestSerdeContext;
 import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
@@ -11,11 +13,11 @@ import org.springframework.lang.Nullable;
 
 @Getter
 public class PlainConfigStringSerializerFactory
-        implements TestSerdeConverterFactory<Object, byte[], TestSerdeContext, ComponentRole, PlainConfig> {
+        implements TestSerdeConverterFactory<Object, ByteBuffer, TestSerdeContext, ComponentRole, PlainConfig> {
 
     private final Class<Object> inputClass = Object.class;
 
-    private final Class<byte[]> outputClass = byte[].class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
 
     private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
 
@@ -23,8 +25,8 @@ public class PlainConfigStringSerializerFactory
 
     @Override
     @Nullable
-    public TestSerdeConverter<Object, byte[], TestSerdeContext> create(PlainConfig config, Class<Object> inputClass,
-                                                                       Class<byte[]> outputClass,
+    public TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> create(PlainConfig config, Class<Object> inputClass,
+                                                                       Class<ByteBuffer> outputClass,
                                                                        Class<TestSerdeContext> contextClass,
                                                                        @Nullable ComponentRole role) {
         if (!"bytes".equals(config.getFormat()) && !"tagged".equals(config.getFormat())) {

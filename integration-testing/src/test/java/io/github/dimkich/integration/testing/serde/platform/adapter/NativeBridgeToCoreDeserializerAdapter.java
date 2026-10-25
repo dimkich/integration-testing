@@ -1,5 +1,7 @@
 package io.github.dimkich.integration.testing.serde.platform.adapter;
 
+import java.nio.ByteBuffer;
+
 import io.github.dimkich.integration.testing.serde.*;
 import io.github.dimkich.integration.testing.serde.platform.NativeBridgeDeserializer;
 import lombok.Getter;
@@ -8,7 +10,7 @@ import org.springframework.lang.Nullable;
 @Getter
 public class NativeBridgeToCoreDeserializerAdapter implements TestSerdeAdapter<
         NativeBridgeDeserializer,
-        byte[],
+        ByteBuffer,
         Object,
         TestSerdeContext,
         ComponentRole,
@@ -16,7 +18,7 @@ public class NativeBridgeToCoreDeserializerAdapter implements TestSerdeAdapter<
 
     private final Class<NativeBridgeDeserializer> sourceClass = NativeBridgeDeserializer.class;
 
-    private final Class<byte[]> inputClass = byte[].class;
+    private final Class<ByteBuffer> inputClass = ByteBuffer.class;
 
     private final Class<Object> outputClass = Object.class;
 
@@ -26,13 +28,13 @@ public class NativeBridgeToCoreDeserializerAdapter implements TestSerdeAdapter<
 
     @Override
     @Nullable
-    public TestSerdeConverter<byte[], Object, TestSerdeContext> adapt(
-            NativeBridgeDeserializer source, StandardSerdeProperties properties, Class<byte[]> inputClass,
+    public TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> adapt(
+            NativeBridgeDeserializer source, StandardSerdeProperties properties, Class<ByteBuffer> inputClass,
             Class<Object> outputClass, Class<TestSerdeContext> contextClass, @Nullable ComponentRole role) {
-        if (!byte[].class.equals(inputClass)) {
+        if (!ByteBuffer.class.equals(inputClass)) {
             return null;
         }
         return TestSerdeConverter.of(inputClass, outputClass, contextClass,
-                (input, context) -> source.deserialize(input));
+                (input, context) -> source.deserialize(TestSerdeConverter.toByteArray(input)));
     }
 }

@@ -29,7 +29,7 @@ public class VersionSegmentProvider implements BinarySegmentProvider {
         }
 
         @Override
-        public void write(ByteBuffer buffer, byte[] payload) {
+        public void write(ByteBuffer buffer, ByteBuffer payload) {
             buffer.put(version);
         }
 
