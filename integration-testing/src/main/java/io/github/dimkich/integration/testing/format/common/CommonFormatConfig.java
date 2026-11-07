@@ -68,7 +68,8 @@ public class CommonFormatConfig {
                 .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,
-                        LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, Instant.class,
+                        LocalTime.class, OffsetTime.class, LocalDate.class, LocalDateTime.class,
+                        ZonedDateTime.class, Instant.class,
                         boolean.class, char.class, byte.class, short.class, int.class, long.class, double.class,
                         float.class, SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class,
                         LinkedHashMapObjectObject.class, LinkedHashMapStringObject.class, RuntimeException.class,
@@ -91,7 +92,6 @@ public class CommonFormatConfig {
                 .addJacksonModule(new SimpleModule().addSerializer(BigDecimal.class, new BigDecimalSerializer())
                         .addDeserializer(Iterator.class, new IteratorDeserializer())
                         .setMixInAnnotation(Throwable.class, ThrowableMixIn.class)
-                        .setMixInAnnotation(FieldError.class, FieldErrorMixIn.class)
                         .setMixInAnnotation(FieldError.class, FieldErrorMixIn.class)
                         .setMixInAnnotation(SecureRandom.class, SecureRandomMixIn.class)
                         .setMixInAnnotation(Resource.class, SpringResourceMixIn.class)

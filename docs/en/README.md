@@ -48,6 +48,19 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
 * **[Extensibility](redis/Extensibility.md)** — Custom codec/schema/data access, stream & event
   handlers, `TestSetupModule.addSubTypes()`.
 
+### PostgreSQL
+
+* **[PostgreSQL Overview](postgresql/README.md)** — `@EnableTestPostgreSQL` setup, quick start,
+  data preparation, and automatic diff.
+* **[Configuration](postgresql/Configuration.md)** — Connections, permissions, `columns`, `ignore`,
+  `excludedFields`, and diff shape.
+* **[Data and Diff](postgresql/Data-and-Diff.md)** — `SqlStorageSetup`, `SqlStorageInit`, DBUnit
+  datasets, `dataStorageDiff`, and row keys.
+* **[Types and Serde](postgresql/Types-and-Serde.md)** — PostgreSQL types in XML, arrays, JSON,
+  composites, `hstore`, `bytea`, and custom converters.
+* **[Troubleshooting](postgresql/Troubleshooting.md)** — Empty diff, permission, schema, conversion,
+  and Testcontainers issues.
+
 ### Kafka
 
 * **[Kafka Overview](kafka/README.md)** — `@EnableTestKafka` setup, XML examples, sending and asserting messages.

@@ -1,36 +1,32 @@
 package io.github.dimkich.integration.testing.storage;
 
-import eu.ciechanowiec.sneakyfun.SneakyFunction;
 import io.github.dimkich.integration.testing.TestDataStorage;
-import io.github.dimkich.integration.testing.execution.MockAnswer;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
+@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @Component
 @RequiredArgsConstructor
 public class TestDataStorages {
-    private final static Supplier<Map<String, Map<String, Object>>> ordered = LinkedHashMap::new;
-    private final static Supplier<Map<String, Map<String, Object>>> sorted = TreeMap::new;
-
     private final Map<String, TestDataStorage> storageMap;
-    private final ObjectsDifference objectsDifference;
     private final StorageProperties properties;
-
-    private final Set<TestDataStorage> affectedStorages = new HashSet<>();
-    private Map<String, Map<String, Object>> currentValue = new LinkedHashMap<>();
 
     @PostConstruct
     void init() {
-        Map<String, TestDataStorage> map = storageMap.values().stream()
-                .collect(Collectors.toMap(TestDataStorage::getName, Function.identity(), (x, y) -> y, LinkedHashMap::new));
+        Map<String, TestDataStorage> map = new LinkedHashMap<>();
+        for (TestDataStorage storage : storageMap.values()) {
+            TestDataStorage previous = map.putIfAbsent(storage.getName(), storage);
+            if (previous != null) {
+                throw new IllegalStateException("Duplicate TestDataStorage name '" + storage.getName()
+                        + "': " + previous.getClass().getName() + " and " + storage.getClass().getName());
+            }
+        }
         storageMap.clear();
         storageMap.putAll(map);
     }
@@ -38,52 +34,37 @@ public class TestDataStorages {
     public <T extends TestDataStorage> T getTestDataStorage(String name, Class<T> cls) {
         TestDataStorage storage = storageMap.get(name);
         if (storage == null) {
-            throw new RuntimeException(String.format("TestDataStorage '%s' not found", name));
+            throw new IllegalStateException(String.format("TestDataStorage '%s' not found", name));
         }
         return cls.cast(storage);
     }
 
     public <T extends TestDataStorage> Stream<T> getTestDataStorages(Class<T> cls) {
-        return storageMap.values().stream().filter(s -> s.getClass().isAssignableFrom(cls)).map(cls::cast);
+        return storageMap.values().stream().filter(cls::isInstance).map(cls::cast);
     }
 
-    public Object getMapDiff() {
-        Map<String, Map<String, Object>> currentValue = getCurrentValue(storageMap.values());
-        Object diff = objectsDifference.getDifference(this.currentValue, currentValue);
-        storageMap.forEach((n, s) -> s.setDiff(null));
-        if (diff instanceof Container container) {
-            container.clearNullValueKeys();
-            if (container.isEmpty()) {
-                diff = null;
+    public Object getMapDiff() throws Exception {
+        Container rootContainer = Container.create(
+                properties.getKeyType(0), properties.getValueType(0),
+                properties.getSort(0), properties.getChangeType(0));
+
+        for (TestDataStorage storage : storageMap.values()) {
+            Object storageDiff = storage.getDiff();
+            if (storageDiff != null) {
+                rootContainer.addEntry(Container.ChangeType.changed, storage.getName(), storageDiff, String::valueOf);
             }
         }
-        this.currentValue = currentValue;
-        return diff;
+        rootContainer.clearNullValueKeys();
+        return rootContainer.isEmpty() ? null : rootContainer;
     }
 
-    public void addAffectedStorage(TestDataStorage storage) {
-        affectedStorages.add(storage);
-    }
-
-    public void affectAllStorages() {
-        affectedStorages.addAll(storageMap.values());
-    }
-
-    public void setNewCurrentValue() {
-        if (affectedStorages.isEmpty()) {
-            return;
+    /**
+     * Prepares all storages for the upcoming test. Snapshot storages refresh their baseline;
+     * other storages keep the default no-op implementation.
+     */
+    public void prepareForTest() throws Exception {
+        for (TestDataStorage storage : storageMap.values()) {
+            storage.prepareForTest();
         }
-        this.currentValue.putAll(getCurrentValue(affectedStorages));
-        affectedStorages.clear();
-    }
-
-    private Map<String, Map<String, Object>> getCurrentValue(Collection<TestDataStorage> storages) {
-        return MockAnswer.enable(() -> storages.stream()
-                .collect(Collectors.toMap(
-                        TestDataStorage::getName,
-                        SneakyFunction.sneaky(s -> s.getCurrentValue(properties.getExcludedFields(s.getName()))),
-                        (v1, v2) -> v2,
-                        properties.getSort(0) ? sorted : ordered
-                )));
     }
 }

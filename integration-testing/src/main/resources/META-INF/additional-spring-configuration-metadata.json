@@ -1,0 +1,23 @@
+{
+  "properties": [
+    {
+      "name": "integration.testing.assertion",
+      "type": "java.lang.String",
+      "description": "Assertion implementation used by the integration test framework.",
+      "hints": [
+        {
+          "value": "String"
+        },
+        {
+          "value": "File"
+        },
+        {
+          "value": "SingleFile"
+        },
+        {
+          "value": "SaveActualData"
+        }
+      ]
+    }
+  ]
+}

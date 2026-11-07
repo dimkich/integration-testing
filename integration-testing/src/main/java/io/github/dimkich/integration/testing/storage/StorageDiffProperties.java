@@ -4,8 +4,6 @@ import io.github.dimkich.integration.testing.storage.mapping.Container;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Data
 public class StorageDiffProperties {
@@ -17,7 +15,6 @@ public class StorageDiffProperties {
     private List<Boolean> sort;
     private Boolean defaultChangeType;
     private List<Boolean> changeType;
-    private Map<String, Set<String>> excludedFields;
 
     public Container.Type getKeyType(int level) {
         return getFromList(level, keyType, defaultKeyType);

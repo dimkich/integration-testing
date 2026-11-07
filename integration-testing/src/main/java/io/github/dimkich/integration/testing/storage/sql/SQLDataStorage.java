@@ -1,111 +1,65 @@
 package io.github.dimkich.integration.testing.storage.sql;
 
-import org.dbunit.database.DatabaseConfig;
-import org.dbunit.dataset.IDataSet;
+import io.github.dimkich.integration.testing.dbunit.DbUnitFixture;
+import io.github.dimkich.integration.testing.storage.sql.table.TableSet;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Abstraction over a SQL data storage used by integration tests.
- * <p>
- * Implementations are responsible for executing SQL, loading DBUnit datasets,
- * and generating vendor-specific SQL snippets to control and clean test data.
  */
 public interface SQLDataStorage {
 
-    /**
-     * Returns the logical name of this storage (for example, a data source alias).
-     *
-     * @return storage name
-     */
     String getName();
 
     /**
-     * Executes the given SQL statements in the context of this storage.
+     * Drops cached schema and audit state (journal, watermark and tagged SQL), reloads the table
+     * catalog and prepares metadata for the current tables. It is called after an init setup, so
+     * implementations can discover the schema and attach complete table, column, key and sequence
+     * information to the canonical
+     * {@link io.github.dimkich.integration.testing.storage.sql.table.Table} objects.
+     */
+    void initialize() throws Exception;
+
+    /**
+     * Executes a batch of SQL. {@code untrackedSql} is infrastructure SQL (setup, rollback,
+     * clearing) and is executed with triggers disabled. {@code trackedSql} is the target SQL
+     * executed normally; the storage keeps its correlation tags until
+     * {@link #getStorageChanges(String)} resolves the applied mutations.
      *
-     * @param sql collection of SQL statements to execute
+     * @param untrackedSql SQL that must not appear in the audit diff
+     * @param trackedSql the target SQL statements, in execution order; identical texts are allowed
      * @throws Exception any error during SQL execution
      */
-    void executeSql(Collection<String> sql) throws Exception;
+    void executeSql(Collection<String> untrackedSql, Collection<String> trackedSql) throws Exception;
 
     /**
-     * Reads data from the specified tables and returns them in a storage-specific format.
-     *
-     * @param tables       tables to read
-     * @param excludedRows map of table name to set of row identifiers (for example, primary keys)
-     *                     that must be excluded from the result
-     * @return a map containing table data; concrete structure depends on implementation
-     * @throws Exception any error while reading data
+     * Loads the requested tables from the fixture into the storage. The storage owns the concrete
+     * DBUnit operation and connection settings (for example, a clean insert for PostgreSQL); the
+     * fixture only exposes the already parsed data set.
      */
-    Map<String, Object> getTablesData(Collection<String> tables,
-                                      Map<String, Set<String>> excludedRows) throws Exception;
+    void loadFixture(DbUnitFixture fixture, TableSet tables) throws Exception;
 
     /**
-     * Loads the given DBUnit dataset into the storage.
-     *
-     * @param dataSet dataset to load
-     * @throws Exception any error while loading data
+     * SQL that removes all rows from the given tables without producing audit changes.
      */
-    void loadDataset(IDataSet dataSet) throws Exception;
+    String getClearSql(TableSet tables);
 
     /**
-     * Provides DBUnit configuration for this storage.
-     *
-     * @return DBUnit {@link DatabaseConfig}
-     * @throws Exception any error while building configuration
+     * SQL that restarts the sequences of the managed tables, or an empty string when the storage
+     * has no sequences to reset. Restarting to the base value keeps the identifiers of dynamic
+     * data deterministic: fixtures use explicit ids, so a rolled back or reverted mutation cannot
+     * leave a sequence drifted past them.
      */
-    DatabaseConfig getDbunitConfig() throws Exception;
+    String getSequenceRestartSql();
 
     /**
-     * Returns the list of tables that are visible in this storage.
+     * Reads the tracked changes newer than the previous read exactly once. The returned result
+     * builds only the requested part and does not mutate the storage when its accessors are called.
      *
-     * @return set of table names
-     * @throws Exception any error while retrieving metadata
+     * @param postReadSql SQL to execute after the audit select, or {@code null}
+     * @return the lazy result of the read
+     * @throws Exception if an error occurs while reading
      */
-    Set<String> getTables() throws Exception;
-
-    /**
-     * Initializes table restriction for the given tables.
-     * <p>
-     * Implementations can use this method to restrict visibility or operations
-     * to the specified subset of tables.
-     *
-     * @param tables tables that should be restricted
-     * @throws Exception any error while applying restrictions
-     */
-    void initTablesRestriction(Collection<String> tables) throws Exception;
-
-    /**
-     * Builds SQL statement that removes restrictions and allows operations for the given table.
-     *
-     * @param table table name
-     * @return SQL statement that allows the table
-     */
-    String getAllowTableSql(String table);
-
-    /**
-     * Builds SQL statement that restricts operations for the given table.
-     *
-     * @param table table name
-     * @return SQL statement that restricts the table
-     */
-    String getRestrictTableSql(String table);
-
-    /**
-     * Builds SQL statement that clears data from the given tables.
-     *
-     * @param tables tables to clear
-     * @return SQL statement that deletes or truncates data in the tables
-     */
-    String getClearSql(Collection<String> tables);
-
-    /**
-     * Builds SQL statement that restarts identity/sequence values for the given tables.
-     *
-     * @param tables tables whose identity values must be restarted
-     * @return SQL statement that restarts identities
-     */
-    String getRestartIdentitySql(Collection<String> tables);
+    StorageChanges getStorageChanges(String postReadSql) throws Exception;
 }

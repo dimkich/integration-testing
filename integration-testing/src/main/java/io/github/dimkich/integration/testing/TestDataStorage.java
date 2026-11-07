@@ -1,16 +1,17 @@
 package io.github.dimkich.integration.testing;
 
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Interface for test data storage implementations used in integration testing.
  * <p>
- * This interface provides a contract for managing and retrieving test data state
- * from various storage backends (e.g., SQL databases, key-value stores, Redis).
- * Implementations are responsible for providing the current state of their data
- * and optionally handling difference notifications when data changes are detected.
- * </p>
+ * This interface provides a contract for detecting data changes produced by a test.
+ * Implementations fall into two categories:
+ * <ul>
+ *   <li><b>Snapshot storages</b> (Redis, in-memory caches) capture the state before the test
+ *       and compare it with the state after the test. See
+ *       {@link io.github.dimkich.integration.testing.storage.SnapshotTestDataStorage}.</li>
+ *   <li><b>Delta storages</b> (databases with audit logs, Kafka, event-driven systems) know
+ *       their changes without a full scan and return the diff directly.</li>
+ * </ul>
  *
  * @author dimkich
  */
@@ -19,7 +20,7 @@ public interface TestDataStorage {
      * Returns the unique name identifier for this test data storage.
      * <p>
      * The name is used to identify and retrieve specific storage instances
-     * from the storage registry.
+     * from the storage registry and to look up storage specific configuration.
      * </p>
      *
      * @return the name of this test data storage, never {@code null}
@@ -27,43 +28,31 @@ public interface TestDataStorage {
     String getName();
 
     /**
-     * Retrieves the current state of the data stored in this storage.
+     * Prepares this storage for the upcoming test.
      * <p>
-     * The returned map represents the current snapshot of all data entities,
-     * where keys are typically composite identifiers (e.g., "tableName_id" for SQL,
-     * "keyspace_id" for key-value stores) and values are the actual data objects.
-     * </p>
-     * <p>
-     * The excluded fields parameter allows filtering out specific fields from
-     * the returned data. The map structure is: key is the entity/table/keyspace name,
-     * value is a set of field names to exclude from that entity.
+     * Called by the framework once before each test, after initialization has been applied
+     * and all asynchronous work has settled. The default implementation does nothing;
+     * implementations that need a refreshed baseline, such as snapshot storages, override it.
      * </p>
      *
-     * @param excludedFields a map where keys are entity identifiers (table names,
-     *                       keyspace names, etc.) and values are sets of field names
-     *                       to exclude from the returned data. May be {@code null} or empty.
-     * @return a map representing the current state of all data, where keys are
-     * composite identifiers and values are the data objects. The map should
-     * preserve insertion order if possible.
-     * @throws Exception if an error occurs while retrieving the data
+     * @throws Exception if an error occurs while preparing the storage
      */
-    Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) throws Exception;
+    default void prepareForTest() throws Exception {
+    }
 
     /**
-     * Notifies this storage about detected differences in the data state.
+     * Computes the difference for this storage after the test has been executed.
      * <p>
-     * This method is called by the testing framework when differences are detected
-     * between the expected and actual data state. Implementations can override this
-     * method to track changes, update internal state, or perform cleanup operations.
-     * </p>
-     * <p>
-     * The default implementation does nothing. Implementations that need to track
-     * differences should override this method.
+     * For snapshot storages the difference is computed against the snapshot captured by
+     * {@link io.github.dimkich.integration.testing.storage.SnapshotTestDataStorage#prepareForTest()}
+     * before the test. For delta storages the storage knows its own changes and returns them
+     * directly.
      * </p>
      *
-     * @param diff a map representing the differences detected, or {@code null} if
-     *             no differences were found or when resetting the difference state
+     * @return the computed difference (a
+     * {@link io.github.dimkich.integration.testing.storage.mapping.Container}) or {@code null}
+     * if there were no changes
+     * @throws Exception if an error occurs while computing the difference
      */
-    default void setDiff(Map<String, Object> diff) {
-    }
+    Object getDiff() throws Exception;
 }

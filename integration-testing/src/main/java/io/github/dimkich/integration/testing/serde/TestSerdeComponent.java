@@ -9,8 +9,10 @@ import org.springframework.lang.Nullable;
  * <p>Describes the signature used to match a resolution request — input, output, context,
  * properties and role — plus ordering ({@link #compare}) and the shared checks
  * ({@link #matches}, {@link #verify}). A {@code null} input or output class means "any type", a
- * {@code null} properties class matches every configuration, and a non-null role restricts the
- * component to requests with the same {@link ComponentRole#name()}.
+ * {@code null} properties class matches every configuration. A non-null {@link #getRole() role}
+ * restricts the component to requests with the same {@link ComponentRole#name()}; otherwise a
+ * non-null {@link #getRoleClass() role class} restricts it to requests whose role is an instance
+ * of that class.
  *
  * @param <I> input type the component produces converters for
  * @param <O> output type the component produces converters for
@@ -70,12 +72,27 @@ public interface TestSerdeComponent<I, O, C extends TestSerdeContext, R extends 
     }
 
     /**
-     * Returns the role the component is restricted to.
+     * Returns the exact role the component is restricted to.
      *
-     * @return the role, or {@code null} when the component is universal
+     * @return the role, or {@code null} when no exact role is set
      */
     @Nullable
     default R getRole() {
+        return null;
+    }
+
+    /**
+     * Returns the role class the component is restricted to when {@link #getRole()} is
+     * {@code null}.
+     *
+     * <p>Use this method for roles that carry request data and cannot be represented by a single
+     * constant, for example a PostgreSQL column type descriptor. A {@code null} value means that
+     * the component is not restricted at the class level.
+     *
+     * @return the accepted role class, or {@code null} when no class-level restriction is set
+     */
+    @Nullable
+    default Class<? extends R> getRoleClass() {
         return null;
     }
 
@@ -87,6 +104,10 @@ public interface TestSerdeComponent<I, O, C extends TestSerdeContext, R extends 
      * must be a subtype of the requested output (covariance). A {@code null} declared type means
      * "any type". Decorators override this to invariant matching, because a decorator wraps a
      * converter of exactly its declared signature.
+     *
+     * <p>An explicit {@link #getRole() role} takes precedence over {@link #getRoleClass()}. When
+     * the explicit role is {@code null}, a non-null role class accepts any non-null request role
+     * that is an instance of that class. When both are {@code null}, the component is universal.
      *
      * @param propsClass   configuration class of the request
      * @param contextClass context class of the request
@@ -106,14 +127,16 @@ public interface TestSerdeComponent<I, O, C extends TestSerdeContext, R extends 
 
     /**
      * Orders components so that the more specific one wins: by role, then by the specificity of the
-     * properties, input, output and context classes.
+     * properties, input, output and context classes. An explicit role is more specific than a role
+     * class, which in turn is more specific than a universal component.
      *
      * @param other component to compare with
      * @return a negative value when this component is more specific, a positive value when
      * {@code other} is, {@code 0} when they are equally specific
      */
     default int compare(TestSerdeComponent<?, ?, ?, ?, ?> other) {
-        int result = TypeSpecificity.compareRoles(getRole(), other.getRole());
+        int result = TypeSpecificity.compareRoles(getRole(), getRoleClass(),
+                other.getRole(), other.getRoleClass());
         if (result == 0) {
             result = TypeSpecificity.compare(getPropertiesClass(), other.getPropertiesClass());
         }
@@ -164,7 +187,11 @@ public interface TestSerdeComponent<I, O, C extends TestSerdeContext, R extends 
 
     private boolean matchesRole(@Nullable ComponentRole requestedRole) {
         R role = getRole();
-        return role == null || (requestedRole != null && role.name().equals(requestedRole.name()));
+        if (role != null) {
+            return requestedRole != null && role.name().equals(requestedRole.name());
+        }
+        Class<? extends R> roleClass = getRoleClass();
+        return roleClass == null || roleClass.isInstance(requestedRole);
     }
 
     private static String typeName(Class<?> type) {

@@ -1,60 +1,17 @@
 package io.github.dimkich.integration.testing.postgresql.dbunit;
 
-import org.dbunit.dataset.datatype.AbstractDataType;
-import org.springframework.util.StringUtils;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Types;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
-public class HStoreDataType extends AbstractDataType {
+/**
+ * DBUnit data type of the PostgreSQL {@code hstore} type: the fixture value is a textual hstore
+ * literal (e.g. <code>"k1"=>"v1", "k2"=>"v2"</code>) and is bound as a typed
+ * {@link org.postgresql.util.PGobject}, so PostgreSQL parses the literal itself. Values may
+ * therefore contain any character, including commas, colons and quotes.
+ */
+public class HStoreDataType extends PgObjectDataType {
+    private static final String HSTORE = "hstore";
+
     public HStoreDataType() {
-        super("hstore", Types.OTHER, HStoreDataType.class, false);
-    }
-
-    public HStoreDataType(String name, int sqlType) {
-        super(name, sqlType, HStoreDataType.class, false);
-    }
-
-    public Object typeCast(Object value) {
-        return value;
-    }
-
-    public Object getSqlValue(int column, ResultSet resultSet) throws SQLException {
-        String value = resultSet.getString(column);
-        if (value == null || resultSet.wasNull()) {
-            return null;
-        }
-        return value;
-    }
-
-    public void setSqlValue(Object value, int column, PreparedStatement statement) throws SQLException {
-        statement.setObject(column, toMap(value));
-    }
-
-    private Map<String, String> toMap(Object value) {
-        Map<String, String> map = new LinkedHashMap<>();
-        if (value instanceof String valueStr) {
-            if (StringUtils.hasText(valueStr)) {
-                valueStr = valueStr.replaceAll("=>", ":");
-                valueStr = valueStr.replaceAll("->", ":");
-                valueStr = valueStr.replaceAll("=", ":");
-                valueStr = valueStr.replaceAll("[{}\"]", "");
-                valueStr = valueStr.replaceAll(", ", ",");
-                String[] split = valueStr.split(",");
-                for (String str : split) {
-                    String[] keyValue = str.split(":");
-                    if (keyValue.length == 1) {
-                        map.put(keyValue[0], null);
-                    } else if (keyValue.length == 2) {
-                        map.put(keyValue[0], keyValue[1]);
-                    }
-                }
-            }
-        }
-        return map;
+        super(HSTORE, Types.OTHER);
     }
 }

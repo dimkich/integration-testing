@@ -36,8 +36,7 @@ public class RedisReplicationMockFacade {
     public void init() {
         snapshotTestFactorySyncStateDelegator.switchToSnapshot();
         isStreamMode = false;
-        testDataStorages.addAffectedStorage(testDataStorages.getTestDataStorage(
-                "snapshotTestFactory", RedisTestDataStorage.class));
+        testDataStorages.getTestDataStorage("snapshotTestFactory", RedisTestDataStorage.class).markAffected();
     }
 
     @SneakyThrows

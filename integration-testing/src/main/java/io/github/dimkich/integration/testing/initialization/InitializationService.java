@@ -3,13 +3,15 @@ package io.github.dimkich.integration.testing.initialization;
 import io.github.dimkich.integration.testing.Test;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class InitializationService {
     private final Map<Class<? extends TestInit>, InitStateBuilder<TestInit, ?>> inits;
-    private final List<TestInit> transientInits = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
     public InitializationService(List<InitSetup<? extends TestInit,
@@ -33,11 +35,6 @@ public class InitializationService {
         }
     }
 
-    public void addTransientInit(TestInit init) {
-        transientInits.add(init);
-        inits.get(init.getClass()).getAddBuilder().add(init);
-    }
-
     @SuppressWarnings("unchecked")
     public <T extends TestInitState<?>> T changeCurrentStatus(Class<? extends TestInit> testInitClass) {
         InitStateBuilder<TestInit, ? extends TestInitState<?>> builder = inits.get(testInitClass);
@@ -48,7 +45,6 @@ public class InitializationService {
     }
 
     public void afterTest(Test test) {
-        removeInits(transientInits);
         removeInits(test.getInits());
         for (InitStateBuilder<TestInit, ?> builder : inits.values()) {
             builder.getRemoveBuilder().build(test);

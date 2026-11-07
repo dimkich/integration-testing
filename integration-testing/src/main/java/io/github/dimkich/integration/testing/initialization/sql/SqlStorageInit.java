@@ -11,27 +11,26 @@ import java.util.List;
 /**
  * Represents a SQL storage initialization configuration for integration tests.
  * This class extends {@link io.github.dimkich.integration.testing.initialization.TestInit}
- * and provides a mechanism to initialize SQL storage systems by allowing/restricting table access,
- * loading data from DBUnit datasets, executing SQL statements, and managing table hooks.
+ * and provides a mechanism to initialize SQL storage systems by clearing tables, loading data from
+ * DBUnit datasets and executing SQL statements.
  *
- * <p>SQL storage initialization is used to configure which tables can be modified during tests,
- * which tables should be loaded with data, and to execute custom SQL statements. This initialization
- * runs before individual test cases and parts, allowing you to prepare the database state and
- * control table access restrictions.
+ * <p>SQL storage initialization is used to configure which tables should be cleared or loaded with
+ * data and to execute custom SQL statements. This initialization runs before individual test cases
+ * and parts, allowing you to prepare the database state.
  *
  * <p>Example XML configurations:
  * <pre>{@code
- * <!-- Allow specific tables to be changed -->
+ * <!-- Clear specific tables -->
  * <init type="sqlStorageInit" name="dataSource">
- *     <tablesToChange>t1,t2</tablesToChange>
+ *     <tablesToClear>t1,t2</tablesToClear>
  * </init>
  *
  * <!-- Load all tables from DBUnit dataset -->
  * <init type="sqlStorageInit" name="dataSource" loadAllTables="true"/>
  *
- * <!-- Allow and load specific tables -->
+ * <!-- Clear and load specific tables -->
  * <init type="sqlStorageInit" name="dataSource">
- *     <tablesToChange>t1</tablesToChange>
+ *     <tablesToClear>t1</tablesToClear>
  *     <tablesToLoad>t1</tablesToLoad>
  * </init>
  *
@@ -42,19 +41,14 @@ import java.util.List;
  *
  * <!-- Multiple SQL statements -->
  * <init type="sqlStorageInit" name="dataSource">
- *     <tablesToChange>t1</tablesToChange>
+ *     <tablesToClear>t1</tablesToClear>
  *     <sql>update t1 set column = 1</sql>
  *     <sql>insert into t1 values (2, 'test')</sql>
  * </init>
  *
- * <!-- Disable table hooks for this initialization -->
- * <init type="sqlStorageInit" name="dataSource" disableTableHooks="true">
- *     <sql>update t1 set column = 1</sql>
- * </init>
- *
  * <!-- Apply to specific test type -->
  * <init type="sqlStorageInit" name="dataSource" applyTo="TestCase">
- *     <tablesToChange>t1,t2</tablesToChange>
+ *     <tablesToClear>t1,t2</tablesToClear>
  * </init>
  * }</pre>
  *
@@ -97,36 +91,18 @@ public class SqlStorageInit extends TestInit {
     private Boolean loadAllTables;
 
     /**
-     * Whether to disable table hooks for this initialization.
-     * If set to {@code true}, table hooks configured in {@link SqlStorageSetup} will not be triggered
-     * when tables are modified during this initialization. If set to {@code false} or {@code null},
-     * table hooks will be executed normally.
-     * <p>
-     * This is serialized as an XML attribute when using Jackson XML serialization.
-     * <p>
-     * XML Example:
-     * <pre>{@code
-     * <init type="sqlStorageInit" name="dataSource" disableTableHooks="true">
-     *     <tablesToChange>t1</tablesToChange>
-     * </init>
-     * }</pre>
-     */
-    @JacksonXmlProperty(isAttribute = true)
-    private Boolean disableTableHooks;
-
-    /**
-     * Comma-separated list of table names that should be allowed to be changed during test execution.
-     * Tables specified here will be allowed for modifications, while other tables will be restricted.
-     * If not specified, no tables will be allowed for changes unless {@code loadAllTables} is set to {@code true}.
+     * Comma-separated list of table names that should be cleared before test execution.
+     * Tables specified here are set to the {@code CLEARED} state, unless they are also listed
+     * in {@code tablesToLoad} or {@code loadAllTables} is set to {@code true}.
      * <p>
      * XML Example:
      * <pre>{@code
      * <init type="sqlStorageInit" name="dataSource">
-     *     <tablesToChange>t1,t2</tablesToChange>
+     *     <tablesToClear>t1,t2</tablesToClear>
      * </init>
      * }</pre>
      */
-    private String tablesToChange;
+    private String tablesToClear;
 
     /**
      * Comma-separated list of table names that should be loaded with data from the DBUnit dataset.

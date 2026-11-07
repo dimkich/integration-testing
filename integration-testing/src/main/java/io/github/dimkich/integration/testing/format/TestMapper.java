@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.dimkich.integration.testing.Test;
 import io.github.dimkich.integration.testing.TestContainer;
 import io.github.dimkich.integration.testing.util.TestUtils;
+import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.core.io.ClassPathResource;
@@ -32,9 +33,8 @@ public abstract class TestMapper {
     }
 
     public void writeRootTest(Test test) throws IOException {
-        try (FileWriter fileWriter = new FileWriter(TestUtils.getTestResourceFile(path), StandardCharsets.UTF_8)) {
-            fileWriter.write(getRootTestAsString(test));
-        }
+        @Cleanup FileWriter fileWriter = new FileWriter(TestUtils.getTestResourceFile(path), StandardCharsets.UTF_8);
+        fileWriter.write(getRootTestAsString(test));
     }
 
     public String getRootTestAsString(Test test) throws IOException {

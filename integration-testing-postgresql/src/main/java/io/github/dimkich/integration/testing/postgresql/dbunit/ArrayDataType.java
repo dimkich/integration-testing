@@ -1,107 +1,27 @@
 package io.github.dimkich.integration.testing.postgresql.dbunit;
 
-import lombok.extern.slf4j.Slf4j;
-import org.dbunit.dataset.ITable;
-import org.dbunit.dataset.datatype.AbstractDataType;
-import org.dbunit.dataset.datatype.TypeCastException;
-import org.springframework.util.StringUtils;
+import java.sql.Types;
 
-import java.sql.*;
+/**
+ * DBUnit data type of the PostgreSQL array types: the fixture value is a textual array literal
+ * (e.g. <code>{tag_x,tag_y}</code>) and is bound as a typed {@link org.postgresql.util.PGobject},
+ * so PostgreSQL parses the literal itself. Element values may therefore contain any character,
+ * including commas, braces and quotes.
+ */
+public class ArrayDataType extends PgObjectDataType {
 
-@Slf4j
-public class ArrayDataType extends AbstractDataType {
-    public ArrayDataType() {
-        this("array", Types.ARRAY);
+    public ArrayDataType(String pgType) {
+        super(pgType, Types.ARRAY);
     }
 
-    public ArrayDataType(String name, int sqlType) {
-        super(name, sqlType, Array.class, false);
-    }
-
-    public Object typeCast(Object value) throws TypeCastException {
-        if (value == null || value == ITable.NO_VALUE) {
-            return null;
+    /**
+     * Converts the type name reported by the driver to the form PostgreSQL accepts, e.g. the
+     * internal {@code _text} to {@code text[]}.
+     */
+    public static String typeName(String sqlTypeName) {
+        if (sqlTypeName == null || sqlTypeName.isBlank()) {
+            return "text[]";
         }
-
-        if (value instanceof String) {
-            return new String[]{(String) value};
-        }
-        if (value instanceof String[]) {
-            return value;
-        }
-
-        if (value instanceof Date || value instanceof Time || value instanceof Timestamp) {
-            return new String[]{value.toString()};
-        }
-
-        if (value instanceof Boolean) {
-            return new String[]{value.toString()};
-        }
-
-        if (value instanceof Number) {
-            try {
-                return new String[]{value.toString()};
-            } catch (NumberFormatException e) {
-                throw new TypeCastException(value, this, e);
-            }
-        }
-
-        if (value instanceof Array) {
-            try {
-                Array a = (Array) value;
-                return a.getArray();
-            } catch (Exception e) {
-                throw new TypeCastException(value, this, e);
-            }
-        }
-
-        if (value instanceof Blob) {
-            try {
-                Blob blob = (Blob) value;
-                byte[] blobValue = blob.getBytes(1, (int) blob.length());
-                return typeCast(blobValue);
-            } catch (SQLException e) {
-                throw new TypeCastException(value, this, e);
-            }
-        }
-
-        if (value instanceof Clob) {
-            try {
-                Clob clobValue = (Clob) value;
-                int length = (int) clobValue.length();
-                if (length > 0) {
-                    return clobValue.getSubString(1, length);
-                }
-                return "";
-            } catch (SQLException e) {
-                throw new TypeCastException(value, this, e);
-            }
-        }
-
-        log.warn("Unknown/unsupported object type '{}' - will invoke toString() as last fallback which " +
-                "might produce undesired results", value.getClass().getName());
-        return value.toString();
-    }
-
-    public Object getSqlValue(int column, ResultSet resultSet) throws SQLException {
-        String value = resultSet.getString(column);
-        if (value == null || resultSet.wasNull()) {
-            return null;
-        }
-        return value;
-    }
-
-    public void setSqlValue(Object value, int column, PreparedStatement statement) throws SQLException {
-        Array array = statement.getConnection().createArrayOf("varchar", toArray(value));
-        statement.setArray(column, array);
-    }
-
-    private Object[] toArray(Object value) {
-        if (value instanceof String valueStr && StringUtils.hasText(valueStr)) {
-            valueStr = valueStr.replaceAll("[{}]", "");
-            valueStr = valueStr.replaceAll(", ", ",");
-            return valueStr.split(",");
-        }
-        return new Object[]{};
+        return sqlTypeName.charAt(0) == '_' ? sqlTypeName.substring(1) + "[]" : sqlTypeName;
     }
 }

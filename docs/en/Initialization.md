@@ -11,21 +11,23 @@ applied according to the test hierarchy (Container → Case → Part).
 Supported Initialization Types
 ------------------------------
 
-| Type             | Class            | Description                                                       |
-|------------------|------------------|-------------------------------------------------------------------|
-| `BeanInit`       | `BeanInit`       | Invokes methods on Spring beans for setup/teardown                |
-| `DateTimeInit`   | `DateTimeInit`   | Sets or shifts the mocked system time (requires `@MockJavaTime`)  |
-| `MockInit`       | `MockInit`       | Resets mock invocation counters                                   |
-| `SqlStorageInit` | `SqlStorageInit` | Configures SQL storage: table access, data loading, SQL execution |
+| Type                | Class               | Description                                                         |
+|---------------------|---------------------|---------------------------------------------------------------------|
+| `BeanInit`          | `BeanInit`          | Invokes methods on Spring beans for setup/teardown                  |
+| `DateTimeInit`      | `DateTimeInit`      | Sets or shifts the mocked system time (requires `@MockJavaTime`)    |
+| `MockInit`          | `MockInit`          | Resets mock invocation counters                                     |
+| `SqlStorageSetup`   | `SqlStorageSetup`   | Configures SQL storage: SQL scripts and DBUnit datasets             |
+| `SqlStorageInit`    | `SqlStorageInit`    | Configures SQL storage: table clearing, data loading, SQL execution |
+| `OnTableChangeInit` | `OnTableChangeInit` | Refreshes the application cache of stale tables                     |
 
 Common Attributes
 -----------------
 
-| Attribute | Type   | Description                                                                                  | Default      |
-|-----------|--------|----------------------------------------------------------------------------------------------|--------------|
-| `type`    | String | **Required** . Initialization type: `BeanInit`, `DateTimeInit`, `MockInit`, `SqlStorageInit` | ---          |
-| `applyTo` | String | Scope of application: `TestCase`, `TestPart`, or `All`                                       | `All`        |
-| `name`    | String | Storage name (for `SqlStorageInit` only)                                                     | `dataSource` |
+| Attribute | Type   | Description                                                                                                                          | Default      |
+|-----------|--------|--------------------------------------------------------------------------------------------------------------------------------------|--------------|
+| `type`    | String | **Required** . Initialization type: `BeanInit`, `DateTimeInit`, `MockInit`, `SqlStorageSetup`, `SqlStorageInit`, `OnTableChangeInit` | ---          |
+| `applyTo` | String | Scope of application: `TestCase`, `TestPart`, or `All`                                                                               | `All`        |
+| `name`    | String | Storage name (for `SqlStorageInit` only)                                                                                             | `dataSource` |
 
 BeanInit
 --------
@@ -109,7 +111,7 @@ xml
 
 ```
 
-**Time progression in multi-step test:**
+**Time progression in multistep test:**
 
 ```
 xml  
@@ -162,83 +164,170 @@ SqlStorageInit
 
 ### Description
 
-Configures SQL database state for integration tests: table access permissions, data loading from DBUnit XML, and custom
-SQL execution.
+Configures SQL database state for integration tests: clearing/loading tables from a DBUnit XML
+dataset, and custom SQL execution.
 
 ### Attributes
 
-| Attribute           | Required | Description                                               |
-|---------------------|----------|-----------------------------------------------------------|
-| `name`              | No       | Storage name (must match configured `SQLDataStorage`)     |
-| `tablesToChange`    | No       | Comma-separated list of tables to set to `ALLOWED` access |
-| `tablesToLoad`      | No       | Comma-separated list of tables to load data into          |
-| `loadAllTables`     | No       | Load all available tables from DBUnit dataset             |
-| `disableTableHooks` | No       | Execute SQL without triggering table hooks                |
-| `sql`               | No       | List of SQL statements to execute                         |
+| Attribute        | Required | Description                                            |
+|------------------|----------|--------------------------------------------------------|
+| `name`           | No       | Storage name (must match configured `SQLDataStorage`)  |
+| `tablesToClear`  | No       | Comma-separated list of tables to clear (set to empty) |
+| `tablesToLoad`   | No       | Comma-separated list of tables to load data into       |
+| `loadAllTables`  | No       | Load all available tables from DBUnit dataset          |
+| `sql`            | No       | List of SQL statements to execute                      |
 
 ### Child Elements
 
-| Element        | Description                                                |
-|----------------|------------------------------------------------------------|
-| `<dbUnitPath>` | Path to DBUnit XML dataset file (classpath resource)       |
-| `<tableHook>`  | Register a bean method to be called after table operations |
-| `<sql>`        | SQL statement to execute (can be repeated)                 |
+| Element        | Description                                          |
+|----------------|------------------------------------------------------|
+| `<dbUnitPath>` | Path to DBUnit XML dataset file (classpath resource) |
+| `<sql>`        | SQL statement to execute (can be repeated)           |
 
-### Attributes for `<tableHook>`
+### Table Data States
 
-| Attribute    | Required | Description                                 |
-|--------------|----------|---------------------------------------------|
-| `tableName`  | **Yes**  | Table name the hook applies to              |
-| `beanName`   | **Yes**  | Spring bean name containing the hook method |
-| `beanMethod` | **Yes**  | Method name to invoke                       |
-
-### Table Access States
-
-| State        | Description                                   |
-|--------------|-----------------------------------------------|
-| `ALLOWED`    | Table is accessible for read/write operations |
-| `RESTRICTED` | Table access is blocked (default state)       |
+| State     | Description                                          |
+|-----------|------------------------------------------------------|
+| `CLEARED` | Table data is deleted (default for `tablesToClear`)  |
+| `LOADED`  | Table data is loaded from the DBUnit dataset         |
 
 ### Execution Order
 
-1. Apply `tablesToChange`: set tables to `ALLOWED`
+1. Apply `tablesToClear`: clear the listed tables
 2. Apply `tablesToLoad` / `loadAllTables`: load data from DBUnit
 3. Execute custom `sql` statements
-4. Invoke registered `tableHook` methods
+4. Advance the data revision of the modified tables; an `OnTableChangeInit` refreshes their caches later
+
+### State History and Rollback
+
+Every initialization contributes an ordered `MutationLog` to the storage state: `LOAD`/`CLEAR`
+baseline declarations, SQL mutations and the mutations the system under test produces during a test.
+The table statuses live in a separate `TableBaseline`. Every `StorageMutation` carries the tables it
+touched and its revert commands per table. The mutation attribution is built once, when the change
+journal is read after the test (the only read of a test, see below): records without a tag are the
+mutations of the system under test, tagged records belong to the applied SQL mutations. Tables
+touched by a `<sql>` block are **not parsed** from the statement text: the journal content defines
+them.
+
+Before a new test `StorageState.planTransition` computes a `TransitionPlan` from the source and
+target states. `TransitionAnalyzer` and `TableTransition` find the structural common prefix, compare
+the baselines, evaluate whether each table can be rolled back cheaply enough and cascade the
+necessary baseline resets. A mutation shared by several tables is kept only when it is common to all
+of them; otherwise every table it touches is rolled back to before the mutation and the mutation is
+applied exactly once. A rollback **never crosses a baseline change**: a table that had a
+`LOAD`/`CLEAR` applied after the common prefix is not rolled back row by row, but reloaded or cleared
+instead. The plan contains only commands that really change data: an empty revert command does not
+invalidate a table.
+
+Applying a transition has four ordered phases:
+
+1. untagged rollback of the old tail and clearing of the reset tables;
+2. DBUnit load of the target fixtures;
+3. untagged sequence restart;
+4. tagged target SQL mutations.
+
+The tag is put into the session variable `it.node` and lands in the `node` column of the
+`_it_postgres_journal_<random>` journal, so the next read can attribute the records to the mutations.
+
+For the trigger based delta storage the rollback uses the prebuilt commands of the mutations: as long
+as reverting is cheaper than reloading the fixture (the summed number of audited rows of the tail
+mutations is below the fixture size plus one) the commands are executed; otherwise — when the change
+cannot be reverted or when the tail crossed a `LOAD`/`CLEAR` boundary — the table is reloaded from the
+DBUnit dataset or cleared according to its baseline. The revert commands are set
+based (the records are squashed per primary key), so their number is proportional to the kinds of
+changes, not to the number of records. Generated columns do not force a reload:
+the framework excludes `GENERATED ALWAYS AS (...) STORED` columns from the inverse `INSERT`/`UPDATE`
+(PostgreSQL recomputes them from the base columns) and restores `GENERATED ALWAYS AS IDENTITY`
+values with `OVERRIDING SYSTEM VALUE` (it deletes and re-inserts the row when the identity value
+actually changed). Storages without an audit log fall back to the plain table-diff executor.
+
+#### Table cache synchronization
+
+The application cache is modelled through monotonic table revisions. For every table the framework
+keeps two revisions: the database revision advanced by a change made by the test framework
+(`LOAD`/`CLEAR`, a `<sql>` mutation, a non-empty rollback or `clearTables`) and the revision
+acknowledged by the application cache. While the database revision is greater, the cache is
+considered stale. An `OnTableChangeInit` performs the synchronisation (see below): for every stale
+table in its scope it invokes the configured action — **a bean method call only, no database I/O** —
+and acknowledges the revision.
+
+Mutations produced by the system under test are recorded in the mutation log (together with their
+revert commands) but do not advance the database revision: the SUT tracks its own changes. This also
+means that such a mutation does not acknowledge an earlier framework change, so a stale cache stays
+stale until an action really synchronises it. If a later test rolls the SUT changes back, that
+rollback is a framework change and the action is invoked.
 
 ### Example: Full Configuration
 
 ```
-xml  
-<init type="SqlStorageInit" name="dataSource">  
-    <!-- Load dataset -->  
-    <dbUnitPath>testData.xml</dbUnitPath>  
-    
-    <!-- Allow specific tables -->  
-    <tablesToChange>users,orders</tablesToChange>  
-    
-    <!-- Load only specific tables from dataset -->  
-    <tablesToLoad>users</tablesToLoad>  
-    
-    <!-- Register hook -->  
-    <tableHook tableName="orders" beanName="orderService" beanMethod="afterLoad"/>  
-    
-    <!-- Execute custom SQL -->  
-    <sql>UPDATE users SET status = 'active' WHERE id = 1</sql>  
-</init>  
+xml
+<init type="SqlStorageInit" name="dataSource">
+    <!-- Load dataset -->
+    <dbUnitPath>testData.xml</dbUnitPath>
+
+    <!-- Clear specific tables -->
+    <tablesToClear>users,orders</tablesToClear>
+
+    <!-- Load only specific tables from dataset -->
+    <tablesToLoad>users</tablesToLoad>
+
+    <!-- Execute custom SQL -->
+    <sql>UPDATE users SET status = 'active' WHERE id = 1</sql>
+</init>
 
 ```
 
-### Example: Disable Hooks for SQL
+OnTableChangeInit
+--------------
+
+### Description
+
+Refreshes the application cache of a SQL storage: invokes the configured bean methods for the tables
+whose database revision is newer than the acknowledged cache revision. This is an **action**, not a
+state: it runs every time it is in scope and does nothing when no table is stale.
+
+### Attributes
+
+| Attribute | Required | Description                                                             |
+|-----------|----------|-------------------------------------------------------------------------|
+| `name`    | **Yes**  | Storage name (must match configured `SQLDataStorage`)                   |
+| `applyTo` | No       | Level the action expands to (`TestContainer` / `TestCase` / `TestPart`) |
+
+### Child Elements
+
+| Element           | Description                                                                       |
+|-------------------|-----------------------------------------------------------------------------------|
+| `<onTableChange>` | `tableName` + `beanName` + `beanMethod`; an empty list disables inherited actions |
+
+### Example
 
 ```
-xml  
-<init type="SqlStorageInit" name="dataSource" disableTableHooks="true">  
-    <sql>DELETE FROM audit_log</sql>  
-    <!-- SQL executes without triggering table hooks -->  
-</init>  
+xml
+<!-- Declare once on a container: refresh the cache for every test case -->
+<init type="OnTableChangeInit" name="dataSource" applyTo="TestCase">
+    <onTableChange tableName="users" beanName="cacheService" beanMethod="reloadUsers"/>
+    <onTableChange tableName="orders" beanName="cacheService" beanMethod="reloadOrders"/>
+</init>
+
+<!-- Cancel the inherited actions for a single test -->
+<init type="OnTableChangeInit" name="dataSource"/>
 
 ```
+
+### Scope and cancellation
+
+The action is expanded through `applyTo` and inherited down the tree. A more specific declaration
+replaces the inherited one **for its own storage** (`name`): the `onTableChange` list is replaced as a
+whole, so an `OnTableChangeInit` with an empty list disables the actions for its subtree. Different
+storages do not clash — each is overridden by its own `name`.
+
+Actions are invoked only for tables whose cache is stale (see "Table cache synchronization"); when
+nothing changed no action is invoked. The initialization runs after `SqlStorageInit` and `BeanInit`,
+so it sees the data of every storage already applied.
+
+> **Limitation.** Two operations on the same table in one test — first with an action, then without —
+> cannot be expressed: the states of same-type inits are merged. For that rare case use two
+> `<test type="Part">`.
 
 Inheritance and Scope (`applyTo`)
 ---------------------------------
@@ -310,7 +399,7 @@ Best Practices
 1. **Set time once in root Container** --- avoids redundant reinitialization
 2. **Use `applyTo` for granular control** --- prevents unnecessary setup overhead
 3. **Group related initializations** --- keep `BeanInit`, `SqlStorageInit` logically separated
-4. **Avoid `disableTableHooks` unless necessary** --- hooks ensure data consistency
+4. **Keep an `OnTableChangeInit` in scope unless you need a stale cache** --- actions ensure data consistency
 5. **Use `tablesToLoad` instead of `loadAllTables`** --- faster test execution
 6. **Document custom SQL** --- add comments explaining non-obvious `sql` statements
 
@@ -327,10 +416,13 @@ placed at the correct level and `applyTo` matches the target test type.
 **Cause:** `@MockJavaTime` annotation missing on test class. **Solution:** Add `@MockJavaTime` to the test class and
 ensure `DateTimeInit` uses valid ISO-8601 format.
 
-### SQL Hooks Not Triggered
+### Table Change Actions Not Triggered
 
-**Cause:** `disableTableHooks="true"` or incorrect `tableName` in `<tableHook>`. **Solution:**
-Remove `disableTableHooks` and verify table names match database schema exactly.
+**Cause:** an incorrect `tableName` in `<onTableChange>`, no `OnTableChangeInit` in scope, or an overlapping
+`OnTableChangeInit` with an empty list. **Solution:** verify table names match the database schema exactly
+and that an `OnTableChangeInit` is visible in the current test. When actions are intentionally disabled with
+an empty `OnTableChangeInit` they are deferred: the affected tables stay stale and their actions fire on the
+next test where the initialization is active again.
 
 ### Mock Counters Not Reset
 

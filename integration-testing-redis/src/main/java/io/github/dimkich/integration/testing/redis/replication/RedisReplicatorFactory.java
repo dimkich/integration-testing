@@ -5,6 +5,7 @@ import com.moilioncircle.redis.replicator.RedisSocketReplicator;
 import com.moilioncircle.redis.replicator.Replicator;
 import com.moilioncircle.redis.replicator.cmd.CommandName;
 import io.github.dimkich.integration.testing.redis.config.RedisProperties;
+import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -76,11 +77,10 @@ public class RedisReplicatorFactory {
      * replica can keep up without blocking on RDB files or buffer backpressure.
      */
     private void prepareRedisServer(RedisConnectionFactory connectionFactory) {
-        try (RedisConnection conn = connectionFactory.getConnection()) {
-            RedisServerCommands server = conn.serverCommands();
-            server.setConfig("repl-diskless-sync", "yes");
-            server.setConfig("repl-diskless-sync-delay", "0");
-            server.setConfig("client-output-buffer-limit", "replica 0 0 0");
-        }
+        @Cleanup RedisConnection conn = connectionFactory.getConnection();
+        RedisServerCommands server = conn.serverCommands();
+        server.setConfig("repl-diskless-sync", "yes");
+        server.setConfig("repl-diskless-sync-delay", "0");
+        server.setConfig("client-output-buffer-limit", "replica 0 0 0");
     }
 }

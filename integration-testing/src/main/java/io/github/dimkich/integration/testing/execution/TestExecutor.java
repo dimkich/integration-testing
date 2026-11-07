@@ -153,14 +153,13 @@ public class TestExecutor {
      *   <li>Executes test's before hooks and before-test extensions</li>
      *   <li>Waits for asynchronous work started during initialization, so data storage
      *       snapshots are taken from a synchronized state</li>
-     *   <li>Initializes test data storages if available</li>
+     *   <li>Prepares test data storages for the upcoming test</li>
      * </ul>
      * <p>
      * For root-level tests, this method also:
      * <ul>
      *   <li>Finds the last executed test</li>
      *   <li>Creates and clears the test temporary directory if enabled</li>
-     *   <li>Affects all test data storages</li>
      * </ul>
      *
      * @param expectedTest the test to prepare for execution
@@ -184,9 +183,7 @@ public class TestExecutor {
         waitCompletion.start();
         this.test.before(this::beforeConsumer, this::afterConsumer);
         waitCompletion.waitCompletion();
-        if (testDataStorages != null) {
-            testDataStorages.setNewCurrentValue();
-        }
+        testDataStorages.prepareForTest();
     }
 
     /**
@@ -216,9 +213,6 @@ public class TestExecutor {
                     testsTempDirCleared = true;
                 }
             }
-            if (testDataStorages != null) {
-                testDataStorages.affectAllStorages();
-            }
         }
         t.clearCustom();
         initializationService.beforeTest(t);
@@ -237,7 +231,7 @@ public class TestExecutor {
      *   <li>Otherwise, executes the test method using reflection on Spring beans</li>
      *   <li>Waits for all asynchronous operations to complete</li>
      *   <li>Polls for outbound messages if a message store is configured</li>
-     *   <li>Captures data storage differences if test data storages are configured</li>
+     *   <li>Captures data storage differences</li>
      *   <li>Applies all test converters to transform the test data</li>
      *   <li>Performs assertions comparing expected and actual test results</li>
      * </ol>
@@ -274,9 +268,7 @@ public class TestExecutor {
 
         List<AbstractMessage> messages = testMessages.pollMessages();
         test.setOutboundMessages(messages.isEmpty() ? null : messages);
-        if (testDataStorages != null) {
-            test.setDataStorageDiff(testDataStorages.getMapDiff());
-        }
+        test.setDataStorageDiff(testDataStorages.getMapDiff());
         testConverters.forEach(c -> c.convertNoException(test));
         if (test.getOutboundMessages() != null) {
             test.setOutboundMessages(alignActualToExpected(expectedOutboundMessages, test.getOutboundMessages()));

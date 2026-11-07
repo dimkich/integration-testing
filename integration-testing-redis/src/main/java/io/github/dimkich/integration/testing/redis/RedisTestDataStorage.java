@@ -8,11 +8,11 @@ import io.github.dimkich.integration.testing.redis.model.RedisKey;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
-import io.github.dimkich.integration.testing.storage.TestDataStorages;
+import io.github.dimkich.integration.testing.storage.ObjectsDifference;
+import io.github.dimkich.integration.testing.storage.SnapshotTestDataStorage;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.Cleanup;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -22,7 +22,6 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * {@link KeyValueDataStorage} backed by a live Redis connection and an in-memory mirror
@@ -31,7 +30,7 @@ import java.util.Set;
  * Spring registers one bean per configured {@link RedisConnectionFactory}
  * ({@link io.github.dimkich.integration.testing.redis.config.RedisConfig}); the bean name is
  * {@code factoryName + "TestDataStorage"}. Test setup writes seed data through
- * {@link #putKeysData(Map)}; assertions read expected state from {@link #getCurrentValue(Map)}
+ * {@link #putKeysData(Map)}; assertions read expected state from {@link #doGetCurrentValue()}
  * via the paired {@link io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore}.
  * Virtual time advances through {@link #setNow}, which purges expired keys in the mirror and on Redis.
  * <p>
@@ -42,8 +41,7 @@ import java.util.Set;
  * @see RedisAccessorCoordinator
  * @see KeyValueDataStorage
  */
-@RequiredArgsConstructor
-public class RedisTestDataStorage implements KeyValueDataStorage, NowSetter {
+public class RedisTestDataStorage extends SnapshotTestDataStorage implements KeyValueDataStorage, NowSetter {
     @Getter
     private final String name;
     private final RedisConnectionFactory connectionFactory;
@@ -52,20 +50,29 @@ public class RedisTestDataStorage implements KeyValueDataStorage, NowSetter {
     private final RedisAccessorCoordinator accessorCoordinator;
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private InitializationService initializationService;
-    @Setter(onMethod_ = {@Autowired, @Lazy})
-    private TestDataStorages testDataStorages;
+
+    public RedisTestDataStorage(String name, RedisConnectionFactory connectionFactory, RedisInMemoryStore memStore,
+                                RedisDataSchemaRegistry registry, RedisAccessorCoordinator accessorCoordinator,
+                                ObjectsDifference objectsDifference) {
+        super(objectsDifference);
+        this.name = name;
+        this.connectionFactory = connectionFactory;
+        this.memStore = memStore;
+        this.registry = registry;
+        this.accessorCoordinator = accessorCoordinator;
+    }
 
     /**
      * Advances virtual time for this Redis instance: purges expired entries in the in-memory store
-     * and on the server, then registers this storage with {@link TestDataStorages} so assertions
-     * see the updated snapshot.
+     * and on the server, then marks this storage as changed so the baseline is refreshed before the
+     * test.
      *
      * @param dateTime new "current" time for TTL evaluation and purge
      */
     @Override
     public void setNow(ZonedDateTime dateTime) {
         memStore.updateTimeAndPurge(dateTime, connectionFactory);
-        testDataStorages.addAffectedStorage(this);
+        markAffected();
     }
 
     /**
@@ -78,6 +85,7 @@ public class RedisTestDataStorage implements KeyValueDataStorage, NowSetter {
         if (!memStore.isEmpty()) {
             @Cleanup RedisConnection connection = connectionFactory.getConnection();
             connection.serverCommands().flushAll();
+            markAffected();
         }
     }
 
@@ -114,32 +122,30 @@ public class RedisTestDataStorage implements KeyValueDataStorage, NowSetter {
             RedisDataSchema schema = registry.findSchema(name, entry.getKey().toString()).getSchema();
             accessorCoordinator.store(keyRaw, entry.getValue(), connection, schema);
         }
+        markAffected();
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * Returns a clone of the in-memory replication snapshot; {@code excludedFields} is not applied
-     * for Redis storage.
+     * Returns a clone of the in-memory replication snapshot.
      *
-     * @param excludedFields unused for Redis storage
      * @return snapshot map from the paired in-memory store
      */
     @Override
-    public Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) {
+    protected Map<String, Object> doGetCurrentValue() {
         return memStore.getSnapshot();
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * Resets initialization status to {@link KeyValueStorageInit} when the framework detects
-     * a diff against expected data.
-     *
-     * @param diff detected differences; may be {@code null}
+     * Resets initialization status to {@link KeyValueStorageInit} after the diff.
      */
     @Override
-    public void setDiff(Map<String, Object> diff) {
+    public Object getDiff() throws Exception {
+        Object diff = super.getDiff();
         initializationService.changeCurrentStatus(KeyValueStorageInit.class);
+        return diff;
     }
 }

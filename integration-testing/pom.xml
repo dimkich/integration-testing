@@ -17,7 +17,6 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <dom4j.version>2.2.0</dom4j.version>
-        <jsqlparser.version>4.3</jsqlparser.version>
         <streaming-multipart-parser.version>0.10.0</streaming-multipart-parser.version>
         <janino.version>3.1.12</janino.version>
     </properties>
@@ -30,11 +29,6 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.jsqlparser</groupId>
-            <artifactId>jsqlparser</artifactId>
-            <version>${jsqlparser.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

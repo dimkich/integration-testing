@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.kafka.serde;
 
-import io.github.dimkich.integration.testing.TestDataStorage;
+import io.github.dimkich.integration.testing.storage.ObjectsDifference;
+import io.github.dimkich.integration.testing.storage.SnapshotTestDataStorage;
 import io.github.dimkich.integration.testing.kafka.KafkaRecord;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -9,17 +10,21 @@ import org.springframework.util.MultiValueMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component("receivedMessages")
-public class ReceivedMessageStorage implements TestDataStorage {
+public class ReceivedMessageStorage extends SnapshotTestDataStorage {
 
     private final AtomicLong counter = new AtomicLong();
     private final Map<String, KafkaRecord> messages = new LinkedHashMap<>();
 
+    public ReceivedMessageStorage(ObjectsDifference objectsDifference) {
+        super(objectsDifference);
+    }
+
     public void put(KafkaRecord record) {
         messages.put("msg-" + counter.getAndIncrement(), record);
+        markAffected();
     }
 
     public void storeReceived(String topic, String key, Object payload, Map<String, Object> headers) {
@@ -51,13 +56,19 @@ public class ReceivedMessageStorage implements TestDataStorage {
     }
 
     @Override
-    public Map<String, Object> getCurrentValue(Map<String, Set<String>> excludedFields) {
+    protected Map<String, Object> doGetCurrentValue() {
         return new LinkedHashMap<>(messages);
     }
 
     @Override
-    public void setDiff(Map<String, Object> diff) {
+    public Object getDiff() throws Exception {
+        Object diff = super.getDiff();
+        boolean hadMessages = !messages.isEmpty();
         messages.clear();
         counter.set(0);
+        if (hadMessages) {
+            markAffected();
+        }
+        return diff;
     }
 }

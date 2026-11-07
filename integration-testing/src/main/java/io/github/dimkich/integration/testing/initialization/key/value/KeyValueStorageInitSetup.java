@@ -23,7 +23,6 @@ import java.util.Map;
  *   <li>Converts {@link KeyValueStorageInit} configurations into {@link KeyValueStorageInitState} objects</li>
  *   <li>Clears storage data when the {@code clear} flag is set</li>
  *   <li>Loads key-value pairs into storage from the configuration</li>
- *   <li>Tracks affected storages for test cleanup purposes</li>
  *   <li>Runs with an execution order of 3000, allowing earlier initializations (like date/time) to occur first</li>
  * </ul>
  *
@@ -31,7 +30,6 @@ import java.util.Map;
  * <ol>
  *   <li>If the {@code clear} flag is set, all existing data in the storage is removed</li>
  *   <li>If a map of key-value pairs is provided, the data is loaded into the storage</li>
- *   <li>Affected storages are registered with {@link TestDataStorages} for potential cleanup after test execution</li>
  * </ol>
  *
  * @author dimkich
@@ -45,7 +43,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class KeyValueStorageInitSetup implements InitSetup<KeyValueStorageInit, KeyValueStorageInitState> {
     /**
-     * The test data storages registry used to retrieve storage instances and track affected storages.
+     * The test data storages registry used to retrieve storage instances.
      */
     private final TestDataStorages testDataStorages;
 
@@ -77,7 +75,6 @@ public class KeyValueStorageInitSetup implements InitSetup<KeyValueStorageInit, 
      *
      * @param init the key-value storage initialization configuration to convert
      * @return a state object containing the storage instance and its initialization state
-     * @throws Exception if the storage cannot be retrieved or if the conversion fails
      */
     @Override
     public KeyValueStorageInitState convert(KeyValueStorageInit init) {
@@ -94,7 +91,6 @@ public class KeyValueStorageInitSetup implements InitSetup<KeyValueStorageInit, 
      *   <li>Iterates through all storage states in the new state</li>
      *   <li>Clears storage data if the {@code clear} flag is set</li>
      *   <li>Loads key-value pairs into storage if a map is provided and not empty</li>
-     *   <li>Registers affected storages with {@link TestDataStorages} for cleanup tracking</li>
      *   <li>Logs debug information for each operation</li>
      * </ul>
      *
@@ -113,12 +109,10 @@ public class KeyValueStorageInitSetup implements InitSetup<KeyValueStorageInit, 
             if (entry.getValue().isClear()) {
                 log.debug("Storage {} is cleared", storage.getName());
                 storage.clearAll();
-                testDataStorages.addAffectedStorage(storage);
             }
             if (entry.getValue().getMap() != null && !entry.getValue().getMap().isEmpty()) {
                 log.debug("Data loaded to storage {}", storage.getName());
                 storage.putKeysData(entry.getValue().getMap());
-                testDataStorages.addAffectedStorage(storage);
             }
         }
     }

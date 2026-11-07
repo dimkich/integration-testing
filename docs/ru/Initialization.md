@@ -24,20 +24,20 @@
 Элемент `<init>` добавляется внутрь любого теста (`Container`, `Case`, `Part`):
 
 ```
-xml  
-<test type="Container">  
-    <!-- Инициализация на уровне контейнера -->  
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
-    
-    <test type="Case" name="тест1">  
-        <!-- Наследует dateTimeInit от родителя + своя инициализация -->  
-        <init type="sqlStorageInit" name="dataSource">  
-            <tablesToChange>users</tablesToChange>  
-        </init>  
-        <bean>userService</bean>  
-        <method>create</method>  
-    </test>  
-</test>  
+xml
+<test type="Container">
+    <!-- Инициализация на уровне контейнера -->
+    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+
+    <test type="Case" name="тест1">
+        <!-- Наследует dateTimeInit от родителя + своя инициализация -->
+        <init type="sqlStorageInit" name="dataSource">
+            <tablesToClear>users</tablesToClear>
+        </init>
+        <bean>userService</bean>
+        <method>create</method>
+    </test>
+</test>
 
 ```
 
@@ -55,18 +55,18 @@ xml
 **Пример использования:**
 
 ```
-xml  
-<!-- Применится ко всем TestCase внутри этого контейнера одной записью -->  
-<test type="Container">  
-    <init type="mockInit" applyTo="TestCase" resetAll="true"/>  
-    
-    <test type="Case" name="кейс1">  
-        <!-- mockInit применён автоматически -->  
-    </test>  
-    <test type="Case" name="кейс2">  
-        <!-- mockInit применён автоматически -->  
-    </test>  
-</test>  
+xml
+<!-- Применится ко всем TestCase внутри этого контейнера одной записью -->
+<test type="Container">
+    <init type="mockInit" applyTo="TestCase" resetAll="true"/>
+
+    <test type="Case" name="кейс1">
+        <!-- mockInit применён автоматически -->
+    </test>
+    <test type="Case" name="кейс2">
+        <!-- mockInit применён автоматически -->
+    </test>
+</test>
 
 ```
 
@@ -82,38 +82,38 @@ xml
 #### Примеры
 
 ```
-xml  
-<!-- Абсолютное время для всех тестов в контейнере -->  
-<test type="Container">  
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
-    
-    <test type="Case" name="фиксированноеВремя">  
-        <bean>dateTimeService</bean>  
-        <method>now</method>  
-        <response type="ZonedDateTime">2025-01-01T00:00:00Z</response>  
-    </test>  
-</test>  
+xml
+<!-- Абсолютное время для всех тестов в контейнере -->
+<test type="Container">
+    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+
+    <test type="Case" name="фиксированноеВремя">
+        <bean>dateTimeService</bean>
+        <method>now</method>
+        <response type="ZonedDateTime">2025-01-01T00:00:00Z</response>
+    </test>
+</test>
 
 ```
 
 ```
-xml  
-<!-- Прогрессия времени внутри многошагового теста -->  
-<test type="Case" name="многошаговыйСценарий">  
-    <!-- Базовое время для кейса -->  
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
-    <!-- Сдвиг на 1 минуту для каждого Part -->  
-    <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>  
-    
-    <test type="Part" name="шаг1">  
-        <!-- Время: 2025-01-01T00:01:00Z -->  
-        <response type="ZonedDateTime">2025-01-01T00:01:00Z</response>  
-    </test>  
-    <test type="Part" name="шаг2">  
-        <!-- Время: 2025-01-01T00:02:00Z -->  
-        <response type="ZonedDateTime">2025-01-01T00:02:00Z</response>  
-    </test>  
-</test>  
+xml
+<!-- Прогрессия времени внутри многошагового теста -->
+<test type="Case" name="многошаговыйСценарий">
+    <!-- Базовое время для кейса -->
+    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <!-- Сдвиг на 1 минуту для каждого Part -->
+    <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
+
+    <test type="Part" name="шаг1">
+        <!-- Время: 2025-01-01T00:01:00Z -->
+        <response type="ZonedDateTime">2025-01-01T00:01:00Z</response>
+    </test>
+    <test type="Part" name="шаг2">
+        <!-- Время: 2025-01-01T00:02:00Z -->
+        <response type="ZonedDateTime">2025-01-01T00:02:00Z</response>
+    </test>
+</test>
 
 ```
 
@@ -128,139 +128,248 @@ xml
 
 ### 2. SqlStorageSetup --- Настройка SQL-хранилища
 
-**Назначение:** Первоначальная конфигурация БД: выполнение SQL-скриптов, загрузка DBUnit-датасетов, настройка хуков.
+**Назначение:** Первоначальная конфигурация БД: выполнение SQL-скриптов, загрузка DBUnit-датасетов.
 
 #### Примеры
 
 ```
-xml  
-<!-- Базовая настройка с DBUnit и хуком -->  
-<init type="sqlStorageSetup" name="dataSource">  
-    <dbUnitPath>initializationData.xml</dbUnitPath>  
-    <tableHook tableName="t1" beanName="testSQLDataStorage" beanMethod="reloadT1"/>  
-</init>  
+xml
+<!-- Базовая настройка с DBUnit -->
+<init type="sqlStorageSetup" name="dataSource">
+    <dbUnitPath>initializationData.xml</dbUnitPath>
+</init>
 
 ```
 
 ```
-xml  
-<!-- Настройка с SQL-файлами -->  
-<init type="sqlStorageSetup" name="dataSource">  
-    <sqlFilePath>schema.sql</sqlFilePath>  
-    <sqlFilePath>test-data.sql</sqlFilePath>  
-    <dbUnitPath>users.xml</dbUnitPath>  
-</init>  
+xml
+<!-- Настройка с SQL-файлами -->
+<init type="sqlStorageSetup" name="dataSource">
+    <sqlFilePath>schema.sql</sqlFilePath>
+    <sqlFilePath>test-data.sql</sqlFilePath>
+    <dbUnitPath>users.xml</dbUnitPath>
+</init>
 
 ```
 
 ```
-xml  
-<!-- Настройка с inline SQL -->  
-<init type="sqlStorageSetup" name="dataSource">  
-    <sql>CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY, name VARCHAR(100))</sql>  
-    <sql>INSERT INTO users VALUES (1, 'John')</sql>  
-    <dbUnitPath>users.xml</dbUnitPath>  
-</init>  
+xml
+<!-- Настройка с inline SQL -->
+<init type="sqlStorageSetup" name="dataSource">
+    <sql>CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY, name VARCHAR(100))</sql>
+    <sql>INSERT INTO users VALUES (1, 'John')</sql>
+    <dbUnitPath>users.xml</dbUnitPath>
+</init>
 
 ```
 
 #### Параметры
 
-| Элемент       | Описание                                                      |
-|---------------|---------------------------------------------------------------|
-| `name`        | Имя хранилища (совпадает с бином `SQLDataStorageService`)     |
-| `sqlFilePath` | Пути к SQL-файлам (classpath)                                 |
-| `sql`         | Inline SQL-запросы                                            |
-| `dbUnitPath`  | Пути к DBUnit XML-датасетам                                   |
-| `tableHook`   | Хуки для автоматического обновления кэша при изменении таблиц |
+| Элемент       | Описание                                                  |
+|---------------|-----------------------------------------------------------|
+| `name`        | Имя хранилища (совпадает с бином `SQLDataStorageService`) |
+| `sqlFilePath` | Пути к SQL-файлам (classpath)                             |
+| `sql`         | Inline SQL-запросы                                        |
+| `dbUnitPath`  | Пути к DBUnit XML-датасетам                               |
 
 *** ** * ** ***
 
 ### 3. SqlStorageInit --- Инициализация таблиц
 
-**Назначение:** Управление доступом к таблицам и загрузка данных **перед конкретным тестом** .
+**Назначение:** Очистка и загрузка данных таблиц **перед конкретным тестом** .
 
 #### Примеры
 
 ```
-xml  
-<!-- Разрешить изменение конкретных таблиц -->  
-<init type="sqlStorageInit" name="dataSource">  
-    <tablesToChange>t1,t2</tablesToChange>  
-</init>  
+xml
+<!-- Очистить конкретные таблицы -->
+<init type="sqlStorageInit" name="dataSource">
+    <tablesToClear>t1,t2</tablesToClear>
+</init>
 
 ```
 
 ```
-xml  
-<!-- Загрузить все таблицы из DBUnit -->  
-<init type="sqlStorageInit" name="dataSource" loadAllTables="true"/>  
+xml
+<!-- Загрузить все таблицы из DBUnit -->
+<init type="sqlStorageInit" name="dataSource" loadAllTables="true"/>
 
 ```
 
 ```
-xml  
-<!-- Разрешить и загрузить конкретные таблицы -->  
-<init type="sqlStorageInit" name="dataSource">  
-    <tablesToChange>t1</tablesToChange>  
-    <tablesToLoad>t1</tablesToLoad>  
-</init>  
+xml
+<!-- Очистить и загрузить конкретные таблицы -->
+<init type="sqlStorageInit" name="dataSource">
+    <tablesToClear>t1</tablesToClear>
+    <tablesToLoad>t1</tablesToLoad>
+</init>
 
 ```
 
 ```
-xml  
-<!-- Выполнить SQL-запросы -->  
-<init type="sqlStorageInit" name="dataSource">  
-    <sql>update t1 set column = 1</sql>  
-</init>  
+xml
+<!-- Выполнить SQL-запросы -->
+<init type="sqlStorageInit" name="dataSource">
+    <sql>update t1 set column = 1</sql>
+</init>
 
 ```
 
 #### Параметры
 
-| Атрибут          | Описание                                                        |
-|------------------|-----------------------------------------------------------------|
-| `name`           | Имя хранилища                                                   |
-| `tablesToChange` | Список таблиц, которые можно изменять (остальные заблокированы) |
-| `tablesToLoad`   | Список таблиц для загрузки данных из DBUnit                     |
-| `loadAllTables`  | `true` --- загрузить все таблицы из датасета                    |
-| `sql`            | SQL-запросы для выполнения                                      |
+| Атрибут          | Описание                                            |
+|------------------|-----------------------------------------------------|
+| `name`           | Имя хранилища                                       |
+| `tablesToClear`  | Список таблиц, которые очищаются (данные удаляются) |
+| `tablesToLoad`   | Список таблиц для загрузки данных из DBUnit         |
+| `loadAllTables`  | `true` --- загрузить все таблицы из датасета        |
+| `sql`            | SQL-запросы для выполнения                          |
+
+#### История состояний и откат
+
+Каждая инициализация добавляет в состояние хранилища упорядоченный `MutationLog`: объявления
+baseline `LOAD`/`CLEAR`, SQL-мутации и изменения, которые тестируемая система вносит во время
+теста. Статусы таблиц хранятся отдельно в `TableBaseline`. Каждая `StorageMutation` несёт
+затронутые таблицы и команды отката по каждой таблице. Привязка мутаций к таблицам строится один
+раз --- когда после теста читается журнал изменений (единственное чтение за тест, см. ниже):
+записи без тега --- это изменения тестируемой системы, записи с тегом --- SQL применённых мутаций.
+Таблицы, которые изменяет блок `<sql>`, **не парсятся** из текста запроса: их определяет
+содержимое журнала.
+
+Перед новым тестом `StorageState.planTransition` вычисляет `TransitionPlan` из исходного и
+целевого состояний. `TransitionAnalyzer` и `TableTransition` находят структурный общий префикс,
+сравнивают baseline, оценивают возможность и стоимость отката каждой таблицы и каскадно разрешают
+необходимые базовые сбросы. Мутация, общая для нескольких таблиц, считается сохраняемой только
+если она общая для всех них; иначе все её таблицы откатываются до этой мутации и она накатывается
+ровно один раз. Так общий SQL не откатывается и не переисполняется для таблицы, ветка которой не
+менялась. Откат **никогда не проходит сквозь изменение baseline**: таблица, к которой после
+общего префикса применялся `LOAD`/`CLEAR`, не откатывается построчно, а перезагружается или
+очищается. План содержит только команды, которые действительно меняют данные: пустой откат не
+инвалидирует таблицу.
+
+Применение перехода состоит из четырёх последовательных фаз:
+
+1. untagged-откат старого хвоста и очистка сбрасываемых таблиц;
+2. загрузка целевых фикстур DBUnit;
+3. untagged-перезапуск сиквенсов;
+4. tagged-накат целевых SQL-мутаций.
+
+Тег кладётся в сессионную переменную `it.node` и попадает в колонку `node` журнала
+`_it_postgres_journal_<random>` --- по нему следующее чтение атрибутирует записи мутациям.
+
+Для delta-хранилища на триггерах откат исполняет готовые команды мутаций: если откат дешевле
+перезагрузки фикстуры (суммарное число записей аудита по мутациям хвоста меньше размера фикстуры
+плюс один) --- команды исполняются; иначе --- если изменение откатить нельзя или хвост пересёк
+границу `LOAD`/`CLEAR` --- таблица перезагружается из DBUnit-датасета или очищается по своему
+baseline. Команды отката строятся множественно (записи сквошатся по
+первичному ключу), поэтому их число пропорционально видам изменений, а не числу записей.
+Генерируемые колонки не вынуждают перезагрузку: колонки `GENERATED ALWAYS AS (...) STORED`
+исключаются из обратных `INSERT`/`UPDATE` (PostgreSQL пересчитывает их из восстановленных базовых
+колонок), а значения `GENERATED ALWAYS AS IDENTITY` восстанавливаются через `OVERRIDING SYSTEM VALUE`
+(если значение identity действительно перегенерировалось, строка удаляется и вставляется заново).
+Хранилища без аудит-лога используют обычный исполнитель по разнице таблиц.
+
+#### Синхронизация кэша таблиц
+
+Кэш приложения моделируется через монотонные ревизии таблиц. Для каждой таблицы фреймворк ведёт
+две ревизии: ревизию данных в БД, которая растёт при изменении со стороны тестового фреймворка
+(`LOAD`/`CLEAR`, `<sql>`, непустой откат или `clearTables`), и ревизию, которую подтвердил кэш
+приложения. Пока ревизия БД больше, кэш считается устаревшим. Синхронизацию выполняет
+`OnTableChangeInit` (см. ниже): для каждой устаревшей таблицы из своей области видимости он вызывает
+настроенное действие --- **только вызов метода бина, без запросов в БД** --- и подтверждает ревизию.
+
+Изменения, которые тестируемая система вносит во время теста, фиксируются в журнале мутаций
+(вместе со своими обратными командами), но не двигают ревизию БД: SUT отслеживает свои изменения
+сам. Поэтому такое изменение не подтверждает более раннее изменение фреймворка, и устаревший кэш
+остаётся устаревшим до реальной синхронизации действием. Если следующий тест откатывает изменения
+SUT, этот откат является изменением фреймворка и действие вызывается снова.
 
 *** ** * ** ***
 
-### 4. BeanInit --- Вызов методов бинов
+### 4. OnTableChangeInit --- Синхронизация кэша таблиц
 
-**Назначение:** Выполнение методов на Spring-бинах перед тестом (без параметров).  
+**Назначение:** Вызвать настроенные методы бинов для таблиц, чья ревизия БД больше подтверждённой
+ревизии кэша. Это **действие**, а не состояние: оно выполняется каждый раз, когда попадает в
+область видимости, и ничего не делает, если устаревших таблиц нет.
+
+#### Примеры
+
+```
+xml
+<!-- Один раз на контейнер: для всех TestCase обновлять кэш users и orders -->
+<init type="OnTableChangeInit" name="dataSource" applyTo="TestCase">
+    <onTableChange tableName="users" beanName="cacheService" beanMethod="reloadUsers"/>
+    <onTableChange tableName="orders" beanName="cacheService" beanMethod="reloadOrders"/>
+</init>
+
+```
+
+```
+xml
+<!-- Отменить действия, унаследованные из контейнера, для одного теста -->
+<init type="OnTableChangeInit" name="dataSource"/>
+
+```
+
+#### Параметры
+
+| Атрибут/Элемент | Описание                                                                                       |
+|-----------------|------------------------------------------------------------------------------------------------|
+| `name`          | Имя хранилища                                                                                  |
+| `applyTo`       | Уровень раскрытия действия (`TestContainer`/`TestCase`/`TestPart`)                             |
+| `onTableChange` | Запись `tableName` + `beanName` + `beanMethod`; пустой список отменяет унаследованные действия |
+
+#### Область видимости и отмена
+
+Действие раскрывается через `applyTo` и наследуется вниз по дереву. Более вложенное объявление
+заменяет унаследованное **для своего хранилища** (`name`): список `onTableChange` перекрывается целиком,
+поэтому `OnTableChangeInit` с пустым списком отключает действия для своего поддерева. Разные
+хранилища не конфликтуют --- каждое перекрывается своим `name`. Если в поддереве есть и `TestCase`,
+и `TestPart`, нужно объявить действие для обоих уровней (`applyTo="TestCase"` и
+`applyTo="TestPart"`).
+
+Действия вызываются для таблиц, у которых кэш устарел (см. «Синхронизация кэша таблиц»); если
+данные не менялись, действий не будет. Инициализация выполняется после `SqlStorageInit` и
+`BeanInit`, поэтому видит данные всех хранилищ уже применёнными.
+
+> **Ограничение.** Две операции с одной и той же таблицей в одном тесте --- сначала с действием,
+> потом без --- выразить нельзя: состояния init'ов одного типа сливаются. Для такого редкого случая
+> используйте два `<test type="Part">`.
+
+*** ** * ** ***
+
+### 5. BeanInit --- Вызов методов бинов
+
+**Назначение:** Выполнение методов на Spring-бинах перед тестом (без параметров).
 **Важно:** `BeanInit` --- это **действие** , а не состояние. Методы выполняются немедленно при применении инициализации,
 результат не сохраняется между тестами.
 
 #### Примеры
 
 ```
-xml  
-<!-- Очистка кэша перед тестом -->  
-<init type="beanInit">  
-    <bean name="cacheService" method="clear"/>  
-    <bean name="dataLoader" method="loadTestData"/>  
-</init>  
+xml
+<!-- Очистка кэша перед тестом -->
+<init type="beanInit">
+    <bean name="cacheService" method="clear"/>
+    <bean name="dataLoader" method="loadTestData"/>
+</init>
 
 ```
 
 ```
-xml  
-<!-- Инициализация только для TestCase -->  
-<init type="beanInit" applyTo="TestCase">  
-    <bean name="setupService" method="init"/>  
-</init>  
+xml
+<!-- Инициализация только для TestCase -->
+<init type="beanInit" applyTo="TestCase">
+    <bean name="setupService" method="init"/>
+</init>
 
 ```
 
 *** ** * ** ***
 
-### 5. MockInit --- Сброс моков
+### 6. MockInit --- Сброс моков
 
-**Назначение:** Сброс состояния всех моков в иерархии тестов.  
+**Назначение:** Сброс состояния всех моков в иерархии тестов.
 **Что именно сбрасывается:**
 
 * Счётчик результатов `<result>` в `<mockInvoke>` возвращается к первому значению
@@ -270,23 +379,23 @@ xml
 #### Примеры
 
 ```
-xml  
-<!-- Сбросить все моки -->  
-<init type="mockInit" resetAll="true"/>  
+xml
+<!-- Сбросить все моки -->
+<init type="mockInit" resetAll="true"/>
 
 ```
 
 ```
-xml  
-<!-- Сброс только для TestCase -->  
-<init type="mockInit" applyTo="TestCase" resetAll="true"/>  
+xml
+<!-- Сброс только для TestCase -->
+<init type="mockInit" applyTo="TestCase" resetAll="true"/>
 
 ```
 
 ```
-xml  
-<!-- Сброс только для TestPart -->  
-<init type="mockInit" applyTo="TestPart" resetAll="true"/>  
+xml
+<!-- Сброс только для TestPart -->
+<init type="mockInit" applyTo="TestPart" resetAll="true"/>
 
 ```
 
@@ -300,64 +409,64 @@ xml
 #### Пример с последовательностью результатов
 
 ```
-xml  
-<test type="Container">  
-    <!-- Mock с тремя результатами -->  
-    <mockInvoke name="idGenerator" method="generate">  
-        <result><return>ID-001</return></result>  
-        <result><return>ID-002</return></result>  
-        <result><return>ID-003</return></result>  
-    </mockInvoke>  
-    
-    <test type="Case" name="тест1">  
-        <init type="mockInit" resetAll="true"/>  
-        <!-- Первый вызов вернёт ID-001 (счётчик сброшен) -->  
-    </test>  
-    
-    <test type="Case" name="тест2">  
-        <init type="mockInit" resetAll="true"/>  
-        <!-- Первый вызов снова вернёт ID-001 (счётчик сброшен) -->  
-    </test>  
-</test>  
+xml
+<test type="Container">
+    <!-- Mock с тремя результатами -->
+    <mockInvoke name="idGenerator" method="generate">
+        <result><return>ID-001</return></result>
+        <result><return>ID-002</return></result>
+        <result><return>ID-003</return></result>
+    </mockInvoke>
+
+    <test type="Case" name="тест1">
+        <init type="mockInit" resetAll="true"/>
+        <!-- Первый вызов вернёт ID-001 (счётчик сброшен) -->
+    </test>
+
+    <test type="Case" name="тест2">
+        <init type="mockInit" resetAll="true"/>
+        <!-- Первый вызов снова вернёт ID-001 (счётчик сброшен) -->
+    </test>
+</test>
 
 ```
 
 *** ** * ** ***
 
-### 6. KeyValueStorageInit --- Инициализация key-value хранилища
+### 7. KeyValueStorageInit --- Инициализация key-value хранилища
 
 **Назначение:** Очистка и загрузка данных в key-value хранилища (Redis, in-memory cache).
 
 #### Примеры
 
 ```
-xml  
-<!-- Очистить и загрузить данные -->  
-<init type="keyValueStorageInit" name="redisCache" clear="true">  
-    <map type="LinkedHashMapStringObject">  
-        <entry key="user_123">John Doe</entry>  
-        <entry key="config_timeout" type="Integer">5000</entry>  
-        <entry key="feature_enabled" type="Boolean">true</entry>  
-    </map>  
-</init>  
+xml
+<!-- Очистить и загрузить данные -->
+<init type="keyValueStorageInit" name="redisCache" clear="true">
+    <map type="LinkedHashMapStringObject">
+        <entry key="user_123">John Doe</entry>
+        <entry key="config_timeout" type="Integer">5000</entry>
+        <entry key="feature_enabled" type="Boolean">true</entry>
+    </map>
+</init>
 
 ```
 
 ```
-xml  
-<!-- Только загрузить данные без очистки -->  
-<init type="keyValueStorageInit" name="localCache">  
-    <map type="LinkedHashMapStringObject">  
-        <entry key="feature_enabled" type="Boolean">true</entry>  
-    </map>  
-</init>  
+xml
+<!-- Только загрузить данные без очистки -->
+<init type="keyValueStorageInit" name="localCache">
+    <map type="LinkedHashMapStringObject">
+        <entry key="feature_enabled" type="Boolean">true</entry>
+    </map>
+</init>
 
 ```
 
 ```
-xml  
-<!-- Только очистить хранилище -->  
-<init type="keyValueStorageInit" name="redisCache" clear="true"/>  
+xml
+<!-- Только очистить хранилище -->
+<init type="keyValueStorageInit" name="redisCache" clear="true"/>
 
 ```
 
@@ -375,23 +484,23 @@ xml
 зарезервировано для пространств имён. Используйте `LinkedHashMapStringObject` с атрибутом `key`:
 
 ```
-xml  
-<!-- ✅ Правильно: через LinkedHashMapStringObject с атрибутом key -->  
-<init type="keyValueStorageInit" name="redisCache" clear="true">  
-    <map type="LinkedHashMapStringObject">  
-        <entry key="user:123">John Doe</entry>  
-        <entry key="user:456">Jane Doe</entry>  
-        <entry key="config:timeout" type="Integer">5000</entry>  
-        <entry key="session:abc123">active</entry>  
-    </map>  
-</init>  
+xml
+<!-- ✅ Правильно: через LinkedHashMapStringObject с атрибутом key -->
+<init type="keyValueStorageInit" name="redisCache" clear="true">
+    <map type="LinkedHashMapStringObject">
+        <entry key="user:123">John Doe</entry>
+        <entry key="user:456">Jane Doe</entry>
+        <entry key="config:timeout" type="Integer">5000</entry>
+        <entry key="session:abc123">active</entry>
+    </map>
+</init>
 
-<!-- ❌ Ошибка: двоеточие в имени тега -->  
-<init type="keyValueStorageInit" name="redisCache" clear="true">  
-    <map>  
-        <user:123>John Doe</user:123>  
-    </map>  
-</init>  
+<!-- ❌ Ошибка: двоеточие в имени тега -->
+<init type="keyValueStorageInit" name="redisCache" clear="true">
+    <map>
+        <user:123>John Doe</user:123>
+    </map>
+</init>
 
 ```
 
@@ -429,37 +538,37 @@ xml
 ----------------------------
 
 ```
-┌─────────────────────────────────────────────────────────────┐  
-│              TestExecutor.before(test)                      │  
-└─────────────────────────────────────────────────────────────┘  
-                              │  
-                              ▼  
-┌─────────────────────────────────────────────────────────────┐  
-│         InitializationService.beforeTest(test)              │  
-│  ├── Для каждого InitSetup (по порядку):                    │  
-│  │   ├── add(test) --- добавить тест в builder               │  
-│  │   ├── add(init) --- добавить инициализацию из теста       │  
-│  │   └── build(test) --- построить и применить состояние     │  
-└─────────────────────────────────────────────────────────────┘  
-                              │  
-                              ▼  
-┌─────────────────────────────────────────────────────────────┐  
-│              TestExecutor.runTest()                         │  
-│  (Выполнение теста: bean/method или inboundMessage)         │  
-└─────────────────────────────────────────────────────────────┘  
-                              │  
-                              ▼  
-┌─────────────────────────────────────────────────────────────┐  
-│              TestExecutor.after(test)                       │  
-└─────────────────────────────────────────────────────────────┘  
-                              │  
-                              ▼  
-┌─────────────────────────────────────────────────────────────┐  
-│         InitializationService.afterTest(test)               │  
-│  ├── Удалить init из теста                                  │  
-│  └── Для каждого InitSetup:                                 │  
-│      └── remove(test) --- удалить состояние теста            │  
-└─────────────────────────────────────────────────────────────┘  
+┌─────────────────────────────────────────────────────────────┐
+│              TestExecutor.before(test)                      │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│         InitializationService.beforeTest(test)              │
+│  ├── Для каждого InitSetup (по порядку):                    │
+│  │   ├── add(test) --- добавить тест в builder               │
+│  │   ├── add(init) --- добавить инициализацию из теста       │
+│  │   └── build(test) --- построить и применить состояние     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              TestExecutor.runTest()                         │
+│  (Выполнение теста: bean/method или inboundMessage)         │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              TestExecutor.after(test)                       │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│         InitializationService.afterTest(test)               │
+│  ├── Удалить init из теста                                  │
+│  └── Для каждого InitSetup:                                 │
+│      └── remove(test) --- удалить состояние теста            │
+└─────────────────────────────────────────────────────────────┘
 
 ```
 
@@ -473,25 +582,25 @@ xml
 Настройки инициализации наследуются **сверху вниз** по иерархии тестов:
 
 ```
-xml  
-<test type="Container" name="модуль">  
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
-    <init type="beanInit">  
-        <bean name="setupService" method="init"/>  
-    </init>  
-    
-    <test type="Case" name="кейс1">  
-        <!-- Наследует dateTimeInit и beanInit от родителя -->  
-        <init type="sqlStorageInit" name="dataSource">  
-            <tablesToChange>t1</tablesToChange>  
-        </init>  
-    </test>  
-    
-    <test type="Case" name="кейс2">  
-        <!-- Наследует dateTimeInit и beanInit от родителя -->  
-        <!-- Не наследует sqlStorageInit из кейс1 -->  
-    </test>  
-</test>  
+xml
+<test type="Container" name="модуль">
+    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="beanInit">
+        <bean name="setupService" method="init"/>
+    </init>
+
+    <test type="Case" name="кейс1">
+        <!-- Наследует dateTimeInit и beanInit от родителя -->
+        <init type="sqlStorageInit" name="dataSource">
+            <tablesToClear>t1</tablesToClear>
+        </init>
+    </test>
+
+    <test type="Case" name="кейс2">
+        <!-- Наследует dateTimeInit и beanInit от родителя -->
+        <!-- Не наследует sqlStorageInit из кейс1 -->
+    </test>
+</test>
 
 ```
 
@@ -504,26 +613,26 @@ xml
 2. Инициализаций, объявленных непосредственно в самом `TestPart`
 
 ```
-xml  
-<test type="Container">  
-    <!-- Этот init НЕ применится к TestPart (нет applyTo="TestPart") -->  
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
-    
-    <test type="Case" name="многошаговый">  
-        <!-- Этот init применится ко всем Part внутри кейса -->  
-        <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>  
-        
-        <test type="Part" name="шаг1">  
-            <!-- Время: 2025-01-01T00:01:00Z (только от applyTo="TestPart") -->  
-        </test>  
-        
-        <test type="Part" name="шаг2">  
-            <!-- Время: 2025-01-01T00:02:00Z (накопленный сдвиг) -->  
-            <!-- Можно переопределить локально -->  
-            <init type="dateTimeInit" dateTime="2025-02-02T00:00:00Z"/>  
-        </test>  
-    </test>  
-</test>  
+xml
+<test type="Container">
+    <!-- Этот init НЕ применится к TestPart (нет applyTo="TestPart") -->
+    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+
+    <test type="Case" name="многошаговый">
+        <!-- Этот init применится ко всем Part внутри кейса -->
+        <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
+
+        <test type="Part" name="шаг1">
+            <!-- Время: 2025-01-01T00:01:00Z (только от applyTo="TestPart") -->
+        </test>
+
+        <test type="Part" name="шаг2">
+            <!-- Время: 2025-01-01T00:02:00Z (накопленный сдвиг) -->
+            <!-- Можно переопределить локально -->
+            <init type="dateTimeInit" dateTime="2025-02-02T00:00:00Z"/>
+        </test>
+    </test>
+</test>
 
 ```
 
@@ -539,22 +648,22 @@ xml
 **Пример массового применения:**
 
 ```
-xml  
-<!-- Применится ко всем TestCase внутри этого контейнера одной записью -->  
-<test type="Container">  
-    <init type="mockInit" applyTo="TestCase" resetAll="true"/>  
-    
-    <test type="Case" name="кейс1">  
-        <!-- mockInit применён -->  
-    </test>  
-    
-    <test type="Case" name="кейс2">  
-        <!-- mockInit применён -->  
-        <test type="Part" name="шаг1">  
-            <!-- mockInit НЕ применён (applyTo="TestCase") -->  
-        </test>  
-    </test>  
-</test>  
+xml
+<!-- Применится ко всем TestCase внутри этого контейнера одной записью -->
+<test type="Container">
+    <init type="mockInit" applyTo="TestCase" resetAll="true"/>
+
+    <test type="Case" name="кейс1">
+        <!-- mockInit применён -->
+    </test>
+
+    <test type="Case" name="кейс2">
+        <!-- mockInit применён -->
+        <test type="Part" name="шаг1">
+            <!-- mockInit НЕ применён (applyTo="TestCase") -->
+        </test>
+    </test>
+</test>
 
 ```
 
@@ -568,9 +677,9 @@ xml
 Когда несколько инициализаций применяются к одному тесту, их состояния **сливаются** :
 
 ```
-java  
-// Псевдокод слияния  
-currentState = currentState.merge(newState);  
+java
+// Псевдокод слияния
+currentState = currentState.merge(newState);
 
 ```
 
@@ -589,13 +698,13 @@ currentState = currentState.merge(newState);
 Перед применением инициализации фреймворк **сравнивает** старое и новое состояние:
 
 ```
-java  
-if (oldState.equals(newState)) {  
-    // Никаких действий не требуется  
-    return;  
-}  
-// Применяются только необходимые изменения  
-applyChanges(oldState, newState);  
+java
+if (oldState.equals(newState)) {
+    // Никаких действий не требуется
+    return;
+}
+// Применяются только необходимые изменения
+applyChanges(oldState, newState);
 
 ```
 
@@ -609,137 +718,139 @@ applyChanges(oldState, newState);
 ### Пример 1: Полная настройка тестового окружения
 
 ```
-xml  
-<?xml version='1.1' encoding='UTF-8'?>  
-<test type="Container">  
-    <!-- Глобальные настройки для всех тестов -->  
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
-    
-    <init type="sqlStorageSetup" name="dataSource">  
-        <sqlFilePath>schema.sql</sqlFilePath>  
-        <dbUnitPath>initializationData.xml</dbUnitPath>  
-        <tableHook tableName="users" beanName="userService" beanMethod="reloadUsers"/>  
-    </init>  
-    
-    <test type="Case" name="созданиеПользователя">  
-        <!-- Настройки только для этого кейса -->  
-        <init type="sqlStorageInit" name="dataSource">  
-            <tablesToChange>users</tablesToChange>  
-            <tablesToLoad>users</tablesToLoad>  
-        </init>  
-        
-        <bean>userService</bean>  
-        <method>createUser</method>  
-        <request>  
-            <value type="String">John</value>  
-        </request>  
-        <response type="User">  
-            <id>1</id>  
-            <name>John</name>  
-        </response>  
-    </test>  
-    
-    <test type="Case" name="удалениеПользователя">  
-        <!-- Наследует dateTimeInit и sqlStorageSetup от родителя -->  
-        <init type="sqlStorageInit" name="dataSource">  
-            <tablesToChange>users</tablesToChange>  
-        </init>  
-        
-        <bean>userService</bean>  
-        <method>deleteUser</method>  
-        <request>  
-            <value type="Integer">1</value>  
-        </request>  
-        <response>ok</response>  
-    </test>  
-</test>  
+xml
+<?xml version='1.1' encoding='UTF-8'?>
+<test type="Container">
+    <!-- Глобальные настройки для всех тестов -->
+    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+
+    <init type="sqlStorageSetup" name="dataSource">
+        <sqlFilePath>schema.sql</sqlFilePath>
+        <dbUnitPath>initializationData.xml</dbUnitPath>
+    </init>
+    <init type="OnTableChangeInit" name="dataSource" applyTo="TestCase">
+        <onTableChange tableName="users" beanName="userService" beanMethod="reloadUsers"/>
+    </init>
+
+    <test type="Case" name="созданиеПользователя">
+        <!-- Настройки только для этого кейса -->
+        <init type="sqlStorageInit" name="dataSource">
+            <tablesToClear>users</tablesToClear>
+            <tablesToLoad>users</tablesToLoad>
+        </init>
+
+        <bean>userService</bean>
+        <method>createUser</method>
+        <request>
+            <value type="String">John</value>
+        </request>
+        <response type="User">
+            <id>1</id>
+            <name>John</name>
+        </response>
+    </test>
+
+    <test type="Case" name="удалениеПользователя">
+        <!-- Наследует dateTimeInit и sqlStorageSetup от родителя -->
+        <init type="sqlStorageInit" name="dataSource">
+            <tablesToClear>users</tablesToClear>
+        </init>
+
+        <bean>userService</bean>
+        <method>deleteUser</method>
+        <request>
+            <value type="Integer">1</value>
+        </request>
+        <response>ok</response>
+    </test>
+</test>
 
 ```
 
 ### Пример 2: Многошаговый тест с инициализацией
 
 ```
-xml  
-<?xml version='1.1' encoding='UTF-8'?>  
-<test type="Container">  
-    <test type="Case" name="полныйЦиклЗаказа">  
-        <!-- Инициализация применяется один раз перед всеми Part -->  
-        <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
-        <init type="sqlStorageInit" name="dataSource">  
-            <tablesToChange>orders,payments</tablesToChange>  
-            <tablesToLoad>orders</tablesToLoad>  
-        </init>  
-        
-        <!-- Шаг 1: Создание заказа -->  
-        <test type="Part" name="создание">  
-            <bean>orderService</bean>  
-            <method>create</method>  
-            <response type="Order">  
-                <id>1</id>  
-                <status>CREATED</status>  
-            </response>  
-        </test>  
-        
-        <!-- Шаг 2: Оплата (видит результат шага 1) -->  
-        <test type="Part" name="оплата">  
-            <init type="dateTimeInit" addDuration="PT1M"/>  
-            <bean>paymentService</bean>  
-            <method>pay</method>  
-            <request>  
-                <value type="Integer">1</value>  
-            </request>  
-            <response>ok</response>  
-        </test>  
-        
-        <!-- Шаг 3: Доставка (видит результаты шагов 1-2) -->  
-        <test type="Part" name="доставка">  
-            <init type="dateTimeInit" addDuration="PT30M"/>  
-            <bean>deliveryService</bean>  
-            <method>ship</method>  
-            <request>  
-                <value type="Integer">1</value>  
-            </request>  
-            <response>ok</response>  
-        </test>  
-    </test>  
-</test>  
+xml
+<?xml version='1.1' encoding='UTF-8'?>
+<test type="Container">
+    <test type="Case" name="полныйЦиклЗаказа">
+        <!-- Инициализация применяется один раз перед всеми Part -->
+        <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+        <init type="sqlStorageInit" name="dataSource">
+            <tablesToClear>orders,payments</tablesToClear>
+            <tablesToLoad>orders</tablesToLoad>
+        </init>
+
+        <!-- Шаг 1: Создание заказа -->
+        <test type="Part" name="создание">
+            <bean>orderService</bean>
+            <method>create</method>
+            <response type="Order">
+                <id>1</id>
+                <status>CREATED</status>
+            </response>
+        </test>
+
+        <!-- Шаг 2: Оплата (видит результат шага 1) -->
+        <test type="Part" name="оплата">
+            <init type="dateTimeInit" addDuration="PT1M"/>
+            <bean>paymentService</bean>
+            <method>pay</method>
+            <request>
+                <value type="Integer">1</value>
+            </request>
+            <response>ok</response>
+        </test>
+
+        <!-- Шаг 3: Доставка (видит результаты шагов 1-2) -->
+        <test type="Part" name="доставка">
+            <init type="dateTimeInit" addDuration="PT30M"/>
+            <bean>deliveryService</bean>
+            <method>ship</method>
+            <request>
+                <value type="Integer">1</value>
+            </request>
+            <response>ok</response>
+        </test>
+    </test>
+</test>
 
 ```
 
 ### Пример 3: Сброс моков между тестами
 
 ```
-xml  
-<?xml version='1.1' encoding='UTF-8'?>  
-<test type="Container">  
-    <!-- Общие моки для всех тестов -->  
-    <mockInvoke name="idGenerator" method="generate">  
-        <result><return type="String">ID-001</return></result>  
-        <result><return type="String">ID-002</return></result>  
-    </mockInvoke>  
-    
-    <test type="Case" name="тест1">  
-        <!-- Сбросить моки перед этим тестом -->  
-        <init type="mockInit" resetAll="true"/>  
-        
-        <bean>orderService</bean>  
-        <method>create</method>  
-        <response type="Order">  
-            <id>ID-001</id>  
-        </response>  
-    </test>  
-    
-    <test type="Case" name="тест2">  
-        <!-- Сбросить моки перед этим тестом -->  
-        <init type="mockInit" resetAll="true"/>  
-        
-        <bean>orderService</bean>  
-        <method>create</method>  
-        <response type="Order">  
-            <id>ID-001</id>  
-        </response>  
-    </test>  
-</test>  
+xml
+<?xml version='1.1' encoding='UTF-8'?>
+<test type="Container">
+    <!-- Общие моки для всех тестов -->
+    <mockInvoke name="idGenerator" method="generate">
+        <result><return type="String">ID-001</return></result>
+        <result><return type="String">ID-002</return></result>
+    </mockInvoke>
+
+    <test type="Case" name="тест1">
+        <!-- Сбросить моки перед этим тестом -->
+        <init type="mockInit" resetAll="true"/>
+
+        <bean>orderService</bean>
+        <method>create</method>
+        <response type="Order">
+            <id>ID-001</id>
+        </response>
+    </test>
+
+    <test type="Case" name="тест2">
+        <!-- Сбросить моки перед этим тестом -->
+        <init type="mockInit" resetAll="true"/>
+
+        <bean>orderService</bean>
+        <method>create</method>
+        <response type="Order">
+            <id>ID-001</id>
+        </response>
+    </test>
+</test>
 
 ```
 
@@ -750,75 +861,78 @@ xml
 
 ### Инициализация не применяется
 
-**Причина:** Несоответствие имени хранилища или бина.  
+**Причина:** Несоответствие имени хранилища или бина.
 **Решение:**
 
 ```
-xml  
-<!-- ✅ Правильно: имя совпадает с бином в Spring-контексте -->  
-<init type="sqlStorageInit" name="dataSource"/>  
+xml
+<!-- ✅ Правильно: имя совпадает с бином в Spring-контексте -->
+<init type="sqlStorageInit" name="dataSource"/>
 
-<!-- ❌ Ошибка: имя не совпадает -->  
-<init type="sqlStorageInit" name="wrongName"/>  
+<!-- ❌ Ошибка: имя не совпадает -->
+<init type="sqlStorageInit" name="wrongName"/>
 
 ```
 
 ### Конфликт состояний инициализации
 
-**Причина:** Несколько инициализаций с противоречивыми настройками.  
+**Причина:** Несколько инициализаций с противоречивыми настройками.
 **Решение:**
 
 ```
-xml  
-<!-- ✅ Правильно: явное переопределение в дочернем тесте -->  
-<test type="Container">  
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
-    <test type="Case" name="кейс">  
-        <init type="dateTimeInit" dateTime="2025-02-02T00:00:00Z"/>  
-    </test>  
-</test>  
+xml
+<!-- ✅ Правильно: явное переопределение в дочернем тесте -->
+<test type="Container">
+    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <test type="Case" name="кейс">
+        <init type="dateTimeInit" dateTime="2025-02-02T00:00:00Z"/>
+    </test>
+</test>
 
 ```
 
-### Хуки таблиц не вызываются
+### Действия при изменении таблиц не вызываются
 
-**Причина:** Неправильное имя таблицы.  
-**Решение:**
+**Причина:** Неправильное имя таблицы, отсутствующий `OnTableChangeInit` в области видимости или
+перекрывающий `OnTableChangeInit` с пустым списком.
+**Решение:** Убедитесь, что имя таблицы совпадает с БД и что `OnTableChangeInit` виден в текущем тесте.
+Если действия намеренно отключены пустым `OnTableChangeInit`, они будут вызваны на следующем тесте,
+где инициализация снова активна.
 
 ```
-xml  
-<!-- ✅ Правильно: имя таблицы совпадает с БД -->  
-<tableHook tableName="users" beanName="userService" beanMethod="reloadUsers"/>  
+xml
+<!-- ✅ Правильно: имя таблицы совпадает с БД -->
+<onTableChange tableName="users" beanName="userService" beanMethod="reloadUsers"/>
 
-<!-- ❌ Ошибка: имя таблицы не совпадает -->  
-<tableHook tableName="User" beanName="userService" beanMethod="reloadUsers"/>  
+<!-- ❌ Ошибка: имя таблицы не совпадает -->
+<onTableChange tableName="User" beanName="userService" beanMethod="reloadUsers"/>
 
 ```
 
 ### Инициализация не применяется к TestPart
 
-**Причина:** Инициализация объявлена в родителе без `applyTo="TestPart"`.  
+**Причина:** Инициализация объявлена в родителе без `applyTo="TestPart"`.
 **Решение:**
 
 ```
-xml  
-<!-- ✅ Правильно: явно указать applyTo="TestPart" -->  
-<test type="Case" name="многошаговый">  
-    <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>  
-    
-    <test type="Part" name="шаг1">  
-        <!-- Инициализация применится -->  
-    </test>  
-</test>  
+xml
+<!-- ✅ Правильно: явно указать applyTo="TestPart" -->
+<test type="Case" name="многошаговый">
+    <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
 
-<!-- ❌ Ошибка: без applyTo="TestPart" не применится к Part -->  
-<test type="Case" name="многошаговый">  
-    <init type="dateTimeInit" addDuration="PT1M"/>  
-    
-    <test type="Part" name="шаг1">  
-        <!-- Инициализация НЕ применится -->  
-    </test>  
-</test>  
+    <test type="Part" name="шаг1">
+        <!-- Инициализация применится -->
+    </test>
+</test>
+
+<!-- ❌ Ошибка: без applyTo="TestPart" не применится к Part -->
+<test type="Case" name="многошаговый">
+    <init type="dateTimeInit" addDuration="PT1M"/>
+
+    <test type="Part" name="шаг1">
+        <!-- Инициализация НЕ применится -->
+    </test>
+</test>
 
 ```
 
@@ -843,4 +957,4 @@ xml
 9. **Для сложных ключей в KeyValueStorageInit используйте `LinkedHashMapStringObject`** --- ключи с
    двоеточием (`user:123`, `config:timeout`) требуют специального формата через `entry key="..."`.
 10. **Помните: `TestPart` не наследует init от родителей** --- кроме тех, у которых явно указано `applyTo="TestPart"`
-    или которые объявлены непосредственно в `Part`.  
+    или которые объявлены непосредственно в `Part`.

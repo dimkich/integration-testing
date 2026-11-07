@@ -12,6 +12,20 @@ package io.github.dimkich.integration.testing.serde;
 public interface TestSerdeProperties {
 
     /**
+     * Empty configuration used when a module resolves built-in converters without explicit user
+     * configuration.
+     *
+     * <p>It is a concrete type, so a factory declared for it does not match
+     * {@link StandardSerdeProperties} or any other configured properties.
+     */
+    final class Default implements TestSerdeProperties {
+        public static final Default INSTANCE = new Default();
+
+        private Default() {
+        }
+    }
+
+    /**
      * Reports the roles of this configuration level to the given collector. The default
      * implementation reports nothing.
      *

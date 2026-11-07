@@ -1,0 +1,47 @@
+app:
+  datasource:
+    user: app_user
+    password: app_pw
+
+integration:
+  testing:
+    assertion: String
+    postgresql:
+      connections:
+        dataSource:
+          host: "${embedded.postgresql.host}"
+          port: "${embedded.postgresql.port}"
+          database: "${embedded.postgresql.schema}"
+          user: "${embedded.postgresql.user}"
+          password: "${embedded.postgresql.password}"
+          columns:
+            "[public.spi_values.location]":
+              type: it-point
+            "[public.serde_custom_values.tiny]":
+              type: it-byte
+            "[public.serde_values.data]":
+              type: json
+              target-class: io.github.dimkich.integration.testing.postgresql.PostgresSerdeDto
+            "[serde_values.payload]":
+              type: string
+              binary-envelope: "{VER(1)}{LEN(INT, BE)}{CONTENT}"
+            "[public.documents.content]":
+              ignore: true
+            "[public.excluded_values.ignored_text]":
+              type: string
+              ignore: true
+            "[public.excluded_values.ignored_number]":
+              ignore: true
+            "[public.excluded_values.payload]":
+              type: json
+              excludedFields:
+                - secret
+            "[public.excluded_values.payload_hstore]":
+              excludedFields:
+                - secret
+    storage:
+      storages:
+        dataSource:
+          keyType: [ STRING, OBJECT ]
+          valueType: [ OBJECT, OBJECT ]
+          changeType: [ false, true ]

@@ -56,11 +56,6 @@
                     <request type="LinkedHashMap">
                         <test-header>text-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-record-out">
                         <key>record-base-1</key>
                         <value>record value - processed</value>
@@ -107,11 +102,6 @@
                     <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                     <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                     <request>test-header</request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-record-out">
                         <headers>
                             <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
@@ -164,11 +154,6 @@
                     <request type="LinkedHashMap">
                         <test-header>text-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-parts-out">
                         <key>parts-base-1</key>
                         <value>parts payload-parts-processed</value>
@@ -228,11 +213,6 @@
                     <request type="LinkedHashMap">
                         <test-header>text-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-native-out">
                         <key>native-base-1</key>
                         <value>native text-native-processed</value>
@@ -292,11 +272,6 @@
                     <request type="LinkedHashMap">
                         <test-header>text-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-string-record-out">
                         <key>strrec-base-1</key>
                         <value>string record value-string-record-processed</value>
@@ -353,11 +328,6 @@
                     <request type="LinkedHashMap">
                         <test-header>text-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="text-default-out">
                         <key>def-base-1</key>
                         <value>hello default-default-processed</value>
@@ -443,11 +413,6 @@
                     <request type="LinkedHashMap">
                         <test-header>json-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-record-out">
                         <key>json-record-base-1</key>
                         <value type="JsonTestDto">
@@ -543,11 +508,6 @@
                     <request type="LinkedHashMap">
                         <test-header>json-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-parts-out">
                         <key>json-parts-base-1</key>
                         <value type="JsonTestDto">
@@ -648,20 +608,22 @@ b25UZXN0RHRv</__TypeId__>
                     </inboundMessage>
                     <dataStorageDiff type="MapStringKeyObjectValue">
                         <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 type="MapStringKeyObjectValue">
+                            <msg-0 type="KafkaRecord" topic="json-spring-json-in">
                                 <key>json-spring-json-multi-1</key>
-                                <value type="MapStringKeyObjectValue">
+                                <value type="JsonTestDto">
                                     <id>jsj-multi-1</id>
                                     <name>multi headers</name>
-                                    <amount type="Integer">7</amount>
-                                    <price type="Double">7.5</price>
+                                    <amount>7</amount>
+                                    <price>7.5</price>
+                                    <active>true</active>
+                                    <tags></tags>
+                                    <timestamp>2026-05-31T11:30:00Z</timestamp>
+                                    <localDateTime>2026-05-31T11:30:00</localDateTime>
                                 </value>
-                                <headers type="MapStringKeyObjectValue">
-                                    <traceId type="ArrayList">
-                                        <traceId>multi-a</traceId>
-                                        <traceId>multi-b</traceId>
-                                        <traceId xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                    </traceId>
+                                <headers>
+                                    <traceId>multi-a</traceId>
+                                    <traceId>multi-b</traceId>
+                                    <traceId xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                                 </headers>
                             </msg-0>
                         </receivedMessages>
@@ -695,19 +657,20 @@ b25UZXN0RHRv</__TypeId__>
                     </inboundMessage>
                     <dataStorageDiff type="MapStringKeyObjectValue">
                         <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 type="MapStringKeyObjectValue">
-                                <topic>json-spring-key-in</topic>
+                            <msg-0 type="KafkaRecord" topic="json-spring-key-in">
                                 <key>jsj-key-1</key>
-                                <value type="MapStringKeyObjectValue">
+                                <value type="JsonTestDto">
                                     <id>jsj-k-1</id>
                                     <name>spring json key</name>
-                                    <amount type="Integer">21</amount>
-                                    <price type="Double">21.0</price>
+                                    <amount>21</amount>
+                                    <price>21.0</price>
+                                    <active>true</active>
+                                    <tags></tags>
+                                    <timestamp>2026-05-31T11:30:00Z</timestamp>
+                                    <localDateTime>2026-05-31T11:30:00</localDateTime>
                                 </value>
-                                <headers type="MapStringKeyObjectValue">
-                                    <traceId type="ArrayList">
-                                        <traceId>spring-json-key-1</traceId>
-                                    </traceId>
+                                <headers>
+                                    <traceId>spring-json-key-1</traceId>
                                 </headers>
                             </msg-0>
                         </receivedMessages>
@@ -742,11 +705,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>json-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-out">
                         <key>json-spring-json-base-1</key>
                         <value type="JsonTestDto">
@@ -842,11 +800,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                     <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                     <request>traceId</request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-out">
                         <headers>
                             <traceId xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
@@ -900,11 +853,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>json-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-out">
                         <key>json-spring-json-order-1</key>
                         <value type="OrderEventDto">
@@ -982,11 +930,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>json-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="json-spring-json-no-type-out">
                         <key>jsj-no-type-1</key>
                         <value type="JsonTestDto">
@@ -1111,11 +1054,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>xml-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="xml-spring-xml-out">
                         <key>xml-spring-xml-base-1</key>
                         <value type="JsonTestDto">
@@ -1192,11 +1130,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>xml-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="xml-spring-xml-out">
                         <key>xml-spring-xml-order-1</key>
                         <value type="OrderEventDto">
@@ -1284,11 +1217,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>xml-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="xml-spring-xml-no-type-out">
                         <key>xml-no-type-1</key>
                         <value type="JsonTestDto">
@@ -1382,11 +1310,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>xml-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="xml-record-out">
                         <key>xml-record-base-1</key>
                         <value type="JsonTestDto">
@@ -1483,11 +1406,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>byte-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-record-out">
                         <key>brec-base-1</key>
                         <value type="byte[]">cmVjb3JkIHZhbHVlIC0gcHJvY2Vzc2Vk</value>
@@ -1534,11 +1452,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                     <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                     <request>test-header</request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-record-out">
                         <headers>
                             <test-header xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
@@ -1582,11 +1495,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>byte-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-parts-out">
                         <key type="byte[]">WW5CaGNuUnpMV0poYzJVdE1RPT0=</key>
                         <value type="byte[]">cGFydHMgcGF5bG9hZC1wYXJ0cy1wcm9jZXNzZWQ=</value>
@@ -1643,11 +1551,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>byte-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-native-out">
                         <key>bnat-base-1</key>
                         <value type="byte[]">bmF0aXZlIGJ5dGUtbmF0aXZlLXByb2Nlc3NlZA==</value>
@@ -1705,11 +1608,6 @@ b25UZXN0RHRv</__TypeId__>
                     <request type="LinkedHashMap">
                         <test-header>byte-base-header</test-header>
                     </request>
-                    <dataStorageDiff type="MapStringKeyObjectValue">
-                        <receivedMessages type="MapStringKeyObjectValue">
-                            <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </receivedMessages>
-                    </dataStorageDiff>
                     <outboundMessage type="KafkaRecord" connection="kafka1" topic="byte-native-out">
                         <key>bnat-utf8-1</key>
                         <value type="byte[]">0J/RgNC40LLQtdGCLCDQvNC40YAhINCi0LXRgdGC0LjRgNGD0LXQvCDQutC+0LTQuNGA0L7QstC6
@@ -1768,11 +1666,6 @@ b25UZXN0RHRv</__TypeId__>
                 <request type="LinkedHashMap">
                     <test-header>envelope-header</test-header>
                 </request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <receivedMessages type="MapStringKeyObjectValue">
-                        <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </receivedMessages>
-                </dataStorageDiff>
                 <outboundMessage type="KafkaRecord" connection="kafka1" topic="bin-envelope-out">
                     <key>envelope-base-1</key>
                     <value>envelope payload-processed</value>
@@ -1822,11 +1715,6 @@ b25UZXN0RHRv</__TypeId__>
                 <request>bin-envelope-out</request>
                 <request>envelope-poison-1</request>
                 <request type="byte[]">/8Mo</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <receivedMessages type="MapStringKeyObjectValue">
-                        <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </receivedMessages>
-                </dataStorageDiff>
                 <outboundMessage type="KafkaRecord" connection="kafka1" topic="bin-envelope-out">
                     <exception>
                         <exceptionType>RuntimeException</exceptionType>
@@ -1866,11 +1754,6 @@ b25UZXN0RHRv</__TypeId__>
                 <request>bin-envelope-out</request>
                 <request>envelope-tombstone-1</request>
                 <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <receivedMessages type="MapStringKeyObjectValue">
-                        <msg-0 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </receivedMessages>
-                </dataStorageDiff>
                 <outboundMessage type="KafkaRecord" connection="kafka1" topic="bin-envelope-out">
                     <key>envelope-tombstone-1</key>
                 </outboundMessage>

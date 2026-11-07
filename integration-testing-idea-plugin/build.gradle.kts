@@ -29,6 +29,12 @@ dependencies {
     compileOnly("com.jetbrains.intellij.java:java-execution:251.25410.159")
 }
 
+intellijPlatform {
+    publishing {
+        token = providers.gradleProperty("intellijPlatformPublishingToken")
+    }
+}
+
 tasks {
     buildSearchableOptions {
         enabled = false

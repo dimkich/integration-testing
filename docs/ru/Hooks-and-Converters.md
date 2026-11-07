@@ -245,7 +245,7 @@ static class Config {
 │  │   ├── initializationService.beforeTest()                 │  
 │  │   └── BeforeTest.before() ← Для Container, Case, Part    │  
 │  ├── waitCompletion.waitCompletion()                        │  
-│  └── testDataStorages.setNewCurrentValue()                  │  
+│  └── testDataStorages.prepareForTest()                      │
 └─────────────────────────────────────────────────────────────┘  
                             ↓  
 ┌─────────────────────────────────────────────────────────────┐  

@@ -263,66 +263,52 @@
     <test type="Container" name="sqlStorageInit">
         <init type="SqlStorageSetup" name="dataSource">
             <dbUnitPath>initializationData.xml</dbUnitPath>
-            <tableHook tableName="t1" beanName="testSQLDataStorage" beanMethod="reloadT1"/>
+        </init>
+        <init type="OnTableChangeInit" name="dataSource" applyTo="TestCase">
+            <onTableChange tableName="t1" beanName="testSQLDataStorage" beanMethod="reloadT1"/>
+        </init>
+        <init type="OnTableChangeInit" name="dataSource" applyTo="TestPart">
+            <onTableChange tableName="t1" beanName="testSQLDataStorage" beanMethod="reloadT1"/>
         </init>
         <test type="Container" name="case;allow t1, t2;allow t2, t3;restrict all">
-            <test type="Case" name="[allow t2, allow t1]">
+            <test type="Case" name="[]">
                 <init type="SqlStorageInit" name="dataSource">
-                    <tablesToChange>t1,t2</tablesToChange>
+                    <tablesToClear>t1,t2</tablesToClear>
                 </init>
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
-                <response type="ArrayList">
-                    <response>allow t2</response>
-                    <response>allow t1</response>
-                </response>
+                <response type="ArrayList"/>
             </test>
-            <test type="Case" name="[allow t3, restrict t1, clear [t1, t2], restart identity [t1, t2], reloaded t1]">
+            <test type="Case" name="[]">
                 <init type="SqlStorageInit" name="dataSource">
-                    <tablesToChange>t2,t3</tablesToChange>
+                    <tablesToClear>t2,t3</tablesToClear>
                 </init>
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
-                <response type="ArrayList">
-                    <response>allow t3</response>
-                    <response>restrict t1</response>
-                    <response>clear [t1, t2]</response>
-                    <response>restart identity [t1, t2]</response>
-                    <response>reloaded t1</response>
-                </response>
+                <response type="ArrayList"/>
             </test>
-            <test type="Case" name="[restrict t3, restrict t2, clear [t2, t3], restart identity [t2, t3]]">
+            <test type="Case" name="[]">
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
-                <response type="ArrayList">
-                    <response>restrict t3</response>
-                    <response>restrict t2</response>
-                    <response>clear [t2, t3]</response>
-                    <response>restart identity [t2, t3]</response>
-                </response>
+                <response type="ArrayList"/>
             </test>
         </test>
         <test type="Case" name="part;allow t1, t2;allow t2, t3;restrict all">
-            <test type="Part" name="[allow t2, allow t1]">
+            <test type="Part" name="[]">
                 <init type="SqlStorageInit" name="dataSource">
-                    <tablesToChange>t1,t2</tablesToChange>
+                    <tablesToClear>t1,t2</tablesToClear>
                 </init>
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
-                <response type="ArrayList">
-                    <response>allow t2</response>
-                    <response>allow t1</response>
-                </response>
+                <response type="ArrayList"/>
             </test>
-            <test type="Part" name="[allow t3]">
+            <test type="Part" name="[]">
                 <init type="SqlStorageInit" name="dataSource">
-                    <tablesToChange>t2,t3</tablesToChange>
+                    <tablesToClear>t2,t3</tablesToClear>
                 </init>
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
-                <response type="ArrayList">
-                    <response>allow t3</response>
-                </response>
+                <response type="ArrayList"/>
             </test>
             <test type="Part" name="[]">
                 <bean>testSQLDataStorage</bean>
@@ -332,17 +318,12 @@
         </test>
         <test type="Container" name="case;loadAllTables">
             <init type="SqlStorageInit" name="dataSource" loadAllTables="true"/>
-            <test type="Case" name="[Load t1, Load t2, restrict t3, restrict t2, restrict t1, clear [t3], restart identity [t1, t2, t3], reloaded t1]">
+            <test type="Case" name="[Load t1, Load t2, reloaded t1]">
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
                 <response type="ArrayList">
                     <response>Load t1</response>
                     <response>Load t2</response>
-                    <response>restrict t3</response>
-                    <response>restrict t2</response>
-                    <response>restrict t1</response>
-                    <response>clear [t3]</response>
-                    <response>restart identity [t1, t2, t3]</response>
                     <response>reloaded t1</response>
                 </response>
             </test>
@@ -367,54 +348,45 @@
         </test>
         <test type="Container" name="case;allow and load t1">
             <init type="SqlStorageInit" name="dataSource">
-                <tablesToChange>t1</tablesToChange>
+                <tablesToClear>t1</tablesToClear>
                 <tablesToLoad>t1</tablesToLoad>
             </init>
-            <test type="Case" name="[allow t1, clear [t2], restart identity [t2]]">
+            <test type="Case" name="[clear [t2]]">
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
                 <response type="ArrayList">
-                    <response>allow t1</response>
                     <response>clear [t2]</response>
-                    <response>restart identity [t2]</response>
                 </response>
             </test>
-            <test type="Case" name="[Load t1, restart identity [t1], update t1 set column = 1, reloaded t1]">
+            <test type="Case" name="[update t1 set column = 1, reloaded t1]">
                 <init type="SqlStorageInit" name="dataSource">
                     <sql>update t1 set column = 1</sql>
                 </init>
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
                 <response type="ArrayList">
-                    <response>Load t1</response>
-                    <response>restart identity [t1]</response>
                     <response>update t1 set column = 1</response>
                     <response>reloaded t1</response>
                 </response>
             </test>
-            <test type="Case" name="[Load t1, restart identity [t1], reloaded t1]">
+            <test type="Case" name="[revert t1, reloaded t1]">
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
                 <response type="ArrayList">
-                    <response>Load t1</response>
-                    <response>restart identity [t1]</response>
+                    <response>revert t1</response>
                     <response>reloaded t1</response>
                 </response>
             </test>
         </test>
         <test type="Case" name="part;allow and load t1">
             <init type="SqlStorageInit" name="dataSource">
-                <tablesToChange>t1</tablesToChange>
+                <tablesToClear>t1</tablesToClear>
                 <tablesToLoad>t1</tablesToLoad>
             </init>
-            <test type="Part" name="[Load t1, restart identity [t1], reloaded t1]">
+            <test type="Part" name="[]">
                 <bean>testSQLDataStorage</bean>
                 <method>operations</method>
-                <response type="ArrayList">
-                    <response>Load t1</response>
-                    <response>restart identity [t1]</response>
-                    <response>reloaded t1</response>
-                </response>
+                <response type="ArrayList"/>
             </test>
             <test type="Part" name="[update t1 set column = 1, reloaded t1]">
                 <init type="SqlStorageInit" name="dataSource">
@@ -432,6 +404,182 @@
                 <method>operations</method>
                 <response type="ArrayList"/>
             </test>
+        </test>
+        <test type="Container" name="sut mutation">
+            <test type="Case" name="[clear [t1], reloaded t1]">
+                <init type="SqlStorageInit" name="dataSource">
+                    <tablesToClear>t1</tablesToClear>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>sutMutationT1</method>
+                <response type="ArrayList">
+                    <response>clear [t1]</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+            <test type="Case" name="[revert t1, reloaded t1]">
+                <init type="SqlStorageInit" name="dataSource">
+                    <tablesToClear>t1</tablesToClear>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="ArrayList">
+                    <response>revert t1</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="sut cache cursor">
+            <test type="Case" name="sut mutation survives empty part">
+                <test type="Part" name="[]">
+                    <bean>testSQLDataStorage</bean>
+                    <method>sutMutationT1</method>
+                    <response type="ArrayList"/>
+                </test>
+                <test type="Part" name="[]">
+                    <bean>testSQLDataStorage</bean>
+                    <method>operations</method>
+                    <response type="ArrayList"/>
+                </test>
+            </test>
+            <test type="Case" name="[revert t1, reloaded t1]">
+                <init type="SqlStorageInit" name="dataSource">
+                    <tablesToClear>t1</tablesToClear>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="ArrayList">
+                    <response>revert t1</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+        </test>
+        <test type="Case" name="part; sut mutation survives own sql init of next part">
+            <init type="SqlStorageInit" name="dataSource">
+                <tablesToClear>t1</tablesToClear>
+            </init>
+            <test type="Part" name="[]">
+                <bean>testSQLDataStorage</bean>
+                <method>sutMutationT1</method>
+                <response type="ArrayList"/>
+            </test>
+            <test type="Part" name="[update t1 set column = 1, reloaded t1]">
+                <init type="SqlStorageInit" name="dataSource">
+                    <sql>update t1 set column = 1</sql>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="ArrayList">
+                    <response>update t1 set column = 1</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+            <test type="Part" name="[]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="ArrayList"/>
+            </test>
+        </test>
+        <test type="Container" name="duplicate sql">
+            <test type="Case" name="[clear [t1], update t3 set column = 1, update t3 set column = 1, update t3 set column = 1, reloaded t1]">
+                <init type="SqlStorageInit" name="dataSource">
+                    <sql>update t3 set column = 1</sql>
+                    <sql>update t3 set column = 1</sql>
+                    <sql>update t3 set column = 1</sql>
+                </init>
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="ArrayList">
+                    <response>clear [t1]</response>
+                    <response>update t3 set column = 1</response>
+                    <response>update t3 set column = 1</response>
+                    <response>update t3 set column = 1</response>
+                    <response>reloaded t1</response>
+                </response>
+            </test>
+            <test type="Case" name="[revert t3, revert t3, revert t3]">
+                <bean>testSQLDataStorage</bean>
+                <method>operations</method>
+                <response type="ArrayList">
+                    <response>revert t3</response>
+                    <response>revert t3</response>
+                    <response>revert t3</response>
+                </response>
+            </test>
+        </test>
+    </test>
+    <test type="Container" name="sql storage setup">
+        <init type="SqlStorageSetup" name="dataSource">
+            <sqlFilePath>initialization-setup.sql</sqlFilePath>
+            <sql>select 'setup inline';</sql>
+            <dbUnitPath>initializationData.xml</dbUnitPath>
+        </init>
+        <test type="Case" name="[select 'setup from file';, select 'setup inline';]">
+            <bean>testSQLDataStorage</bean>
+            <method>operations</method>
+            <response type="ArrayList">
+                <response>select 'setup from file';</response>
+                <response>select 'setup inline';</response>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="clear tables">
+        <init type="SqlStorageSetup" name="dataSource">
+            <dbUnitPath>initializationData.xml</dbUnitPath>
+        </init>
+        <test type="Case" name="[Load t1, clear [t1]]">
+            <init type="SqlStorageInit" name="dataSource">
+                <tablesToLoad>t1</tablesToLoad>
+            </init>
+            <bean>clearTablesFacade</bean>
+            <method>clearT1</method>
+            <response type="ArrayList">
+                <response>Load t1</response>
+                <response>clear [t1]</response>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="two sql storages">
+        <init type="SqlStorageSetup" name="dataSource">
+            <dbUnitPath>initializationData.xml</dbUnitPath>
+        </init>
+        <init type="SqlStorageSetup" name="secondaryDataSource">
+            <dbUnitPath>initializationData.xml</dbUnitPath>
+        </init>
+        <test type="Case" name="[Load t1, restart sequences, Load t2, restart sequences]">
+            <init type="SqlStorageInit" name="dataSource">
+                <tablesToLoad>t1</tablesToLoad>
+            </init>
+            <init type="SqlStorageInit" name="secondaryDataSource">
+                <tablesToLoad>t2</tablesToLoad>
+            </init>
+            <bean>storageOperationsFacade</bean>
+            <method>operations</method>
+            <response type="ArrayList">
+                <response>Load t1</response>
+                <response>restart sequences</response>
+                <response>Load t2</response>
+                <response>restart sequences</response>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="on table change proxy">
+        <init type="SqlStorageSetup" name="dataSource">
+            <dbUnitPath>initializationData.xml</dbUnitPath>
+        </init>
+        <init type="OnTableChangeInit" name="dataSource">
+            <onTableChange tableName="t1" beanName="reloadProxy" beanMethod="reload"/>
+        </init>
+        <test type="Case" name="[1, clear [t1]]">
+            <init type="SqlStorageInit" name="dataSource">
+                <tablesToClear>t1</tablesToClear>
+            </init>
+            <bean>proxyReloadFacade</bean>
+            <method>reloadAndOperations</method>
+            <response type="ArrayList">
+                <response>1</response>
+                <response>clear [t1]</response>
+            </response>
         </test>
     </test>
 </test>

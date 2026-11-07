@@ -170,7 +170,8 @@ An adapter is a bridge from an already resolved native source to an `input → o
 Common selection rules:
 
 * candidates are ordered by specificity: a subtype source goes before its ancestors, a concrete
-  input/output pair before `null`, an explicit role before a universal one;
+  input/output pair before `null`, an explicit role before a role class, and a role class before a
+  universal component;
 * the input/output pair is matched by the Liskov substitution principle, as for providers and
   factories: the declared input must be a supertype of the requested input and the declared output a
   subtype of the requested output;
@@ -179,8 +180,9 @@ Common selection rules:
 * the candidate order is deterministic: specificity (the role, source, config class, input, output
   and context); unrelated classes are ordered by their number of supertypes, and ties keep the
   order of the beans passed to the manager;
-* the adapter role (`getRole()`) takes part in the selection: an adapter with an explicit role wins
-  over a universal one, and a request without a role sees only universal adapters;
+* the adapter role (`getRole()`/`getRoleClass()`) takes part in the selection: an explicit role wins
+  over a role class, a role class wins over a universal adapter, and a request without a role sees
+  only universal adapters;
 * several adapters for the same triple form a fallback sequence, not a conflict;
 * for a config that does not extend `StandardSerdeProperties`, declare `Object` or the exact class —
   an adapter declared for `StandardSerdeProperties` does not apply to it.
@@ -226,13 +228,18 @@ role is a generic parameter `R extends ComponentRole` (just like `C extends Test
 a platform enum is bound in `TestSerdeAdapter`/`TestSerdeConverterFactory`/
 `TestSerdeProviderFactory`, so `adapt`/`create` receive a typed role.
 
-* `getRole()` is the component role; the default is `null`: the component is universal and fits any
-  request;
-* in `matches(..., role)` a component with a role fits only a matching requested role (compared by
-  `name()`), while a universal one always fits;
-* a component with an explicit role is more specific than a universal one;
-* the role is part of the `ConverterManager`/`AdapterManager` cache keys, so different slots of the
-  same source never mix;
+* `getRole()` is the exact component role; the default is `null`;
+* `getRoleClass()` is the accepted role class when the role carries request data and cannot be
+  reduced to one constant; the default is `null`. For example, PostgreSQL passes a
+  `PostgresTypeDescriptor` as the role and the factory declares
+  `getRoleClass() = PostgresTypeDescriptor.class`;
+* in `matches(..., role)` `getRole()` takes precedence: an explicit role fits only a matching
+  `name()`. When `getRole()` is `null` and `getRoleClass()` is set, any non-`null` instance of that
+  class fits. When both are `null`, the component is universal;
+* specificity: an explicit role is more specific than a role class, which is more specific than a
+  universal component;
+* the actual role instance is part of the `ConverterManager`/`AdapterManager` cache keys, so
+  different slots and different type descriptors of the same source never mix;
 * `SerdeManager` has two entry points, and the role is passed to both explicitly:
   `resolve(props, ..., role)` resolves a converter from the configuration, while
   `adapt(source, props, ..., role)` adapts an already available source; pass `null` when no role

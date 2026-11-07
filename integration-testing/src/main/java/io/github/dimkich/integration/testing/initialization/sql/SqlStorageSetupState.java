@@ -7,13 +7,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Getter
 @ToString
 @NoArgsConstructor
 public class SqlStorageSetupState implements TestInitState<SqlStorageSetupState> {
-    private final Map<SQLDataStorageService, InitData> initData = new HashMap<>();
+    private final Map<SQLDataStorageService, InitData> initData = new LinkedHashMap<>();
 
     SqlStorageSetupState(SQLDataStorageService storage, InitData initData) {
         this.initData.put(storage, initData);
@@ -39,7 +44,6 @@ public class SqlStorageSetupState implements TestInitState<SqlStorageSetupState>
     @Data
     static class InitData {
         private List<String> sql = new ArrayList<>();
-        private Set<String> dbUnitPath = new HashSet<>();
-        private Set<SqlStorageSetup.TableHook> tableHook = new LinkedHashSet<>();
+        private Set<String> dbUnitPath = new LinkedHashSet<>();
     }
 }

@@ -9,20 +9,25 @@ import io.github.dimkich.integration.testing.initialization.key.value.KeyValueSt
 import io.github.dimkich.integration.testing.initialization.key.value.KeyValueStorageInitSetup;
 import io.github.dimkich.integration.testing.initialization.mock.MockInit;
 import io.github.dimkich.integration.testing.initialization.mock.MockInitSetup;
-import io.github.dimkich.integration.testing.initialization.sql.*;
+import io.github.dimkich.integration.testing.initialization.sql.OnTableChangeInit;
+import io.github.dimkich.integration.testing.initialization.sql.OnTableChangeInitSetup;
+import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInit;
+import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInitSetup;
+import io.github.dimkich.integration.testing.initialization.sql.SqlStorageSetup;
+import io.github.dimkich.integration.testing.initialization.sql.SqlStorageSetupSetup;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
 @Import({InitializationService.class, BeanInitSetup.class, DateTimeInitSetup.class, KeyValueStorageInitSetup.class,
-        MockInitSetup.class, SqlStorageInitSetup.class, SqlStorageSetupSetup.class, SqlStorageNoHookInitSetup.class})
+        MockInitSetup.class, SqlStorageInitSetup.class, SqlStorageSetupSetup.class, OnTableChangeInitSetup.class})
 public class InitializationConfig {
     @Bean
     TestSetupModule initializationTestSetupModule() {
         return new TestSetupModule()
                 .addParentType(TestInit.class)
                 .addSubTypes(DateTimeInit.class, KeyValueStorageInit.class, BeanInit.class, MockInit.class,
-                        SqlStorageSetup.class, SqlStorageInit.class);
+                        SqlStorageSetup.class, SqlStorageInit.class, OnTableChangeInit.class);
     }
 }

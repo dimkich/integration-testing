@@ -364,7 +364,7 @@ Complete Test Lifecycle Diagram
 │  │   ├── initializationService.beforeTest()                 │  
 │  │   └── BeforeTest.before() ← Hook 1 (for Container/Case/Part)│  
 │  ├── waitCompletion.waitCompletion()                        │  
-│  └── testDataStorages.setNewCurrentValue()                  │  
+│  └── testDataStorages.prepareForTest()                      │
 └─────────────────────────────────────────────────────────────┘  
                             ↓  
 ┌─────────────────────────────────────────────────────────────┐  

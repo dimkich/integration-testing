@@ -95,7 +95,8 @@ public interface TestSerdeAdapter<S, I, O, C extends TestSerdeContext, R extends
      * {@code other} is, {@code 0} when they are equally specific
      */
     default int compare(TestSerdeAdapter<?, ?, ?, ?, ?, ?> other) {
-        int result = TypeSpecificity.compareRoles(getRole(), other.getRole());
+        int result = TypeSpecificity.compareRoles(getRole(), getRoleClass(),
+                other.getRole(), other.getRoleClass());
         if (result == 0) {
             result = TypeSpecificity.compareSources(getSourceClass(), other.getSourceClass());
         }

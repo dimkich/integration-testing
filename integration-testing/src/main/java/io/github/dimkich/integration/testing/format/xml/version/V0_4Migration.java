@@ -4,8 +4,11 @@ import io.github.dimkich.integration.testing.format.xml.tnode.TNode;
 import io.github.dimkich.integration.testing.util.TestUtils;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,6 +29,9 @@ public class V0_4Migration implements XmlMigration {
     private static final String KAFKA_CONNECTION = "kafka";
     private static final Set<String> STRUCTURAL_ATTRIBUTES =
             Set.of(TOPIC_ATTRIBUTE, KEY_ATTRIBUTE, UTYPE_ATTRIBUTE, TYPE_ATTRIBUTE, CONNECTION_ATTRIBUTE);
+    private static final String LEGACY_TABLES_TO_CHANGE_ELEMENT = "tablesToChange";
+    private static final String TABLES_TO_CLEAR_ELEMENT = "tablesToClear";
+    private static final String INIT_ELEMENT = "init";
 
     @Override
     public void migrate(String path) {
@@ -52,7 +58,10 @@ public class V0_4Migration implements XmlMigration {
      * @return {@code true} if the document was changed and has to be saved
      */
     public boolean migrate(TNode root) {
-        boolean changed = migrateMessages(root, INBOUND_MESSAGE);
+        boolean changed = renameTablesToClear(root);
+        if (migrateMessages(root, INBOUND_MESSAGE)) {
+            changed = true;
+        }
         if (migrateMessages(root, OUTBOUND_MESSAGE)) {
             changed = true;
         }
@@ -60,6 +69,49 @@ public class V0_4Migration implements XmlMigration {
             changed = true;
         }
         return changed;
+    }
+
+    /**
+     * Renames the legacy {@code tablesToChange} element to {@code tablesToClear}.
+     * If both elements are present in one {@code init}, their values are merged and the legacy
+     * element is removed.
+     *
+     * @param root the root node of the test XML document
+     * @return {@code true} if the document was changed and has to be saved
+     */
+    private boolean renameTablesToClear(TNode root) {
+        boolean changed = false;
+        for (TNode init : root.findNodes(INIT_ELEMENT).toList()) {
+            TNode target = findChild(init, TABLES_TO_CLEAR_ELEMENT);
+            for (TNode legacy : init.findChildNodes(LEGACY_TABLES_TO_CHANGE_ELEMENT).toList()) {
+                if (target == null) {
+                    legacy.setName(TABLES_TO_CLEAR_ELEMENT);
+                    target = legacy;
+                } else {
+                    target.setValue(mergeTableNames(target.getValue(), legacy.getValue()));
+                    legacy.remove();
+                }
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    private String mergeTableNames(String first, String second) {
+        Set<String> names = new LinkedHashSet<>();
+        addTableNames(names, first);
+        addTableNames(names, second);
+        return String.join(",", names);
+    }
+
+    private void addTableNames(Set<String> names, String value) {
+        if (value == null) {
+            return;
+        }
+        Arrays.stream(value.split(","))
+                .map(String::strip)
+                .filter(name -> !name.isEmpty())
+                .forEach(names::add);
     }
 
     private boolean migrateMessages(TNode root, String messageTag) {
@@ -162,7 +214,7 @@ public class V0_4Migration implements XmlMigration {
         if (value == null || value.isEmpty()) {
             return false;
         }
-        String capitalized = value.substring(0, 1).toUpperCase() + value.substring(1);
+        String capitalized = value.substring(0, 1).toUpperCase(Locale.ROOT) + value.substring(1);
         if (capitalized.equals(value)) {
             return false;
         }

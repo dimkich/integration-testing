@@ -48,6 +48,19 @@
 * **[Расширяемость](redis/Extensibility.md)** — Кастомные кодек/схема/доступ к данным, обработчики
   потоков и событий, `TestSetupModule.addSubTypes()`.
 
+### PostgreSQL
+
+* **[Обзор PostgreSQL](postgresql/README.md)** — Настройка `@EnableTestPostgreSQL`, быстрый старт,
+  подготовка данных и автоматический diff.
+* **[Конфигурация](postgresql/Configuration.md)** — Подключения, права, `columns`, `ignore`,
+  `excludedFields` и форма diff.
+* **[Данные и diff](postgresql/Data-and-Diff.md)** — `SqlStorageSetup`, `SqlStorageInit`,
+  DBUnit-датасеты, `dataStorageDiff` и ключи строк.
+* **[Типы и serde](postgresql/Types-and-Serde.md)** — PostgreSQL-типы в XML, массивы, JSON,
+  composite, `hstore`, `bytea` и свои конвертеры.
+* **[Устранение неполадок](postgresql/Troubleshooting.md)** — Пустой diff, ошибки прав, схемы,
+  конвертации и Testcontainers.
+
 ### Kafka
 
 * **[Обзор Kafka](kafka/README.md)** — Настройка `@EnableTestKafka`, XML-примеры, отправка и проверка сообщений.

@@ -2,7 +2,6 @@ package io.github.dimkich.integration.testing.initialization.sql;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import io.github.dimkich.integration.testing.initialization.TestInit;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -13,20 +12,20 @@ import java.util.Set;
 /**
  * Represents a SQL storage setup configuration for integration tests.
  * This class extends {@link io.github.dimkich.integration.testing.initialization.TestInit}
- * and provides a mechanism to configure SQL storage systems by executing SQL scripts,
- * loading DBUnit XML datasets, and setting up table hooks for automatic data reloading.
+ * and provides a mechanism to configure SQL storage systems by executing SQL scripts and
+ * loading DBUnit XML datasets.
  *
  * <p>SQL storage setup is typically used once per test container to configure the storage
- * with initial SQL scripts, DBUnit datasets, and table hooks. This setup runs before
- * individual test cases and parts, allowing you to prepare the database schema and
- * define hooks that will be triggered when specific tables are modified.
+ * with initial SQL scripts and DBUnit datasets. This setup runs before individual test cases
+ * and parts, allowing you to prepare the database schema and the fixture that {@code SqlStorageInit}
+ * later loads. Table change actions are configured separately with
+ * {@link OnTableChangeInit}.
  *
  * <p>Example XML configurations:
  * <pre>{@code
- * <!-- Basic setup with DBUnit dataset and table hook -->
+ * <!-- Basic setup with a DBUnit dataset -->
  * <init type="sqlStorageSetup" name="dataSource">
  *     <dbUnitPath>initializationData.xml</dbUnitPath>
- *     <tableHook tableName="t1" beanName="testSQLDataStorage" beanMethod="reloadT1"/>
  * </init>
  *
  * <!-- Setup with SQL file paths -->
@@ -41,13 +40,6 @@ import java.util.Set;
  *     <sql>CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY, name VARCHAR(100))</sql>
  *     <sql>INSERT INTO users VALUES (1, 'John')</sql>
  *     <dbUnitPath>users.xml</dbUnitPath>
- * </init>
- *
- * <!-- Setup with multiple table hooks -->
- * <init type="sqlStorageSetup" name="dataSource">
- *     <dbUnitPath>initializationData.xml</dbUnitPath>
- *     <tableHook tableName="t1" beanName="testSQLDataStorage" beanMethod="reloadT1"/>
- *     <tableHook tableName="t2" beanName="testSQLDataStorage" beanMethod="reloadT2"/>
  * </init>
  *
  * <!-- Setup with SQL files and inline SQL combined -->
@@ -131,81 +123,4 @@ public class SqlStorageSetup extends TestInit {
      */
     private Set<String> dbUnitPath;
 
-    /**
-     * List of table hooks that define methods to be called when specific tables are modified.
-     * Table hooks allow you to automatically reload or refresh data in related beans
-     * when certain tables are changed during test execution.
-     * <p>
-     * XML Example:
-     * <pre>{@code
-     * <init type="sqlStorageSetup" name="dataSource">
-     *     <tableHook tableName="t1" beanName="testSQLDataStorage" beanMethod="reloadT1"/>
-     *     <tableHook tableName="t2" beanName="cacheService" beanMethod="refreshCache"/>
-     * </init>
-     * }</pre>
-     */
-    private List<TableHook> tableHook;
-
-    /**
-     * Represents a table hook configuration that associates a database table with a bean method
-     * to be invoked when that table is modified during test execution.
-     * <p>
-     * Table hooks are useful for automatically refreshing cached data or reloading related
-     * beans when specific tables are changed. The hook is triggered whenever the associated
-     * table is modified through SQL operations or DBUnit dataset loading.
-     *
-     * <p>Example XML configurations:
-     * <pre>{@code
-     * <!-- Single table hook -->
-     * <tableHook tableName="users" beanName="userService" beanMethod="reloadUsers"/>
-     *
-     * <!-- Multiple table hooks -->
-     * <tableHook tableName="t1" beanName="testSQLDataStorage" beanMethod="reloadT1"/>
-     * <tableHook tableName="t2" beanName="testSQLDataStorage" beanMethod="reloadT2"/>
-     * }</pre>
-     */
-    @Data
-    public static class TableHook {
-        /**
-         * The name of the database table that this hook is associated with.
-         * When this table is modified during test execution, the specified bean method will be invoked.
-         * <p>
-         * This is serialized as an XML attribute when using Jackson XML serialization.
-         * <p>
-         * XML Example:
-         * <pre>{@code
-         * <tableHook tableName="users" beanName="userService" beanMethod="reloadUsers"/>
-         * }</pre>
-         */
-        @JacksonXmlProperty(isAttribute = true)
-        private String tableName;
-
-        /**
-         * The name of the Spring bean that contains the method to be invoked.
-         * This should match a bean name in the Spring application context.
-         * <p>
-         * This is serialized as an XML attribute when using Jackson XML serialization.
-         * <p>
-         * XML Example:
-         * <pre>{@code
-         * <tableHook tableName="users" beanName="userService" beanMethod="reloadUsers"/>
-         * }</pre>
-         */
-        @JacksonXmlProperty(isAttribute = true)
-        private String beanName;
-
-        /**
-         * The name of the method to invoke on the specified bean when the table is modified.
-         * The method should be accessible and should not require parameters.
-         * <p>
-         * This is serialized as an XML attribute when using Jackson XML serialization.
-         * <p>
-         * XML Example:
-         * <pre>{@code
-         * <tableHook tableName="users" beanName="userService" beanMethod="reloadUsers"/>
-         * }</pre>
-         */
-        @JacksonXmlProperty(isAttribute = true)
-        private String beanMethod;
-    }
 }

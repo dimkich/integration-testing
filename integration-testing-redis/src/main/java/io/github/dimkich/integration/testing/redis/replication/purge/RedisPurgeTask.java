@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.redis.replication.purge;
 
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataCodec;
+import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -41,20 +42,19 @@ public class RedisPurgeTask {
             return;
         }
 
-        try (RedisConnection conn = factory.getConnection()) {
-            dbTasks.forEach((db, task) -> {
-                try {
-                    conn.select(db);
-                } catch (UnsupportedOperationException ignore) {
-                    log.debug("Redis driver {} select command not supported", factory);
-                }
-                conn.openPipeline();
-                try {
-                    task.execute(conn, storageName, registry, keyCodec);
-                } finally {
-                    conn.closePipeline();
-                }
-            });
-        }
+        @Cleanup RedisConnection conn = factory.getConnection();
+        dbTasks.forEach((db, task) -> {
+            try {
+                conn.select(db);
+            } catch (UnsupportedOperationException ignore) {
+                log.debug("Redis driver {} select command not supported", factory);
+            }
+            conn.openPipeline();
+            try {
+                task.execute(conn, storageName, registry, keyCodec);
+            } finally {
+                conn.closePipeline();
+            }
+        });
     }
 }

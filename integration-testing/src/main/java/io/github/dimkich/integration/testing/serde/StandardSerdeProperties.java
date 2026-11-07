@@ -6,6 +6,7 @@ import io.github.dimkich.integration.testing.serde.properties.BinaryEnvelopeProp
 import io.github.dimkich.integration.testing.serde.properties.ClassRefProperties;
 import io.github.dimkich.integration.testing.serde.properties.ProviderProperties;
 import lombok.Data;
+import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Type;
 
@@ -30,6 +31,18 @@ public class StandardSerdeProperties implements ProviderProperties, BeanRefPrope
     private Type targetClass;
     private String objectMapperRef;
     private String binaryEnvelope;
+
+    /**
+     * Returns whether this configuration defines any serde settings. A module may use an
+     * inheriting configuration entry only for non-serde purposes, for example to exclude a field.
+     */
+    public boolean hasSerdeConfiguration() {
+        return StringUtils.hasText(beanRef)
+                || StringUtils.hasText(type)
+                || targetClass != null
+                || StringUtils.hasText(objectMapperRef)
+                || StringUtils.hasText(binaryEnvelope);
+    }
 
     @Override
     public void reportRoles(SerdeRoleCollector collector) {

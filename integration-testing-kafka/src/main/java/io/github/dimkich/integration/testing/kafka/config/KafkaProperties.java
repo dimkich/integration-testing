@@ -26,7 +26,7 @@ public class KafkaProperties extends TopicProperties {
 
     // kept low so lag resolution is prompt; a higher value trades detection latency for CPU load
     private long lagPollingIntervalMs = 5;
-    private long lagPollingTimeoutMs = 10000;
+    private long lagPollingTimeoutMs = 15000;
     private long startupStabilizationTimeoutSeconds = 30;
 
     // kept higher than lag polling so waiting for a starting SUT does not flood the broker

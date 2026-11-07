@@ -6,6 +6,7 @@ import org.springframework.lang.Nullable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -54,13 +55,38 @@ final class TypeSpecificity {
     }
 
     /**
-     * Orders a component with an explicit role before a universal one ({@code null}).
+     * Orders components by role specificity: an explicit role precedes a role class, which in turn
+     * precedes a universal component ({@code null} for both). Two explicit roles are ordered by
+     * name; two role classes are ordered by class specificity and then by name.
      */
-    static int compareRoles(@Nullable ComponentRole first, @Nullable ComponentRole second) {
-        if (first == null) {
-            return second == null ? 0 : 1;
+    static int compareRoles(@Nullable ComponentRole firstRole,
+                            @Nullable Class<? extends ComponentRole> firstRoleClass,
+                            @Nullable ComponentRole secondRole,
+                            @Nullable Class<? extends ComponentRole> secondRoleClass) {
+        int firstRank = roleRank(firstRole, firstRoleClass);
+        int secondRank = roleRank(secondRole, secondRoleClass);
+        if (firstRank != secondRank) {
+            return Integer.compare(firstRank, secondRank);
         }
-        return second == null ? -1 : first.name().compareTo(second.name());
+        if (firstRole != null) {
+            ComponentRole otherRole = Objects.requireNonNull(secondRole, "secondRole");
+            return firstRole.name().compareTo(otherRole.name());
+        }
+        if (firstRoleClass != null) {
+            Class<? extends ComponentRole> otherRoleClass =
+                    Objects.requireNonNull(secondRoleClass, "secondRoleClass");
+            int result = compare(firstRoleClass, otherRoleClass);
+            return result != 0 ? result : firstRoleClass.getName().compareTo(otherRoleClass.getName());
+        }
+        return 0;
+    }
+
+    private static int roleRank(@Nullable ComponentRole role,
+                                @Nullable Class<? extends ComponentRole> roleClass) {
+        if (role != null) {
+            return 0;
+        }
+        return roleClass != null ? 1 : 2;
     }
 
     /**

@@ -30,13 +30,11 @@ public class ObjectsDifference {
     private final Function<Object, Boolean> simpleTypeDetector = o -> BeanUtils.isSimpleValueType(o.getClass())
             || o.getClass() == PeriodDuration.class || o.getClass() == byte[].class;
 
-    private String name;
-
-    public Object getDifference(Object left, Object right) {
-        return diff(left, right, 0);
+    public Object getDifference(String storageName, Object left, Object right) {
+        return diff(storageName, left, right, 1);
     }
 
-    private Object diff(Object left, Object right, int level) {
+    private Object diff(String storageName, Object left, Object right, int level) {
         if (right == null) {
             return null;
         }
@@ -44,40 +42,30 @@ public class ObjectsDifference {
             return right;
         }
         if ((left == null || left instanceof Map<?, ?>) && right instanceof Map<?, ?>) {
-            return mapDiff(left == null ? Map.of() : (Map<?, ?>) left, (Map<?, ?>) right, level);
+            return mapDiff(storageName, left == null ? Map.of() : (Map<?, ?>) left, (Map<?, ?>) right, level);
         }
         if (right instanceof Set<?> rightSet) {
-            return setDiff(left instanceof Set<?> ? (Set<?>) left : Set.of(), rightSet, level);
+            return setDiff(storageName, left instanceof Set<?> ? (Set<?>) left : Set.of(), rightSet, level);
         }
         if ((left == null || left instanceof Collection<?>) && right instanceof Collection<?>) {
             return right;
         }
-        return left == null ? right : pojoDiff(left, right, level);
+        return left == null ? right : pojoDiff(storageName, left, right, level);
     }
 
-    private Object mapDiff(Map<?, ?> left, Map<?, ?> right, int level) {
-        Container container = Container.create(properties.getKeyType(name, level), properties.getValueType(name, level),
-                properties.getSort(name, level), properties.getChangeType(name, level));
-        CollectionUtils.setsDifference(right.keySet(), left.keySet()).forEach(key -> {
-            if (level == 0) {
-                name = convertKey(key);
-            }
-            container.addEntry(Container.ChangeType.added, key, diff(null, right.get(key), level + 1), this::convertKey);
-            if (level == 0) {
-                name = null;
-            }
-        });
+    private Object mapDiff(String storageName, Map<?, ?> left, Map<?, ?> right, int level) {
+        Container container = Container.create(properties.getKeyType(storageName, level),
+                properties.getValueType(storageName, level), properties.getSort(storageName, level),
+                properties.getChangeType(storageName, level));
+        CollectionUtils.setsDifference(right.keySet(), left.keySet()).forEach(key ->
+                container.addEntry(Container.ChangeType.added, key, diff(storageName, null, right.get(key), level + 1),
+                        this::convertKey));
         CollectionUtils.setsIntersection(right.keySet(), left.keySet()).forEach(key -> {
             Object leftValue = left.get(key);
             Object rightValue = right.get(key);
             if (!isEquals(leftValue, rightValue)) {
-                if (level == 0) {
-                    name = convertKey(key);
-                }
-                container.addEntry(Container.ChangeType.changed, key, diff(leftValue, rightValue, level + 1), this::convertKey);
-                if (level == 0) {
-                    name = null;
-                }
+                container.addEntry(Container.ChangeType.changed, key,
+                        diff(storageName, leftValue, rightValue, level + 1), this::convertKey);
             }
         });
         CollectionUtils.setsDifference(left.keySet(), right.keySet()).forEach(key ->
@@ -86,9 +74,10 @@ public class ObjectsDifference {
         return container.isEmpty() ? null : container;
     }
 
-    private Object setDiff(Set<?> leftSet, Set<?> rightSet, int level) {
-        Container container = Container.create(properties.getKeyType(name, level), properties.getValueType(name, level),
-                properties.getSort(name, level), properties.getChangeType(name, level));
+    private Object setDiff(String storageName, Set<?> leftSet, Set<?> rightSet, int level) {
+        Container container = Container.create(properties.getKeyType(storageName, level),
+                properties.getValueType(storageName, level), properties.getSort(storageName, level),
+                properties.getChangeType(storageName, level));
 
         rightSet.stream()
                 .filter(item -> !leftSet.contains(item))
@@ -101,10 +90,10 @@ public class ObjectsDifference {
         return container.isEmpty() ? null : container;
     }
 
-    private Object pojoDiff(Object left, Object right, int level) {
+    private Object pojoDiff(String storageName, Object left, Object right, int level) {
         Map<String, Object> leftMap = jacksonConverter.convertPojo(left);
         Map<String, Object> rightMap = jacksonConverter.convertPojo(right);
-        return mapDiff(leftMap, rightMap, level);
+        return mapDiff(storageName, leftMap, rightMap, level);
     }
 
     private String convertKey(Object key) {
@@ -130,7 +119,7 @@ public class ObjectsDifference {
             return o1 == o2;
         }
         if (simpleTypeDetector.apply(o1) && simpleTypeDetector.apply(o2)) {
-            return Objects.equals(o1, o2);
+            return Objects.deepEquals(o1, o2);
         }
         return compCalculator.determineDifferences(o1, o2, compConfig).isEmpty();
     }
