@@ -41,12 +41,23 @@ public class PointcutRegistry {
     /**
      * Retrieves the settings for a specific pointcut by its ID.
      *
+     * <p>Returns default no-op settings instead of {@code null} when the ID is not
+     * registered. This is required because advice of an already instrumented class may
+     * still fire after {@link #clear()} while the corresponding test infrastructure is
+     * shutting down (for example, a timer thread of a closing Spring context). Such a
+     * call must be a no-op rather than a {@link NullPointerException}.</p>
+     *
      * @param id the unique identifier of the pointcut.
-     * @return the {@link PointcutSettings} instance associated with the ID.
-     * @throws ArrayIndexOutOfBoundsException if the ID is invalid.
+     * @return the {@link PointcutSettings} instance associated with the ID, or default
+     *         no-op settings if the ID is unknown.
      */
     public static PointcutSettings get(int id) {
-        return registry[id];
+        PointcutSettings[] current = registry;
+        if (id < 0 || id >= current.length) {
+            return new PointcutSettings();
+        }
+        PointcutSettings settings = current[id];
+        return settings != null ? settings : new PointcutSettings();
     }
 
     /**

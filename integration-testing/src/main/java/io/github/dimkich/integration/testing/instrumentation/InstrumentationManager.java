@@ -71,7 +71,11 @@ public class InstrumentationManager {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Reiterating.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .with(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST)
+                // HYBRID describes already loaded classes via reflection and does not read
+                // their class files. POOL_FIRST called TypePool.describe() for every loaded
+                // class during the retroactive RETRANSFORMATION scan, which read tens of
+                // thousands of class files on the second test class in the same JVM.
+                .with(AgentBuilder.DescriptionStrategy.Default.HYBRID)
                 .with(new AgentBuilder.Listener.Adapter() {
                     @Override
                     @SuppressWarnings("NullableProblems")
