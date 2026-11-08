@@ -8,6 +8,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,6 +20,12 @@ import java.util.logging.Logger;
  * It maintains a registry of active service instances and periodically queries
  * their state (e.g., queue size, pool occupancy) to determine if background
  * activity is still ongoing.</p>
+ *
+ * <h3>Activity sensor:</h3>
+ * <ul>
+ *   <li>registering a new service marks activity;</li>
+ *   <li>observing a non-zero pending count during polling marks activity.</li>
+ * </ul>
  *
  * <h3>Memory Management:</h3>
  * <ul>
@@ -50,11 +57,34 @@ public class QueueLikeTracker {
     private static final ReferenceQueue<Object> queue = new ReferenceQueue<>();
 
     /**
+     * Activity accumulated since the last reset: a new service registration or a non-empty
+     * queue observed during polling.
+     */
+    private static final AtomicBoolean anyActivity = new AtomicBoolean();
+
+    /**
      * Clears all registered services.
      * Typically called between tests to ensure a clean state.
      */
     public static void clear() {
         activeServices.clear();
+        anyActivity.set(false);
+    }
+
+    /**
+     * Resets the activity flag before a new test.
+     */
+    public static void resetActivity() {
+        anyActivity.set(false);
+    }
+
+    /**
+     * Atomically takes and clears the accumulated activity flag.
+     *
+     * @return {@code true} if a service was registered or a non-empty queue was observed
+     */
+    public static boolean takeActivity() {
+        return anyActivity.getAndSet(false);
     }
 
     /**
@@ -69,6 +99,7 @@ public class QueueLikeTracker {
         if (settings.checkWhen(service, args)) {
             // IdentityWeakReference ensures we track unique instances correctly
             activeServices.put(new IdentityWeakReference(service, settings.getCount()), Boolean.TRUE);
+            anyActivity.set(true);
         }
     }
 
@@ -76,7 +107,8 @@ public class QueueLikeTracker {
      * Calculates the total number of pending tasks across all tracked services.
      *
      * <p>Before calculation, it drains the {@link ReferenceQueue} to remove
-     * references to objects that have been garbage collected.</p>
+     * references to objects that have been garbage collected. A non-zero total marks
+     * activity for the current window.</p>
      *
      * @param allowLogging if {@code true}, logs the task count for each individual service.
      * @return the sum of all pending tasks reported by the registered count functions.
@@ -85,12 +117,18 @@ public class QueueLikeTracker {
         Object ref;
         // Clean up collected references
         while ((ref = queue.poll()) != null) {
-            activeServices.remove(ref);
+            if (ref instanceof IdentityWeakReference key) {
+                activeServices.remove(key);
+            }
         }
 
-        return activeServices.keySet().stream()
+        int count = activeServices.keySet().stream()
                 .mapToInt(r -> r.countPendingTasks(allowLogging))
                 .sum();
+        if (count > 0) {
+            anyActivity.set(true);
+        }
+        return count;
     }
 
     /**

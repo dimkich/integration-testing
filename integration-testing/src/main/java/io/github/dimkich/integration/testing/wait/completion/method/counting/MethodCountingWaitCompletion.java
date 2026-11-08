@@ -28,9 +28,10 @@ import static org.springframework.core.annotation.AnnotatedElementUtils.findMerg
  *   <li><b>Instrumentation:</b> During agent setup, it injects {@link MethodCountingAdvice}
  *       into methods matching the {@link MethodCountingAwait#pointcut()} expression.</li>
  *   <li><b>Tracking:</b> Every call to an instrumented method increments a global counter
- *       on entry and decrements it on exit (including exceptional exits).</li>
- *   <li><b>Synchronization:</b> The test execution blocks until the counter reaches
- *       zero, ensuring all intercepted methods have finished their execution.</li>
+ *       on entry and decrements it on exit (including exceptional exits). It also marks
+ *       the activity flag, so work that finished before the wait is still reported.</li>
+ *   <li><b>Synchronization:</b> The coordinator step blocks until the counter reaches
+ *       zero and takes the activity flag atomically.</li>
  * </ul>
  *
  * @see MethodCountingAwait
@@ -59,9 +60,8 @@ public class MethodCountingWaitCompletion implements WaitCompletion, Instrumenta
     }
 
     /**
-     * Resets the internal {@link MethodCountingTracker} state.
-     * <p>Clears the active task counter and the activity flag to ensure a clean state
-     * before starting a new tracking cycle in a test.</p>
+     * Resets the internal {@link MethodCountingTracker} state: the active task counter and
+     * the activity flag.
      */
     @Override
     public void start() {
@@ -69,24 +69,14 @@ public class MethodCountingWaitCompletion implements WaitCompletion, Instrumenta
     }
 
     /**
-     * Indicates whether any tracked method activity has been observed
-     * since the last {@link #start()} or {@link #waitCompletion()} call.
+     * Blocks until all tracked method activities are completed and returns whether any
+     * tracked method was invoked since {@link #start()} or the previous call.
      *
-     * @return {@code true} if at least one tracked method was invoked; otherwise {@code false}.
-     */
-    @Override
-    public boolean isAnyTaskStarted() {
-        return MethodCountingTracker.isAnyActivity();
-    }
-
-    /**
-     * Blocks the current thread until all tracked method activities are completed.
-     * <p>This method delegates the blocking logic to {@link MethodCountingTracker#waitCompletion()},
-     * which waits for the atomic counter of in-flight executions to reach zero.</p>
+     * @return {@code true} if at least one tracked method was invoked during the window
      */
     @Override
     @SneakyThrows
-    public void waitCompletion() {
-        MethodCountingTracker.waitCompletion();
+    public boolean awaitAndCheckActivity() {
+        return MethodCountingTracker.awaitAndCheckActivity();
     }
 }

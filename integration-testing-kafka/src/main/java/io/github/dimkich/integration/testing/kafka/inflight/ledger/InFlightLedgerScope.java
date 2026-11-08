@@ -35,6 +35,11 @@ public class InFlightLedgerScope implements KafkaStateChecker {
     }
 
     @Override
+    public boolean takeActivity() {
+        return inFlightLedger.takeActivity(bootstrapServers);
+    }
+
+    @Override
     public String describe() {
         return inFlightLedger.describe(bootstrapServers);
     }

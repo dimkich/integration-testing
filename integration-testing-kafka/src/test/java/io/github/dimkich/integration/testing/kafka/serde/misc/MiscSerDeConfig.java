@@ -29,6 +29,9 @@ public class MiscSerDeConfig {
                 topic("misc-tx-out"),
                 topic("misc-tx-offsets-in"),
                 topic("misc-tx-offsets-out"),
+                topic("misc-cascade-in"),
+                topic("misc-cascade-mid"),
+                topic("misc-cascade-out"),
                 topic("misc-assign"),
                 topic("misc-assign-result")
         );

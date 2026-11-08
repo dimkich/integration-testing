@@ -273,6 +273,7 @@ public class RedisConfig {
                     .genericBeanDefinition(RedisWaitCompletion.class)
                     .addConstructorArgReference(beans.syncState)
                     .addConstructorArgReference(beans.barrier)
+                    .addConstructorArgReference(beans.memStore)
                     .getBeanDefinition();
             def.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
             return def;

@@ -197,7 +197,7 @@ How it works:
 * `start()` only resets the tracking state and never blocks; readiness is awaited when the wait
   completion runs after test initialization, so SUT listeners started by initialization have time to
   come up;
-* every poll iteration (`waitCompletion()`) first waits up to `startup-stabilization-timeout-seconds`
+* every stabilization step (`awaitAndCheckActivity()`) first waits up to `startup-stabilization-timeout-seconds`
   for the sniffer assignment and for each expected group to become ready — live members holding
   assigned partitions ("running + assigned") — and, when groups are listed, for all known groups to
   stop rebalancing. On timeout the test fails with

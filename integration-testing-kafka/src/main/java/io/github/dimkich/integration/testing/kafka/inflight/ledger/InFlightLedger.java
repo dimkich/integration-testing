@@ -112,6 +112,21 @@ public class InFlightLedger implements DisposableBean {
     }
 
     /**
+     * Atomically takes the activity observed on this cluster since the last reset.
+     *
+     * @param bootstrapServers raw {@code bootstrap.servers} of the connection
+     * @return {@code true} if a send, commit or acknowledged offset was observed
+     */
+    public boolean takeActivity(String bootstrapServers) {
+        String normalized = BootstrapUtil.normalize(bootstrapServers);
+        if (normalized == null) {
+            return false;
+        }
+        ClusterState state = clusters.get(normalized);
+        return state != null && state.takeActivity();
+    }
+
+    /**
      * Returns all non-internal partitions observed on the cluster.
      *
      * @param bootstrapServers raw {@code bootstrap.servers} of the connection
@@ -169,7 +184,7 @@ public class InFlightLedger implements DisposableBean {
             return false;
         }
         for (String groupId : expectedGroups) {
-            if (!state.hasGroup(groupId) || !state.isGroupReady(groupId)) {
+            if (state.isGroupMissing(groupId) || !state.isGroupReady(groupId)) {
                 return false;
             }
         }
@@ -191,7 +206,7 @@ public class InFlightLedger implements DisposableBean {
             return expectedGroups.isEmpty();
         }
         for (String groupId : expectedGroups) {
-            if (!state.hasGroup(groupId)) {
+            if (state.isGroupMissing(groupId)) {
                 return false;
             }
         }
@@ -249,7 +264,7 @@ public class InFlightLedger implements DisposableBean {
     }
 
     private static String describeGroup(ClusterState state, String groupId) {
-        if (state == null || !state.hasGroup(groupId)) {
+        if (state == null || state.isGroupMissing(groupId)) {
             return "missing";
         }
         if (state.isGroupReady(groupId)) {

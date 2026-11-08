@@ -8,7 +8,6 @@ import io.github.dimkich.integration.testing.instrumentation.InstrumentationPlug
 import io.github.dimkich.integration.testing.wait.completion.FutureLikeAwait;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletion;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.agent.builder.AgentBuilder;
 
@@ -53,8 +52,7 @@ public class FutureLikeWaitCompletion implements WaitCompletion, Instrumentation
     }
 
     /**
-     * Resets the {@link FutureLikeTracker}.
-     * Tasks created before this call will not be tracked for completion.
+     * Resets the {@link FutureLikeTracker}: pending tasks and the activity flag are cleared.
      */
     @Override
     public void start() {
@@ -62,26 +60,14 @@ public class FutureLikeWaitCompletion implements WaitCompletion, Instrumentation
     }
 
     /**
-     * Checks if there are any pending asynchronous tasks currently being tracked.
+     * Blocks the calling thread until all tracked tasks are completed (including tasks
+     * registered while waiting) and returns whether any task was captured since
+     * {@link #start()} or the previous call.
      *
-     * @return {@code true} if the tracker has recorded any activity.
+     * @return {@code true} if at least one task was registered during the window
      */
     @Override
-    public boolean isAnyTaskStarted() {
-        return FutureLikeTracker.isAnyActivity();
-    }
-
-    /**
-     * Blocks the calling thread until all tracked tasks are completed.
-     * <p>
-     * Execution is delegated to {@link FutureLikeTracker#waitCompletion()},
-     * which iterates through all captured objects and executes their
-     * defined {@code await} logic.
-     * </p>
-     */
-    @Override
-    @SneakyThrows
-    public void waitCompletion() {
-        FutureLikeTracker.waitCompletion();
+    public boolean awaitAndCheckActivity() {
+        return FutureLikeTracker.awaitAndCheckActivity();
     }
 }

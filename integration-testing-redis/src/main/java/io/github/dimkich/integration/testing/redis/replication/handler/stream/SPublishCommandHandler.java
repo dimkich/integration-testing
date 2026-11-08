@@ -20,6 +20,10 @@ public class SPublishCommandHandler implements RedisStreamHandler<SPublishComman
 
     @Override
     public void handle(SPublishCommand event, RedisInMemoryStore store) {
+        if (!store.getBarrier().isSyncChannel(event.getChannel())) {
+            // Service traffic of the barrier must not wake the activity sensor.
+            store.markActivity();
+        }
         redisPushCapture.capture(store, event.getChannel(), event.getMessage());
     }
 }

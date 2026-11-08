@@ -20,12 +20,18 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>{@link #start()} only resets the tracking state and never blocks. Consumer groups
  * listed in {@code integration.testing.kafka.connections.<name>.expected-groups} are
- * awaited in {@link #waitCompletion()}: it first waits up to
+ * awaited in {@link #awaitAndCheckActivity()}: it first waits up to
  * {@code startup-stabilization-timeout-seconds} for the sniffer assignment and for the
  * expected groups to become ready and all known groups stable (covering SUT consumers
  * that start asynchronously, possibly triggered by test initialization), and only then
  * waits up to {@code lag-polling-timeout-ms} for the lag to drain. An empty group
  * listing alone is not treated as "nothing to wait for".
+ *
+ * <p>The activity sensor combines two sources: lag observed by the checker (the in-flight
+ * ledger or the Admin API) and the checker's own accumulated activity (intercepted sends,
+ * commits and broker offset growth). The latter is taken atomically at the end of the step,
+ * so a message that was fully processed before the wait still makes the coordinator run
+ * another stabilization step.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -33,7 +39,6 @@ public class KafkaWaitCompletion implements WaitCompletion {
     private final KafkaSnifferConsumer sniffer;
     private final KafkaStateChecker stateChecker;
     private final KafkaProperties kafkaProperties;
-    private volatile boolean anyLag = false;
 
     @Override
     public void start() {
@@ -42,18 +47,13 @@ public class KafkaWaitCompletion implements WaitCompletion {
     }
 
     @Override
-    public boolean isAnyTaskStarted() {
-        return anyLag;
-    }
-
-    @Override
     @SneakyThrows
     @SuppressWarnings("BusyWait")
-    public void waitCompletion() {
+    public boolean awaitAndCheckActivity() {
         long readinessDeadlineNanos = System.nanoTime()
                 + TimeUnit.SECONDS.toNanos(kafkaProperties.getStartupStabilizationTimeoutSeconds());
         long lagDeadlineNanos = 0;
-        anyLag = false;
+        boolean lagObserved = false;
         Set<String> expectedGroups = expectedGroups();
         long readinessRecheckNanos = TimeUnit.MILLISECONDS.toNanos(
                 Math.max(kafkaProperties.getReadinessPollingIntervalMs(), kafkaProperties.getLagPollingIntervalMs()));
@@ -101,9 +101,9 @@ public class KafkaWaitCompletion implements WaitCompletion {
                 if (log.isTraceEnabled()) {
                     log.trace("WaitCompletion: no lag. {}", stateChecker.describe());
                 }
-                return;
+                return lagObserved || stateChecker.takeActivity();
             }
-            anyLag = true;
+            lagObserved = true;
 
             if (nowNanos >= lagDeadlineNanos) {
                 break;

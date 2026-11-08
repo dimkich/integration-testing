@@ -20,6 +20,17 @@ public interface KafkaStateChecker {
     }
 
     /**
+     * Atomically takes the activity observed by the checker since {@link #reset()} or the
+     * previous call: produced messages, commits and acknowledged offsets for the in-flight
+     * ledger, or broker offset growth for the Admin API.
+     *
+     * @return {@code true} if any message or commit passed through the cluster
+     */
+    default boolean takeActivity() {
+        return false;
+    }
+
+    /**
      * Computes the current lag state.
      *
      * @return the lag state together with the partitions examined

@@ -18,6 +18,7 @@ import lombok.Setter;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 
@@ -55,6 +56,37 @@ public class RedisInMemoryStore {
 
     private final Map<RedisKey, RedisEntry> currentValue = new ConcurrentHashMap<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
+    /**
+     * Activity sensor: set when a live command of the application is applied to the mirror.
+     * The replication barrier token is filtered out by
+     * {@link io.github.dimkich.integration.testing.redis.replication.event.listener.RedisSyncStateDelegator}
+     * and never marks activity.
+     */
+    private final AtomicBoolean activity = new AtomicBoolean();
+
+    /**
+     * Marks that at least one live application command was observed since the last reset.
+     */
+    public void markActivity() {
+        activity.set(true);
+    }
+
+    /**
+     * Clears the activity flag before a new test.
+     */
+    public void resetActivity() {
+        activity.set(false);
+    }
+
+    /**
+     * Atomically takes and clears the activity accumulated since the last reset.
+     *
+     * @return {@code true} if the application changed a key or published a message
+     */
+    public boolean takeActivity() {
+        return activity.getAndSet(false);
+    }
 
     /**
      * Registers a listener on the backing {@link Replicator} (for example sync-phase hooks).
@@ -141,6 +173,7 @@ public class RedisInMemoryStore {
      * @param consumer schema-aware mutation
      */
     public void compute(long db, byte[] key, BiConsumer<RedisDataSchema, RedisEntry> consumer) {
+        markActivity();
         lock.writeLock().lock();
         try {
             RedisKey redisKey = getKey(db, key);
@@ -162,6 +195,7 @@ public class RedisInMemoryStore {
      * @param key raw Redis key bytes
      */
     public void remove(byte[] key) {
+        markActivity();
         lock.writeLock().lock();
         try {
             currentValue.remove(getKey(currentDb, key));
@@ -185,6 +219,7 @@ public class RedisInMemoryStore {
      * @param newKeyRaw new key bytes
      */
     public void rename(byte[] oldKeyRaw, byte[] newKeyRaw) {
+        markActivity();
         lock.writeLock().lock();
         try {
             RedisKey oldKeyIdentity = getKey(currentDb, oldKeyRaw);
@@ -207,6 +242,7 @@ public class RedisInMemoryStore {
      * @param replace    if {@code true}, overwrite an existing destination entry
      */
     public void copy(byte[] srcKeyRaw, byte[] destKeyRaw, boolean replace) {
+        markActivity();
         lock.writeLock().lock();
         try {
             RedisKey srcKey = getKey(currentDb, srcKeyRaw);
@@ -229,6 +265,7 @@ public class RedisInMemoryStore {
      * the single database {@code FLUSHDB} clears.
      */
     public void flushDb() {
+        markActivity();
         lock.writeLock().lock();
         try {
             currentValue.keySet().removeIf(key -> key.getDb() == null || key.getDb() == currentDb);
@@ -239,6 +276,7 @@ public class RedisInMemoryStore {
 
     /** Clears the entire in-memory keyspace across all logical databases. */
     public void flushAll() {
+        markActivity();
         lock.writeLock().lock();
         try {
             currentValue.clear();
@@ -251,6 +289,7 @@ public class RedisInMemoryStore {
      * @param key resolved key identity (DB + string key)
      */
     public void removeKey(RedisKey key) {
+        markActivity();
         lock.writeLock().lock();
         try {
             currentValue.remove(key);
@@ -264,6 +303,7 @@ public class RedisInMemoryStore {
      * @param entry entry to store (not cloned)
      */
     public void putKey(RedisKey key, RedisEntry entry) {
+        markActivity();
         lock.writeLock().lock();
         try {
             currentValue.put(key, entry);

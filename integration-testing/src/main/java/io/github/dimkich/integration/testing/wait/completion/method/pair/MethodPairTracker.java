@@ -27,6 +27,8 @@ import java.util.logging.Logger;
  *       while {@code endTask} decrements the <i>same</i> counter.</li>
  *   <li><b>Global Convergence:</b> The framework blocks until the <b>sum</b> of all
  *       active tasks across all registered shared counters reaches zero.</li>
+ *   <li><b>Atomic Activity Window:</b> Counter transitions and the activity flag are
+ *       guarded by one monitor, so activity reported before the wait is not lost.</li>
  * </ul>
  *
  * @see MethodPairEnterAdvice
@@ -68,7 +70,10 @@ public class MethodPairTracker {
      * <p>This effectively clears the instrumentation rules from the tracker's memory.</p>
      */
     public static void clear() {
-        counters.clear();
+        synchronized (lock) {
+            counters.clear();
+            anyActivity = false;
+        }
     }
 
     /**
@@ -77,8 +82,10 @@ public class MethodPairTracker {
      * subsequent tracking cycles without re-registration.</p>
      */
     public static void reset() {
-        counters.values().forEach(c -> c.set(0));
-        anyActivity = false;
+        synchronized (lock) {
+            counters.values().forEach(c -> c.set(0));
+            anyActivity = false;
+        }
     }
 
     /**
@@ -99,7 +106,7 @@ public class MethodPairTracker {
      *
      * <p>Invoked by {@link MethodPairEnterAdvice}. If the pointcut's 'when' condition
      * is satisfied, the associated shared counter is incremented and the activity
-     * flag is set to {@code true}.</p>
+     * flag is set to {@code true} under the monitor.</p>
      *
      * @param pointcutId the unique ID used to fetch settings and the shared counter.
      * @param obj        the target object instance.
@@ -110,9 +117,12 @@ public class MethodPairTracker {
         if (PointcutRegistry.get(pointcutId).checkWhen(obj, args)) {
             AtomicInteger counter = counters.get(pointcutId);
             if (counter != null) {
-                counter.incrementAndGet();
-                anyActivity = true;
-                log.log(Level.FINE, "Active: {0}: Started: {1}", new Object[]{getActiveTasks(), method});
+                int active;
+                synchronized (lock) {
+                    active = counter.incrementAndGet();
+                    anyActivity = true;
+                }
+                log.log(Level.FINE, "Active: {0}: Started: {1}", new Object[]{active, method});
             }
         }
     }
@@ -121,7 +131,8 @@ public class MethodPairTracker {
      * Decrements the shared counter associated with the given pointcut ID.
      *
      * <p>Invoked by {@link MethodPairExitAdvice}. If the total number of active tasks
-     * across all pairs drops to zero, it notifies any threads blocked in {@link #waitCompletion()}.</p>
+     * across all pairs drops to zero, it notifies any threads blocked in
+     * {@link #awaitAndCheckActivity()}.</p>
      *
      * @param pointcutId the unique ID for pointcut settings and counter lookup.
      * @param obj        the target object instance.
@@ -131,36 +142,43 @@ public class MethodPairTracker {
     public static void endTask(int pointcutId, Object obj, Method method, Object[] args) {
         if (PointcutRegistry.get(pointcutId).checkWhen(obj, args)) {
             AtomicInteger counter = counters.get(pointcutId);
-            if (counter != null && counter.get() > 0) {
-                counter.decrementAndGet();
-                log.log(Level.FINE, "Active: {0}: Ended: {1}", new Object[]{getActiveTasks(), method});
-                if (getActiveTasks() == 0) {
-                    synchronized (lock) {
-                        lock.notifyAll();
+            if (counter != null) {
+                boolean completed = false;
+                synchronized (lock) {
+                    if (counter.get() > 0) {
+                        counter.decrementAndGet();
+                        completed = true;
+                        if (getActiveTasks() == 0) {
+                            lock.notifyAll();
+                        }
                     }
+                }
+                if (completed) {
+                    log.log(Level.FINE, "Active: {0}: Ended: {1}",
+                            new Object[]{getActiveTasks(), method});
                 }
             }
         }
     }
 
     /**
-     * Blocks the calling thread until the total number of active paired tasks reaches zero.
+     * Blocks the calling thread until the total number of active paired tasks reaches zero,
+     * then atomically takes the activity accumulated since {@link #reset()} or the previous
+     * call.
      *
-     * <p>Uses a polled wait (1ms) within a synchronized block to ensure visibility
-     * of counter updates and prevent potential race conditions.</p>
-     *
+     * @return {@code true} if at least one paired chain was started during the window
      * @throws InterruptedException if the thread is interrupted while waiting.
      */
-    public static void waitCompletion() throws InterruptedException {
-        log.log(Level.FINE, "WaitCompletion, active: {0}", new Object[]{getActiveTasks()});
-        anyActivity = false;
-        if (getActiveTasks() > 0) {
-            synchronized (lock) {
-                while (getActiveTasks() > 0) {
-                    lock.wait();
-                }
-                log.log(Level.FINE, "WaitCompletion, active: {0}", new Object[]{getActiveTasks()});
+    public static boolean awaitAndCheckActivity() throws InterruptedException {
+        synchronized (lock) {
+            while (getActiveTasks() > 0) {
+                lock.wait();
             }
+            boolean activity = anyActivity;
+            anyActivity = false;
+            log.log(Level.FINE, "WaitCompletion, active: {0}, activity: {1}",
+                    new Object[]{getActiveTasks(), activity});
+            return activity;
         }
     }
 }

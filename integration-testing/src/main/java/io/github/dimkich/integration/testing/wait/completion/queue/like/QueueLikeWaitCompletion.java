@@ -71,36 +71,32 @@ public class QueueLikeWaitCompletion implements WaitCompletion, InstrumentationP
     }
 
     /**
-     * Start is a no-op for this strategy as tracking begins automatically
-     * via Advice when matching types are instantiated.
+     * Resets the activity flag; service tracking itself starts automatically via advice when
+     * matching types are instantiated.
      */
     @Override
     public void start() {
-    }
-
-    /**
-     * Indicates whether any tracked service currently reports a non-zero task count.
-     *
-     * @return {@code true} if the aggregate count of pending tasks is greater than 0.
-     */
-    @Override
-    public boolean isAnyTaskStarted() {
-        return QueueLikeTracker.getCount(false) > 0;
+        QueueLikeTracker.resetActivity();
     }
 
     /**
      * Blocks the calling thread by polling the total pending task count across all
-     * registered services until it reaches zero.
+     * registered services until it reaches zero, then atomically takes the activity flag.
      *
      * <p>It uses a 1ms sleep interval between polls to minimize CPU overhead while
      * maintaining high responsiveness to task completion.</p>
+     *
+     * @return {@code true} if a service was registered or a non-empty queue was observed
      */
     @Override
     @SneakyThrows
-    public void waitCompletion() {
+    @SuppressWarnings("BusyWait")
+    public boolean awaitAndCheckActivity() {
         while (QueueLikeTracker.getCount(true) > 0) {
             Thread.sleep(1);
         }
-        log.debug("All queue-like objects are empty");
+        boolean activity = QueueLikeTracker.takeActivity();
+        log.debug("All queue-like objects are empty, activity: {}", activity);
+        return activity;
     }
 }

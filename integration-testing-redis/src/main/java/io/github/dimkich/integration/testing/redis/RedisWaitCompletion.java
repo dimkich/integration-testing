@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.redis;
 
 import io.github.dimkich.integration.testing.redis.config.RedisProperties;
+import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
 import io.github.dimkich.integration.testing.redis.replication.RedisSyncBarrier;
 import io.github.dimkich.integration.testing.redis.replication.RedisSyncState;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletion;
@@ -15,8 +16,10 @@ import lombok.RequiredArgsConstructor;
  * are captured before assertions).
  * <p>
  * One instance is registered per configured connection
- * ({@link io.github.dimkich.integration.testing.redis.config.RedisConfig}). The waiting happens
- * in {@link #waitCompletion()}; there is no per-test state to reset in {@link #start()}.
+ * ({@link io.github.dimkich.integration.testing.redis.config.RedisConfig}). {@link #start()}
+ * resets the activity sensor of the connection's in-memory mirror; the actual waiting happens
+ * in {@link #awaitAndCheckActivity()}, which pumps the barrier and then atomically takes the
+ * activity accumulated since {@link #start()} or the previous step.
  * <p>
  * The SUT processes published messages asynchronously; tests must explicitly await the SUT
  * side (for example with a facade) before asserting on it, the barrier only guarantees that
@@ -26,21 +29,26 @@ import lombok.RequiredArgsConstructor;
 public class RedisWaitCompletion implements WaitCompletion {
     private final RedisSyncState state;
     private final RedisSyncBarrier barrier;
+    private final RedisInMemoryStore store;
     private final RedisProperties properties;
 
-    /** No per-test state: synchronization happens in {@link #waitCompletion()}. */
+    /** Resets the activity sensor of the connection before a new test. */
     @Override
     public void start() {
+        store.resetActivity();
     }
 
+    /**
+     * Pumps the replication barrier (so the local mirror is complete) and takes the activity
+     * of the commands applied since the previous step.
+     *
+     * @return {@code true} if the application changed at least one key or published a message
+     */
     @Override
-    public boolean isAnyTaskStarted() {
-        return false;
-    }
-
-    @Override
-    public void waitCompletion() {
+    public boolean awaitAndCheckActivity() {
         state.awaitActive(properties.getSyncBarrierTimeoutMs());
         barrier.triggerAndAwait(properties.getSyncBarrierTimeoutMs());
+        state.throwFatalError();
+        return store.takeActivity();
     }
 }

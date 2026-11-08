@@ -8,10 +8,12 @@ import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +29,36 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class KafkaAdminRepository implements KafkaStateChecker {
     private final AdminClient adminClient;
+
+    /**
+     * Activity observed as broker end-offset growth between two {@link #checkLag()} calls.
+     */
+    private final AtomicBoolean activity = new AtomicBoolean();
+
+    /**
+     * End offsets of the previous {@link #checkLag()} call. Deliberately kept across test
+     * boundaries so the first check after a test sees the offsets produced by that test.
+     */
+    private volatile Map<TopicPartition, Long> previousEndOffsets = Map.of();
+
+    /**
+     * Clears only the activity flag of the previous window. The end-offset baseline is kept
+     * so a new test still detects messages produced since the last check.
+     */
+    @Override
+    public void reset() {
+        activity.set(false);
+    }
+
+    /**
+     * Atomically takes and clears the activity flag.
+     *
+     * @return {@code true} if any broker end offset increased between checks
+     */
+    @Override
+    public boolean takeActivity() {
+        return activity.getAndSet(false);
+    }
 
     /**
      * @return {@code true} when every consumer group is in a state that
@@ -227,11 +259,13 @@ public class KafkaAdminRepository implements KafkaStateChecker {
                 .collect(Collectors.toMap(tp -> tp, tp -> OffsetSpec.latest()));
 
         if (endOffsetsReq.isEmpty()) {
+            previousEndOffsets = Map.of();
             return new LagCheckResult(false, Set.of());
         }
 
         Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets =
                 adminClient.listOffsets(endOffsetsReq).all().get();
+        recordOffsetGrowth(endOffsets);
 
         List<ConsumerGroupListing> liveGroups = adminClient.listConsumerGroups().all().get().stream()
                 .filter(g -> {
@@ -267,6 +301,31 @@ public class KafkaAdminRepository implements KafkaStateChecker {
         }
 
         return new LagCheckResult(hasLag, endOffsetsReq.keySet());
+    }
+
+    /**
+     * Compares the freshly read broker end offsets with the previous check and marks
+     * activity when any partition grew. A partition seen for the first time establishes
+     * the baseline without being treated as activity, so the very first check after a
+     * context start does not invent a cascade.
+     *
+     * @param endOffsets end offsets returned by the Admin API for the current check
+     */
+    private void recordOffsetGrowth(Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets) {
+        Map<TopicPartition, Long> current = new HashMap<>();
+        endOffsets.forEach((tp, info) -> current.put(tp, info.offset()));
+        boolean grew = false;
+        for (Map.Entry<TopicPartition, Long> entry : current.entrySet()) {
+            Long previous = previousEndOffsets.get(entry.getKey());
+            if (previous != null && entry.getValue() > previous) {
+                grew = true;
+                break;
+            }
+        }
+        previousEndOffsets = current;
+        if (grew) {
+            activity.set(true);
+        }
     }
 
     @Override

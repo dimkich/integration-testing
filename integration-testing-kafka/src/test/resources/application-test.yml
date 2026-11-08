@@ -257,6 +257,31 @@ integration:
               deserializer:
                 type: string
 
+            "misc-cascade-in":
+              serializer:
+                key:
+                  type: string
+                value:
+                  type: string
+                headers:
+                  type: string
+            "misc-cascade-mid":
+              deserializer:
+                key:
+                  type: string
+                value:
+                  type: string
+                headers:
+                  type: string
+            "misc-cascade-out":
+              deserializer:
+                key:
+                  type: string
+                value:
+                  type: string
+                headers:
+                  type: string
+
             "misc-cold-start":
               serializer:
                 type: spring-json

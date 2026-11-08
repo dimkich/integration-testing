@@ -6,6 +6,7 @@ import org.apache.kafka.common.TopicPartition;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -66,6 +67,13 @@ public class ClusterState {
     private final TransactionTracker transactionTracker = new TransactionTracker();
 
     /**
+     * Activity sensor of the cluster: set by every message send, commit and acknowledged
+     * offset recorded by the in-flight interceptors. Taken atomically by the wait completion
+     * after the lag has drained.
+     */
+    private final AtomicBoolean activity = new AtomicBoolean();
+
+    /**
      * Assignment snapshots of the consumers observed on this cluster, used by the
      * wait completion to answer group readiness without contacting the broker.
      */
@@ -89,6 +97,7 @@ public class ClusterState {
      * @param partition the explicit partition or {@code null} when the producer chooses
      */
     public void onSend(String topic, Integer partition) {
+        activity.set(true);
         pendingSends.increment(topic);
         if (partition != null) {
             offsets.recordSeenPartition(new TopicPartition(topic, partition));
@@ -103,6 +112,7 @@ public class ClusterState {
      * @param offset the committed offset
      */
     public void onCommit(String groupId, TopicPartition tp, long offset) {
+        activity.set(true);
         offsets.recordCommit(groupId, tp, offset);
     }
 
@@ -120,6 +130,7 @@ public class ClusterState {
      * @param offset the acknowledged offset (exclusive end becomes {@code offset + 1})
      */
     public void recordEndOffset(TopicPartition tp, long offset) {
+        activity.set(true);
         offsets.recordEndOffset(tp, offset);
     }
 
@@ -229,9 +240,9 @@ public class ClusterState {
         assignments.remove(groupId, consumer);
     }
 
-    /** {@code true} if the group has a registered subscription. */
-    public boolean hasGroup(String groupId) {
-        return subscriptions.hasGroup(groupId);
+    /** {@code true} if the group has no registered subscription. */
+    public boolean isGroupMissing(String groupId) {
+        return !subscriptions.hasGroup(groupId);
     }
 
     /** All groups that currently have at least one subscription. */
@@ -394,6 +405,15 @@ public class ClusterState {
                 + "], " + offsets.describe();
     }
 
+    /**
+     * Atomically takes and clears the activity observed since the last reset.
+     *
+     * @return {@code true} if a message send, commit or acknowledged offset was observed
+     */
+    public boolean takeActivity() {
+        return activity.getAndSet(false);
+    }
+
     // ----------------------------------------------------------------
     // Lifecycle
     // ----------------------------------------------------------------
@@ -422,5 +442,6 @@ public class ClusterState {
         pendingSends.clear();
         subscriptions.clearPatternCache();
         transactionTracker.clear();
+        activity.set(false);
     }
 }

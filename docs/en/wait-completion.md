@@ -40,14 +40,40 @@ code. The framework "injects" invisible sensors into them that track the lifecyc
 * **Garbage Collector Friendly:** The use of **WeakReferences** ensures that monitoring objects does not lead to memory
   leaks or prevent the natural cleanup of resources in the application.
 
-### How it Works (Briefly)
+### How it Works: the Convergence Loop
 
-The system consists of a set of specialized wait strategies. When a test starts, the **WaitCompletionManager** scans the
-annotations on the test class. Each annotation is a contract that says: *"Treat everything that falls under this
-Pointcut as asynchronous work."*  
-During the test execution, the framework keeps track of all "open" tasks. When the test reaches the verification phase,
-it invokes the `waitCompletion()` method, which blocks the test thread until the internal counters and activity
-indicators show that the application has fully reached a state of rest.
+The system consists of a set of specialized wait strategies. When a test starts,
+`WaitCompletionList` collects every strategy active for the current context (core trackers,
+Kafka, Redis, etc.). Each strategy implements two independent invariants:
+
+* **Local quiescence:** block until the subsystem has no unfinished work (the in-flight
+  counter is above zero, the queue is not empty, the Kafka lag is not drained, the Redis
+  replication barrier has not been passed).
+* **Activity sensor:** an atomic flag that records whether at least one useful event passed
+  through the subsystem during the current window.
+
+Lifecycle:
+
+1. `start()` is called before the test action (and before test initialization). It only
+   resets counters, accumulated errors and activity flags and never blocks.
+2. `awaitAndCheckActivity()` is called by the coordinator in a loop. Every step dispatches the
+   method of **all** strategies strictly in parallel on a pool sized to the number of
+   strategies: the duration of a step is the slowest subsystem rather than the sum. When a
+   step finishes, every strategy atomically returns and clears its accumulated flag.
+3. If at least one strategy reported activity, the coordinator runs another step for all
+   subsystems: an event in one subsystem may have caused a cascade in another (for example, a
+   Kafka consumer wrote to Redis, and that triggered a background application handler).
+4. If every strategy returns `false`, global quiescence is reached and the test proceeds to
+   assertions.
+
+The activity window is not tied to absolute time: it opens in `start()` and reopens on every
+return from `awaitAndCheckActivity()`. Thanks to the atomic read-and-reset, an event that
+happens while a step is running is never lost and always makes the coordinator run one more
+step.
+
+Any infrastructure error (a Kafka wait timeout, a dead Redis replicator) breaks the loop
+immediately and is propagated to the test thread unchanged instead of waiting for the global
+test timeout.
 
 *** ** * ** ***
 

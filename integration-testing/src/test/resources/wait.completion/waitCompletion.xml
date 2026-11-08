@@ -481,4 +481,34 @@
             </response>
         </test>
     </test>
+    <test type="Container" name="cascade">
+        <test type="Case" name="activity re-runs the stabilization loop">
+            <bean>reflection</bean>
+            <method>invokeWithRounds</method>
+            <request type="ArrayList">
+                <item type="Method">
+                    <cls>FutureLike1</cls>
+                    <method>await</method>
+                </item>
+            </request>
+            <request type="Integer">1</request>
+            <response type="ArrayList">
+                <response>LoopProbe.steps = 2</response>
+            </response>
+        </test>
+        <test type="Case" name="future-like await starts a method-counted task">
+            <bean>reflection</bean>
+            <method>create</method>
+            <request type="ArrayList">
+                <item type="Class">FutureLike8</item>
+            </request>
+            <response type="ArrayList">
+                <response>FutureLike8#await</response>
+                <response>FutureLike8Task#method (count = 1)</response>
+                <response>FutureLikeTracker.activeTasks = 0</response>
+                <response>MethodCountingTracker.activeTasks = 0</response>
+                <response>MethodPairTracker.activeTasks = 0</response>
+            </response>
+        </test>
+    </test>
 </test>

@@ -1815,6 +1815,32 @@ b25UZXN0RHRv</__TypeId__>
                 <value>delayed message</value>
             </outboundMessage>
         </test>
+        <test type="Case" name="Two-hop cascade">
+            <inboundMessage type="KafkaRecord" connection="kafka1" topic="misc-cascade-in">
+                <key>misc-cascade-1</key>
+                <value>cascade</value>
+            </inboundMessage>
+            <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-cascade-mid">
+                <key>misc-cascade-1</key>
+                <value>cascade-mid</value>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="kafka1" topic="misc-cascade-out">
+                <key>misc-cascade-1</key>
+                <value>cascade-mid-out</value>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-cascade-in">
+                <key>misc-cascade-1</key>
+                <value>cascade</value>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-cascade-mid">
+                <key>misc-cascade-1</key>
+                <value>cascade-mid</value>
+            </outboundMessage>
+            <outboundMessage type="KafkaRecord" connection="monitor" topic="misc-cascade-out">
+                <key>misc-cascade-1</key>
+                <value>cascade-mid-out</value>
+            </outboundMessage>
+        </test>
         <test type="Case" name="Cold Start">
             <inboundMessage type="KafkaRecord" connection="kafka1" topic="misc-cold-start">
                 <key>misc-cold-1</key>

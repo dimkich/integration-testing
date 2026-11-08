@@ -29,8 +29,8 @@ import static org.springframework.core.annotation.AnnotatedElementUtils.findMerg
  *       are resolved and linked to a single shared counter.</li>
  *   <li><b>Conditional Tracking:</b> Separate "when" conditions can be applied to both
  *       the start and end points of the pair.</li>
- *   <li><b>State Management:</b> The test thread blocks until the shared counter for
- *       all registered pairs returns to zero.</li>
+ *   <li><b>State Management:</b> The coordinator step blocks until the shared counter for
+ *       all registered pairs returns to zero and takes the activity flag.</li>
  * </ul>
  *
  * @see MethodPairAwait
@@ -81,24 +81,14 @@ public class MethodPairWaitCompletion implements WaitCompletion, Instrumentation
     }
 
     /**
-     * Indicates whether any tracked method pair activity has been detected
-     * since the last {@link #start()} or {@link #waitCompletion()} call.
+     * Blocks until all tracked method-pair activities are completed and returns whether
+     * at least one chain was started since {@link #start()} or the previous call.
      *
-     * @return {@code true} if at least one start method of a pair was invoked; otherwise {@code false}.
-     */
-    @Override
-    public boolean isAnyTaskStarted() {
-        return MethodPairTracker.isAnyActivity();
-    }
-
-    /**
-     * Blocks the current thread until all tracked method-pair activities are completed.
-     * <p>Delegates the waiting logic to {@link MethodPairTracker#waitCompletion()},
-     * which blocks until the sum of all paired counters reaches zero.</p>
+     * @return {@code true} if at least one start method of a pair was invoked during the window
      */
     @Override
     @SneakyThrows
-    public void waitCompletion() {
-        MethodPairTracker.waitCompletion();
+    public boolean awaitAndCheckActivity() {
+        return MethodPairTracker.awaitAndCheckActivity();
     }
 }

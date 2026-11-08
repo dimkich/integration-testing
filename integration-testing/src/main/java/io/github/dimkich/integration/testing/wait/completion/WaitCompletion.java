@@ -1,39 +1,42 @@
 package io.github.dimkich.integration.testing.wait.completion;
 
 /**
- * Abstraction for waiting until asynchronous tasks are completed.
+ * Abstraction for synchronizing a test with asynchronous work of one subsystem.
  * <p>
- * Typical usage:
+ * The lifecycle is driven by {@link WaitCompletionList}:
  * <ol>
- *   <li>Call {@link #start()} before the asynchronous work is triggered.</li>
- *   <li>Optionally check {@link #isAnyTaskStarted()} to see if anything has begun.</li>
- *   <li>Call {@link #waitCompletion()} to block until all tasks are finished.</li>
+ *   <li>{@link #start()} is called before the test action (or before test initialization).
+ *       It only resets accumulated errors and activity flags and must not block.</li>
+ *   <li>{@link #awaitAndCheckActivity()} is called repeatedly in a stabilization loop: all
+ *       registered subsystems are awaited in parallel, and the loop repeats while at least
+ *       one of them reports activity.</li>
  * </ol>
+ * Activity is measured as a window between coordinator phases: {@link #start()} opens the
+ * first window, and every {@link #awaitAndCheckActivity()} call atomically returns the
+ * activity accumulated since {@link #start()} or since the previous return and opens a new
+ * window. An event that arrives while a step is running is therefore never lost: it is
+ * reported by the next call and makes the coordinator run another stabilization step.
  */
 public interface WaitCompletion {
 
     /**
      * Marks the beginning of the waiting lifecycle.
      * <p>
-     * Implementations may use this to start tracking asynchronous tasks or register
-     * listeners that will be awaited in {@link #waitCompletion()}. This method must
-     * not block waiting for external readiness (started consumers, connections and
-     * the like): all waiting belongs to {@link #waitCompletion()}.
+     * Implementations reset their counters, accumulated errors and primary activity flags.
+     * This method must not block waiting for external readiness (started consumers,
+     * connections and the like): all waiting belongs to {@link #awaitAndCheckActivity()}.
      */
     void start();
 
     /**
-     * Indicates whether at least one asynchronous task has been started.
-     *
-     * @return {@code true} if any task has started and is being tracked, {@code false} otherwise
-     */
-    boolean isAnyTaskStarted();
-
-    /**
-     * Blocks the current thread until all tracked asynchronous tasks are completed.
+     * Blocks the current thread until the subsystem reaches local quiescence and atomically
+     * takes the activity accumulated since {@link #start()} or the previous return.
      * <p>
-     * Implementations should guarantee that after this method returns,
-     * there are no pending tasks associated with this instance.
+     * Implementations fail fast on infrastructure errors (a wait timeout, a dead replicator)
+     * and are free to use {@code @SneakyThrows} for checked interrupts.
+     *
+     * @return {@code true} if the subsystem observed activity in the current window,
+     *         {@code false} if it was in absolute rest
      */
-    void waitCompletion();
+    boolean awaitAndCheckActivity();
 }

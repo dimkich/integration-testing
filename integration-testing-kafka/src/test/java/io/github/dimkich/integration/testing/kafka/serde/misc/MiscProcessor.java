@@ -53,6 +53,29 @@ public class MiscProcessor {
                 .build());
     }
 
+    @KafkaListener(topics = "misc-cascade-in", groupId = "misc-cascade-in-group",
+            containerFactory = "textListenerContainerFactory")
+    public void listenCascadeIn(@Payload String text,
+                                @Header(KafkaHeaders.RECEIVED_KEY) String key) {
+        log.debug("listenCascadeIn: received [key={}, text={}]", key, text);
+        textKafkaTemplate.send(MessageBuilder.withPayload(text + "-mid")
+                .setHeader(KafkaHeaders.TOPIC, "misc-cascade-mid")
+                .setHeader(KafkaHeaders.KEY, key)
+                .build());
+    }
+
+    @KafkaListener(topics = "misc-cascade-mid", groupId = "misc-cascade-out-group",
+            containerFactory = "textListenerContainerFactory")
+    public void listenCascadeMid(@Payload String text,
+                                 @Header(KafkaHeaders.RECEIVED_KEY) String key) throws InterruptedException {
+        log.debug("listenCascadeMid: received [key={}, text={}]", key, text);
+        Thread.sleep(300);
+        textKafkaTemplate.send(MessageBuilder.withPayload(text + "-out")
+                .setHeader(KafkaHeaders.TOPIC, "misc-cascade-out")
+                .setHeader(KafkaHeaders.KEY, key)
+                .build());
+    }
+
     @KafkaListener(
             topicPartitions = @TopicPartition(topic = "misc-assign", partitions = "0"),
             groupId = "misc-assign-group",

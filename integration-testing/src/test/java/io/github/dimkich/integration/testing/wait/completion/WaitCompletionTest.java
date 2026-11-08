@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -37,6 +38,7 @@ import static io.github.dimkich.integration.testing.wait.completion.WaitCompleti
         "&& m.ann('" + FL + ".FutureLike5Ann')", awaitConsumer = FutureLike5Consumer.class)
 @FutureLikeAwait(pointcut = "t.name('" + FL + ".FutureLike6') && m.name('create')", await = "o.call('await')")
 @FutureLikeAwait(pointcut = "t.name('" + FL + ".FutureLike7') && m.name('create')", await = "o.call('await')")
+@FutureLikeAwait(pointcut = "t.name('" + FL + ".FutureLike8') && m.isConstructor()", await = "o.call('await')")
 @MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting1') && m.name('method')",
         when = "o.isSameClass(" + MC + ".MethodCounting1.class)")
 @MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting2') && m.name('method')")
@@ -45,6 +47,7 @@ import static io.github.dimkich.integration.testing.wait.completion.WaitCompleti
 @MethodCountingAwait(pointcut = "t.packageStartsWith('" + MC + "') && m.ann('" + MC + ".MethodCounting4Ann')")
 @MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting51') && m.name('method')")
 @MethodCountingAwait(pointcut = "t.name('" + MC + ".MethodCounting61') && m.name('method')")
+@MethodCountingAwait(pointcut = "t.name('" + FL + ".FutureLike8Task') && m.name('method')")
 @MethodPairAwait(startPointcut = "t.name('" + MP + ".MethodPair1') && m.name('method')",
         startWhen = "o.isSameClass(" + MP + ".MethodPair1Child1.class)",
         endPointcut = "t.name('" + MP + ".MethodPair1') && m.name('method')",
@@ -90,12 +93,18 @@ public class WaitCompletionTest {
         TestSetupModule module() {
             return new TestSetupModule().addSubTypes(Method.class).addSubTypes(pkg);
         }
+
+        @Bean
+        LoopProbe loopProbe() {
+            return new LoopProbe();
+        }
     }
 
     @RequiredArgsConstructor
     @Component(value = "reflection")
     public static class Reflection {
         private final WaitCompletionList waitCompletionList;
+        private final LoopProbe loopProbe;
 
         public List<String> create(List<Class<?>> classes) throws Exception {
             return invoke(() -> {
@@ -105,6 +114,7 @@ public class WaitCompletionTest {
             });
         }
 
+        @SuppressWarnings("UnusedReturnValue")
         public List<String> invoke(List<Method> methods) throws Exception {
             return invoke(() -> {
                 for (Method method : methods) {
@@ -132,6 +142,20 @@ public class WaitCompletionTest {
             result.add("MethodPairTracker.activeTasks = " + MethodPairTracker.getActiveTasks());
             System.gc();
             return result;
+        }
+
+        /**
+         * Runs the given methods with a probe that reports activity for {@code rounds}
+         * stabilization steps and returns the number of steps the coordinator performed.
+         */
+        public List<String> invokeWithRounds(List<Method> methods, int rounds) throws Exception {
+            loopProbe.setRounds(rounds);
+            try {
+                invoke(methods);
+                return new ArrayList<>(List.of("LoopProbe.steps = " + loopProbe.getSteps()));
+            } finally {
+                loopProbe.setRounds(0);
+            }
         }
     }
 

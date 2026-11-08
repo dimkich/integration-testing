@@ -68,7 +68,7 @@ class KafkaWaitCompletionTest {
         when(kafkaProperties.getConnection("kafka1")).thenReturn(first);
         when(kafkaProperties.getConnection("monitor")).thenReturn(second);
 
-        waitCompletion.waitCompletion();
+        waitCompletion.awaitAndCheckActivity();
 
         ArgumentCaptor<Set<String>> captor = ArgumentCaptor.forClass(Set.class);
         verify(stateChecker, atLeast(1)).areExpectedGroupsReady(captor.capture());
@@ -82,7 +82,7 @@ class KafkaWaitCompletionTest {
         when(stateChecker.areExpectedGroupsReady(any())).thenReturn(false);
         when(stateChecker.checkLag()).thenReturn(new LagCheckResult(false, Set.of(PARTITION)));
 
-        assertThatThrownBy(() -> waitCompletion.waitCompletion())
+        assertThatThrownBy(() -> waitCompletion.awaitAndCheckActivity())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("expected consumer groups are not ready")
                 .hasMessageContaining("g1=missing");
@@ -94,7 +94,7 @@ class KafkaWaitCompletionTest {
         when(sniffer.getAssignment()).thenReturn(Collections.emptySet());
         when(stateChecker.checkLag()).thenReturn(new LagCheckResult(false, Set.of(PARTITION)));
 
-        assertThatThrownBy(() -> waitCompletion.waitCompletion())
+        assertThatThrownBy(() -> waitCompletion.awaitAndCheckActivity())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("sniffer is not assigned to all partitions");
         verify(sniffer, atLeast(1)).signalMetadataNeedsRefresh();
@@ -105,7 +105,7 @@ class KafkaWaitCompletionTest {
         when(kafkaProperties.getLagPollingTimeoutMs()).thenReturn(30L);
         when(stateChecker.checkLag()).thenReturn(new LagCheckResult(true, Set.of(PARTITION)));
 
-        assertThatThrownBy(() -> waitCompletion.waitCompletion())
+        assertThatThrownBy(() -> waitCompletion.awaitAndCheckActivity())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Kafka wait completion timeout. Unprocessed messages remaining on broker.");
     }
@@ -115,7 +115,7 @@ class KafkaWaitCompletionTest {
         RuntimeException error = new RuntimeException("sniffer failed");
         when(sniffer.getLastException()).thenReturn(error);
 
-        assertThatThrownBy(() -> waitCompletion.waitCompletion()).isSameAs(error);
+        assertThatThrownBy(() -> waitCompletion.awaitAndCheckActivity()).isSameAs(error);
     }
 
     @Test
@@ -124,7 +124,7 @@ class KafkaWaitCompletionTest {
         when(stateChecker.areExpectedGroupsReady(any())).thenReturn(false, false, true);
         when(stateChecker.checkLag()).thenReturn(new LagCheckResult(false, Set.of(PARTITION)));
 
-        waitCompletion.waitCompletion();
+        waitCompletion.awaitAndCheckActivity();
 
         verify(stateChecker, atLeast(3)).areExpectedGroupsReady(any());
     }
@@ -135,26 +135,29 @@ class KafkaWaitCompletionTest {
         when(stateChecker.areAllConsumerGroupsStable(any())).thenReturn(false, false, true);
         when(stateChecker.checkLag()).thenReturn(new LagCheckResult(false, Set.of(PARTITION)));
 
-        waitCompletion.waitCompletion();
+        waitCompletion.awaitAndCheckActivity();
 
         verify(stateChecker, atLeast(3)).areAllConsumerGroupsStable(any());
     }
 
     @Test
-    void isAnyTaskStartedTrueAfterLagObserved() {
+    void activityIsReportedAfterLagObserved() {
         when(stateChecker.checkLag())
                 .thenReturn(new LagCheckResult(true, Set.of(PARTITION)), new LagCheckResult(false, Set.of(PARTITION)));
 
-        waitCompletion.waitCompletion();
-
-        assertThat(waitCompletion.isAnyTaskStarted()).isTrue();
+        assertThat(waitCompletion.awaitAndCheckActivity()).isTrue();
     }
 
     @Test
-    void isAnyTaskStartedFalseForCleanRun() {
-        waitCompletion.waitCompletion();
+    void activityIsFalseForCleanRun() {
+        assertThat(waitCompletion.awaitAndCheckActivity()).isFalse();
+    }
 
-        assertThat(waitCompletion.isAnyTaskStarted()).isFalse();
+    @Test
+    void checkerActivityIsReported() {
+        when(stateChecker.takeActivity()).thenReturn(true);
+
+        assertThat(waitCompletion.awaitAndCheckActivity()).isTrue();
     }
 
     private void connectionWithExpectedGroups(String... groups) {

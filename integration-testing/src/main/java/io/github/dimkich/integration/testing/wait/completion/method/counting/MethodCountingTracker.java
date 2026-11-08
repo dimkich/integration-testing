@@ -13,14 +13,22 @@ import java.util.logging.Logger;
  * and provides synchronization primitives for test execution.
  *
  * <p>This tracker maintains an atomic "in-flight" counter. When the counter reaches zero,
- * it signals any waiting threads that all background activities have completed.
- * It is primarily used by {@link MethodCountingAdvice} to report method lifecycle events.</p>
+ * it signals any waiting threads that all background activities have completed. The counter
+ * and the activity flag are mutated under the same monitor, so a task that registers while
+ * the test thread reads and resets the flag is either awaited or reported as activity; the
+ * event can never be lost between the quiescence check and the reset. It is primarily used
+ * by {@link MethodCountingAdvice} to report method lifecycle events.</p>
  *
  * <h3>Key Features:</h3>
  * <ul>
- *   <li><b>Atomic Counters:</b> Uses {@link AtomicInteger} to track tasks without heavy locking on every call.</li>
- *   <li><b>Conditional Tracking:</b> Evaluates the 'when' condition of a pointcut before incrementing/decrementing.</li>
- *   <li><b>Wait-Notify Mechanism:</b> Blocks the test thread efficiently until all concurrent tasks finish.</li>
+ *   <li><b>Atomic Counters:</b> Uses {@link AtomicInteger} to track tasks without heavy locking
+ *       on every call; the monitor is held only for a short increment/decrement.</li>
+ *   <li><b>Conditional Tracking:</b> Evaluates the 'when' condition of a pointcut before
+ *       incrementing/decrementing.</li>
+ *   <li><b>Activity Window:</b> The flag is set on task start and taken atomically after the
+ *       counter reaches zero, so a cascade that finished before the wait is still reported.</li>
+ *   <li><b>Wait-Notify Mechanism:</b> Blocks the test thread efficiently until all concurrent
+ *       tasks finish.</li>
  * </ul>
  *
  * @see MethodCountingAdvice
@@ -38,13 +46,13 @@ public class MethodCountingTracker {
     private static final AtomicInteger activeTasks = new AtomicInteger(0);
 
     /**
-     * Dedicated monitor object for coordinating {@link #waitCompletion()} and {@link #endTask(int, Object, Method, Object[])}.
+     * Dedicated monitor that guards counter transitions and the activity flag.
      */
     private static final Object lock = new Object();
 
     /**
-     * Flag indicating whether any tracked activity has been observed
-     * since the last {@link #reset()} or {@link #waitCompletion()} call.
+     * Flag indicating whether any tracked activity has been observed since the last
+     * {@link #reset()} or {@link #awaitAndCheckActivity()} call.
      */
     @Getter
     private static volatile boolean anyActivity;
@@ -55,8 +63,10 @@ public class MethodCountingTracker {
      * from previous tests affect the current results.</p>
      */
     public static void reset() {
-        activeTasks.set(0);
-        anyActivity = false;
+        synchronized (lock) {
+            activeTasks.set(0);
+            anyActivity = false;
+        }
     }
 
     /**
@@ -71,7 +81,8 @@ public class MethodCountingTracker {
      *
      * <p>Called by {@link MethodCountingAdvice#enter}. It retrieves the pointcut
      * settings and evaluates the dynamic 'when' condition. If the condition is met,
-     * the counter is incremented and the activity flag is set to {@code true}.</p>
+     * the counter is incremented and the activity flag is set to {@code true} under
+     * the monitor, so a concurrent {@link #awaitAndCheckActivity()} cannot miss it.</p>
      *
      * @param pointcutId the unique ID used to fetch settings from the {@link PointcutRegistry}.
      * @param obj        the target object of the intercepted method.
@@ -80,8 +91,11 @@ public class MethodCountingTracker {
      */
     public static void startTask(int pointcutId, Object obj, Method method, Object[] args) {
         if (PointcutRegistry.get(pointcutId).checkWhen(obj, args)) {
-            int count = activeTasks.incrementAndGet();
-            anyActivity = true;
+            int count;
+            synchronized (lock) {
+                count = activeTasks.incrementAndGet();
+                anyActivity = true;
+            }
             log.log(Level.FINE, "Active: {0}: Started: {1}", new Object[]{count, method});
         }
     }
@@ -100,37 +114,37 @@ public class MethodCountingTracker {
      */
     public static void endTask(int pointcutId, Object obj, Method method, Object[] args) {
         if (PointcutRegistry.get(pointcutId).checkWhen(obj, args)) {
-            int count = activeTasks.decrementAndGet();
-            log.log(Level.FINE, "Active: {0}: Ended: {1}", new Object[]{count, method});
-            if (count == 0) {
-                synchronized (lock) {
+            int count;
+            synchronized (lock) {
+                count = activeTasks.decrementAndGet();
+                if (count == 0) {
                     lock.notifyAll();
                 }
             }
+            log.log(Level.FINE, "Active: {0}: Ended: {1}", new Object[]{count, method});
         }
     }
 
     /**
-     * Blocks the calling thread until there are no active (in-flight) tasks.
+     * Blocks the calling thread until there are no active (in-flight) tasks, then atomically
+     * takes the activity accumulated since {@link #reset()} or the previous call.
      *
-     * <p>This method implements a wait loop. It checks the {@link #activeTasks} counter
-     * within a {@code synchronized} block. If the counter is greater than zero,
-     * it enters a {@code wait(1)} state, waking up either on notification
-     * from {@link #endTask} or after a 1ms timeout (to prevent potential deadlocks
-     * due to missed notifications or race conditions during counter transitions).</p>
+     * <p>The wait and the flag reset are performed under the same monitor that guards task
+     * registration, so no event can slip between the quiescence check and the reset.</p>
      *
+     * @return {@code true} if at least one tracked method was invoked during the window
      * @throws InterruptedException if the thread is interrupted while waiting.
      */
-    public static void waitCompletion() throws InterruptedException {
-        log.log(Level.FINE, "WaitCompletion, active: {0}", new Object[]{activeTasks.get()});
-        anyActivity = false;
-        if (activeTasks.get() > 0) {
-            synchronized (lock) {
-                while (activeTasks.get() > 0) {
-                    lock.wait();
-                }
-                log.log(Level.FINE, "WaitCompletion, active: {0}", new Object[]{activeTasks.get()});
+    public static boolean awaitAndCheckActivity() throws InterruptedException {
+        synchronized (lock) {
+            while (activeTasks.get() > 0) {
+                lock.wait();
             }
+            boolean activity = anyActivity;
+            anyActivity = false;
+            log.log(Level.FINE, "WaitCompletion, active: {0}, activity: {1}",
+                    new Object[]{activeTasks.get(), activity});
+            return activity;
         }
     }
 }
