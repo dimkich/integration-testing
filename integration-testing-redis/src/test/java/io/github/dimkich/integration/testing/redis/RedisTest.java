@@ -45,7 +45,7 @@ public class RedisTest {
     );
 
     @TestFactory
-    Stream<DynamicNode> tests() throws Exception {
+    Stream<DynamicNode> tests() {
         return dynamicTestBuilder.build("redis.xml"
 //                ,List.of("redis operations", "redis expiration")
         );

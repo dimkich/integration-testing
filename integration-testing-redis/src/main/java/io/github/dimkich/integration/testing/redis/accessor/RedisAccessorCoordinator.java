@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.redis.accessor;
 
 import io.github.dimkich.integration.testing.date.time.DateTimeService;
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.model.RedisEntry;
 import io.github.dimkich.integration.testing.redis.model.RedisValue;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
@@ -9,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.redis.connection.RedisConnection;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  * Routes test data values to the appropriate {@link RedisDataAccessor} and writes them through a
- * {@link RedisConnection}.
+ * {@link RedisPipeline}.
  * <p>
  * At startup, all injected {@link RedisDataAccessor} beans are indexed by
  * {@link RedisDataAccessor#getSupportedClass()}. Values that are not a {@link RedisValue} subtype
@@ -45,20 +45,20 @@ public class RedisAccessorCoordinator {
     /**
      * Stores a key-value pair in Redis using the accessor that matches the value type.
      *
-     * @param keyRaw encoded Redis key
-     * @param value  {@link RedisEntry}, a {@link RedisValue}, or a plain object for string storage
-     * @param conn   connection used for writes
-     * @param schema codecs and metadata for key/value encoding
+     * @param keyRaw   encoded Redis key
+     * @param value    {@link RedisEntry}, a {@link RedisValue}, or a plain object for string storage
+     * @param pipeline pipeline used for writes
+     * @param schema   codecs and metadata for key/value encoding
      */
-    public void store(byte[] keyRaw, Object value, RedisConnection conn, RedisDataSchema schema) {
+    public void store(byte[] keyRaw, Object value, RedisPipeline pipeline, RedisDataSchema schema) {
         if (value instanceof RedisEntry entry) {
-            findAndStore(keyRaw, entry.getData(), conn, schema);
+            findAndStore(keyRaw, entry.getData(), pipeline, schema);
             Instant expireInstant = entry.getExpireInstant(dateTimeService.getDateTime());
             if (expireInstant != null) {
-                conn.keyCommands().pExpireAt(keyRaw, expireInstant.toEpochMilli());
+                pipeline.pExpireAt(keyRaw, expireInstant.toEpochMilli());
             }
         } else {
-            findAndStore(keyRaw, value, conn, schema);
+            findAndStore(keyRaw, value, pipeline, schema);
         }
     }
 
@@ -66,7 +66,7 @@ public class RedisAccessorCoordinator {
      * Dispatches {@code data} to a typed accessor or {@link StringDataAccessor}; no-op when
      * {@code data} is {@code null}.
      */
-    private void findAndStore(byte[] key, Object data, RedisConnection conn, RedisDataSchema schema) {
+    private void findAndStore(byte[] key, Object data, RedisPipeline pipeline, RedisDataSchema schema) {
         if (data == null) {
             return;
         }
@@ -75,9 +75,9 @@ public class RedisAccessorCoordinator {
             if (accessor == null) {
                 throw new RuntimeException("No accessor registered for " + data.getClass());
             }
-            accessor.store(key, redisValue, conn, schema);
+            accessor.store(key, redisValue, pipeline, schema);
         } else {
-            stringDataAccessor.store(key, data, conn, schema);
+            stringDataAccessor.store(key, data, pipeline, schema);
         }
     }
 }

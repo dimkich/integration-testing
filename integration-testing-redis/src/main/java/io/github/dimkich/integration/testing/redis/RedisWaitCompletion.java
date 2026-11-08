@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
  * diffs are read from a caught-up mirror) and after the test action (so pushes and mutations
  * are captured before assertions).
  * <p>
- * One instance is registered per {@link org.springframework.data.redis.connection.RedisConnectionFactory}
+ * One instance is registered per configured connection
  * ({@link io.github.dimkich.integration.testing.redis.config.RedisConfig}). The waiting happens
  * in {@link #waitCompletion()}; there is no per-test state to reset in {@link #start()}.
  * <p>

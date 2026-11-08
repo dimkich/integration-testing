@@ -86,7 +86,7 @@ public @interface FutureLikeAwait {
      *
      * <p>The consumer receives the tracked instance and must block the thread until
      * the asynchronous operation is finished. Use this for complex scenarios
-     * (e.g., polling, multi-step checks, or using third-party APIs).</p>
+     * (e.g., polling, multistep checks, or using third-party APIs).</p>
      *
      * <p>The class must have a public no-args constructor.</p>
      */

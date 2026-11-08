@@ -1,8 +1,8 @@
 package io.github.dimkich.integration.testing.redis.accessor;
 
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.model.RedisSet;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
-import org.springframework.data.redis.connection.RedisConnection;
 
 /**
  * {@link RedisDataAccessor} that writes {@link RedisSet} values to Redis.
@@ -24,24 +24,20 @@ public class SetDataAccessor implements RedisDataAccessor<RedisSet> {
      * Empty sets only delete the key. Non-empty sets are stored with {@code SADD};
      * member order in the model is not preserved in Redis.
      *
-     * @param key    serialized Redis key
-     * @param data   set members to store
-     * @param conn   connection used for commands
-     * @param schema codec for set member values
+     * @param key      serialized Redis key
+     * @param data     set members to store
+     * @param pipeline pipeline used for commands
+     * @param schema   codec for set member values
      */
     @Override
-    public void store(byte[] key, RedisSet data, RedisConnection conn, RedisDataSchema schema) {
-        conn.keyCommands().del(key);
+    public void store(byte[] key, RedisSet data, RedisPipeline pipeline, RedisDataSchema schema) {
+        pipeline.del(key);
         if (data.isEmpty()) {
             return;
         }
         byte[][] raw = data.stream()
                 .map(schema.getValueCodec()::serialize)
                 .toArray(byte[][]::new);
-        if (conn.setCommands() == null) {
-            conn.sAdd(key, raw);
-        } else {
-            conn.setCommands().sAdd(key, raw);
-        }
+        pipeline.sAdd(key, raw);
     }
 }

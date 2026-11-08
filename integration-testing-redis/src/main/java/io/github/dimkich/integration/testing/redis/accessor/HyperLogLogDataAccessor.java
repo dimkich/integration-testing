@@ -1,8 +1,8 @@
 package io.github.dimkich.integration.testing.redis.accessor;
 
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.model.RedisHyperLogLog;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
-import org.springframework.data.redis.connection.RedisConnection;
 
 /**
  * {@link RedisDataAccessor} that writes {@link RedisHyperLogLog} values to Redis.
@@ -21,17 +21,17 @@ public class HyperLogLogDataAccessor implements RedisDataAccessor<RedisHyperLogL
     /**
      * Writes a HyperLogLog to Redis, replacing any existing value at {@code key}.
      * <p>
-     * Empty HyperLogLogs only delete the key. Non-empty values are stored with a single
+     * Empty HyperLogLogs only delete the key. Non-empty values are stored with
      * {@code PFADD} after serializing each element through the schema value codec.
      *
-     * @param key    serialized Redis key
-     * @param data   elements to add to the HyperLogLog
-     * @param conn   connection used for commands
-     * @param schema codecs for HyperLogLog element values
+     * @param key      serialized Redis key
+     * @param data     elements to add to the HyperLogLog
+     * @param pipeline pipeline used for commands
+     * @param schema   codecs for HyperLogLog element values
      */
     @Override
-    public void store(byte[] key, RedisHyperLogLog data, RedisConnection conn, RedisDataSchema schema) {
-        conn.keyCommands().del(key);
+    public void store(byte[] key, RedisHyperLogLog data, RedisPipeline pipeline, RedisDataSchema schema) {
+        pipeline.del(key);
         if (data.isEmpty()) {
             return;
         }
@@ -40,6 +40,6 @@ public class HyperLogLogDataAccessor implements RedisDataAccessor<RedisHyperLogL
                 .map(schema.getValueCodec()::serialize)
                 .toArray(byte[][]::new);
 
-        conn.hyperLogLogCommands().pfAdd(key, rawElements);
+        pipeline.pfAdd(key, rawElements);
     }
 }

@@ -1,28 +1,33 @@
 package io.github.dimkich.integration.testing.redis.replication.purge;
 
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.model.RedisKey;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaMetadata;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataCodec;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.connection.RedisConnection;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Per-database batch of keys and hash fields to delete when their in-memory TTL has expired.
  * <p>
  * When every field of a hash is scheduled for removal, the whole key is deleted with {@code DEL}
- * instead of individual {@code HDEL} calls. Commands are sent in batches of 500.
+ * instead of individual {@code HDEL} calls. Commands are queued into the pipeline as whole lists;
+ * the pipeline splits them into chunks and sends one batch.
+ * <p>
+ * Instances are single-use: {@link #execute} promotes expired hashes into key deletes and moves
+ * entries between its collections, so running the same task twice is not supported.
  */
 @RequiredArgsConstructor
 public class RedisDbPurgeTask {
-    /** Maximum number of keys or hash fields per pipelined command batch. */
-    private static final int BATCH_SIZE = 500;
-
     private final List<byte[]> keysToDel = new ArrayList<>();
-    private final Map<RedisKey, List<Object>> hashFieldsToDel = new HashMap<>();
-    private final Map<RedisKey, Integer> hashTotalSizes = new HashMap<>();
+    private final Map<RedisKey, List<Object>> hashFieldsToDel = new LinkedHashMap<>();
+    private final Map<RedisKey, Integer> hashTotalSizes = new LinkedHashMap<>();
 
     /** Queues a top-level key for {@code DEL} (already serialized with the connection key codec). */
     public void addKey(byte[] serializedKey) {
@@ -42,14 +47,16 @@ public class RedisDbPurgeTask {
     }
 
     /**
-     * Promotes full-hash deletes, then issues batched {@code DEL} and {@code HDEL} on {@code conn}.
+     * Promotes full-hash deletes, then queues {@code DEL} and {@code HDEL} commands for the rest.
+     * <p>
+     * Whole lists are handed to the pipeline, which splits them into command-sized chunks.
      *
-     * @param conn         open Redis connection (caller selects DB and pipeline)
-     * @param storageName  connection name for schema lookup
-     * @param registry     schema registry for hash-field serialization
-     * @param keyCodec     key codec for serializing logical keys to wire format
+     * @param pipeline    open pipeline (caller selects the database)
+     * @param storageName connection name for schema lookup
+     * @param registry    schema registry for hash-field serialization
+     * @param keyCodec    key codec for serializing logical keys to wire format
      */
-    public void execute(RedisConnection conn, String storageName, RedisDataSchemaRegistry registry,
+    public void execute(RedisPipeline pipeline, String storageName, RedisDataSchemaRegistry registry,
                         RedisDataCodec keyCodec) {
 
         Iterator<Map.Entry<RedisKey, List<Object>>> iterator = hashFieldsToDel.entrySet().iterator();
@@ -63,9 +70,8 @@ public class RedisDbPurgeTask {
             }
         }
 
-        for (int i = 0; i < keysToDel.size(); i += BATCH_SIZE) {
-            List<byte[]> batch = keysToDel.subList(i, Math.min(i + BATCH_SIZE, keysToDel.size()));
-            conn.keyCommands().del(batch.toArray(new byte[0][]));
+        if (!keysToDel.isEmpty()) {
+            pipeline.del(keysToDel.toArray(new byte[0][]));
         }
 
         hashFieldsToDel.forEach((rootKey, fields) -> {
@@ -73,14 +79,11 @@ public class RedisDbPurgeTask {
             RedisDataCodec fieldCodec = schemaInfo.getSchema().getHashKeyCodec();
             byte[] rootKeyRaw = keyCodec.serialize(rootKey.getKey());
 
-            List<byte[]> fieldsRaw = fields.stream()
+            byte[][] fieldsRaw = fields.stream()
                     .map(fieldCodec::serialize)
-                    .toList();
+                    .toArray(byte[][]::new);
 
-            for (int j = 0; j < fieldsRaw.size(); j += BATCH_SIZE) {
-                List<byte[]> batch = fieldsRaw.subList(j, Math.min(j + BATCH_SIZE, fieldsRaw.size()));
-                conn.hashCommands().hDel(rootKeyRaw, batch.toArray(new byte[0][]));
-            }
+            pipeline.hDel(rootKeyRaw, fieldsRaw);
         });
     }
 }

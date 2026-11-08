@@ -45,8 +45,8 @@ the `keyValueStorageInit` initializer type is used:
 </init>
 ```
 
-* `name` — the connection name (matches the `RedisConnectionFactory` bean name in your project,
-  e.g., `redissonConnectionFactory`).
+* `name` — the connection name from `integration.testing.redis.connections` (for example,
+  `redissonConnectionFactory`).
 * `clear="true"` — completely clear the database before the test (executes `FLUSHALL` on the server).
 * `clear="false"` — do not clear the database (new keys will be added or existing ones updated).
 

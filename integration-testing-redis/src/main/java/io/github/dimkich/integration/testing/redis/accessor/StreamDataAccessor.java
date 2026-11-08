@@ -1,12 +1,11 @@
 package io.github.dimkich.integration.testing.redis.accessor;
 
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.model.RedisStream;
 import io.github.dimkich.integration.testing.redis.model.RedisStreamEntry;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.stream.ByteRecord;
-import org.springframework.data.redis.connection.stream.StreamRecords;
 
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -32,27 +31,21 @@ public class StreamDataAccessor implements RedisDataAccessor<RedisStream> {
      * with {@code XADD}; each entry keeps its model id and field map order is preserved
      * via a {@link LinkedHashMap} before serialization.
      *
-     * @param key    serialized Redis key
-     * @param data   stream entries to store
-     * @param conn   connection used for commands
-     * @param schema codecs for stream field names and values
+     * @param key      serialized Redis key
+     * @param data     stream entries to store
+     * @param pipeline pipeline used for commands
+     * @param schema   codecs for stream field names and values
      */
     @Override
-    public void store(byte[] key, RedisStream data, RedisConnection conn, RedisDataSchema schema) {
-        conn.keyCommands().del(key);
+    public void store(byte[] key, RedisStream data, RedisPipeline pipeline, RedisDataSchema schema) {
+        pipeline.del(key);
         for (RedisStreamEntry record : data) {
             Map<byte[], byte[]> fields = new LinkedHashMap<>();
-            record.getFields().forEach((f, v) -> fields.put(
-                    schema.getHashKeyCodec().serialize(f),
-                    schema.getHashValueCodec().serialize(v)));
+            record.getFields().forEach((field, value) -> fields.put(
+                    schema.getHashKeyCodec().serialize(field),
+                    schema.getHashValueCodec().serialize(value)));
 
-            ByteRecord byteRecord = StreamRecords.newRecord()
-                    .in(key)
-                    .withId(record.getId())
-                    .ofBytes(fields);
-
-            conn.streamCommands().xAdd(byteRecord);
+            pipeline.xAdd(key, record.getId().getBytes(StandardCharsets.UTF_8), fields);
         }
     }
 }
-

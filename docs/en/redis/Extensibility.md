@@ -63,7 +63,7 @@ field keys as plain strings:
 
 ```yaml
 connections:
-  redisConnectionFactory:
+  redissonConnectionFactory:
     schemas:
       "compressed:":
         value:
@@ -87,9 +87,9 @@ Implement `RedisDataAccessor<D>` for this purpose.
 package com.example.redis.accessor;
 
 import io.github.dimkich.integration.testing.redis.accessor.RedisDataAccessor;
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import io.github.dimkich.integration.testing.redis.model.RedisValue;
-import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.stereotype.Component;
 
 @Component  // Automatically registered in RedisAccessorCoordinator
@@ -102,11 +102,16 @@ public class BloomFilterAccessor implements RedisDataAccessor<CustomBloomFilter>
 
     @Override
     public void store(byte[] key, CustomBloomFilter value,
-                      RedisConnection conn, RedisDataSchema schema) {
-        conn.set(key, schema.getValueCodec().serialize(value));
+                      RedisPipeline pipeline, RedisDataSchema schema) {
+        pipeline.set(key, schema.getValueCodec().serialize(value));
     }
 }
 ```
+
+The accessor receives a `RedisPipeline`: commands are only queued and are executed later as one
+batch. If a custom type needs an arbitrary command, use
+`pipeline.execute("MYCOMMAND".getBytes(), args...)`. Do not try to read a command result inside
+the accessor: replies are drained only when the batch completes.
 
 ### Registering a `RedisValue` Subtype in Jackson
 
@@ -199,7 +204,7 @@ referenced from a schema component:
 
 ```yaml
 connections:
-  redisConnectionFactory:
+  redissonConnectionFactory:
     defaultSchema:
       value:
         bean-ref: "customSerializerBean"
@@ -215,7 +220,7 @@ from all three schema components, and hash fields are serialized with their own 
 
 ```yaml
 connections:
-  redisConnectionFactory:
+  redissonConnectionFactory:
     schemas:
       "cache:":
         value:

@@ -1,7 +1,10 @@
 package io.github.dimkich.integration.testing.date.time;
 
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.RemoveContainerCmd;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.GenericContainer;
@@ -46,7 +49,7 @@ public class LibFakeTimeTracker {
 
     @SuppressWarnings("resource")
     private static GenericContainer<?> createFakeTimeServerContainer() {
-        return new GenericContainer<>("dimkich/libfaketime-server:latest")
+        return new GenericContainer<>("dimkich/libfaketime-server:0.2")
                 .withExposedPorts(9999);
     }
 
@@ -119,7 +122,7 @@ public class LibFakeTimeTracker {
         }
 
         InspectImageResponse inspect;
-        @Cleanup var imgCmd = container.getDockerClient()
+        @Cleanup InspectImageCmd imgCmd = container.getDockerClient()
                 .inspectImageCmd(imageName);
         inspect = imgCmd.exec();
 
@@ -177,7 +180,7 @@ public class LibFakeTimeTracker {
         String imageName = container.getDockerImageName();
         String tempId;
         try {
-            @Cleanup var createCmd = container.getDockerClient().createContainerCmd(imageName);
+            @Cleanup CreateContainerCmd createCmd = container.getDockerClient().createContainerCmd(imageName);
             tempId = createCmd.exec().getId();
         } catch (Exception e) {
             return "linux";
@@ -197,7 +200,7 @@ public class LibFakeTimeTracker {
                 return "linux";
             } finally {
                 try {
-                    @Cleanup var rmCmd = container.getDockerClient().removeContainerCmd(tempId);
+                    @Cleanup RemoveContainerCmd rmCmd = container.getDockerClient().removeContainerCmd(tempId);
                     rmCmd.withForce(true).exec();
                 } catch (Exception ignored) {
                 }

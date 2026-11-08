@@ -4,9 +4,12 @@ import io.github.dimkich.integration.testing.NowSetter;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.initialization.key.value.KeyValueStorageInit;
 import io.github.dimkich.integration.testing.redis.accessor.RedisAccessorCoordinator;
+import io.github.dimkich.integration.testing.redis.client.RedisClient;
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.model.RedisKey;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
+import io.github.dimkich.integration.testing.redis.serde.RedisDataCodec;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import io.github.dimkich.integration.testing.storage.ObjectsDifference;
 import io.github.dimkich.integration.testing.storage.SnapshotTestDataStorage;
@@ -16,23 +19,26 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * {@link KeyValueDataStorage} backed by a live Redis connection and an in-memory mirror
  * maintained by replication.
  * <p>
- * Spring registers one bean per configured {@link RedisConnectionFactory}
+ * Spring registers one bean per configured connection
  * ({@link io.github.dimkich.integration.testing.redis.config.RedisConfig}); the bean name is
- * {@code factoryName + "TestDataStorage"}. Test setup writes seed data through
+ * {@code connectionName + "TestDataStorage"}. Test setup writes seed data through
  * {@link #putKeysData(Map)}; assertions read expected state from {@link #doGetCurrentValue()}
  * via the paired {@link io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore}.
  * Virtual time advances through {@link #setNow}, which purges expired keys in the mirror and on Redis.
+ * <p>
+ * Seed data is written through a single pipeline grouped by logical database: one {@code SELECT}
+ * per database and no network round trip per command.
  * <p>
  * {@link #clearAll()} issues {@code FLUSHALL} only when the in-memory store is non-empty,
  * avoiding unnecessary server commands when replication has not yet populated data.
@@ -44,19 +50,19 @@ import java.util.Objects;
 public class RedisTestDataStorage extends SnapshotTestDataStorage implements KeyValueDataStorage, NowSetter {
     @Getter
     private final String name;
-    private final RedisConnectionFactory connectionFactory;
+    private final RedisClient client;
     private final RedisInMemoryStore memStore;
     private final RedisDataSchemaRegistry registry;
     private final RedisAccessorCoordinator accessorCoordinator;
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private InitializationService initializationService;
 
-    public RedisTestDataStorage(String name, RedisConnectionFactory connectionFactory, RedisInMemoryStore memStore,
+    public RedisTestDataStorage(String name, RedisClient client, RedisInMemoryStore memStore,
                                 RedisDataSchemaRegistry registry, RedisAccessorCoordinator accessorCoordinator,
                                 ObjectsDifference objectsDifference) {
         super(objectsDifference);
         this.name = name;
-        this.connectionFactory = connectionFactory;
+        this.client = client;
         this.memStore = memStore;
         this.registry = registry;
         this.accessorCoordinator = accessorCoordinator;
@@ -71,7 +77,7 @@ public class RedisTestDataStorage extends SnapshotTestDataStorage implements Key
      */
     @Override
     public void setNow(ZonedDateTime dateTime) {
-        memStore.updateTimeAndPurge(dateTime, connectionFactory);
+        memStore.updateTimeAndPurge(dateTime, client);
         markAffected();
     }
 
@@ -83,8 +89,7 @@ public class RedisTestDataStorage extends SnapshotTestDataStorage implements Key
     @Override
     public void clearAll() {
         if (!memStore.isEmpty()) {
-            @Cleanup RedisConnection connection = connectionFactory.getConnection();
-            connection.serverCommands().flushAll();
+            client.flushAll();
             markAffected();
         }
     }
@@ -94,7 +99,8 @@ public class RedisTestDataStorage extends SnapshotTestDataStorage implements Key
      * <p>
      * Keys may be plain objects or {@link RedisKey} wrappers (logical DB + key). Values are
      * serialized and written through {@link RedisAccessorCoordinator} using the schema from
-     * {@link RedisDataSchemaRegistry}.
+     * {@link RedisDataSchemaRegistry}. Entries are grouped by database and sent through one
+     * pipeline, so the whole fixture is loaded with one round trip per database.
      *
      * @param map key-value pairs to store; no-op when {@code null} or empty
      */
@@ -104,25 +110,38 @@ public class RedisTestDataStorage extends SnapshotTestDataStorage implements Key
             return;
         }
 
-        @Cleanup RedisConnection connection = connectionFactory.getConnection();
-        int currentDb = 0;
-
+        int defaultDatabase = client.getDefaultDatabase();
+        Map<Integer, List<Map.Entry<Object, Object>>> byDatabase = new LinkedHashMap<>();
         for (Map.Entry<Object, Object> entry : map.entrySet()) {
-            Object key = entry.getKey();
-            int db = 0;
-            if (key instanceof RedisKey redisKey) {
-                key = redisKey.getKey();
+            int db = defaultDatabase;
+            if (entry.getKey() instanceof RedisKey redisKey && redisKey.getDb() != null) {
                 db = redisKey.getDb();
             }
-            if (!Objects.equals(currentDb, db)) {
-                connection.select(db);
-                currentDb = db;
-            }
-            byte[] keyRaw = registry.findKeyCodec(name).serialize(key);
-            RedisDataSchema schema = registry.findSchema(name, entry.getKey().toString()).getSchema();
-            accessorCoordinator.store(keyRaw, entry.getValue(), connection, schema);
+            byDatabase.computeIfAbsent(db, key -> new ArrayList<>()).add(entry);
         }
+
+        @Cleanup RedisPipeline pipeline = client.pipeline();
+        byDatabase.forEach((db, entries) -> {
+            pipeline.select(db);
+            storeEntries(entries, pipeline);
+        });
+        // The pipeline moves the client's selected database on flush, so return to the
+        // configured default instead of leaving the connection in the last seeded database.
+        pipeline.select(defaultDatabase);
         markAffected();
+    }
+
+    private void storeEntries(List<Map.Entry<Object, Object>> entries, RedisPipeline pipeline) {
+        RedisDataCodec keyCodec = registry.findKeyCodec(name);
+        for (Map.Entry<Object, Object> entry : entries) {
+            Object key = entry.getKey();
+            if (key instanceof RedisKey redisKey) {
+                key = redisKey.getKey();
+            }
+            byte[] keyRaw = keyCodec.serialize(key);
+            RedisDataSchema schema = registry.findSchema(name, entry.getKey().toString()).getSchema();
+            accessorCoordinator.store(keyRaw, entry.getValue(), pipeline, schema);
+        }
     }
 
     /**

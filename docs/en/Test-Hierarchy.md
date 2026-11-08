@@ -24,7 +24,7 @@ Test Types
 |-------------|-----------------|--------------------------|---------------------|--------------------------|--------------------------------------------|
 | `Container` | `TestContainer` | Logically groups tests   | `Container`, `Case` | Root or `Container` only | Not required for root, required for nested |
 | `Case`      | `TestCase`      | Individual test scenario | `Part`              | `Container` only         | **Required**                               |
-| `Part`      | `TestPart`      | Step of multi-step test  | No                  | `Case` only              | **Required**                               |
+| `Part`      | `TestPart`      | Step of multistep test   | No                  | `Case` only              | **Required**                               |
 
 Hierarchy Rules
 ---------------
@@ -470,7 +470,7 @@ Why This Hierarchy?
 | **Logical grouping**     | `Container` allows combining related scenarios (by module, functionality, API)                |
 | **Partial execution**    | Can run individual branches via name filter in `DynamicTestBuilder.build(path, allowedNames)` |
 | **`Case` isolation**     | Each `Case` executes in isolated context --- no side effects between cases                    |
-| **Dependent steps**      | `Part` inside `Case` share state --- convenient for multi-step scenarios                      |
+| **Dependent steps**      | `Part` inside `Case` share state --- convenient for multistep scenarios                       |
 | **Settings inheritance** | `init` and other settings inherited top-down, reducing duplication                            |
 | **Readability**          | Hierarchy reflects business scenario structure (group → scenario → step)                      |
 | **Reporting**            | JUnit displays hierarchy in reports, simplifying navigation through results                   |

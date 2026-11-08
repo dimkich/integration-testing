@@ -1,8 +1,8 @@
 package io.github.dimkich.integration.testing.redis.accessor;
 
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.model.RedisList;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
-import org.springframework.data.redis.connection.RedisConnection;
 
 /**
  * {@link RedisDataAccessor} that writes {@link RedisList} values to Redis.
@@ -24,21 +24,20 @@ public class ListDataAccessor implements RedisDataAccessor<RedisList> {
      * Empty lists only delete the key. Non-empty lists are stored with {@code RPUSH},
      * preserving element order from first to last.
      *
-     * @param key    serialized Redis key
-     * @param data   list elements to store
-     * @param conn   connection used for commands
-     * @param schema codec for list element values
+     * @param key      serialized Redis key
+     * @param data     list elements to store
+     * @param pipeline pipeline used for commands
+     * @param schema   codec for list element values
      */
     @Override
-    public void store(byte[] key, RedisList data, RedisConnection conn, RedisDataSchema schema) {
-        conn.keyCommands().del(key);
+    public void store(byte[] key, RedisList data, RedisPipeline pipeline, RedisDataSchema schema) {
+        pipeline.del(key);
         if (data.isEmpty()) {
             return;
         }
         byte[][] raw = data.stream()
                 .map(schema.getValueCodec()::serialize)
                 .toArray(byte[][]::new);
-        conn.listCommands().rPush(key, raw);
+        pipeline.rPush(key, raw);
     }
 }
-

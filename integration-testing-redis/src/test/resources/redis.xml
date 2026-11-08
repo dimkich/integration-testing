@@ -3670,6 +3670,22 @@
                         </redissonConnectionFactory>
                     </dataStorageDiff>
                 </test>
+                <test type="Case" name="LTRIM: long extreme indices">
+                    <init type="KeyValueStorageInit" name="redissonConnectionFactory">
+                        <map type="LinkedHashMapStringObject">
+                            <entry key="redisson.ltrim.long" utype="RedisList">
+                                <data>A</data>
+                                <data>B</data>
+                                <data>C</data>
+                            </entry>
+                        </map>
+                    </init>
+                    <bean>redisStringFacade</bean>
+                    <method>lTrim</method>
+                    <request>redisson.ltrim.long</request>
+                    <request type="Long">-9223372036854775808</request>
+                    <request type="Long">9223372036854775807</request>
+                </test>
             </test>
             <test type="Container" name="RPOP">
                 <test type="Case" name="RPOP success: pop single element from tail">
@@ -5269,6 +5285,36 @@
                                         </value>
                                     </entry>
                                 </value>
+                            </entry>
+                        </redissonConnectionFactory>
+                    </dataStorageDiff>
+                </test>
+                <test type="Case" name="ZREMRANGEBYRANK: long extreme range">
+                    <init type="KeyValueStorageInit" name="redissonConnectionFactory">
+                        <map type="LinkedHashMapStringObject">
+                            <entry key="redisson.zset.rank.long" utype="RedisZSet">
+                                <data>
+                                    <member>m1</member>
+                                    <score>10</score>
+                                </data>
+                                <data>
+                                    <member>m2</member>
+                                    <score>20</score>
+                                </data>
+                            </entry>
+                        </map>
+                    </init>
+                    <bean>redisStringFacade</bean>
+                    <method>zRemRangeByRank</method>
+                    <request>redisson.zset.rank.long</request>
+                    <request type="Long">-9223372036854775808</request>
+                    <request type="Long">9223372036854775807</request>
+                    <response type="Long">2</response>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
+                            <entry change="deleted">
+                                <key>redisson.zset.rank.long</key>
+                                <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                             </entry>
                         </redissonConnectionFactory>
                     </dataStorageDiff>
@@ -7169,6 +7215,20 @@
                         </redissonConnectionFactory>
                     </dataStorageDiff>
                 </test>
+                <test type="Case" name="XADD NOMKSTREAM missing key">
+                    <bean>jedisFacade</bean>
+                    <method>xAddNoMkStream</method>
+                    <request>jedis.stream.nomkstream</request>
+                    <request>*</request>
+                    <request type="LinkedHashMap">
+                        <f>v</f>
+                    </request>
+                    <test type="Part" name="Key is absent">
+                        <bean>jedisFacade</bean>
+                        <method>get</method>
+                        <request>jedis.stream.nomkstream</request>
+                    </test>
+                </test>
             </test>
             <test type="Case" name="XDEL: Remove entries by ID">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
@@ -7902,6 +7962,28 @@
                     <request>LT</request>
                 </test>
             </test>
+            <test type="Case" name="EXPIRE 0 deletes key">
+                <init type="KeyValueStorageInit" name="redissonConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="redisson.key.expire.zero" utype="RedisEntry">
+                            <data>value</data>
+                        </entry>
+                    </map>
+                </init>
+                <bean>redisStringFacade</bean>
+                <method>expire</method>
+                <request>redisson.key.expire.zero</request>
+                <request type="Long">0</request>
+                <response type="Boolean">true</response>
+                <dataStorageDiff type="MapStringKeyObjectValue">
+                    <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
+                        <entry change="deleted">
+                            <key>redisson.key.expire.zero</key>
+                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </entry>
+                    </redissonConnectionFactory>
+                </dataStorageDiff>
+            </test>
         </test>
         <test type="Container" name="General Key commands">
             <test type="Case" name="PERSIST">
@@ -7930,6 +8012,17 @@
                         </entry>
                     </redissonConnectionFactory>
                 </dataStorageDiff>
+            </test>
+            <test type="Case" name="PERSIST without TTL">
+                <init type="KeyValueStorageInit" name="redissonConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="redisson.persist.no.ttl" utype="String">value</entry>
+                    </map>
+                </init>
+                <bean>redisStringFacade</bean>
+                <method>persist</method>
+                <request>redisson.persist.no.ttl</request>
+                <response type="Boolean">false</response>
             </test>
             <test type="Container" name="COPY">
                 <test type="Case" name="copy string key">
@@ -8042,6 +8135,14 @@
                         </entry>
                     </redissonConnectionFactory>
                 </dataStorageDiff>
+            </test>
+            <test type="Case" name="Unlink missing key">
+                <bean>redisStringFacade</bean>
+                <method>unlink</method>
+                <request type="Object[]">
+                    <item>redisson.unlink.missing</item>
+                </request>
+                <response type="Long">0</response>
             </test>
             <test type="Container" name="RESTORE">
                 <test type="Case" name="simple String">
@@ -8225,6 +8326,407 @@
     </test>
     <test type="Container" name="jedis">
         <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true"/>
+            <test type="Container" name="SET options">
+                <test type="Case" name="EX seconds">
+                    <bean>jedisFacade</bean>
+                    <method>setWithOptions</method>
+                    <request>jedis.set.ex</request>
+                    <request>new</request>
+                    <request type="String[]">
+                        <item>EX</item>
+                        <item>60</item>
+                    </request>
+                    <response>OK</response>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                            <entry change="added">
+                                <key>jedis.set.ex.0</key>
+                                <value type="RedisEntry">
+                                    <data>new</data>
+                                    <ttl>PT1M</ttl>
+                                </value>
+                            </entry>
+                        </jedisConnectionFactory>
+                    </dataStorageDiff>
+                </test>
+                <test type="Case" name="PX milliseconds">
+                    <bean>jedisFacade</bean>
+                    <method>setWithOptions</method>
+                    <request>jedis.set.px</request>
+                    <request>new</request>
+                    <request type="String[]">
+                        <item>PX</item>
+                        <item>1500</item>
+                    </request>
+                    <response>OK</response>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                            <entry change="added">
+                                <key>jedis.set.px.0</key>
+                                <value type="RedisEntry">
+                                    <data>new</data>
+                                    <ttl>PT1.5S</ttl>
+                                </value>
+                            </entry>
+                        </jedisConnectionFactory>
+                    </dataStorageDiff>
+                </test>
+                <test type="Case" name="EXAT absolute seconds">
+                    <bean>jedisFacade</bean>
+                    <method>setWithOptions</method>
+                    <request>jedis.set.exat</request>
+                    <request>new</request>
+                    <request type="String[]">
+                        <item>EXAT</item>
+                        <item>1767225630</item>
+                    </request>
+                    <response>OK</response>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                            <entry change="added">
+                                <key>jedis.set.exat.0</key>
+                                <value type="RedisEntry">
+                                    <data>new</data>
+                                    <ttl>PT29.999S</ttl>
+                                </value>
+                            </entry>
+                        </jedisConnectionFactory>
+                    </dataStorageDiff>
+                </test>
+                <test type="Case" name="PXAT absolute milliseconds">
+                    <bean>jedisFacade</bean>
+                    <method>setWithOptions</method>
+                    <request>jedis.set.pxat</request>
+                    <request>new</request>
+                    <request type="String[]">
+                        <item>PXAT</item>
+                        <item>1767225600801</item>
+                    </request>
+                    <response>OK</response>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                            <entry change="added">
+                                <key>jedis.set.pxat.0</key>
+                                <value type="RedisEntry">
+                                    <data>new</data>
+                                    <ttl>PT0.8S</ttl>
+                                </value>
+                            </entry>
+                        </jedisConnectionFactory>
+                    </dataStorageDiff>
+                </test>
+                <test type="Case" name="KEEPTTL preserves existing TTL">
+                    <init type="KeyValueStorageInit" name="jedisConnectionFactory">
+                        <map type="LinkedHashMapStringObject">
+                            <entry key="jedis.set.keepttl" utype="RedisEntry">
+                                <data>old</data>
+                                <ttl>PT1M40S</ttl>
+                            </entry>
+                        </map>
+                    </init>
+                    <test type="Part" name="Set with KEEPTTL">
+                        <bean>jedisFacade</bean>
+                        <method>setWithOptions</method>
+                        <request>jedis.set.keepttl</request>
+                        <request>new</request>
+                        <request type="String[]">
+                            <item>KEEPTTL</item>
+                        </request>
+                        <response>OK</response>
+                        <dataStorageDiff type="MapStringKeyObjectValue">
+                            <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                                <entry change="changed">
+                                    <key>jedis.set.keepttl.0</key>
+                                    <value type="EntriesObjectKeyObjectValue">
+                                        <entry change="changed">
+                                            <key>data</key>
+                                            <value>new</value>
+                                        </entry>
+                                    </value>
+                                </entry>
+                            </jedisConnectionFactory>
+                        </dataStorageDiff>
+                    </test>
+                    <test type="Part" name="TTL remains">
+                        <bean>jedisFacade</bean>
+                        <method>pttl</method>
+                        <request>jedis.set.keepttl</request>
+                        <response type="Long">100000</response>
+                    </test>
+                </test>
+                <test type="Case" name="SET without options resets TTL">
+                    <init type="KeyValueStorageInit" name="jedisConnectionFactory">
+                        <map type="LinkedHashMapStringObject">
+                            <entry key="jedis.set.reset" utype="RedisEntry">
+                                <data>old</data>
+                                <ttl>PT1M</ttl>
+                            </entry>
+                        </map>
+                    </init>
+                    <test type="Part" name="Set without options">
+                        <bean>jedisFacade</bean>
+                        <method>set</method>
+                        <request>jedis.set.reset</request>
+                        <request>new</request>
+                        <dataStorageDiff type="MapStringKeyObjectValue">
+                            <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                                <entry change="changed">
+                                    <key>jedis.set.reset.0</key>
+                                    <value type="EntriesObjectKeyObjectValue">
+                                        <entry change="changed">
+                                            <key>data</key>
+                                            <value>new</value>
+                                        </entry>
+                                    </value>
+                                </entry>
+                            </jedisConnectionFactory>
+                        </dataStorageDiff>
+                    </test>
+                    <test type="Part" name="TTL is cleared">
+                        <bean>jedisFacade</bean>
+                        <method>pttl</method>
+                        <request>jedis.set.reset</request>
+                        <response type="Long">-1</response>
+                    </test>
+                </test>
+                <test type="Case" name="NX existing key">
+                    <init type="KeyValueStorageInit" name="jedisConnectionFactory">
+                        <map type="LinkedHashMapStringObject">
+                            <entry key="jedis.set.nx" utype="String">old</entry>
+                        </map>
+                    </init>
+                    <test type="Part" name="Set NX">
+                        <bean>jedisFacade</bean>
+                        <method>setWithOptions</method>
+                        <request>jedis.set.nx</request>
+                        <request>new</request>
+                        <request type="String[]">
+                            <item>NX</item>
+                        </request>
+                    </test>
+                    <test type="Part" name="Value is unchanged">
+                        <bean>jedisFacade</bean>
+                        <method>get</method>
+                        <request>jedis.set.nx</request>
+                        <response>old</response>
+                    </test>
+                </test>
+                <test type="Case" name="XX missing key">
+                    <test type="Part" name="Set XX">
+                        <bean>jedisFacade</bean>
+                        <method>setWithOptions</method>
+                        <request>jedis.set.xx</request>
+                        <request>new</request>
+                        <request type="String[]">
+                            <item>XX</item>
+                        </request>
+                    </test>
+                    <test type="Part" name="Key is not created">
+                        <bean>jedisFacade</bean>
+                        <method>get</method>
+                        <request>jedis.set.xx</request>
+                    </test>
+                </test>
+                <test type="Case" name="GET returns the old value">
+                    <init type="KeyValueStorageInit" name="jedisConnectionFactory">
+                        <map type="LinkedHashMapStringObject">
+                            <entry key="jedis.set.get" utype="String">old</entry>
+                        </map>
+                    </init>
+                    <test type="Part" name="Set GET">
+                        <bean>jedisFacade</bean>
+                        <method>setWithOptions</method>
+                        <request>jedis.set.get</request>
+                        <request>new</request>
+                        <request type="String[]">
+                            <item>GET</item>
+                        </request>
+                        <response>old</response>
+                        <dataStorageDiff type="MapStringKeyObjectValue">
+                            <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                                <entry change="changed">
+                                    <key>jedis.set.get.0</key>
+                                    <value type="EntriesObjectKeyObjectValue">
+                                        <entry change="changed">
+                                            <key>data</key>
+                                            <value>new</value>
+                                        </entry>
+                                    </value>
+                                </entry>
+                            </jedisConnectionFactory>
+                        </dataStorageDiff>
+                    </test>
+                    <test type="Part" name="New value is stored">
+                        <bean>jedisFacade</bean>
+                        <method>get</method>
+                        <request>jedis.set.get</request>
+                        <response>new</response>
+                    </test>
+                </test>
+            </test>
+        <test type="Container" name="RESTORE options">
+            <test type="Case" name="without REPLACE leaves existing key">
+                <init type="KeyValueStorageInit" name="jedisConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="jedis.restore.keep" utype="String">old</entry>
+                    </map>
+                </init>
+                <test type="Part" name="Restore">
+                    <bean>jedisFacade</bean>
+                    <method>restoreFromObjectWithOptions</method>
+                    <request>jedis.restore.keep</request>
+                    <request>new</request>
+                    <request type="Long">0</request>
+                    <response type="InvalidDataAccessApiUsageException">
+                        <message>BUSYKEY Target key name already exists.</message>
+                    </response>
+                </test>
+                <test type="Part" name="Value is unchanged">
+                    <bean>jedisFacade</bean>
+                    <method>get</method>
+                    <request>jedis.restore.keep</request>
+                    <response>old</response>
+                </test>
+            </test>
+            <test type="Case" name="with REPLACE overwrites existing key">
+                <init type="KeyValueStorageInit" name="jedisConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="jedis.restore.replace" utype="String">old</entry>
+                    </map>
+                </init>
+                <test type="Part" name="Restore">
+                    <bean>jedisFacade</bean>
+                    <method>restoreFromObjectWithOptions</method>
+                    <request>jedis.restore.replace</request>
+                    <request>new</request>
+                    <request type="Long">0</request>
+                    <request type="String[]">
+                        <item>REPLACE</item>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                            <entry change="changed">
+                                <key>jedis.restore.replace.0</key>
+                                <value type="EntriesObjectKeyObjectValue">
+                                    <entry change="changed">
+                                        <key>data</key>
+                                        <value>new</value>
+                                    </entry>
+                                </value>
+                            </entry>
+                        </jedisConnectionFactory>
+                    </dataStorageDiff>
+                </test>
+                <test type="Part" name="New value is stored">
+                    <bean>jedisFacade</bean>
+                    <method>get</method>
+                    <request>jedis.restore.replace</request>
+                    <response>new</response>
+                </test>
+            </test>
+            <test type="Case" name="relative TTL">
+                <test type="Part" name="Restore">
+                    <bean>jedisFacade</bean>
+                    <method>restoreFromObjectWithOptions</method>
+                    <request>jedis.restore.ttl</request>
+                    <request>value</request>
+                    <request type="Long">60000</request>
+                    <request type="String[]">
+                        <item>REPLACE</item>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                            <entry change="added">
+                                <key>jedis.restore.ttl.0</key>
+                                <value type="RedisEntry">
+                                    <data>value</data>
+                                    <ttl>PT1M</ttl>
+                                </value>
+                            </entry>
+                        </jedisConnectionFactory>
+                    </dataStorageDiff>
+                </test>
+                <test type="Part" name="TTL is set">
+                    <bean>jedisFacade</bean>
+                    <method>pttl</method>
+                    <request>jedis.restore.ttl</request>
+                    <response type="Long">60000</response>
+                </test>
+            </test>
+            <test type="Case" name="ABSTTL">
+                <test type="Part" name="Restore">
+                    <bean>jedisFacade</bean>
+                    <method>restoreFromObjectWithOptions</method>
+                    <request>jedis.restore.abs</request>
+                    <request>value</request>
+                    <request type="Long">1767225660000</request>
+                    <request type="String[]">
+                        <item>REPLACE</item>
+                        <item>ABSTTL</item>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                            <entry change="added">
+                                <key>jedis.restore.abs.0</key>
+                                <value type="RedisEntry">
+                                    <data>value</data>
+                                    <ttl>PT59.999S</ttl>
+                                </value>
+                            </entry>
+                        </jedisConnectionFactory>
+                    </dataStorageDiff>
+                </test>
+                <test type="Part" name="TTL is absolute">
+                    <bean>jedisFacade</bean>
+                    <method>pttl</method>
+                    <request>jedis.restore.abs</request>
+                    <response type="Long">59999</response>
+                </test>
+            </test>
+            <test type="Case" name="TTL 0 clears existing TTL">
+                <init type="KeyValueStorageInit" name="jedisConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="jedis.restore.clear" utype="RedisEntry">
+                            <data>old</data>
+                            <ttl>PT1M</ttl>
+                        </entry>
+                    </map>
+                </init>
+                <test type="Part" name="Restore">
+                    <bean>jedisFacade</bean>
+                    <method>restoreFromObjectWithOptions</method>
+                    <request>jedis.restore.clear</request>
+                    <request>new</request>
+                    <request type="Long">0</request>
+                    <request type="String[]">
+                        <item>REPLACE</item>
+                    </request>
+                    <dataStorageDiff type="MapStringKeyObjectValue">
+                        <jedisConnectionFactory type="EntriesObjectKeyObjectValue">
+                            <entry change="changed">
+                                <key>jedis.restore.clear.0</key>
+                                <value type="EntriesObjectKeyObjectValue">
+                                    <entry change="changed">
+                                        <key>data</key>
+                                        <value>new</value>
+                                    </entry>
+                                    <entry change="deleted">
+                                        <key>ttl</key>
+                                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                    </entry>
+                                </value>
+                            </entry>
+                        </jedisConnectionFactory>
+                    </dataStorageDiff>
+                </test>
+                <test type="Part" name="TTL is cleared">
+                    <bean>jedisFacade</bean>
+                    <method>pttl</method>
+                    <request>jedis.restore.clear</request>
+                    <response type="Long">-1</response>
+                </test>
+            </test>
+        </test>
         <test type="Container" name="zset operations">
             <test type="Container" name="ZPOPMAX operations">
                 <test type="Case" name="ZPOPMAX basic: pop single highest element">
@@ -9988,6 +10490,23 @@
                     <message>No handler for com.moilioncircle.redis.replicator.rdb.datatype.KeyStringValueModule Hint: This is a Redis Module (e.g. RedisJSON). Implement a custom RedisSnapshotHandler to support it.</message>
                 </response>
             </test>
+            <test type="Part" name="DumpKeyValuePair">
+                <bean>redisReplicationMockFacade</bean>
+                <method>event</method>
+                <request type="DumpKeyValuePair">
+                    <db>
+                        <dbNumber>0</dbNumber>
+                    </db>
+                    <valueRdbType>0</valueRdbType>
+                    <expiredType>NONE</expiredType>
+                    <evictType>NONE</evictType>
+                    <key>dGVzdA==</key>
+                    <value>AQID</value>
+                </request>
+                <response type="UnsupportedOperationException">
+                    <message>No handler for com.moilioncircle.redis.replicator.rdb.dump.datatype.DumpKeyValuePair Hint: Received a raw RDB dump. This happens if the Redis version is too new or the format is unknown. You may need to update the replicator library or add a custom handler.</message>
+                </response>
+            </test>
             <test type="Part" name="KeyStringValueSet">
                 <bean>redisReplicationMockFacade</bean>
                 <method>event</method>
@@ -10753,6 +11272,51 @@
                 <value>sharded push</value>
             </outboundMessage>
         </test>
+        <test type="Case" name="Multiple pushes are captured in order">
+            <test type="Part" name="First">
+                <bean>redisPushTestFacade</bean>
+                <method>publishString</method>
+                <request>redisson.push.multi</request>
+                <request>one</request>
+                <outboundMessage type="RedisPush" connection="redissonConnectionFactory" channel="redisson.push.multi">
+                    <value>one</value>
+                </outboundMessage>
+            </test>
+            <test type="Part" name="Second">
+                <bean>redisPushTestFacade</bean>
+                <method>publishString</method>
+                <request>redisson.push.multi</request>
+                <request>two</request>
+                <outboundMessage type="RedisPush" connection="redissonConnectionFactory" channel="redisson.push.multi">
+                    <value>two</value>
+                </outboundMessage>
+            </test>
+        </test>
+        <test type="Case" name="Invalid typed payload stores exception">
+            <init type="BeanInit">
+                <bean name="redisPushTestFacade" method="clear"/>
+            </init>
+            <bean>redisPushTestFacade</bean>
+            <method>publishRaw</method>
+            <request>redisson.TestRedisDto.push</request>
+            <request type="byte[]">bm90LWEtZHRv</request>
+            <outboundMessage type="RedisPush" connection="redissonConnectionFactory" channel="redisson.TestRedisDto.push">
+                <value type="byte[]">bm90LWEtZHRv</value>
+                <exception>
+                    <exceptionType>SerializationException</exceptionType>
+                    <message>Could not read JSON: Unrecognized token 'not': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')&#10; at [Source: (byte[])"not-a-dto"; line: 1, column: 5]</message>
+                </exception>
+            </outboundMessage>
+        </test>
+        <test type="Case" name="Push on jedis connection">
+            <bean>redisPushTestFacade</bean>
+            <method>publishOnJedis</method>
+            <request>jedis.push.test</request>
+            <request>jedis push</request>
+            <outboundMessage type="RedisPush" connection="jedisConnectionFactory" channel="jedis.push.test">
+                <value>jedis push</value>
+            </outboundMessage>
+        </test>
     </test>
     <test type="Container" name="Serde">
         <test type="Container" name="component source">
@@ -11129,6 +11693,180 @@
                 <request>missingObjectMapper</request>
                 <response>IllegalArgumentException: No bean named [missingObjectMapper] of type [com.fasterxml.jackson.databind.ObjectMapper] found. Check 'objectMapperRef' in configuration.</response>
             </test>
+        </test>
+    </test>
+    <test type="Container" name="framework client">
+        <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true"/>
+        <test type="Container" name="client">
+            <test type="Case" name="identity">
+                <bean>redisClientTestFacade</bean>
+                <method>name</method>
+                <request>redissonConnectionFactory</request>
+                <response>redissonConnectionFactory</response>
+            </test>
+            <test type="Case" name="default database">
+                <bean>redisClientTestFacade</bean>
+                <method>defaultDatabase</method>
+                <request>redissonConnectionFactory</request>
+                <response type="Integer">0</response>
+            </test>
+            <test type="Case" name="reply types">
+                <bean>redisClientTestFacade</bean>
+                <method>replyTypes</method>
+                <request>redissonConnectionFactory</request>
+                <response>ping=PONG missing=null incr=2 keys=1</response>
+            </test>
+            <test type="Case" name="wrong type error">
+                <bean>redisClientTestFacade</bean>
+                <method>wrongTypeError</method>
+                <request>redissonConnectionFactory</request>
+                <response>RedisClientException: Redis error on command [INCR] for connection [redissonConnectionFactory]: ERR value is not an integer or out of range</response>
+            </test>
+            <test type="Case" name="select and reconnect">
+                <bean>redisClientTestFacade</bean>
+                <method>selectAndReconnect</method>
+                <request>redissonConnectionFactory</request>
+                <request type="Integer">1</request>
+                <request>it:client:db</request>
+                <request>value</request>
+                <response>value</response>
+            </test>
+            <test type="Case" name="close is idempotent">
+                <bean>redisClientTestFacade</bean>
+                <method>closeTwice</method>
+                <request>redissonConnectionFactory</request>
+                <response>PONG</response>
+            </test>
+            <test type="Case" name="config set and get">
+                <test type="Part" name="Set">
+                    <bean>redisClientTestFacade</bean>
+                    <method>configSet</method>
+                    <request>redissonConnectionFactory</request>
+                    <request>repl-diskless-sync</request>
+                    <request>yes</request>
+                </test>
+                <test type="Part" name="Get">
+                    <bean>redisClientTestFacade</bean>
+                    <method>configGet</method>
+                    <request>redissonConnectionFactory</request>
+                    <request>repl-diskless-sync</request>
+                    <response>[repl-diskless-sync, yes]</response>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="pipeline">
+            <test type="Case" name="typed commands">
+                <bean>redisClientTestFacade</bean>
+                <method>pipelineTypedCommands</method>
+                <request>redissonConnectionFactory</request>
+                <response>h=2 l=2 s=3 z=2 x=1 hll&gt;0=true generic=g eval=e</response>
+            </test>
+            <test type="Case" name="bulk hash chunking">
+                <bean>redisClientTestFacade</bean>
+                <method>pipelineBulkHash</method>
+                <request>redissonConnectionFactory</request>
+                <request type="Integer">1025</request>
+                <response>1025</response>
+            </test>
+            <test type="Case" name="bulk collections chunking">
+                <bean>redisClientTestFacade</bean>
+                <method>pipelineBulkCollections</method>
+                <request>redissonConnectionFactory</request>
+                <request type="Integer">513</request>
+                <response>l=513 s=513 z=513 hll&gt;0=true</response>
+            </test>
+            <test type="Case" name="eval and execute">
+                <bean>redisClientTestFacade</bean>
+                <method>pipelineEvalAndExecute</method>
+                <request>redissonConnectionFactory</request>
+                <response>eval=eval direct=direct</response>
+            </test>
+            <test type="Case" name="error reply">
+                <test type="Part" name="Flush fails">
+                    <bean>redisClientTestFacade</bean>
+                    <method>pipelineError</method>
+                    <request>redissonConnectionFactory</request>
+                    <response>RedisClientException: Redis error on command [INCR] for connection [redissonConnectionFactory]: ERR value is not an integer or out of range</response>
+                </test>
+                <test type="Part" name="Client is reusable">
+                    <bean>redisClientTestFacade</bean>
+                    <method>pipelineReusable</method>
+                    <request>redissonConnectionFactory</request>
+                    <response>PONG</response>
+                </test>
+            </test>
+            <test type="Case" name="hash field TTL aggregation">
+                <bean>redisClientTestFacade</bean>
+                <method>pipelineHashTtlAggregation</method>
+                <request>redissonConnectionFactory</request>
+                <response>positive=true ordered=true</response>
+            </test>
+            <test type="Case" name="hash field TTL across databases">
+                <bean>redisClientTestFacade</bean>
+                <method>pipelineHashTtlAcrossDatabases</method>
+                <request>jedisConnectionFactory</request>
+                <response>db0=true db1=true</response>
+            </test>
+            <test type="Case" name="nested pipeline is rejected">
+                <bean>redisClientTestFacade</bean>
+                <method>nestedPipeline</method>
+                <request>redissonConnectionFactory</request>
+                <response>Nested Redis pipeline for connection [redissonConnectionFactory] is not supported</response>
+            </test>
+            <test type="Case" name="command during pipeline is rejected">
+                <bean>redisClientTestFacade</bean>
+                <method>commandDuringPipeline</method>
+                <request>redissonConnectionFactory</request>
+                <response>Redis connection [redissonConnectionFactory] is busy with an open pipeline</response>
+            </test>
+            <test type="Case" name="client close during pipeline is rejected">
+                <bean>redisClientTestFacade</bean>
+                <method>closeDuringPipeline</method>
+                <request>redissonConnectionFactory</request>
+                <response>Redis connection [redissonConnectionFactory] is busy with an open pipeline</response>
+            </test>
+            <test type="Case" name="close behavior">
+                <bean>redisClientTestFacade</bean>
+                <method>pipelineCloseBehavior</method>
+                <request>redissonConnectionFactory</request>
+                <response>Redis pipeline is already closed</response>
+            </test>
+        </test>
+        <test type="Container" name="storage">
+            <test type="Case" name="FLUSHDB drops keys without a database index">
+                <init type="KeyValueStorageInit" name="redissonConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="redisson.flushdb.key" utype="RedisEntry">
+                            <data>redisson.flushdb.value</data>
+                        </entry>
+                    </map>
+                </init>
+                <bean>redisClientTestFacade</bean>
+                <method>flushDb</method>
+                <request>redissonConnectionFactory</request>
+                <dataStorageDiff type="MapStringKeyObjectValue">
+                    <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
+                        <entry change="deleted">
+                            <key>redisson.flushdb.key</key>
+                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </entry>
+                    </redissonConnectionFactory>
+                </dataStorageDiff>
+            </test>
+        </test>
+        <test type="Container" name="configuration">
+            <test type="Case" name="unknown connection name">
+                <bean>redisClientTestFacade</bean>
+                <method>connectionError</method>
+                <request>missingConnection</request>
+                <response>IllegalStateException: Redis connection 'missingConnection' is not configured</response>
+            </test>
+        </test>
+        <test type="Case" name="flush all databases">
+            <bean>redisClientTestFacade</bean>
+            <method>flushAllDatabases</method>
+            <request>redissonConnectionFactory</request>
+            <response>db0=null db1=null</response>
         </test>
     </test>
 </test>

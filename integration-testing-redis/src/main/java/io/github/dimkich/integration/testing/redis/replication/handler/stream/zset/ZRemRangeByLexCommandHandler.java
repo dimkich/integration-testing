@@ -5,7 +5,6 @@ import com.moilioncircle.redis.replicator.event.Event;
 import io.github.dimkich.integration.testing.redis.model.RedisZSet;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisStreamHandler;
-import org.springframework.data.domain.Range;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -24,30 +23,38 @@ public class ZRemRangeByLexCommandHandler implements RedisStreamHandler<ZRemRang
             if (zset.isEmpty()) {
                 return;
             }
-            String minStr = new String(event.getMin(), StandardCharsets.UTF_8);
-            String maxStr = new String(event.getMax(), StandardCharsets.UTF_8);
-            Range<String> range = parseLexRange(minStr, maxStr);
-            zset.removeIf(entry -> range.contains(entry.getMember().toString()));
+            String min = new String(event.getMin(), StandardCharsets.UTF_8);
+            String max = new String(event.getMax(), StandardCharsets.UTF_8);
+            zset.removeIf(entry -> inRange(entry.getMember().toString(), min, max));
         });
     }
 
-    private Range<String> parseLexRange(String min, String max) {
-        return Range.of(parseBound(min, true), parseBound(max, false));
+    private boolean inRange(String value, String min, String max) {
+        if (!"-".equals(min) && !matchesLower(value, min)) {
+            return false;
+        }
+        return "+".equals(max) || matchesUpper(value, max);
     }
 
-    private Range.Bound<String> parseBound(String str, boolean isLower) {
-        if (isLower && "-".equals(str)) {
-            return Range.Bound.unbounded();
+    private boolean matchesLower(String value, String bound) {
+        return matchesBound(value, bound, true);
+    }
+
+    private boolean matchesUpper(String value, String bound) {
+        return matchesBound(value, bound, false);
+    }
+
+    /**
+     * Compares {@code value} with a Redis lex bound ({@code [x}, {@code (x} or a bare value,
+     * which Redis clients treat as inclusive).
+     */
+    private boolean matchesBound(String value, String bound, boolean lower) {
+        boolean explicit = bound.startsWith("[") || bound.startsWith("(");
+        boolean exclusive = bound.startsWith("(");
+        int comparison = value.compareTo(explicit ? bound.substring(1) : bound);
+        if (lower) {
+            return exclusive ? comparison > 0 : comparison >= 0;
         }
-        if (!isLower && "+".equals(str)) {
-            return Range.Bound.unbounded();
-        }
-        if (str.startsWith("[")) {
-            return Range.Bound.inclusive(str.substring(1));
-        }
-        if (str.startsWith("(")) {
-            return Range.Bound.exclusive(str.substring(1));
-        }
-        return Range.Bound.inclusive(str);
+        return exclusive ? comparison < 0 : comparison <= 0;
     }
 }

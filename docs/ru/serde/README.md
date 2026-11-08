@@ -65,8 +65,7 @@ Serde отвечает за то, в каком виде данные уходя
 * сериализатор возвращает буфер, готовый к чтению (`position` на первом байте, `limit` на конце);
 * десериализатор читает `position..limit` и не меняет позицию входного буфера;
 * на границе с Kafka и Redis буфер превращается в `byte[]`: Kafka требует его в своих
-  `Serializer`/`Deserializer` и заголовках, Spring Data Redis — в `RedisConnection` и
-  `RedisSerializer`.
+  `Serializer`/`Deserializer` и заголовках, Spring Data Redis — в `RedisSerializer`.
 
 Доменное значение формата `bytes` — по-прежнему `byte[]`. Поэтому в XML-тестах пишется
 `type="byte[]"`, а `ByteBuffer` не протекает в тестовые данные.

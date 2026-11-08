@@ -43,9 +43,10 @@ Call an application method that publishes, and describe the expected push in
 </test>
 ```
 
-`connection` is the Spring `RedisConnectionFactory` bean name the push was observed on. If
-several factories point to the same Redis, the same push is captured once per factory; mark
-technical channels with `ignore: true` (see below) if you do not want to assert every copy.
+`connection` is the connection name from `integration.testing.redis.connections` on which the
+push was observed. If several connections point to the same Redis, the same push is captured
+once per connection; mark technical channels with `ignore: true` (see below) if you do not want
+to assert every copy.
 
 Direction 2: The Test Sends a Push to the Application
 -----------------------------------------------------
@@ -93,7 +94,7 @@ integration:
   testing:
     redis:
       connections:
-        redisConnectionFactory:
+        redissonConnectionFactory:
           defaultSchema:
             value:
               type: string      # channels not matching any prefix
@@ -113,7 +114,7 @@ Deduplication
 A captured push is filtered out when its identity matches a push sent by the test.
 The identity consists of:
 
-* the connection (factory bean name),
+* the connection (name from `integration.testing.redis.connections`),
 * the channel,
 * the raw payload bytes.
 

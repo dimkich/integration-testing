@@ -7,9 +7,14 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.moilioncircle.redis.replicator.cmd.impl.*;
 import com.moilioncircle.redis.replicator.event.AbstractEvent;
 import com.moilioncircle.redis.replicator.rdb.datatype.KeyValuePair;
+import com.moilioncircle.redis.replicator.rdb.dump.datatype.DumpKeyValuePair;
 import io.github.dimkich.integration.testing.TestConverter;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.format.common.type.TypeParser;
+import io.github.dimkich.integration.testing.redis.client.RedisClient;
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
+import io.github.dimkich.integration.testing.redis.config.RedisProperties;
+import io.github.dimkich.integration.testing.redis.facade.RedisClientTestFacade;
 import io.github.dimkich.integration.testing.redis.facade.RedisPushTestFacade;
 import io.github.dimkich.integration.testing.redis.facade.RedisReplicationMockFacade;
 import io.github.dimkich.integration.testing.redis.facade.RedisReplicatorSpyProcessor;
@@ -33,6 +38,7 @@ import org.redisson.client.protocol.Decoder;
 import org.redisson.client.protocol.Encoder;
 import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.spring.data.connection.RedissonConnectionFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,28 +47,30 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.redis.connection.*;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.connection.zset.Aggregate;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import redis.clients.jedis.Jedis;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Configuration
 @Import({RedisReplicationMockFacade.class, RedisReplicatorSpyProcessor.class})
 public class RedisTestConfig {
-    /** Envelope written by {@link #binaryTestRedisTemplate} and decoded by the test schema. */
+    /** Envelope written by {@link #binaryValueSerializer} and decoded by the test schema. */
     public static final String BINARY_VALUE_ENVELOPE = "{VER(1)}{LEN(INT, BE)}{CONTENT}";
-    @Value("${spring.data.redis.host}")
+    @Value("${embedded.redis.host}")
     private String redisHost;
-    @Value("${spring.data.redis.port}")
+    @Value("${embedded.redis.port}")
     private int redisPort;
-    @Value("${spring.data.redis.password:}")
+    @Value("${embedded.redis.password:}")
     private String redisPassword;
 
     @Bean(destroyMethod = "shutdown")
@@ -81,42 +89,63 @@ public class RedisTestConfig {
     }
 
     /**
-     * Value serializer used by both {@link #testRedisTemplate} and the {@code [redisson.*]}
-     * schemas: the application and the framework must serialize values identically.
+     * Value serializer used by both the typed facade and the {@code [redisson.*]} schemas:
+     * the application and the framework must serialize values identically.
      */
     @Bean
     public RedisSerializer<TestRedisDto> testValueSerializer() {
         return new Jackson2JsonRedisSerializer<>(redisObjectMapper(), TestRedisDto.class);
     }
 
-    @Bean
-    public RedisTemplate<String, TestRedisDto> testRedisTemplate(RedisConnectionFactory redissonConnectionFactory,
-                                                                 RedisSerializer<TestRedisDto> testValueSerializer) {
-        RedisTemplate<String, TestRedisDto> template = new RedisTemplate<>();
-        template.setConnectionFactory(redissonConnectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(testValueSerializer);
-        return template;
+    @Bean(destroyMethod = "close")
+    public Jedis redisTestJedis() {
+        Jedis jedis = new Jedis(redisHost, redisPort);
+        if (!redisPassword.isEmpty()) {
+            jedis.auth(redisPassword);
+        }
+        return jedis;
     }
 
     @Bean
-    public RedisTestFacade<String, TestRedisDto> redissonTestFacade(RedisTemplate<String, TestRedisDto> testRedisTemplate) {
-        return new RedisTestFacade<>(testRedisTemplate);
+    public RedisTestFacade<String, TestRedisDto> redissonTestFacade(
+            Jedis redisTestJedis,
+            @Qualifier("testValueSerializer") RedisSerializer<TestRedisDto> testValueSerializer) {
+        return new RedisTestFacade<>(redisTestJedis, new StringRedisSerializer(), testValueSerializer,
+                jdkSerializer(), jdkSerializer());
     }
 
     /**
-     * Template whose value serializer writes enveloped bytes, emulating an application
-     * that stores values with a binary envelope. The matching test schema uses
+     * {@code RedisTemplate} defaults hash keys and values to {@link JdkSerializationRedisSerializer},
+     * so the facade must use the same serializers for hash and stream fields.
+     */
+    private static RedisSerializer<Object> jdkSerializer() {
+        return new JdkSerializationRedisSerializer();
+    }
+
+    /**
+     * Entry point for the {@code framework client} XML container. Both framework clients are
+     * registered by {@code RedisConfig.PostProcessor} as {@code <connection>RedisClient}.
+     */
+    @Bean
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    public RedisClientTestFacade redisClientTestFacade(
+            @Qualifier("redissonConnectionFactoryRedisClient") RedisClient redissonClient,
+            @Qualifier("jedisConnectionFactoryRedisClient") RedisClient jedisClient,
+            RedisProperties redisProperties) {
+        Map<String, RedisClient> clients = new LinkedHashMap<>();
+        clients.put("redissonConnectionFactory", redissonClient);
+        clients.put("jedisConnectionFactory", jedisClient);
+        return new RedisClientTestFacade(clients, redisProperties);
+    }
+
+    /**
+     * Serializer that writes enveloped bytes, emulating an application that stores values with
+     * a binary envelope. The matching test schema uses
      * {@code value: {bean-ref: testValueSerializer, binary-envelope: ...}} so that the
      * storage decodes the envelope through the core serde pipeline.
      */
     @Bean
-    public RedisTemplate<String, TestRedisDto> binaryTestRedisTemplate(RedisConnectionFactory redissonConnectionFactory,
-                                                                       RedisSerializer<TestRedisDto> testValueSerializer,
-                                                                       SerdeManager serdeManager) {
-        RedisTemplate<String, TestRedisDto> template = new RedisTemplate<>();
-        template.setConnectionFactory(redissonConnectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
+    public EnvelopedRedisSerializer binaryValueSerializer(SerdeManager serdeManager) {
         StandardSerdeProperties props = new StandardSerdeProperties();
         props.setBeanRef("testValueSerializer");
         props.setBinaryEnvelope(BINARY_VALUE_ENVELOPE);
@@ -124,24 +153,26 @@ public class RedisTestConfig {
                 serdeManager.resolve(props, Object.class, ByteBuffer.class, TestSerdeContext.class, null);
         TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> envelopedDeserializer =
                 serdeManager.resolve(props, ByteBuffer.class, Object.class, TestSerdeContext.class, null);
-        template.setValueSerializer(new EnvelopedRedisSerializer(envelopedSerializer, envelopedDeserializer));
-        return template;
+        return new EnvelopedRedisSerializer(envelopedSerializer, envelopedDeserializer);
     }
 
     @Bean
     public RedisTestFacade<String, TestRedisDto> binaryTestFacade(
-            RedisTemplate<String, TestRedisDto> binaryTestRedisTemplate) {
-        return new RedisTestFacade<>(binaryTestRedisTemplate);
+            Jedis redisTestJedis, EnvelopedRedisSerializer binaryValueSerializer) {
+        return new RedisTestFacade<>(redisTestJedis, new StringRedisSerializer(), binaryValueSerializer,
+                jdkSerializer(), jdkSerializer());
     }
 
     @Bean
-    public RedisTestFacade<String, String> redisStringFacade(RedisConnectionFactory redissonConnectionFactory) {
-        return new RedisTestFacade<>(new StringRedisTemplate(redissonConnectionFactory));
+    public RedisTestFacade<String, String> redisStringFacade(Jedis redisTestJedis) {
+        return new RedisTestFacade<>(redisTestJedis, new StringRedisSerializer(), new StringRedisSerializer(),
+                new StringRedisSerializer(), new StringRedisSerializer());
     }
 
     @Bean
     public RedisPushTestFacade redisPushTestFacade(RedisConnectionFactory redissonConnectionFactory,
                                                    RedisConnectionFactory jedisConnectionFactory,
+                                                   @Qualifier("testValueSerializer")
                                                    RedisSerializer<TestRedisDto> testValueSerializer) {
         return new RedisPushTestFacade(redissonConnectionFactory, jedisConnectionFactory, testValueSerializer);
     }
@@ -156,13 +187,9 @@ public class RedisTestConfig {
     }
 
     @Bean
-    public StringRedisTemplate jedisRedisTemplate(RedisConnectionFactory jedisConnectionFactory) {
-        return new StringRedisTemplate(jedisConnectionFactory);
-    }
-
-    @Bean
-    public RedisTestFacade<String, String> jedisFacade(StringRedisTemplate jedisRedisTemplate) {
-        return new RedisTestFacade<>(jedisRedisTemplate);
+    public RedisTestFacade<String, String> jedisFacade(Jedis redisTestJedis) {
+        return new RedisTestFacade<>(redisTestJedis, new StringRedisSerializer(), new StringRedisSerializer(),
+                new StringRedisSerializer(), new StringRedisSerializer());
     }
 
     /**
@@ -221,7 +248,8 @@ public class RedisTestConfig {
 
     @Bean
     TestSetupModule module() {
-        return new TestSetupModule().addSubTypes(TestRedisDto.class, InvalidDataAccessApiUsageException.class,
+        return new TestSetupModule().addSubTypes(DumpKeyValuePair.class, TestRedisDto.class,
+                        InvalidDataAccessApiUsageException.class,
                         RedisListCommands.Direction.class, Aggregate.class, RedisStringCommands.BitOperation.class,
                         BitFieldSubCommands.class, BitFieldSubCommands.BitFieldGet.class,
                         BitFieldSubCommands.BitFieldSet.class, BitFieldSubCommands.BitFieldIncrBy.class,
@@ -279,14 +307,12 @@ public class RedisTestConfig {
     }
 
     @Bean
-    public RedisConnectionFactory snapshotTestFactory() {
-        RedisConnectionFactory factory = mock(RedisConnectionFactory.class);
-        RedisConnection connection = mock(RedisConnection.class);
-        RedisServerCommands serverCommands = mock(RedisServerCommands.class);
-        doReturn(connection).when(factory).getConnection();
-        doReturn(serverCommands).when(connection).serverCommands();
-
-        return factory;
+    public RedisClient snapshotTestFactoryRedisClient() {
+        RedisClient client = mock(RedisClient.class);
+        RedisPipeline pipeline = mock(RedisPipeline.class);
+        when(client.pipeline()).thenReturn(pipeline);
+        when(client.getDefaultDatabase()).thenReturn(0);
+        return client;
     }
 
     @Bean
@@ -303,7 +329,7 @@ public class RedisTestConfig {
      * and deserializer, so the template reads and writes bytes exactly as the schema expects.
      */
     @RequiredArgsConstructor
-    static class EnvelopedRedisSerializer implements RedisSerializer<TestRedisDto> {
+    public static class EnvelopedRedisSerializer implements RedisSerializer<TestRedisDto> {
         private final TestSerdeConverter<Object, ByteBuffer, TestSerdeContext> serializer;
         private final TestSerdeConverter<ByteBuffer, Object, TestSerdeContext> deserializer;
 

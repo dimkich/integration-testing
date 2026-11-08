@@ -6,6 +6,7 @@ import io.github.dimkich.integration.testing.redis.model.RedisZSet;
 import io.github.dimkich.integration.testing.redis.model.RedisZSetEntry;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisStreamHandler;
+import io.github.dimkich.integration.testing.redis.replication.handler.stream.RankRange;
 import org.springframework.stereotype.Component;
 
 import java.util.Iterator;
@@ -21,39 +22,16 @@ public class ZRemRangeByRankCommandHandler implements RedisStreamHandler<ZRemRan
     @Override
     public void handle(ZRemRangeByRankCommand event, RedisInMemoryStore store) {
         store.compute(event.getKey(), RedisZSet.class, (schema, zset) -> {
-            int size = zset.size();
-            if (size == 0) {
+            RankRange range = RankRange.of(zset.size(), event.getStart(), event.getStop());
+            if (range == null) {
                 return;
             }
 
-            int start = (int) event.getStart();
-            int stop = (int) event.getStop();
-            if (start < 0) {
-                start = size + start;
-            }
-            if (stop < 0) {
-                stop = size + stop;
-            }
-            if (start < 0) {
-                start = 0;
-            }
-            if (start >= size || start > stop) {
-                return;
-            }
-            if (stop >= size) {
-                stop = size - 1;
-            }
-
-            Iterator<RedisZSetEntry> it = zset.iterator();
-            int currentRank = 0;
-            while (it.hasNext()) {
-                it.next();
-                if (currentRank >= start) {
-                    it.remove();
-                }
-                currentRank++;
-                if (currentRank > stop) {
-                    break;
+            Iterator<RedisZSetEntry> iterator = zset.iterator();
+            for (int rank = 0; rank <= range.getStop() && iterator.hasNext(); rank++) {
+                iterator.next();
+                if (rank >= range.getStart()) {
+                    iterator.remove();
                 }
             }
         });

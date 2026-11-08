@@ -148,9 +148,10 @@ shows no database changes (or shows an empty block).
 You configured serialization schemas for one connection name, but your application uses
 a different one.
 
-**How to fix:** Ensure that the subsection name in the `connections` block of your YAML
-configuration file exactly matches the Spring `RedisConnectionFactory` bean name of your
-application (see `Configuration.md` for details).
+**How to fix:** Ensure that the `connections` block of your YAML configuration declares a
+connection with the same name used in `<init name="...">` and `<dataStorageDiff>` (see
+`Configuration.md` for details). This is a logical name; it does not have to match the
+application's `RedisConnectionFactory` bean name.
 
 ### Cause 2: Key matched an ignore filter (`ignore: true`)
 
@@ -192,9 +193,9 @@ ignore prefix for the channel under test.
 
 ### Cause 2: The push belongs to another connection
 
-`connection` in the assertion must be the `RedisConnectionFactory` bean name the push was
-observed on. When several factories share one Redis, each captures the same push; ignored
-prefixes hide the copies you do not assert.
+`connection` in the assertion is the connection name from
+`integration.testing.redis.connections` on which the push was observed. When several connections
+share one Redis, each captures the same push; ignored prefixes hide the copies you do not assert.
 
 **How to fix:** Specify `connection` explicitly in `<inboundMessage>`/`<outboundMessage>` and
 mark duplicate captures with `ignore: true`.
@@ -215,6 +216,33 @@ technical channels with `ignore: true` if they should not be asserted.
 
 **How to fix:** Publish pushes inside the test and assert only SUT-produced messages. See
 [Push-Messages.md](Push-Messages.md).
+
+Framework Redis Connection Errors
+---------------------------------
+
+### Symptoms
+
+`RedisClientException` in the logs: `Cannot connect to Redis [...]`, `Redis authentication
+failed`, `Redis command [...] failed`, or `Redis Sync Timeout`.
+
+### What to check
+
+1. `host`/`port` are set explicitly — in `integration.testing.redis.connections.<name>` or at
+   the global `integration.testing.redis.*` level. There is no automatic fallback to
+   `embedded.redis.*`/`spring.data.redis.*`.
+2. `user`/`password` are set for a protected Redis.
+3. `timeoutMs` is sufficient for your environment (default `5000` ms).
+4. For TLS, `ssl: true` is enabled and the server certificate is trusted by the JVM.
+
+The framework does not use the application's `RedisConnectionFactory`, so SUT driver settings
+(for example, Redisson `Config`) do not affect it; configure the `connections` block instead.
+
+### Redis 5 and hash field TTL
+
+The connection and all service commands work with Redis 5+. However, per-field hash TTL
+(`HPEXPIREAT`) was introduced only in Redis 7.4. If `ttl`/`expireAt` is set on `RedisHash`
+fields in test data, writing such a value fails with `unknown command` on Redis 5–7.2. Key-level
+TTL (`PEXPIREAT`) works on all supported versions.
 
 ---
 [← Back to Home](../README.md)

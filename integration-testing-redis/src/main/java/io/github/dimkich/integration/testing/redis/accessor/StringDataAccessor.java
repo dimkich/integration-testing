@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.redis.accessor;
 
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
-import org.springframework.data.redis.connection.RedisConnection;
 
 /**
  * Persists plain (non-{@link io.github.dimkich.integration.testing.redis.model.RedisValue RedisValue})
@@ -19,17 +19,16 @@ public class StringDataAccessor {
      * If {@code data} is already a {@code byte[]}, it is stored as-is. Otherwise, it is
      * serialized with {@link RedisDataSchema#getValueCodec()}.
      *
-     * @param keyRaw encoded Redis key
-     * @param data   value to store (raw bytes or a codec-serializable object)
-     * @param conn   connection used for writing
-     * @param schema provides the value codec for non-byte[] data
+     * @param keyRaw   encoded Redis key
+     * @param data     value to store (raw bytes or a codec-serializable object)
+     * @param pipeline pipeline used for writes
+     * @param schema   provides the value codec for non-byte[] data
      */
-    public void store(byte[] keyRaw, Object data, RedisConnection conn, RedisDataSchema schema) {
+    public void store(byte[] keyRaw, Object data, RedisPipeline pipeline, RedisDataSchema schema) {
         if (data instanceof byte[] bytes) {
-            conn.stringCommands().set(keyRaw, bytes);
+            pipeline.set(keyRaw, bytes);
         } else {
-            conn.stringCommands().set(keyRaw, schema.getValueCodec().serialize(data));
+            pipeline.set(keyRaw, schema.getValueCodec().serialize(data));
         }
     }
 }
-

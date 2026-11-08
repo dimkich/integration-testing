@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "SameReturnValue"})
 public abstract class BitFieldSetMixin {
     @JsonCreator
     public static BitFieldSubCommands.BitFieldSet create(

@@ -1,15 +1,16 @@
-spring:
-  data:
-    redis:
-      host: ${embedded.redis.host}
-      port: ${embedded.redis.port}
-      password: ${embedded.redis.password}
-
 integration:
   testing:
     redis:
       connections:
+        snapshotTestFactory:
+          host: ${embedded.redis.host}
+          port: ${embedded.redis.port}
+          password: ${embedded.redis.password}
+          database: 0
         redissonConnectionFactory:
+          host: ${embedded.redis.host}
+          port: ${embedded.redis.port}
+          password: ${embedded.redis.password}
           schemas:
             "[redisson.TestRedisDto]":
               value:
@@ -78,6 +79,9 @@ integration:
             "[redisson.hidden]":
               ignore: true
         jedisConnectionFactory:
+          host: ${embedded.redis.host}
+          port: ${embedded.redis.port}
+          password: ${embedded.redis.password}
           multipleDatabases: true
           schemas:
             redisson:

@@ -96,6 +96,18 @@ public class RedisPushTestFacade {
         publish(channel, dtoSerializer.serialize(value));
     }
 
+    /** Publishes raw bytes; used to verify the poison-payload path of push capture. */
+    public void publishRaw(String channel, byte[] payload) {
+        @Cleanup RedisConnection connection = connectionFactory.getConnection();
+        connection.publish(channel.getBytes(StandardCharsets.UTF_8), payload);
+    }
+
+    /** Publishes through the Jedis connection, so capture is verified per connection. */
+    public void publishOnJedis(String channel, String value) {
+        @Cleanup RedisConnection connection = rawExecuteConnectionFactory.getConnection();
+        connection.publish(channel.getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8));
+    }
+
     /** Publishes a sharded push (SPUBLISH), which the framework should capture via replication. */
     public void sPublishString(String channel, String value) {
         @Cleanup RedisConnection connection = rawExecuteConnectionFactory.getConnection();

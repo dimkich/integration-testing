@@ -2,15 +2,9 @@ package io.github.dimkich.integration.testing.redis.replication.handler.stream.s
 
 import com.moilioncircle.redis.replicator.cmd.impl.XDelExCommand;
 import com.moilioncircle.redis.replicator.event.Event;
-import io.github.dimkich.integration.testing.redis.model.RedisStream;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisStreamHandler;
 import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class XDelExCommandHandler implements RedisStreamHandler<XDelExCommand> {
@@ -22,11 +16,6 @@ public class XDelExCommandHandler implements RedisStreamHandler<XDelExCommand> {
 
     @Override
     public void handle(XDelExCommand event, RedisInMemoryStore store) {
-        store.compute(event.getKey(), RedisStream.class, (schema, stream) -> {
-            Set<String> idsToDelete = Arrays.stream(event.getIds())
-                    .map(id -> new String(id, StandardCharsets.UTF_8))
-                    .collect(Collectors.toSet());
-            stream.removeIf(entry -> idsToDelete.contains(entry.getId()));
-        });
+        StreamEntries.removeByIds(store, event.getKey(), event.getIds());
     }
 }

@@ -80,11 +80,15 @@ This attribute enables deterministic time control inside Testcontainers Docker c
 
 When non-empty, the framework:
 
-    Starts a shared libfaketime-server container (dimkich/libfaketime-server:latest) to handle time updates.
+    Starts a shared libfaketime-server container (dimkich/libfaketime-server:0.2) to handle time updates.
     Intercepts container startup via a ByteBuddy agent.
     Detects the container OS (glibc Linux vs Alpine) and architecture (x64 vs arm64) to select the correct libfaketime binary.
     Mounts the shared library and configures environment variables (LD_PRELOAD, FAKETIME_TIMESTAMP_FILE, TZ, etc.).
     Connects the container to the server using shared IPC mode.
+
+The server acknowledges every time update only after the shared timestamp file has been replaced, so once
+`DateTimeInit` returns the containers already observe the new time. Without that handshake a container could
+still report the previous instant and, for example, drop a freshly seeded key whose absolute TTL is now in the past.
 
 This ensures that the OS-level time inside the matched Docker containers is dynamically updated alongside the mocked
 Java Time API during test execution.
@@ -312,7 +316,7 @@ Recommendations
 1. **Use `@MockJavaTime` without parameters** for standard Java Time API mocking.
 2. **Set time in the root Container** --- this is the standard scenario that covers most use cases.
 3. **Use `value()` only when necessary** for mocking `System.currentTimeMillis()` in your code or third-party libraries.
-4. **Use `addDuration` for time progression** inside multi-step tests (`TestPart`).
+4. **Use `addDuration` for time progression** inside multistep tests (`TestPart`).
 5. **Use `dockerImages()` for container-dependent tests** — synchronizes container system clocks with JVM test clocks.
 6. **Check package name uniqueness** in `value()` --- use fully qualified names.
 7. **Do not use `<mockInvoke>` for time** --- use `@MockJavaTime` and `DateTimeInit` for time management.  

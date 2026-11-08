@@ -6,57 +6,48 @@ Redis Module Configuration: Parameter Reference
 All Redis testing parameters are defined in standard Spring Boot configuration files (such as
 `application.yml` or `application-test.yml`) under the `integration.testing.redis` prefix.
 
-The settings allow you to declaratively link configuration files with Spring connection beans
-in your project, automatically inherit common parameters, and resolve serialization rules
-without conflicts.
+The settings allow you to declaratively describe Redis connections, automatically inherit common
+parameters, and resolve serialization rules without conflicts.
 
-Linking Configuration to Spring Connection Beans
-------------------------------------------------
+Linking Configuration to Connections
+------------------------------------
 
-The key section is the `connections` block. The subsection names in this section must exactly
-match the `RedisConnectionFactory` bean names declared in your application's Java code.
+The key section is the `connections` block. Its keys are **logical connection names**. The module
+registers its own beans under these names (`<name>TestDataStorage`, `<name>SyncState`,
+`<name>RedisClient`, etc.), and the same names are used in `<init name="...">` and
+`<dataStorageDiff>`.
 
-If your project declares two connection factories (for example, one for Jedis and one for
-Redisson):
-
-```java
-
-@Configuration
-public class MyRedisAppConfig {
-
-    @Bean
-    public RedisConnectionFactory redissonConnectionFactory() {
-        return new RedissonConnectionFactory(...)
-    }
-
-    @Bean
-    public RedisConnectionFactory jedisConnectionFactory() {
-        return new JedisConnectionFactory(...);
-    }
-
-```
-
-Then in `application-test.yml` you describe the connections using the same bean names as keys
-in the `connections` block:
+The framework opens its own connection using the settings below and does **not** use a
+`RedisConnectionFactory` from the application. Therefore, the Redis driver used by the system
+under test (Jedis, Lettuce, Redisson, a custom client) does not matter, and Spring Data Redis is
+not required on the classpath. If the application talks to several Redis instances, declare the
+same number of connections:
 
 ```yaml
 integration:
   testing:
     redis:
       connections:
-        # The key name matches the @Bean method name for Redisson
         redissonConnectionFactory:
           host: "localhost"
           port: 6379
 
-        # The key name matches the @Bean method name for Jedis
         jedisConnectionFactory:
           host: "localhost"
           port: 6380
 ```
 
-If your application uses standard Spring Boot automatic configuration and has only one database,
-the default bean name is `redisConnectionFactory`.
+Transport settings (`timeoutMs`, `ssl`) apply to both the framework client and the replication
+connection; the replication stream still tracks every logical database.
+
+The names may coincide with application bean names for convenience, but this is not required.
+The `connections` section is mandatory: when it is empty, no per-connection beans are registered.
+If a connection inherits all global settings, set at least one field (for example, `database: 0`):
+an empty `{}` entry is not bound by Spring Boot.
+
+There is no automatic endpoint fallback: `host` and `port` must be set explicitly, either at the
+global `integration.testing.redis.*` level or in the connection. The framework does not read
+`embedded.redis.*` or `spring.data.redis.*`.
 
 Inheritance and Deep Merge Pipeline
 -----------------------------------
@@ -68,7 +59,7 @@ to bottom:
 [ Level 1: Global Settings ] (set directly in `integration.testing.redis.*`)
                  │
                  ▼
-  [ Level 2: Connection Settings ] (override globals for a specific bean)
+  [ Level 2: Connection Settings ] (override globals for a specific connection)
                  │
                  ▼
   [ Level 3: Key Schema Settings ] (define rules for a specific key mask/prefix)
@@ -106,16 +97,19 @@ These settings apply to all connections by default.
 
 | Parameter              | Type                      | Description                                                            | Default                      |
 |------------------------|---------------------------|------------------------------------------------------------------------|------------------------------|
-| `host`                 | String                    | Host for connecting to Redis (the replicator connects here)            | `${embedded.redis.host}`     |
-| `port`                 | Integer                   | Port for connecting to Redis                                           | `${embedded.redis.port}`     |
-| `user`                 | String                    | Username for Redis authentication (root is treated as null)            | `${embedded.redis.user}`     |
-| `password`             | String                    | Password for authentication                                            | `${embedded.redis.password}` |
+| `host`                 | String                    | Host for connecting to Redis (client and replicator connect here)      | Not set                      |
+| `port`                 | Integer                   | Port for connecting to Redis                                           | Not set                      |
+| `user`                 | String                    | Username for Redis authentication (root/blank is treated as null)      | Not set                      |
+| `password`             | String                    | Password for authentication                                            | Not set                      |
+| `database`             | Integer                   | Default logical database                                               | `0`                          |
+| `timeoutMs`            | Integer                   | Connect/read timeout for the framework connection, ms                  | `5000`                       |
+| `ssl`                  | Boolean                   | Use TLS for the framework connection                                   | `false`                      |
 | `multipleDatabases`    | Boolean                   | Enable key separation by database index (`SELECT`)                     | `false`                      |
 | `syncBarrierTimeoutMs` | Long                      | Maximum wait time for the replication sync barrier in milliseconds     | `5000`                       |
 | `keyCodec`             | Serde config              | Global key codec configuration                                         | `string`                     |
 | `defaultSchema`        | Schema                    | Global default serialization schema                                    | all components — `string`    |
 | `excludedFields`       | Set\<String\>             | Global list of fields to exclude from comparison in DTOs/maps          | Empty                        |
-| `connections`          | Map\<String, Connection\> | Map of Redis connections, keys are `RedisConnectionFactory` bean names | Empty                        |
+| `connections`          | Map\<String, Connection\> | Map of Redis connections, keys are logical connection names            | Empty                        |
 
 ### Key Codec Structure (`keyCodec`)
 
@@ -229,20 +223,22 @@ own source, the parent's source is not mixed in. `binary-envelope` is an ordinar
 can be set without a source, and the envelope is then applied to the inherited source.
 `excludedFields` are unioned.
 
-### Connection Level Parameters (`connections.<ConnectionFactoryName>.*`)
+### Connection Level Parameters (`connections.<ConnectionName>.*`)
 
-Describe settings for a specific `RedisConnectionFactory`. You can override any Global Level
-parameters here:
+Describe settings for a specific connection. You can override any Global Level parameters here:
 
 | Parameter           | Type                                                               | Description                                                                  | Inheritance                                                                |
 |---------------------|--------------------------------------------------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| `host`              | String                                                             | Host for connecting to Redis (the replicator connects here)                  | Overrides global `host`                                                    |
+| `host`              | String                                                             | Host for connecting to Redis (client and replicator connect here)            | Overrides global `host`                                                    |
 | `port`              | Integer                                                            | Port for connecting to Redis                                                 | Overrides global `port`                                                    |
-| `user`              | String                                                             | Username for Redis authentication (root is treated as null)                  | Overrides global `user`                                                    |
+| `user`              | String                                                             | Username for Redis authentication (root/blank is treated as null)            | Overrides global `user`                                                    |
 | `password`          | String                                                             | Password for authentication                                                  | Overrides global `password`                                                |
+| `database`          | Integer                                                            | Default logical database for this connection                                 | Overrides global `database`                                                |
+| `timeoutMs`         | Integer                                                            | Connect/read timeout for the framework connection, ms                        | Overrides global `timeoutMs`                                               |
+| `ssl`               | Boolean                                                            | Use TLS for the framework connection                                         | Overrides global `ssl`                                                     |
 | `multipleDatabases` | Boolean                                                            | Enable key separation by database index (`SELECT`)                           | Overrides global `multipleDatabases`                                       |
 | `keyCodec`          | Serde config                                                       | Key codec configuration for this connection                                  | Inherits global `keyCodec`; fields are overridden                          |
-| `defaultSchema`     | [`Schema`](#schema-structure-defaultschema-schemas)                | Default serialization schema for this factory                                | Inherits global `defaultSchema`; components can be overridden individually |
+| `defaultSchema`     | [`Schema`](#schema-structure-defaultschema-schemas)                | Default serialization schema for this connection                             | Inherits global `defaultSchema`; components can be overridden individually |
 | `excludedFields`    | Set\<String\>                                                      | List of fields to exclude from comparison in DTOs/maps                       | Merged (Union) with global list                                            |
 | `schemas`           | Map\<String, [`Schema`](#schema-structure-defaultschema-schemas)\> | Map of individual schemas for key groups (Level 3). Keys are prefix patterns | Not inherited (defined only at connection level)                           |
 

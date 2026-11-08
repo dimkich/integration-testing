@@ -45,7 +45,7 @@
 </init>
 ```
 
-* `name` — имя подключения (соответствует имени бина `RedisConnectionFactory` в проекте, например,
+* `name` — имя подключения из `integration.testing.redis.connections` (например,
   `redissonConnectionFactory`).
 * `clear="true"` — полностью очистить базу перед тестом (выполняется команда `FLUSHALL` на сервере).
 * `clear="false"` — не очищать базу (новые ключи допишутся или обновят существующие).

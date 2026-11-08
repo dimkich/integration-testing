@@ -1,12 +1,12 @@
 package io.github.dimkich.integration.testing.redis.replication.purge;
 
+import io.github.dimkich.integration.testing.redis.client.RedisClient;
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataCodec;
 import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +14,8 @@ import java.util.Map;
 /**
  * Executes TTL-driven deletions against a live Redis connection, grouped by logical database.
  * <p>
- * Each database has a {@link RedisDbPurgeTask} that issues pipelined {@code DEL} and {@code HDEL}
- * commands using the connection's key codec and per-key schema codecs.
+ * Each database has a {@link RedisDbPurgeTask} that queues {@code DEL} and {@code HDEL}
+ * commands into one pipeline, using the connection's key codec and per-key schema codecs.
  *
  * @see RedisPurgeBuilder
  */
@@ -33,28 +33,19 @@ public class RedisPurgeTask {
     }
 
     /**
-     * Runs all per-database purge tasks through a single connection, selecting each DB and using a pipeline.
+     * Runs all per-database purge tasks through the framework client, one pipeline per database.
      *
-     * @param factory Spring Data Redis connection factory for the target instance
+     * @param client framework client for the target instance
      */
-    public void execute(RedisConnectionFactory factory) {
+    public void execute(RedisClient client) {
         if (dbTasks.isEmpty()) {
             return;
         }
 
-        @Cleanup RedisConnection conn = factory.getConnection();
         dbTasks.forEach((db, task) -> {
-            try {
-                conn.select(db);
-            } catch (UnsupportedOperationException ignore) {
-                log.debug("Redis driver {} select command not supported", factory);
-            }
-            conn.openPipeline();
-            try {
-                task.execute(conn, storageName, registry, keyCodec);
-            } finally {
-                conn.closePipeline();
-            }
+            @Cleanup RedisPipeline pipeline = client.pipeline();
+            pipeline.select(db);
+            task.execute(pipeline, storageName, registry, keyCodec);
         });
     }
 }

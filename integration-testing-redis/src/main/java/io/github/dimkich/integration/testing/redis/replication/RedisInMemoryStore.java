@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.redis.replication;
 import com.moilioncircle.redis.replicator.Replicator;
 import com.moilioncircle.redis.replicator.event.EventListener;
 import com.moilioncircle.redis.replicator.rdb.datatype.KeyValuePair;
+import io.github.dimkich.integration.testing.redis.client.RedisClient;
 import io.github.dimkich.integration.testing.redis.model.RedisEntry;
 import io.github.dimkich.integration.testing.redis.model.RedisKey;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaMetadata;
@@ -13,7 +14,6 @@ import io.github.sugarcubes.cloner.Cloner;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -49,7 +49,7 @@ public class RedisInMemoryStore {
 
     @Getter
     @Setter
-    private int currentDb = 0;
+    private volatile int currentDb = 0;
     @Getter
     private volatile ZonedDateTime now = ZonedDateTime.now();
 
@@ -222,11 +222,16 @@ public class RedisInMemoryStore {
         }
     }
 
-    /** Drops all in-memory keys belonging to {@link #currentDb}. */
+    /**
+     * Drops all in-memory keys belonging to {@link #currentDb}.
+     * <p>
+     * Keys of a connection without multiple-database tracking carry no index and all belong to
+     * the single database {@code FLUSHDB} clears.
+     */
     public void flushDb() {
         lock.writeLock().lock();
         try {
-            currentValue.keySet().removeIf(key -> Objects.equals(key.getDb(), currentDb));
+            currentValue.keySet().removeIf(key -> key.getDb() == null || key.getDb() == currentDb);
         } finally {
             lock.writeLock().unlock();
         }
@@ -288,18 +293,18 @@ public class RedisInMemoryStore {
      * lock) and the actual deletions arrive back through replication.
      *
      * @param newTime            new virtual time used for TTL evaluation
-     * @param connectionFactory  connection to the Redis instance under test
+     * @param client             framework connection to the Redis instance under test
      */
-    public void updateTimeAndPurge(ZonedDateTime newTime, RedisConnectionFactory connectionFactory) {
+    public void updateTimeAndPurge(ZonedDateTime newTime, RedisClient client) {
         this.now = newTime;
-        RedisPurgeBuilder builder = new RedisPurgeBuilder(name, registry, now);
+        RedisPurgeBuilder builder = new RedisPurgeBuilder(name, registry, now, client.getDefaultDatabase());
         lock.readLock().lock();
         try {
             currentValue.forEach(builder::addCandidate);
         } finally {
             lock.readLock().unlock();
         }
-        builder.build().execute(connectionFactory);
+        builder.build().execute(client);
     }
 
     /**

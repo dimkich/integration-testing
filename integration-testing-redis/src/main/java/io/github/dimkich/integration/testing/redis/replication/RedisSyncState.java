@@ -1,7 +1,6 @@
 package io.github.dimkich.integration.testing.redis.replication;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -73,7 +72,6 @@ public class RedisSyncState {
      * @throws RuntimeException if command sync does not resume, or a fatal replication error
      *                          is pending
      */
-    @SneakyThrows
     public void awaitActive(long timeoutMs) {
         long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         synchronized (monitor) {
@@ -83,20 +81,34 @@ public class RedisSyncState {
                 if (remainingNanos <= 0) {
                     throw new RuntimeException("Redis Sync Timeout for [" + name + "]: command sync did not resume");
                 }
-                monitor.wait(TimeUnit.NANOSECONDS.toMillis(remainingNanos) + 1);
+                try {
+                    monitor.wait(TimeUnit.NANOSECONDS.toMillis(remainingNanos) + 1);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Redis Sync Interrupted for [" + name + "]", e);
+                }
             }
         }
     }
 
     /**
      * Throws and clears the pending fatal replication error, if any.
+     * <p>
+     * Unchecked exceptions and {@link Error errors} are rethrown as is; a checked throwable is
+     * wrapped, so callers never receive a sneaky checked exception.
      */
-    @SneakyThrows
     public void throwFatalError() {
         Throwable error = fatalError;
-        if (error != null) {
-            fatalError = null;
-            throw error;
+        if (error == null) {
+            return;
         }
+        fatalError = null;
+        if (error instanceof Error e) {
+            throw e;
+        }
+        if (error instanceof RuntimeException e) {
+            throw e;
+        }
+        throw new IllegalStateException(error);
     }
 }

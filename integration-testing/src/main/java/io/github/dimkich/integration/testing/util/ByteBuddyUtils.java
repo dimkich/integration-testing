@@ -1,11 +1,13 @@
 package io.github.dimkich.integration.testing.util;
 
+import lombok.Cleanup;
 import lombok.Getter;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.pool.TypePool;
 
@@ -122,19 +124,51 @@ public class ByteBuddyUtils {
      * @param classNames fully qualified names of the classes to move
      */
     public static void moveClassToBootClassLoader(String... classNames) {
-        TypePool typePool = TypePool.Default.ofSystemLoader();
-        ClassFileLocator classFileLocator = ClassFileLocator.ForClassLoader.ofSystemLoader();
+        // Use the class loader that loaded this utility instead of the system one.
+        // Under Surefire with forkCount > 1, suites are enumerated inside the Maven
+        // process, where the framework is loaded by a Maven ClassRealm and is not
+        // visible to the system class loader. In a forked test JVM this is the
+        // system class loader, so the behaviour is unchanged.
+        ClassLoader classLoader = ByteBuddyUtils.class.getClassLoader();
+        if (classLoader == null) {
+            classLoader = ClassLoader.getSystemClassLoader();
+        }
+        TypePool typePool = TypePool.Default.of(ClassFileLocator.ForClassLoader.of(classLoader));
+        ClassFileLocator classFileLocator = ClassFileLocator.ForClassLoader.of(classLoader);
 
         Map<TypeDescription, byte[]> allTypes = new HashMap<>();
         for (String className : classNames) {
-            allTypes.putAll(new ByteBuddy()
+            if (isLoadedByBootClassLoader(className)) {
+                continue;
+            }
+            @Cleanup DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                     .redefine(typePool.describe(className).resolve(), classFileLocator)
-                    .make()
-                    .getAllTypes());
+                    .make();
+            allTypes.putAll(unloaded.getAllTypes());
         }
 
         if (!allTypes.isEmpty()) {
             ClassInjector.UsingUnsafe.ofBootLoader().inject(allTypes);
+        }
+    }
+
+    /**
+     * Checks whether the given class is already visible from the bootstrap class loader.
+     * <p>
+     * Makes {@link #moveClassToBootClassLoader(String...)} idempotent: the bootstrap copy
+     * must not be defined twice when several test modules share one JVM (for example,
+     * when Surefire enumerates suites inside the Maven process).
+     * </p>
+     *
+     * @param className fully qualified name of the class to check
+     * @return {@code true} if the bootstrap class loader can already resolve the class
+     */
+    private static boolean isLoadedByBootClassLoader(String className) {
+        try {
+            Class.forName(className, false, null);
+            return true;
+        } catch (ClassNotFoundException | LinkageError e) {
+            return false;
         }
     }
 }

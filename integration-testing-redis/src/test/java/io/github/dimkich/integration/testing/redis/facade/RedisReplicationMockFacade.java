@@ -40,6 +40,10 @@ public class RedisReplicationMockFacade {
     }
 
     @SneakyThrows
+    public RedisProperties.Connection connection(String name) {
+        return redisProperties.getConnection(name);
+    }
+
     public void event(Event event) {
         if (event.getClass() == PingCommand.class) {
             return;

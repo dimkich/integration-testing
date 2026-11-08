@@ -6,18 +6,21 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Configuration properties for Redis integration testing, bound from
  * {@code integration.testing.redis.*}. Global settings are defaults for each named
- * {@link Connection}; connection names match
- * {@link org.springframework.data.redis.connection.RedisConnectionFactory} bean names, and host,
- * port, user and password fall back to {@code embedded.redis.*}.
+ * {@link Connection}; connection names are logical names configured under
+ * {@code integration.testing.redis.connections}.
+ * <p>
+ * Host, port, user and password have no automatic fallback: they must be configured here or
+ * in a connection. Connections themselves must be declared explicitly; there is no implicit
+ * default connection.
  *
  * @see RedisConfig
  * @see RedisSchemaProperties
@@ -29,21 +32,26 @@ public class RedisProperties {
     @Setter(onMethod_ = @Autowired)
     private PropertyInheritanceMerger merger;
 
-    /** Embedded Redis host; used when a {@link Connection} does not define {@code host}. */
-    @Value("${embedded.redis.host:}")
+    /** Default Redis host for every connection. */
     private String host;
 
-    /** Embedded Redis port; used when a {@link Connection} does not define {@code port}. */
-    @Value("${embedded.redis.port:}")
+    /** Default Redis port for every connection. */
     private Integer port;
 
-    /** Embedded Redis username; {@code root} is normalized to {@code null} in {@link #init()}. */
-    @Value("${embedded.redis.user:}")
+    /** Redis username; {@code root} and blank values are normalized to {@code null} in {@link #init()}. */
     private String user;
 
-    /** Embedded Redis password; used when a {@link Connection} does not define {@code password}. */
-    @Value("${embedded.redis.password:}")
+    /** Redis password; used when a {@link Connection} does not define {@code password}. */
     private String password;
+
+    /** Logical database used when a {@code RedisKey} does not carry an explicit index. Defaults to {@code 0}. */
+    private Integer database = 0;
+
+    /** Socket connect and read timeout in milliseconds for the framework connection. Defaults to {@code 5000}. */
+    private Integer timeoutMs = 5000;
+
+    /** Whether the framework connection uses TLS. Defaults to {@code false}. */
+    private Boolean ssl = false;
 
     /**
      * When {@code true}, replication tracks keys per Redis logical database index.
@@ -72,8 +80,8 @@ public class RedisProperties {
     private Set<String> excludedFields;
 
     /**
-     * Per-{@link org.springframework.data.redis.connection.RedisConnectionFactory} settings,
-     * keyed by factory bean name.
+     * Per-connection settings, keyed by the logical connection name configured under
+     * {@code integration.testing.redis.connections}.
      */
     private Map<String, Connection> connections;
 
@@ -86,7 +94,9 @@ public class RedisProperties {
      */
     @PostConstruct
     public void init() {
-        this.user = "root".equals(user) ? null : user;
+        this.host = blankToNull(host);
+        this.user = normalizeUser(user);
+        this.password = blankToNull(password);
         if (keyCodec == null) {
             keyCodec = new StandardSerdeProperties();
             keyCodec.setType("string");
@@ -95,7 +105,7 @@ public class RedisProperties {
             defaultSchema = new RedisSchemaProperties();
         }
         if (connections == null) {
-            return;
+            connections = new LinkedHashMap<>();
         }
         connections.forEach((name, conn) -> {
             prepare(conn);
@@ -108,6 +118,18 @@ public class RedisProperties {
                 });
             }
         });
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    /**
+     * Normalizes a Redis username: blank values and the legacy {@code root} placeholder mean
+     * "no username" and become {@code null}.
+     */
+    private static String normalizeUser(String value) {
+        return blankToNull("root".equals(value) ? null : value);
     }
 
     private void applyDefaultSource(RedisSchemaProperties schema) {
@@ -128,39 +150,57 @@ public class RedisProperties {
     }
 
     /**
-     * Returns connection settings for {@code name}, creating and merging a new
-     * {@link Connection} on first access when absent from {@link #connections}.
+     * Returns configuration of a connection declared under
+     * {@code integration.testing.redis.connections}.
      *
-     * @param name {@link org.springframework.data.redis.connection.RedisConnectionFactory} bean name
+     * @param name logical connection name configured under {@code integration.testing.redis.connections}
      * @return merged connection properties
+     * @throws IllegalStateException when the connection is not configured
      */
     public Connection getConnection(String name) {
-        return connections.computeIfAbsent(name, (k) -> prepare(new Connection()));
+        Connection connection = connections == null ? null : connections.get(name);
+        if (connection == null) {
+            throw new IllegalStateException(
+                    String.format("Redis connection '%s' is not configured", name));
+        }
+        return connection;
     }
 
-    private Connection prepare(Connection connection) {
+    private void prepare(Connection connection) {
         merger.merge(connection, this);
+        connection.setHost(blankToNull(connection.getHost()));
+        connection.setUser(normalizeUser(connection.getUser()));
+        connection.setPassword(blankToNull(connection.getPassword()));
         if (connection.getSchemas() != null) {
             connection.getSchemas().values().forEach(schema -> {
                 merger.merge(schema, connection.getDefaultSchema());
                 merger.merge(schema, connection);
             });
         }
-        return connection;
     }
 
     /**
-     * Settings for a single Redis connection factory: endpoint credentials, database layout,
-     * codecs, schemas, and per-key-pattern schema overrides.
+     * Settings for a single Redis connection: endpoint credentials, logical database, transport
+     * settings, codecs, schemas, and per-key-pattern schema overrides.
      */
     @Data
     public static class Connection {
         private String host;
         private Integer port;
+        /** Redis username; {@code root} and blank values are normalized to {@code null}. */
         private String user;
         private String password;
 
-        /** Overrides global {@link RedisProperties#multipleDatabases} for this factory. */
+        /** Logical database index used by the framework connection and by keys without an explicit index. */
+        private Integer database;
+
+        /** Socket connect and read timeout in milliseconds. */
+        private Integer timeoutMs;
+
+        /** Whether the framework connection uses TLS. */
+        private Boolean ssl;
+
+        /** Overrides global {@link RedisProperties#multipleDatabases} for this connection. */
         private Boolean multipleDatabases;
 
         /**

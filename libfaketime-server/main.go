@@ -49,18 +49,31 @@ func handleConnection(c net.Conn) {
 			continue
 		}
 
-		if err := os.WriteFile(shmTmpPath, []byte(line), 0666); err != nil {
-			fmt.Fprintf(os.Stderr, "ERROR: failed to write tmp file: %v\n", err)
+		if err := applyTimestamp(line); err != nil {
+			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+			fmt.Fprintf(c, "ERR %v\n", err)
 			continue
 		}
 
-		if err := os.Rename(shmTmpPath, shmPath); err != nil {
-			fmt.Fprintf(os.Stderr, "ERROR: failed to rename file: %v\n", err)
-			continue
+		// Acknowledge only after the rename: from this moment every instrumented
+		// container observes the new timestamp, so the client may proceed.
+		if _, err := fmt.Fprintln(c, "OK"); err != nil {
+			return
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: connection read error: %v\n", err)
 	}
+}
+
+// applyTimestamp atomically replaces the shared timestamp file.
+func applyTimestamp(line string) error {
+	if err := os.WriteFile(shmTmpPath, []byte(line), 0666); err != nil {
+		return fmt.Errorf("failed to write tmp file: %w", err)
+	}
+	if err := os.Rename(shmTmpPath, shmPath); err != nil {
+		return fmt.Errorf("failed to rename file: %w", err)
+	}
+	return nil
 }

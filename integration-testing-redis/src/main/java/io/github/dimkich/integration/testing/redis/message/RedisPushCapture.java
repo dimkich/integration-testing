@@ -44,7 +44,11 @@ public class RedisPushCapture {
         }
 
         String connectionName = store.getName();
-        String channel = schemaRegistry.findKeyCodec(connectionName).deserialize(channelRaw).toString();
+        Object decodedChannel = schemaRegistry.findKeyCodec(connectionName).deserialize(channelRaw);
+        if (decodedChannel == null) {
+            throw new IllegalStateException("Redis channel deserialized to null.");
+        }
+        String channel = decodedChannel.toString();
         RedisDataSchemaMetadata metadata = schemaRegistry.findSchema(connectionName, channel);
         if (metadata.isIgnore()) {
             return;

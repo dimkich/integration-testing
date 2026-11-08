@@ -21,16 +21,19 @@ import java.time.ZonedDateTime;
 public class RedisPurgeBuilder {
     private final ZonedDateTime now;
     private final RedisDataCodec keyCodec;
+    private final int defaultDb;
     private final RedisPurgeTask globalTask;
 
     /**
      * @param storageName connection name used for schema and key-codec lookup
      * @param registry    schema registry for the storage
      * @param now         virtual time at which TTLs are evaluated
+     * @param defaultDb   logical database used when a key has no explicit index
      */
-    public RedisPurgeBuilder(String storageName, RedisDataSchemaRegistry registry, ZonedDateTime now) {
+    public RedisPurgeBuilder(String storageName, RedisDataSchemaRegistry registry, ZonedDateTime now, int defaultDb) {
         this.now = now;
         this.keyCodec = registry.findKeyCodec(storageName);
+        this.defaultDb = defaultDb;
         this.globalTask = new RedisPurgeTask(storageName, registry, this.keyCodec);
     }
 
@@ -41,10 +44,12 @@ public class RedisPurgeBuilder {
      * @param rootEntry root value entry whose {@link RedisEntry#isExpired} drives expiry detection
      */
     public void addCandidate(RedisKey redisKey, RedisEntry rootEntry) {
-        int db = (redisKey.getDb() != null) ? redisKey.getDb() : 0;
+        int db = (redisKey.getDb() != null) ? redisKey.getDb() : defaultDb;
         RedisDbPurgeTask dbTask = globalTask.getOrCreateDbTask(db);
         if (rootEntry.isExpired(now)) {
+            // The whole key expires: per-field deletions would only repeat the same DELETE.
             dbTask.addKey(keyCodec.serialize(redisKey.getKey()));
+            return;
         }
         if (rootEntry.getData() instanceof RedisValue structuralValue) {
             int totalSize = (structuralValue instanceof RedisHash hash) ? hash.size() : 0;

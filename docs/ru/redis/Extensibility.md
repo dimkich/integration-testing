@@ -64,7 +64,7 @@ public class SnappyStringSerializer implements RedisSerializer<Object> {
 
 ```yaml
 connections:
-  redisConnectionFactory:
+  redissonConnectionFactory:
     schemas:
       "compressed:":
         value:
@@ -88,9 +88,9 @@ connections:
 package com.example.redis.accessor;
 
 import io.github.dimkich.integration.testing.redis.accessor.RedisDataAccessor;
+import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
 import io.github.dimkich.integration.testing.redis.model.RedisValue;
-import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.stereotype.Component;
 
 @Component  // Автоматически регистрируется в RedisAccessorCoordinator
@@ -103,11 +103,16 @@ public class BloomFilterAccessor implements RedisDataAccessor<CustomBloomFilter>
 
     @Override
     public void store(byte[] key, CustomBloomFilter value,
-                      RedisConnection conn, RedisDataSchema schema) {
-        conn.set(key, schema.getValueCodec().serialize(value));
+                      RedisPipeline pipeline, RedisDataSchema schema) {
+        pipeline.set(key, schema.getValueCodec().serialize(value));
     }
 }
 ```
+
+Accessor получает `RedisPipeline`: команды в него только ставятся в очередь и выполняются позже,
+одним батчем. Если для кастомного типа нужна произвольная команда, используйте
+`pipeline.execute("MYCOMMAND".getBytes(), args...)`. Не пытайтесь читать результат команды внутри
+accessor'а — ответы вычитываются только при завершении батча.
 
 ### Регистрация подтипа `RedisValue` в Jackson
 
@@ -200,7 +205,7 @@ public class CustomSerializerAdapter
 
 ```yaml
 connections:
-  redisConnectionFactory:
+  redissonConnectionFactory:
     defaultSchema:
       value:
         bean-ref: "customSerializerBean"
@@ -216,7 +221,7 @@ connections:
 
 ```yaml
 connections:
-  redisConnectionFactory:
+  redissonConnectionFactory:
     schemas:
       "cache:":
         value:

@@ -7,6 +7,10 @@ This module allows you to test your application's interaction with a Redis datab
 test scenarios in XML or JSON files: write initial data to Redis before a test, invoke application
 methods, and verify how the data in the database changed afterward.
 
+The framework opens its own Redis connection (RESP2, Redis 5+) and does not use the application's
+`RedisConnectionFactory`, so the driver used by the system under test — Jedis, Lettuce, Redisson
+or a custom one — does not matter. Spring Data Redis is not required on the classpath.
+
 How It Works
 ------------
 
