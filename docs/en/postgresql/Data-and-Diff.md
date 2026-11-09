@@ -136,6 +136,9 @@ Column values are written as PostgreSQL literals:
 Notes:
 
 * `null="true"` sets SQL `NULL`; an empty tag is an empty string.
+* Field order inside a row does not matter. A table's columns are the union of all fields across all
+  rows in first-appearance order; a field omitted in a row is `NULL`.
+* A duplicate field in one row is an error.
 * Arrays use PostgreSQL text literals such as `{a,b}`. Elements may contain commas, quotes, and `NULL`.
 * `json`/`jsonb` and `hstore` are passed as text and parsed by PostgreSQL.
 * `bit`/`varbit` values are strings of `0` and `1`.
