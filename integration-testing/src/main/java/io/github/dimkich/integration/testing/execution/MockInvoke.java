@@ -12,7 +12,9 @@ import org.assertj.core.api.recursive.comparison.RecursiveComparisonDifferenceCa
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicMarkableReference;
 import java.util.function.BiPredicate;
@@ -37,6 +39,7 @@ public class MockInvoke {
                 amr2.getReference(), compConfig).isEmpty(), AtomicMarkableReference.class);
         compConfig.registerEqualsForType((a, b) -> a.compareTo(b) == 0, BigDecimal.class);
         compConfig.registerEqualsForType((a, b) -> a.toInstant().equals(b.toInstant()), ZonedDateTime.class);
+        compConfig.registerEqualsForType(MockInvoke::mapsEquals, Map.class);
     }
 
     /**
@@ -56,7 +59,7 @@ public class MockInvoke {
     @JsonInclude(JsonInclude.Include.NON_DEFAULT)
     private boolean disabled;
     /**
-     * Expected arguments for the invocation (may be {@code null}).
+     * Expected arguments for the invocation; {@code null} is allowed.
      */
     private List<Object> arg;
     /**
@@ -183,10 +186,77 @@ public class MockInvoke {
         return true;
     }
 
-    private boolean isEquals(Object o1, Object o2) {
+    private static boolean isEquals(Object o1, Object o2) {
         if (o1 == null || o2 == null) {
             return o1 == o2;
         }
         return compCalculator.determineDifferences(o1, o2, compConfig).isEmpty();
+    }
+
+    /**
+     * Compares two maps like AssertJ's recursive comparison does, except that keys are matched
+     * with the registered equality predicates instead of {@link Object#equals(Object)}.
+     * <p>
+     * AssertJ always matches map keys by {@code equals}, even when a custom comparator is registered
+     * for the key type, so maps with {@link BigDecimal} keys {@code 0.1} and {@code 0.10}
+     * would be reported as different.
+     * <p>
+     * This is a known AssertJ limitation, see
+     * <a href="https://github.com/assertj/assertj/issues/3835">assertj#3835</a>
+     * ("RecursiveComparisonConfiguration is not taken into account for map keys"). It is fixed
+     * in AssertJ 4.0.0-M2 and later, where map keys are compared with the configured
+     * recursive comparison; after upgrading to that version this method can be removed.
+     *
+     * @param actual   actual map
+     * @param expected expected map
+     * @return {@code true} if the maps have the same size and equal entries
+     */
+    private static boolean mapsEquals(Map<?, ?> actual, Map<?, ?> expected) {
+        if (actual.size() != expected.size()) {
+            return false;
+        }
+        if (hasSameKeys(actual, expected)) {
+            for (Map.Entry<?, ?> actualEntry : actual.entrySet()) {
+                if (!isEquals(actualEntry.getValue(), expected.get(actualEntry.getKey()))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        List<Map.Entry<?, ?>> unmatched = new ArrayList<>(expected.entrySet());
+        for (Map.Entry<?, ?> actualEntry : actual.entrySet()) {
+            Map.Entry<?, ?> expectedEntry = removeEntryWithEqualKey(unmatched, actualEntry.getKey());
+            if (expectedEntry == null || !isEquals(actualEntry.getValue(), expectedEntry.getValue())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Checks whether both maps contain the same keys according to their own lookup rules,
+     * so that values can be compared by {@link Map#get(Object)} without scanning the entries.
+     */
+    private static boolean hasSameKeys(Map<?, ?> actual, Map<?, ?> expected) {
+        if (!actual.keySet().equals(expected.keySet())) {
+            return false;
+        }
+        for (Object key : actual.keySet()) {
+            if (!expected.containsKey(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Map.Entry<?, ?> removeEntryWithEqualKey(List<Map.Entry<?, ?>> entries, Object key) {
+        for (Iterator<Map.Entry<?, ?>> iterator = entries.iterator(); iterator.hasNext(); ) {
+            Map.Entry<?, ?> entry = iterator.next();
+            if (isEquals(entry.getKey(), key)) {
+                iterator.remove();
+                return entry;
+            }
+        }
+        return null;
     }
 }

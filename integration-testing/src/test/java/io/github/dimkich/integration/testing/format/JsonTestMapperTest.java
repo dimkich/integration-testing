@@ -18,6 +18,8 @@ import io.github.dimkich.integration.testing.format.dto.*;
 import io.github.dimkich.integration.testing.format.dto.map.*;
 import io.github.dimkich.integration.testing.format.json.JsonConfig;
 import io.github.dimkich.integration.testing.format.json.JsonTestMapper;
+import io.github.dimkich.integration.testing.initialization.TestInit;
+import io.github.dimkich.integration.testing.initialization.bean.property.BeanPropertyInit;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
@@ -197,6 +199,8 @@ class JsonTestMapperTest {
                 {new Value(PeriodDuration.valueOf("P1Y1M2DT23H59M59.999S")), "{\"value\":[\"PeriodDuration\",\"P1Y1M2DT23H59M59.999S\"]}"},
                 {TestMessage.testCase1(), "{\"type\":\"Case\",\"name\":\"BugRepro\",\"inboundMessage\":{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":\"k1\",\"headers\":{}},\"outboundMessage\":[{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":\"k2\",\"headers\":{}}]}"},
                 {TestMessage.testCase2(), "{\"type\":\"Case\",\"name\":\"EmptyByteKey\",\"inboundMessage\":{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":[\"byte[]\",\"\"],\"headers\":{}},\"outboundMessage\":[{\"type\":\"TestMessage\",\"connection\":\"conn1\",\"key\":[\"byte[]\",\"AQID\"],\"headers\":{}}]}"},
+                {BeanPropertyInitCase.testCase(), "{\"type\":\"Case\",\"name\":\"case\",\"init\":[{\"type\":\"BeanPropertyInit\",\"applyTo\":\"TestCase\",\"property\":[{\"bean\":\"fieldAccessBean\",\"name\":\"activeFlag\",\"value\":true},{\"bean\":\"fieldAccessBean\",\"name\":\"duration\",\"value\":[\"PeriodDuration\",\"PT5M\"]},{\"bean\":\"fieldAccessBean\",\"name\":\"text\",\"value\":\"case\"},{\"bean\":\"fieldAccessBean\",\"name\":\"currencies\",\"value\":[\"ArrayList\",[\"RUB\",\"USD\"]]},{\"bean\":\"fieldAccessBean\",\"name\":\"optional\"},{\"bean\":\"propertyAccessBean\",\"name\":\"label\",\"value\":\"case\"}]}]}"},
+                {BeanPropertyInitCase.testCaseWithTwoInits(), "{\"type\":\"Case\",\"name\":\"twoInits\",\"init\":[{\"type\":\"BeanPropertyInit\",\"bean\":\"fieldAccessBean\",\"property\":[{\"name\":\"activeFlag\",\"value\":true},{\"name\":\"duration\",\"value\":[\"PeriodDuration\",\"PT5M\"]},{\"name\":\"text\",\"value\":\"case\"},{\"name\":\"optional\"}]},{\"type\":\"BeanPropertyInit\",\"applyTo\":\"TestCase\",\"property\":[{\"bean\":\"propertyAccessBean\",\"name\":\"label\",\"value\":\"case\"}]}]}"},
         };
     }
 
@@ -222,8 +226,9 @@ class JsonTestMapperTest {
         TestSetupModule testModule() {
             return new TestSetupModule()
                     .addParentType(AbstractMessage.class)
+                    .addParentType(TestInit.class)
                     .addSubTypes(MapElemNotWrapped.class, MapAttrNotWrapped.class, TypeTest.class, Value.class,
-                            ConverterToList.class, TestMessage.class);
+                            ConverterToList.class, TestMessage.class, BeanPropertyInit.class);
         }
     }
 

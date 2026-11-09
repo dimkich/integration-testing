@@ -17,15 +17,20 @@ import java.util.Set;
 
 public class PolymorphicUnwrappedDeserializer extends BeanDeserializer {
     private final static String tokenBufferKey = "tokenBuffer";
+    private final static String typeBufferKey = "unwrappedTypeBuffer";
 
     private final SettableBeanProperty unwrappedProperty;
     private final TypeDeserializer unwrappedTypeDeserializer;
+    private final String unwrappedTypeProperty;
 
     public PolymorphicUnwrappedDeserializer(BeanDeserializerBase src, Set<String> ignorableProps,
-                                            SettableBeanProperty unwrappedProperty, TypeDeserializer unwrappedTypeDeserializer) {
+                                            SettableBeanProperty unwrappedProperty,
+                                            TypeDeserializer unwrappedTypeDeserializer,
+                                            String unwrappedTypeProperty) {
         super(src, ignorableProps, null);
         this.unwrappedProperty = unwrappedProperty;
         this.unwrappedTypeDeserializer = unwrappedTypeDeserializer;
+        this.unwrappedTypeProperty = unwrappedTypeProperty;
     }
 
 
@@ -44,12 +49,18 @@ public class PolymorphicUnwrappedDeserializer extends BeanDeserializer {
     }
 
     private void setWrappedProperty(JsonParser p, DeserializationContext ctxt, Object bean) throws IOException {
+        TokenBuffer typeBuffer = (TokenBuffer) ctxt.getAttribute(typeBufferKey);
+        ctxt.setAttribute(typeBufferKey, null);
         TokenBuffer tokenBuffer = (TokenBuffer) ctxt.getAttribute(tokenBufferKey);
         if (tokenBuffer != null) {
             clearTokenBuffer(ctxt);
             p.clearCurrentToken();
             tokenBuffer.writeEndObject();
-            p = JsonParserSequence.createFlattened(false, tokenBuffer.asParser(p), p);
+            JsonParser buffered = tokenBuffer.asParser(p);
+            if (typeBuffer != null) {
+                buffered = JsonParserSequence.createFlattened(false, typeBuffer.asParser(p), buffered);
+            }
+            p = JsonParserSequence.createFlattened(false, buffered, p);
             if (p.currentToken() != JsonToken.END_OBJECT) {
                 p.nextToken();
             }
@@ -69,6 +80,20 @@ public class PolymorphicUnwrappedDeserializer extends BeanDeserializer {
 
     @Override
     protected void handleUnknownProperty(JsonParser p, DeserializationContext ctxt, Object beanOrClass, String propName) throws IOException {
+        // The type id may arrive after the payload (a bean with a property-based creator buffers
+        // unknown properties and replays them only at the end), so it is captured separately and
+        // replayed before the payload instead of relying on the order inside the token buffer.
+        if (unwrappedTypeProperty != null && unwrappedTypeProperty.equals(propName)
+                && ctxt.getAttribute(typeBufferKey) == null) {
+            String typeId = p.getValueAsString();
+            if (typeId != null) {
+                TokenBuffer typeBuffer = ctxt.bufferForInputBuffering(p);
+                typeBuffer.writeFieldName(propName);
+                typeBuffer.writeString(typeId);
+                ctxt.setAttribute(typeBufferKey, typeBuffer);
+                return;
+            }
+        }
         TokenBuffer tokenBuffer = getTokenBuffer(p, ctxt);
         tokenBuffer.writeFieldName(propName);
         tokenBuffer.copyCurrentStructure(p);

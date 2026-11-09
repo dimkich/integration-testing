@@ -56,4 +56,96 @@
             <response>1</response>
         </test>
     </test>
+    <test type="Container" name="argument equality">
+        <mockInvoke name="converter" method="charge">
+            <arg type="BigDecimal">0.2</arg>
+            <result>
+                <return>wrong</return>
+            </result>
+        </mockInvoke>
+        <mockInvoke name="converter" method="charge">
+            <arg type="BigDecimal">0.1</arg>
+            <result>
+                <return>right</return>
+            </result>
+        </mockInvoke>
+        <mockInvoke name="converter" method="amount">
+            <arg type="Amount">
+                <value>0.2</value>
+            </arg>
+            <result>
+                <return>wrong</return>
+            </result>
+        </mockInvoke>
+        <mockInvoke name="converter" method="amount">
+            <arg type="Amount">
+                <value>0.1</value>
+            </arg>
+            <result>
+                <return>right</return>
+            </result>
+        </mockInvoke>
+        <mockInvoke name="converter" method="sorted">
+            <arg type="SortedBook">
+                <bid key="0.2">12.3</bid>
+            </arg>
+            <result>
+                <return>wrong</return>
+            </result>
+        </mockInvoke>
+        <mockInvoke name="converter" method="sorted">
+            <arg type="SortedBook">
+                <bid key="0.1">12.3</bid>
+            </arg>
+            <result>
+                <return>right</return>
+            </result>
+        </mockInvoke>
+        <mockInvoke name="converter" method="unordered">
+            <arg type="UnorderedBook">
+                <entry key="0.1">other</entry>
+            </arg>
+            <result>
+                <return>wrong</return>
+            </result>
+        </mockInvoke>
+        <mockInvoke name="converter" method="unordered">
+            <arg type="UnorderedBook">
+                <entry key="0.1">first</entry>
+            </arg>
+            <result>
+                <return>right</return>
+            </result>
+        </mockInvoke>
+        <test type="Case" name="bigDecimal scalar">
+            <bean>converter</bean>
+            <method>charge</method>
+            <request type="BigDecimal">0.1000</request>
+            <response>right</response>
+        </test>
+        <test type="Case" name="bigDecimal field">
+            <bean>converter</bean>
+            <method>amount</method>
+            <request type="Amount">
+                <value>0.1000</value>
+            </request>
+            <response>right</response>
+        </test>
+        <test type="Case" name="bigDecimal keys of sorted map">
+            <bean>converter</bean>
+            <method>sorted</method>
+            <request type="SortedBook">
+                <bid key="0.10">12.300</bid>
+            </request>
+            <response>right</response>
+        </test>
+        <test type="Case" name="bigDecimal keys of unordered map">
+            <bean>converter</bean>
+            <method>unordered</method>
+            <request type="UnorderedBook">
+                <entry key="0.10">first</entry>
+            </request>
+            <response>right</response>
+        </test>
+    </test>
 </test>

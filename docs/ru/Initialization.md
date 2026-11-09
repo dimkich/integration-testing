@@ -124,6 +124,14 @@ xml
 | `dateTime`    | Абсолютное время (ISO-8601)            | `2025-01-01T00:00:00Z`   |
 | `addDuration` | Длительность для добавления (ISO-8601) | `PT1M`, `PT2H30M`, `P1D` |
 
+Оба атрибута можно указать в одном `<init>`: итоговое время будет `dateTime + addDuration`.
+`dateTime` --- это жёсткая установка времени: он сбрасывает `addDuration`, накопленный до него в этом же или внешнем
+скоупе. Поэтому при объявлении отдельными элементами `dateTime` должен идти раньше `addDuration`.
+
+Для `addDuration` обязательна база. Если `dateTime` не задан в текущем или внешнем скоупе, при применении
+инициализации будет ошибка. На практике это значит, что в каждом файле тестов, где используется `DateTimeInit`,
+нужно задать абсолютный `dateTime` в корневом контейнере.
+
 *** ** * ** ***
 
 ### 2. SqlStorageSetup --- Настройка SQL-хранилища
@@ -367,7 +375,99 @@ xml
 
 *** ** * ** ***
 
-### 6. MockInit --- Сброс моков
+### 6. BeanPropertyInit --- Декларативная настройка свойств бинов
+
+**Назначение:** Установка полей и JavaBean-свойств Spring-бинов на время теста с **автоматическим откатом**.
+**Важно:** в отличие от `BeanInit`, это **состояние**: перед первой модификацией запоминается исходное значение, и при
+выходе объявления за область видимости (кейс или контейнер) значение восстанавливается.
+
+#### Примеры
+
+```
+xml
+<!-- Один бин: имя указывается на уровне <init> -->
+<init type="BeanPropertyInit" bean="candleJobFactory">
+    <property name="startUpHistoryAmount" type="PeriodDuration">PT0M</property>
+    <property name="dynamicCandlesFlag" type="Boolean">true</property>
+</init>
+
+```
+
+```
+xml
+<!-- Несколько бинов: имя задаётся у каждого <property> -->
+<init type="BeanPropertyInit">
+    <property bean="candleIteratorFactory" name="dynamicCandlesFlag" type="Boolean">true</property>
+    <property bean="candleJobFactory" name="startUpHistoryAmount" type="PeriodDuration">PT0M</property>
+</init>
+
+```
+
+```
+xml
+<!-- Null-значение: пустой элемент (не xsi:nil --- он обнулит сам <property>) -->
+<init type="BeanPropertyInit" bean="myService">
+    <property name="optionalRule"/>
+</init>
+
+```
+
+```
+xml
+<!-- Коллекция: элементы вкладываются в тело свойства -->
+<init type="BeanPropertyInit" bean="myService">
+    <property name="allowedCurrencies" type="ArrayList">
+        <value>RUB</value>
+        <value>USD</value>
+    </property>
+</init>
+
+```
+
+```
+json
+{
+  "type": "BeanPropertyInit",
+  "bean": "candleJobFactory",
+  "property": [
+    {"name": "startUpHistoryAmount", "value": ["PeriodDuration", "PT0M"]},
+    {"name": "dynamicCandlesFlag", "value": true}
+  ]
+}
+```
+
+#### Параметры
+
+| Атрибут   | Описание                                                          |
+|-----------|-------------------------------------------------------------------|
+| `bean`    | Имя Spring-бина по умолчанию для всех вложенных `<property>`      |
+| `name`    | Псевдоним `bean` (не переопределяет явно заданный `bean`)         |
+| `applyTo` | Область применения: `TestCase`, `TestPart`                        |
+
+| Атрибут `<property>` | Описание                                                        |
+|----------------------|-----------------------------------------------------------------|
+| `bean`               | Имя бина (переопределяет `bean` у `<init>`)                     |
+| `name`               | Имя поля или JavaBean-свойства (getter/setter предпочтительнее) |
+| `type`               | Тип значения (как у обычных элементов теста)                    |
+
+**Правила:**
+
+* Значение ищется через getter/`is`-getter, затем через приватное поле; запись --- через setter, затем через поле.
+  Значение приводится к типу сеттера (для примитивов несовместимый тип --- ошибка).
+* `null` записывается как есть. Примитивное поле или сеттер не могут его принять --- инициализация падает с ошибкой.
+* Исходное значение запоминается один раз --- перед первой модификацией за всё время жизни контекста.
+* Переопределение на вложенном уровне действует до выхода из него: после кейса значение возвращается к значению
+  контейнера, после контейнера --- к исходному значению Spring-контекста.
+* Как и у `DateTimeInit`, изменения на уровне `TestPart` **накапливаются** внутри кейса: откат происходит при выходе из
+  кейса, а не между частями.
+* Свойство должно быть читаемым (getter или поле), иначе исходное значение нечем запомнить --- будет ошибка.
+* Настройка применяется к singleton-бинам; прототипы и статические поля не поддерживаются.
+* Атрибут `type` в XML --- это имя типа развёрнутого значения (по умолчанию для unwrapped-значений используется `utype`;
+  здесь он переопределён аннотацией `@UnwrappedTypeProperty("type")`).
+
+*** ** * ** ***
+
+### 7. MockInit --- Сброс моков
 
 **Назначение:** Сброс состояния всех моков в иерархии тестов.
 **Что именно сбрасывается:**
@@ -433,7 +533,7 @@ xml
 
 *** ** * ** ***
 
-### 7. KeyValueStorageInit --- Инициализация key-value хранилища
+### 8. KeyValueStorageInit --- Инициализация key-value хранилища
 
 **Назначение:** Очистка и загрузка данных в key-value хранилища (Redis, in-memory cache).
 
@@ -525,6 +625,7 @@ xml
 | Порядок   | Тип инициализации     | Описание                                      |
 |-----------|-----------------------|-----------------------------------------------|
 | **0**     | `DateTimeInit`        | Время устанавливается первым                  |
+| **500**   | `BeanPropertyInit`    | Свойства бинов (до БД и вызовов методов)      |
 | **1000**  | `SqlStorageSetup`     | Настройка схемы и данных БД                   |
 | **2000**  | `SqlStorageInit`      | Разрешение таблиц, загрузка данных            |
 | **3000**  | `KeyValueStorageInit` | Инициализация кэшей                           |
@@ -687,11 +788,13 @@ currentState = currentState.merge(newState);
 
 | Тип инициализации     | Правила слияния                                      |
 |-----------------------|------------------------------------------------------|
-| `DateTimeInit`        | `dateTime` переопределяет, `addDuration` суммируется |
+| `DateTimeInit`        | `dateTime` задаёт базу и сбрасывает `addDuration`    |
 | `BeanInit`            | Все бины добавляются в набор                         |
 | `MockInit`            | `resetAll=true` переопределяет всё                   |
 | `SqlStorageInit`      | Таблицы объединяются, состояние сравнивается         |
 | `KeyValueStorageInit` | `clear=true` очищает, `map` объединяется             |
+
+`addDuration` суммируется с текущей базой `dateTime`.
 
 ### Сравнение состояний
 
@@ -918,6 +1021,7 @@ xml
 xml
 <!-- ✅ Правильно: явно указать applyTo="TestPart" -->
 <test type="Case" name="многошаговый">
+    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
     <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
 
     <test type="Part" name="шаг1">
@@ -927,6 +1031,7 @@ xml
 
 <!-- ❌ Ошибка: без applyTo="TestPart" не применится к Part -->
 <test type="Case" name="многошаговый">
+    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
     <init type="dateTimeInit" addDuration="PT1M"/>
 
     <test type="Part" name="шаг1">

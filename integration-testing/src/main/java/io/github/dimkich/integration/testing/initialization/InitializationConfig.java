@@ -3,6 +3,8 @@ package io.github.dimkich.integration.testing.initialization;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.initialization.bean.BeanInit;
 import io.github.dimkich.integration.testing.initialization.bean.BeanInitSetup;
+import io.github.dimkich.integration.testing.initialization.bean.property.BeanPropertyInit;
+import io.github.dimkich.integration.testing.initialization.bean.property.BeanPropertyInitSetup;
 import io.github.dimkich.integration.testing.initialization.date.time.DateTimeInit;
 import io.github.dimkich.integration.testing.initialization.date.time.DateTimeInitSetup;
 import io.github.dimkich.integration.testing.initialization.key.value.KeyValueStorageInit;
@@ -21,13 +23,14 @@ import org.springframework.context.annotation.Import;
 
 @Configuration
 @Import({InitializationService.class, BeanInitSetup.class, DateTimeInitSetup.class, KeyValueStorageInitSetup.class,
-        MockInitSetup.class, SqlStorageInitSetup.class, SqlStorageSetupSetup.class, OnTableChangeInitSetup.class})
+        MockInitSetup.class, SqlStorageInitSetup.class, SqlStorageSetupSetup.class, OnTableChangeInitSetup.class,
+        BeanPropertyInitSetup.class})
 public class InitializationConfig {
     @Bean
     TestSetupModule initializationTestSetupModule() {
         return new TestSetupModule()
                 .addParentType(TestInit.class)
                 .addSubTypes(DateTimeInit.class, KeyValueStorageInit.class, BeanInit.class, MockInit.class,
-                        SqlStorageSetup.class, SqlStorageInit.class, OnTableChangeInit.class);
+                        SqlStorageSetup.class, SqlStorageInit.class, OnTableChangeInit.class, BeanPropertyInit.class);
     }
 }

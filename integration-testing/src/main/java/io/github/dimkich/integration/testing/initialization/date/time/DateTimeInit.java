@@ -42,7 +42,9 @@ public class DateTimeInit extends TestInit {
     /**
      * The absolute date/time to set. If specified, this will be the base time used.
      * If {@code addDuration} is also specified, the duration will be added to this date/time.
-     * If not specified and {@code addDuration} is provided, the duration will be added to the current time.
+     * If not specified and {@code addDuration} is provided, the {@code dateTime} must be supplied by an
+     * enclosing initialization; otherwise applying this state fails.
+     * If both attributes are omitted, the current clock is left unchanged.
      * <p>
      * XML Example:
      * <pre>{@code
@@ -53,9 +55,9 @@ public class DateTimeInit extends TestInit {
     private ZonedDateTime dateTime;
 
     /**
-     * Duration to add to the current or specified date/time.
-     * If {@code dateTime} is specified, the duration will be added to that date/time.
-     * If {@code dateTime} is not specified, the duration will be added to the current time.
+     * Duration to add to the specified date/time.
+     * A base date/time must be defined by this initialization or by an enclosing one.
+     * If no base date/time is defined, applying {@link DateTimeInit} fails.
      * <p>
      * Duration format follows ISO-8601 duration format (e.g., PT1M for 1 minute, PT2H30M for 2 hours 30 minutes).
      * <p>

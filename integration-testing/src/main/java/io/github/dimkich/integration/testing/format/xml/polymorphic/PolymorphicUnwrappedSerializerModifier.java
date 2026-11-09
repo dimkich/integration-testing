@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ser.std.MapSerializer;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import io.github.dimkich.integration.testing.format.common.polymorphic.unwrapped.UnwrappedTypeProperty;
 import io.github.dimkich.integration.testing.format.common.type.TestTypeResolverBuilder;
 import lombok.RequiredArgsConstructor;
 
@@ -31,11 +32,19 @@ public class PolymorphicUnwrappedSerializerModifier extends BeanSerializerModifi
                 TypeSerializer unwrappedTypeSerializer = propertyWriter.getTypeSerializer();
                 propertyWriter.assignTypeSerializer(null);
                 propertyWriter = new PolymorphicUnwrappedBeanPropertyWriter(propertyWriter, NameTransformer.NOP,
-                        unwrappedTypeSerializer, typeResolverBuilder.getUnwrappedTypeProperty());
+                        unwrappedTypeSerializer, findTypePropertyName(propertyWriter, beanDesc));
                 beanProperties.set(i, propertyWriter);
             }
         }
         return beanProperties;
+    }
+
+    private String findTypePropertyName(BeanPropertyWriter property, BeanDescription beanDesc) {
+        UnwrappedTypeProperty annotation = property.getAnnotation(UnwrappedTypeProperty.class);
+        if (annotation == null) {
+            annotation = beanDesc.getClassAnnotations().get(UnwrappedTypeProperty.class);
+        }
+        return annotation == null ? typeResolverBuilder.getUnwrappedTypeProperty() : annotation.value();
     }
 
     @Override

@@ -14,6 +14,7 @@ Supported Initialization Types
 | Type                | Class               | Description                                                         |
 |---------------------|---------------------|---------------------------------------------------------------------|
 | `BeanInit`          | `BeanInit`          | Invokes methods on Spring beans for setup/teardown                  |
+| `BeanPropertyInit`  | `BeanPropertyInit`  | Sets bean fields/properties for a test and restores them afterward  |
 | `DateTimeInit`      | `DateTimeInit`      | Sets or shifts the mocked system time (requires `@MockJavaTime`)    |
 | `MockInit`          | `MockInit`          | Resets mock invocation counters                                     |
 | `SqlStorageSetup`   | `SqlStorageSetup`   | Configures SQL storage: SQL scripts and DBUnit datasets             |
@@ -73,6 +74,93 @@ xml
 
 ```
 
+BeanPropertyInit
+----------------
+
+### Description
+
+Sets fields and JavaBean properties of Spring beans for the time of a test and restores the original values
+afterward. Unlike `BeanInit`, this initialization is a **state**: the original value is captured before the first
+modification and written back when the declaration leaves the scope (test case or container).
+
+### XML Structure
+
+```
+xml
+<init type="BeanPropertyInit" bean="candleJobFactory">
+    <property name="startUpHistoryAmount" type="PeriodDuration">PT0M</property>
+    <property name="dynamicCandlesFlag" type="Boolean">true</property>
+</init>
+```
+
+Several beans may be configured by one declaration:
+
+```
+xml
+<init type="BeanPropertyInit">
+    <property bean="candleIteratorFactory" name="dynamicCandlesFlag" type="Boolean">true</property>
+    <property bean="candleJobFactory" name="startUpHistoryAmount" type="PeriodDuration">PT0M</property>
+</init>
+```
+
+### Attributes for `<init>`
+
+| Attribute | Required | Description                                                      |
+|-----------|----------|------------------------------------------------------------------|
+| `bean`    | No       | Default Spring bean name for all nested `<property>` elements    |
+| `name`    | No       | Alias for `bean` (does not override an explicitly set `bean`)    |
+| `applyTo` | No       | Scope: `TestCase` or `TestPart`                                  |
+
+### Attributes for `<property>`
+
+| Attribute | Required | Description                                                    |
+|-----------|----------|----------------------------------------------------------------|
+| `bean`    | No       | Bean name; overrides the `bean` of `<init>`                    |
+| `name`    | **Yes**  | Field name or JavaBean property name                           |
+| `type`    | No       | Type of the value (as for any other test element)              |
+
+### Value Forms
+
+```
+xml
+<!-- null: an empty element (xsi:nil would nullify the <property> itself) -->
+<property name="optionalRule"/>
+
+<!-- collection: items are nested into the element body -->
+<property name="allowedCurrencies" type="ArrayList">
+    <value>RUB</value>
+    <value>USD</value>
+</property>
+```
+
+### JSON
+
+```json
+{
+  "type": "BeanPropertyInit",
+  "bean": "candleJobFactory",
+  "property": [
+    {"name": "startUpHistoryAmount", "value": ["PeriodDuration", "PT0M"]},
+    {"name": "dynamicCandlesFlag", "value": true}
+  ]
+}
+```
+
+### Rules
+
+* Values are written through a setter when it is compatible, otherwise through a private field; reading uses a
+  getter / `is`-getter, then a private field. AOP proxies are unwrapped to the target object.
+* `null` is written as is. A primitive field or setter cannot hold it, so such a declaration fails with an error.
+* The baseline is captured once, before the first modification, and kept for the whole life of the Spring context.
+* A nested declaration overrides the inherited value until it leaves its scope: after a case the value returns to the
+  value of the container, after the container to the original Spring value.
+* As with `DateTimeInit`, `TestPart`-level changes **accumulate** inside a case: they are reverted when the case ends,
+  not between parts.
+* The property must be readable (getter or field), otherwise the original value cannot be captured and an error is
+  raised. Only singleton beans are supported.
+* In XML the `type` attribute names the type of the unwrapped value: unwrapped values use `utype` by default, here it is
+  overridden with `@UnwrappedTypeProperty("type")`.
+
 DateTimeInit
 ------------
 
@@ -82,10 +170,18 @@ Manages mocked time for tests. Requires the `@MockJavaTime` annotation on the te
 
 ### Attributes
 
-| Attribute     | Required | Description                                                     | Mutual Exclusivity                    |
-|---------------|----------|-----------------------------------------------------------------|---------------------------------------|
-| `dateTime`    | No       | Absolute time in ISO-8601 format (e.g., `2025-01-01T00:00:00Z`) | Mutually exclusive with `addDuration` |
-| `addDuration` | No       | Time shift in ISO-8601 duration format (e.g., `PT1M`, `PT1H`)   | Mutually exclusive with `dateTime`    |
+| Attribute     | Required | Description                                                     |
+|---------------|----------|-----------------------------------------------------------------|
+| `dateTime`    | No       | Absolute time in ISO-8601 format (e.g., `2025-01-01T00:00:00Z`) |
+| `addDuration` | No       | Time shift in ISO-8601 duration format (e.g., `PT1M`, `PT1H`)   |
+
+Both attributes may be specified in the same `<init>`: the resulting time is `dateTime + addDuration`.
+An absolute `dateTime` is always a hard reset: it discards any `addDuration` accumulated before it in the same or an
+enclosing scope. Therefore, declare `dateTime` before `addDuration` when both are separate `<init>` elements.
+
+`addDuration` requires a base time. If no `dateTime` is defined in the current or an enclosing scope, applying the
+initialization fails with an error. In practice this means every test file that uses `DateTimeInit` should define an
+absolute `dateTime` in the root container.
 
 ### Duration Format (ISO-8601)
 
@@ -115,13 +211,17 @@ xml
 
 ```
 xml  
-<test type="Case" name="timeProgression">  
-    <init type="DateTimeInit" applyTo="TestPart" addDuration="PT1M"/>  
-    <test type="Part" name="step1">  
-        <response type="ZonedDateTime">2025-01-01T00:01:00Z</response>  
-    </test>  
-    <test type="Part" name="step2">  
-        <response type="ZonedDateTime">2025-01-01T00:02:00Z</response>  
+<test type="Container">  
+    <!-- Base time is required for addDuration -->  
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
+    <test type="Case" name="timeProgression">  
+        <init type="DateTimeInit" applyTo="TestPart" addDuration="PT1M"/>  
+        <test type="Part" name="step1">  
+            <response type="ZonedDateTime">2025-01-01T00:01:00Z</response>  
+        </test>  
+        <test type="Part" name="step2">  
+            <response type="ZonedDateTime">2025-01-01T00:02:00Z</response>  
+        </test>  
     </test>  
 </test>  
 
@@ -391,7 +491,7 @@ When multiple `<init>` elements target the same test:
 
 1. **More specific scope wins** : `TestPart` > `TestCase` > `All`
 2. **Later declaration wins** within the same scope
-3. **Absolute values override relative** : `dateTime` overrides `addDuration`
+3. **Absolute values are hard resets** : `dateTime` overrides `addDuration` and discards the accumulated shift
 
 Best Practices
 --------------

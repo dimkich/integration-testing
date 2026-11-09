@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -68,19 +67,5 @@ public class DateTimeService {
             log.warn("Applying date-time {} attempt {}/{} failed, retrying", dateTime, attempt, MAX_ATTEMPTS, lastError);
         }
         throw lastError;
-    }
-
-    /**
-     * Adds the specified duration to the current date-time and updates all registered
-     * {@link NowSetter} instances.
-     *
-     * @param duration duration to add to the current date-time; must not be {@code null}
-     * @throws RuntimeException if the service has not been initialized via {@link #setNow(ZonedDateTime)}
-     */
-    public void addDuration(Duration duration) {
-        if (dateTime == null) {
-            throw new RuntimeException("Service is not initialized");
-        }
-        setNow(dateTime.plus(duration));
     }
 }

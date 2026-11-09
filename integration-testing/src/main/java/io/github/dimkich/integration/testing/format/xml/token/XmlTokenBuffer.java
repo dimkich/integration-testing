@@ -122,7 +122,7 @@ public class XmlTokenBuffer extends TokenBuffer {
                               boolean hasNativeObjectIds, JsonStreamContext parentContext,
                               StreamReadConstraints streamReadConstraints, JsonToken currentToken) {
             // 25-Jun-2022, tatu: Ideally would pass parser flags along (as
-            //    per [databund#3528]) but for now make sure not to clear the flags
+            //    per [databind#3528]) but for now make sure not to clear the flags
             //    but let defaults be used
             super();
             _segment = firstSeg;
@@ -200,8 +200,8 @@ public class XmlTokenBuffer extends TokenBuffer {
         }
 
         // 20-May-2020, tatu: This may or may not be enough -- ideally access is
-        //    via `DeserializationContext`, not parser, but if latter is needed
-        //    then we'll need to pass this from parser contents if which were
+        //    via `DeserializationContext`, not parser, but if the latter is needed
+        //    then the flags would have to be taken from the parser that was
         //    buffered.
         @Override
         public JacksonFeatureSet<StreamReadCapability> getReadCapabilities() {
@@ -325,6 +325,11 @@ public class XmlTokenBuffer extends TokenBuffer {
             // inlined common case from nextToken()
             if (_closed || (_segment == null)) {
                 return null;
+            }
+            // Any synthetic tokens, a repeated token or an array context means the next
+            // significant token is not simply the next buffer entry: let nextToken() decide.
+            if (repeatToken || !nextToken.isEmpty() || _parsingContext.inArray()) {
+                return (nextToken() == JsonToken.FIELD_NAME) ? currentName() : null;
             }
 
             int ptr = _segmentPtr + 1;

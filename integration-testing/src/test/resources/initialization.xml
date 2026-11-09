@@ -234,6 +234,37 @@
                 </test>
             </test>
         </test>
+        <test type="Container" name="dateTime and addDuration in one init">
+            <test type="Case" name="2025-01-01T00:05Z[UTC]">
+                <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z" addDuration="PT5M"/>
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="ZonedDateTime">2025-01-01T00:05:00Z</response>
+            </test>
+        </test>
+        <test type="Container" name="dateTime and addDuration as separate inits">
+            <test type="Case" name="2025-01-01T00:05Z[UTC]">
+                <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+                <init type="DateTimeInit" addDuration="PT5M"/>
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="ZonedDateTime">2025-01-01T00:05:00Z</response>
+            </test>
+        </test>
+        <test type="Container" name="addDuration at test case scope">
+            <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+            <init type="DateTimeInit" applyTo="TestCase" addDuration="PT10M"/>
+            <test type="Case" name="2025-01-01T00:10Z[UTC]">
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="ZonedDateTime">2025-01-01T00:10:00Z</response>
+            </test>
+            <test type="Case" name="2025-01-01T00:10Z[UTC]">
+                <bean>dateTime</bean>
+                <method>getDateTime</method>
+                <response type="ZonedDateTime">2025-01-01T00:10:00Z</response>
+            </test>
+        </test>
     </test>
     <test type="Container" name="mockInit">
         <mockInvoke name="mock11" method="name"/>
@@ -580,6 +611,263 @@
                 <response>1</response>
                 <response>clear [t1]</response>
             </response>
+        </test>
+    </test>
+    <test type="Container" name="beanPropertyInit">
+        <test type="Container" name="set and rollback after test case">
+            <test type="Case" name="{activeFlag=true, duration=PT5M, text=case, currencies=RUB|USD, optional=null, count=7}">
+                <init type="BeanPropertyInit" bean="fieldAccessBean">
+                    <property name="activeFlag" type="Boolean">true</property>
+                    <property name="duration" type="PeriodDuration">PT5M</property>
+                    <property name="text" type="String">case</property>
+                    <property name="currencies" type="ArrayList">
+                        <value>RUB</value>
+                        <value>USD</value>
+                    </property>
+                    <property name="optional"/>
+                </init>
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>true</activeFlag>
+                    <duration>PT5M</duration>
+                    <text>case</text>
+                    <currencies>RUB|USD</currencies>
+                    <optional>null</optional>
+                    <count>7</count>
+                </response>
+            </test>
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=initial, currencies=RUB, optional=set, count=7}">
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>initial</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="multiple beans and per property bean">
+            <test type="Case" name="{enabled=true, label=case, proxyLabel=proxy}">
+                <init type="BeanPropertyInit">
+                    <property bean="propertyAccessBean" name="enabled" type="Boolean">true</property>
+                    <property bean="propertyAccessBean" name="label" type="String">case</property>
+                    <property bean="proxiedPropertyAccessBean" name="label" type="String">proxy</property>
+                </init>
+                <bean>propertyAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <enabled>true</enabled>
+                    <label>case</label>
+                    <proxyLabel>proxy</proxyLabel>
+                </response>
+            </test>
+            <test type="Case" name="{enabled=false, label=base, proxyLabel=base}">
+                <bean>propertyAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <enabled>false</enabled>
+                    <label>base</label>
+                    <proxyLabel>base</proxyLabel>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="hierarchy and rollback after container">
+            <init type="BeanPropertyInit" name="fieldAccessBean" applyTo="TestCase">
+                <property name="text" type="String">container</property>
+            </init>
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=container, currencies=RUB, optional=set, count=7}">
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>container</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=case, currencies=RUB, optional=set, count=7}">
+                <init type="BeanPropertyInit" bean="fieldAccessBean">
+                    <property name="text" type="String">case</property>
+                </init>
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>case</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=container, currencies=RUB, optional=set, count=7}">
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>container</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="rollback after container">
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=initial, currencies=RUB, optional=set, count=7}">
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>initial</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="baseline is captured once and only removed properties are restored">
+            <test type="Container" name="first">
+                <init type="BeanPropertyInit" bean="fieldAccessBean" applyTo="TestCase">
+                    <property name="text" type="String">first</property>
+                    <property name="activeFlag" type="Boolean">true</property>
+                </init>
+                <test type="Case" name="{activeFlag=true, duration=P1D, text=first, currencies=RUB, optional=set, count=7}">
+                    <bean>fieldAccessProbe</bean>
+                    <method>state</method>
+                    <response type="LinkedHashMap">
+                        <activeFlag>true</activeFlag>
+                        <duration>P1D</duration>
+                        <text>first</text>
+                        <currencies>RUB</currencies>
+                        <optional>set</optional>
+                        <count>7</count>
+                    </response>
+                </test>
+            </test>
+            <test type="Container" name="second">
+                <init type="BeanPropertyInit" bean="fieldAccessBean" applyTo="TestCase">
+                    <property name="text" type="String">second</property>
+                </init>
+                <test type="Case" name="{activeFlag=false, duration=P1D, text=second, currencies=RUB, optional=set, count=7}">
+                    <bean>fieldAccessProbe</bean>
+                    <method>state</method>
+                    <response type="LinkedHashMap">
+                        <activeFlag>false</activeFlag>
+                        <duration>P1D</duration>
+                        <text>second</text>
+                        <currencies>RUB</currencies>
+                        <optional>set</optional>
+                        <count>7</count>
+                    </response>
+                </test>
+            </test>
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=initial, currencies=RUB, optional=set, count=7}">
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>initial</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
+        </test>
+        <test type="Container" name="test part">
+            <test type="Case" name="applyTo TestPart">
+                <init type="BeanPropertyInit" bean="fieldAccessBean" applyTo="TestPart">
+                    <property name="text" type="String">part</property>
+                </init>
+                <test type="Part" name="{activeFlag=false, duration=P1D, text=part, currencies=RUB, optional=set, count=7}">
+                    <bean>fieldAccessProbe</bean>
+                    <method>state</method>
+                    <response type="LinkedHashMap">
+                        <activeFlag>false</activeFlag>
+                        <duration>P1D</duration>
+                        <text>part</text>
+                        <currencies>RUB</currencies>
+                        <optional>set</optional>
+                        <count>7</count>
+                    </response>
+                </test>
+                <test type="Part" name="{activeFlag=false, duration=P1D, text=part, currencies=RUB, optional=set, count=7}">
+                    <bean>fieldAccessProbe</bean>
+                    <method>state</method>
+                    <response type="LinkedHashMap">
+                        <activeFlag>false</activeFlag>
+                        <duration>P1D</duration>
+                        <text>part</text>
+                        <currencies>RUB</currencies>
+                        <optional>set</optional>
+                        <count>7</count>
+                    </response>
+                </test>
+            </test>
+            <test type="Case" name="do not rollback after test part">
+                <init type="BeanPropertyInit" name="fieldAccessBean">
+                    <property name="text" type="String">case</property>
+                </init>
+                <test type="Part" name="{activeFlag=false, duration=P1D, text=case, currencies=RUB, optional=set, count=7}">
+                    <bean>fieldAccessProbe</bean>
+                    <method>state</method>
+                    <response type="LinkedHashMap">
+                        <activeFlag>false</activeFlag>
+                        <duration>P1D</duration>
+                        <text>case</text>
+                        <currencies>RUB</currencies>
+                        <optional>set</optional>
+                        <count>7</count>
+                    </response>
+                </test>
+                <test type="Part" name="{activeFlag=false, duration=P1D, text=part, currencies=RUB, optional=set, count=7}">
+                    <init type="BeanPropertyInit" bean="fieldAccessBean">
+                        <property name="text" type="String">part</property>
+                    </init>
+                    <bean>fieldAccessProbe</bean>
+                    <method>state</method>
+                    <response type="LinkedHashMap">
+                        <activeFlag>false</activeFlag>
+                        <duration>P1D</duration>
+                        <text>part</text>
+                        <currencies>RUB</currencies>
+                        <optional>set</optional>
+                        <count>7</count>
+                    </response>
+                </test>
+                <test type="Part" name="{activeFlag=false, duration=P1D, text=part, currencies=RUB, optional=set, count=7}">
+                    <bean>fieldAccessProbe</bean>
+                    <method>state</method>
+                    <response type="LinkedHashMap">
+                        <activeFlag>false</activeFlag>
+                        <duration>P1D</duration>
+                        <text>part</text>
+                        <currencies>RUB</currencies>
+                        <optional>set</optional>
+                        <count>7</count>
+                    </response>
+                </test>
+            </test>
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=initial, currencies=RUB, optional=set, count=7}">
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>initial</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
         </test>
     </test>
 </test>

@@ -37,15 +37,16 @@ public class DateTimeInitState implements TestInitState<DateTimeInitState> {
     /**
      * The absolute date/time to set.
      * If specified, this will be the base time used. If {@code addDuration} is also specified,
-     * the duration will be added to this date/time. If {@code null} and {@code addDuration}
-     * is provided, the duration will be added to the current time.
+     * the duration will be added to this date/time. If {@code null} and {@code addDuration} is provided,
+     * applying the state fails: a base date/time must be provided by the current or an enclosing initialization.
+     * If both values are {@code null}, the current clock is left unchanged.
      */
     private ZonedDateTime dateTime;
 
     /**
-     * Duration to add to the current or specified date/time.
-     * If {@code dateTime} is specified, the duration will be added to that date/time.
-     * If {@code dateTime} is {@code null}, the duration will be added to the current time.
+     * Duration to add to the specified date/time.
+     * A base date/time must be defined by the current or an enclosing initialization;
+     * otherwise applying the state fails.
      * During merge operations, if both states have durations, they are combined additively.
      */
     private Duration addDuration;

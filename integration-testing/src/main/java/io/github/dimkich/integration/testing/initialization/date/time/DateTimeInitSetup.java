@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
  * This class handles the setup and application of date/time configurations during test execution.
  *
  * <p>Date/time initialization allows test configurations to set a specific date/time or add
- * a duration to the current time. This is useful for testing time-dependent functionality,
+ * a duration to a base date/time. This is useful for testing time-dependent functionality,
  * such as scheduled tasks, time-based validations, or date calculations.
  *
  * <p>This setup implementation:
@@ -27,8 +27,10 @@ import java.time.ZonedDateTime;
  * <p>The date/time resolution follows these rules:
  * <ul>
  *   <li>If an absolute date/time is specified, it is used as the base</li>
- *   <li>If no date/time is specified but a duration is provided, the duration is added to the current time</li>
  *   <li>If both date/time and duration are specified, the duration is added to the specified date/time</li>
+ *   <li>If no date/time is specified but a duration is provided, an {@link IllegalStateException} is raised:
+ *       a base date/time must be defined in the current or an enclosing scope</li>
+ *   <li>If neither date/time nor duration is specified, the current clock is left unchanged</li>
  * </ul>
  *
  * @author dimkich
@@ -86,7 +88,9 @@ public class DateTimeInitSetup implements InitSetup<DateTimeInit, DateTimeInitSt
      * <p>This method:
      * <ul>
      *   <li>Resolves the target date/time from the state configuration</li>
-     *   <li>If no date/time is specified, uses the current system time as the base</li>
+     *   <li>Fails with {@link IllegalStateException} if a duration is specified but no absolute date/time is
+     *       defined in the current or an enclosing scope</li>
+     *   <li>Leaves the clock unchanged if the state contains neither date/time nor duration</li>
      *   <li>If a duration is specified, adds it to the resolved date/time</li>
      *   <li>Sets the resolved date/time in the {@link DateTimeService}</li>
      *   <li>Logs debug information about the applied date/time</li>
@@ -98,13 +102,18 @@ public class DateTimeInitSetup implements InitSetup<DateTimeInit, DateTimeInitSt
      * @param oldState the previous state (ignored in this implementation)
      * @param newState the new state containing date/time and duration to apply
      * @param test     the test to apply the initialization to
-     * @throws Exception if setting the date/time in the service fails
+     * @throws IllegalStateException if a duration is specified without a date/time base
      */
     @Override
-    public void apply(DateTimeInitState oldState, DateTimeInitState newState, Test test) throws Exception {
+    public void apply(DateTimeInitState oldState, DateTimeInitState newState, Test test) {
         ZonedDateTime dateTime = newState.getDateTime();
         if (dateTime == null) {
-            dateTime = ZonedDateTime.now();
+            if (newState.getAddDuration() != null) {
+                throw new IllegalStateException("DateTimeInit addDuration requires dateTime in the current or "
+                        + "enclosing scope. Add <init type=\"DateTimeInit\" dateTime=\"...\"/> to an enclosing "
+                        + "container or test. Test: " + test.getFullName());
+            }
+            return;
         }
         if (newState.getAddDuration() != null) {
             dateTime = dateTime.plus(newState.getAddDuration());

@@ -54,7 +54,8 @@ Used in the root container to set a single starting point for all tests.
 Used inside test steps (`TestPart`) to simulate the passage of time.
 
 ```xml
-<!-- Apply a 15-second time shift only for steps in the current case -->
+<!-- Apply a 15-second time shift only for steps in the current case.
+     A base dateTime must be defined in the current or an enclosing scope. -->
 <init type="dateTimeInit" applyTo="TestPart" addDuration="PT15S"/>
 ```
 

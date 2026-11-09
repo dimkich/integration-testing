@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing;
 
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
+import io.github.dimkich.integration.testing.date.time.PeriodDuration;
 import io.github.dimkich.integration.testing.dbunit.DbUnitFixture;
 import io.github.dimkich.integration.testing.execution.ConstructorMockAnswer;
 import io.github.dimkich.integration.testing.execution.MockInvoke;
@@ -22,6 +23,7 @@ import io.github.dimkich.integration.testing.storage.sql.table.TableRegistry;
 import io.github.dimkich.integration.testing.storage.sql.table.TableSet;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicNode;
@@ -168,6 +170,34 @@ public class InitializationTest {
             factory.addInterface(Marker.class);
             factory.setProxyTargetClass(false);
             return (Marker) factory.getProxy();
+        }
+
+        @Bean
+        FieldAccessBean fieldAccessBean() {
+            return new FieldAccessBean();
+        }
+
+        @Bean
+        PropertyAccessBean propertyAccessBean() {
+            return new PropertyAccessBean();
+        }
+
+        @Bean
+        PropertyAccessBean proxiedPropertyAccessBean() {
+            ProxyFactory factory = new ProxyFactory(new PropertyAccessBean());
+            factory.setProxyTargetClass(true);
+            return (PropertyAccessBean) factory.getProxy();
+        }
+
+        @Bean
+        FieldAccessProbe fieldAccessProbe(FieldAccessBean fieldAccessBean) {
+            return new FieldAccessProbe(fieldAccessBean);
+        }
+
+        @Bean
+        PropertyAccessProbe propertyAccessProbe(@Qualifier("propertyAccessBean") PropertyAccessBean propertyAccessBean,
+                                                @Qualifier("proxiedPropertyAccessBean") PropertyAccessBean proxiedPropertyAccessBean) {
+            return new PropertyAccessProbe(propertyAccessBean, proxiedPropertyAccessBean);
         }
 
         private static SQLDataStorageService createStorageService(
@@ -461,6 +491,62 @@ public class InitializationTest {
             }
             sequenceRestartSqlReturned = true;
             return "restart sequences";
+        }
+    }
+
+    /**
+     * Bean configured only through its fields: no getters and no setters.
+     * <p>
+     * The fields are mutable: {@code BeanPropertyInit} reassigns them reflectively, so they cannot
+     * be final (the JIT would treat them as constants). They are package-private because
+     * inspectors that only see direct writes otherwise report them as "may be final".
+     */
+    public static class FieldAccessBean {
+        boolean activeFlag = false;
+        PeriodDuration duration = PeriodDuration.valueOf("P1D");
+        String text = "initial";
+        List<String> currencies = new ArrayList<>(List.of("RUB"));
+        String optional = "set";
+        int count = 7;
+    }
+
+    /**
+     * Bean configured through its JavaBean properties.
+     */
+    @Getter
+    @Setter
+    public static class PropertyAccessBean {
+        private boolean enabled = false;
+        private String label = "base";
+    }
+
+    @RequiredArgsConstructor
+    public static class FieldAccessProbe {
+        private final FieldAccessBean bean;
+
+        public Map<String, String> state() {
+            Map<String, String> state = new LinkedHashMap<>();
+            state.put("activeFlag", String.valueOf(bean.activeFlag));
+            state.put("duration", String.valueOf(bean.duration));
+            state.put("text", String.valueOf(bean.text));
+            state.put("currencies", String.join("|", bean.currencies));
+            state.put("optional", String.valueOf(bean.optional));
+            state.put("count", String.valueOf(bean.count));
+            return state;
+        }
+    }
+
+    @RequiredArgsConstructor
+    public static class PropertyAccessProbe {
+        private final PropertyAccessBean bean;
+        private final PropertyAccessBean proxiedBean;
+
+        public Map<String, String> state() {
+            Map<String, String> state = new LinkedHashMap<>();
+            state.put("enabled", String.valueOf(bean.isEnabled()));
+            state.put("label", bean.getLabel());
+            state.put("proxyLabel", proxiedBean.getLabel());
+            return state;
         }
     }
 }

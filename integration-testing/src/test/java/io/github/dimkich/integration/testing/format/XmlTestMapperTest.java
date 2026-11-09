@@ -3,6 +3,8 @@ package io.github.dimkich.integration.testing.format;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
@@ -21,6 +23,9 @@ import io.github.dimkich.integration.testing.format.dto.*;
 import io.github.dimkich.integration.testing.format.dto.map.*;
 import io.github.dimkich.integration.testing.format.xml.XmlConfig;
 import io.github.dimkich.integration.testing.format.xml.XmlTestMapper;
+import io.github.dimkich.integration.testing.initialization.TestInit;
+import io.github.dimkich.integration.testing.initialization.bean.BeanInit;
+import io.github.dimkich.integration.testing.initialization.bean.property.BeanPropertyInit;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
@@ -336,6 +341,21 @@ class XmlTestMapperTest {
 """},
                 {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"), """
 <EntryStringKeyObjectValue key="k" change="added" utype="String">str</EntryStringKeyObjectValue>
+"""},
+                {new EntryStringKeyObjectValue("k", Container.ChangeType.added, 1), """
+<EntryStringKeyObjectValue key="k" change="added" utype="Integer">1</EntryStringKeyObjectValue>
+"""},
+                {new CreatorUnwrappedValue("k", 1), """
+<CreatorUnwrappedValue key="k" utype="Integer">1</CreatorUnwrappedValue>
+"""},
+                {new CreatorUnwrappedValue("k", "s"), """
+<CreatorUnwrappedValue key="k" utype="String">s</CreatorUnwrappedValue>
+"""},
+                {new CreatorUnwrappedValue("k", new TypeTest(1, null, "s")), """
+<CreatorUnwrappedValue key="k" utype="TypeTest">
+    <id>1</id>
+    <name>s</name>
+</CreatorUnwrappedValue>
 """},
                 {HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
                         FormatTestUtils.httpHeaders("Expires", List.of("0"), "Custom", List.of("c", "a")),
@@ -806,6 +826,64 @@ class XmlTestMapperTest {
     </outboundMessage>
 </test>
 """},
+                {BeanPropertyInitCase.testCase(), """
+<test type="Case" name="case">
+    <init type="BeanPropertyInit" applyTo="TestCase">
+        <property bean="fieldAccessBean" name="activeFlag" type="Boolean">true</property>
+        <property bean="fieldAccessBean" name="duration" type="PeriodDuration">PT5M</property>
+        <property bean="fieldAccessBean" name="text" type="String">case</property>
+        <property bean="fieldAccessBean" name="currencies" type="ArrayList">
+            <value>RUB</value>
+            <value>USD</value>
+        </property>
+        <property bean="fieldAccessBean" name="optional"/>
+        <property bean="propertyAccessBean" name="label" type="String">case</property>
+    </init>
+</test>
+"""},
+                {BeanPropertyInitCase.testCaseWithTwoInits(), """
+<test type="Case" name="twoInits">
+    <init type="BeanPropertyInit" bean="fieldAccessBean">
+        <property name="activeFlag" type="Boolean">true</property>
+        <property name="duration" type="PeriodDuration">PT5M</property>
+        <property name="text" type="String">case</property>
+        <property name="optional"/>
+    </init>
+    <init type="BeanPropertyInit" applyTo="TestCase">
+        <property bean="propertyAccessBean" name="label" type="String">case</property>
+    </init>
+</test>
+"""},
+                {twoBeanInits(), """
+<test type="Case" name="twoBeanInits">
+    <init type="BeanInit">
+        <bean name="b" method="m"/>
+    </init>
+    <init type="BeanInit">
+        <bean name="b2" method="m2"/>
+    </init>
+</test>
+"""},
+                {new UnwrappedTypeHolder(new UnwrappedTypeField("k", 1),
+                        UnwrappedTypeClass.of(new TypeTest(1, null, "s")),
+                        UnwrappedTypePrecedence.of(new ArrayList<>(List.of(1, 2)))), """
+<UnwrappedTypeHolder>
+    <field key="k" kind="Integer">1</field>
+    <typedClass kind="TypeTest">
+        <id>1</id>
+        <name>s</name>
+    </typedClass>
+    <precedence fieldKind="ArrayList">
+        <value type="Integer">1</value>
+        <value type="Integer">2</value>
+    </precedence>
+</UnwrappedTypeHolder>
+"""},
+                {new UnwrappedTypeHolder(new UnwrappedTypeField("k", new ToStringScalar("PT5M")), null, null), """
+<UnwrappedTypeHolder>
+    <field key="k" kind="ToStringScalar">PT5M</field>
+</UnwrappedTypeHolder>
+"""},
                 {TestMessage.testCase2(), """
 <test type="Case" name="EmptyByteKey">
     <inboundMessage type="TestMessage" connection="conn1">
@@ -881,9 +959,30 @@ class XmlTestMapperTest {
         TestSetupModule testModule() {
             return new TestSetupModule()
                     .addParentType(AbstractMessage.class)
+                    .addParentType(TestInit.class)
                     .addSubTypes(MapElemNotWrapped.class, MapAttrNotWrapped.class, TypeTest.class, Value.class,
-                            ConverterToList.class, TestMessage.class);
+                            ConverterToList.class, TestMessage.class, BeanPropertyInit.class, BeanInit.class,
+                            ToStringScalar.class)
+                    .addJacksonModule(new SimpleModule()
+                            .addSerializer(ToStringScalar.class, ToStringSerializer.instance));
         }
+    }
+
+    static TestCase twoBeanInits() {
+        TestCase testCase = new TestCase();
+        testCase.setName("twoBeanInits");
+        testCase.getInits().add(beanInit("b", "m"));
+        testCase.getInits().add(beanInit("b2", "m2"));
+        return testCase;
+    }
+
+    static BeanInit beanInit(String name, String method) {
+        BeanInit.BeanMethod beanMethod = new BeanInit.BeanMethod();
+        beanMethod.setName(name);
+        beanMethod.setMethod(method);
+        BeanInit beanInit = new BeanInit();
+        beanInit.setBean(List.of(beanMethod));
+        return beanInit;
     }
 
     @Data

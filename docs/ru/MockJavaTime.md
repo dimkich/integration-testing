@@ -31,7 +31,8 @@ public class MyTimeSensitiveTest {
 управления временем:
 
 1. **Абсолютное время** (`dateTime`) --- установка конкретной даты и времени.
-2. **Сдвиг времени** (`addDuration`) --- добавление длительности к текущему времени.
+2. **Сдвиг времени** (`addDuration`) --- добавление длительности к базовому времени. База `dateTime` должна быть задана
+   в текущем или внешнем скоупе; `addDuration` без базы --- ошибка.
 
 Атрибуты аннотации
 ------------------
@@ -215,6 +216,8 @@ public class MyDatabaseTimeTest {
 ```xml  
 <?xml version='1.1' encoding='UTF-8'?>  
 <test type="Container">  
+    <!-- Для addDuration обязательна базовая инициализация времени -->  
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
     <test type="Case" name="инкремент с дополнительной инициализацией">  
         <init type="DateTimeInit" applyTo="TestPart" addDuration="PT1M"/>  
         

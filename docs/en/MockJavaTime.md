@@ -31,7 +31,8 @@ Time is set in the test XML file inside the `<init>` element with the attribute 
 ways to manage time:
 
 1. **Absolute time** (`dateTime`) --- setting a specific date and time.
-2. **Time shift** (`addDuration`) --- adding a duration to the current time.
+2. **Time shift** (`addDuration`) --- adding a duration to the base time. A base `dateTime` must be defined in the
+   current or an enclosing scope; `addDuration` without a base is an error.
 
 Annotation Attributes
 ---------------------
@@ -213,6 +214,8 @@ Combining absolute time and shift at different hierarchy levels.
 ```xml  
 <?xml version='1.1' encoding='UTF-8'?>  
 <test type="Container">  
+    <!-- Base time is required for addDuration -->  
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
     <test type="Case" name="increment with additional init">  
         <init type="DateTimeInit" applyTo="TestPart" addDuration="PT1M"/>  
         

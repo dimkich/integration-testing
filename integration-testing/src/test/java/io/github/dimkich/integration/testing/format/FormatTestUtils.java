@@ -43,9 +43,12 @@ public class FormatTestUtils {
             compConfig.registerEqualsForType(equalsIgnoreFields("backtrace", "statusText"),
                     HttpClientErrorException.BadRequest.class);
             compConfig.registerEqualsForType(equalsIgnoreFields("type"), RequestEntity.class);
-            compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber"), TestContainer.class);
-            compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber"), TestCase.class);
-            compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber"), TestPart.class);
+            compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber", "inits.test"),
+                    TestContainer.class);
+            compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber", "inits.test"),
+                    TestCase.class);
+            compConfig.registerEqualsForType(equalsIgnoreFields("columnNumber", "lineNumber", "inits.test"),
+                    TestPart.class);
             compConfig.registerEqualsForType((it1, it2) -> {
                 if (it1 == it2) return true;
                 if (it1 == null || it2 == null) return false;
