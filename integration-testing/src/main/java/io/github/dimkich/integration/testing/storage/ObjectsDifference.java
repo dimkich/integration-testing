@@ -1,31 +1,25 @@
 package io.github.dimkich.integration.testing.storage;
 
+import io.github.dimkich.integration.testing.comparison.ObjectComparisonService;
 import io.github.dimkich.integration.testing.date.time.PeriodDuration;
 import io.github.dimkich.integration.testing.storage.mapping.Container;
 import io.github.dimkich.integration.testing.util.CollectionUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
-import org.assertj.core.api.recursive.comparison.RecursiveComparisonDifferenceCalculator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
 public class ObjectsDifference {
-    private static final RecursiveComparisonDifferenceCalculator compCalculator =
-            new RecursiveComparisonDifferenceCalculator();
-    private static final RecursiveComparisonConfiguration compConfig = new RecursiveComparisonConfiguration();
-
     private final StorageProperties properties;
     private final JacksonConverter jacksonConverter;
+    private final ObjectComparisonService objectComparisonService;
     private final Function<Object, Object> nonStringKeysConverter = Function.identity();
     private final Function<Object, Boolean> simpleTypeDetector = o -> BeanUtils.isSimpleValueType(o.getClass())
             || o.getClass() == PeriodDuration.class || o.getClass() == byte[].class;
@@ -63,7 +57,7 @@ public class ObjectsDifference {
         CollectionUtils.setsIntersection(right.keySet(), left.keySet()).forEach(key -> {
             Object leftValue = left.get(key);
             Object rightValue = right.get(key);
-            if (!isEquals(leftValue, rightValue)) {
+            if (!objectComparisonService.isEquals(leftValue, rightValue)) {
                 container.addEntry(Container.ChangeType.changed, key,
                         diff(storageName, leftValue, rightValue, level + 1), this::convertKey);
             }
@@ -111,16 +105,5 @@ public class ObjectsDifference {
             return bigDecimal.stripTrailingZeros().toPlainString();
         }
         return key.toString();
-    }
-
-    @SneakyThrows
-    private boolean isEquals(Object o1, Object o2) {
-        if (o1 == null || o2 == null) {
-            return o1 == o2;
-        }
-        if (simpleTypeDetector.apply(o1) && simpleTypeDetector.apply(o2)) {
-            return Objects.deepEquals(o1, o2);
-        }
-        return compCalculator.determineDifferences(o1, o2, compConfig).isEmpty();
     }
 }

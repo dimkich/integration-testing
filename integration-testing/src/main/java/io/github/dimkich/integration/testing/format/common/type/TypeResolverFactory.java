@@ -3,7 +3,6 @@ package io.github.dimkich.integration.testing.format.common.type;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import io.github.dimkich.integration.testing.TestSetupModule;
-import io.github.dimkich.integration.testing.execution.StubCall;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -47,8 +46,7 @@ public class TypeResolverFactory {
      * <ol>
      *     <li>register all parent types</li>
      *     <li>register aliases for already known subtypes</li>
-     *     <li>register base types, named subtypes, unnamed subtypes and custom
-     *     equality rules for {@link StubCall}</li>
+     *     <li>register base types, named subtypes and unnamed subtypes</li>
      * </ol>
      */
     @PostConstruct
@@ -63,7 +61,6 @@ public class TypeResolverFactory {
             module.getBaseTypes().forEach(this::addBaseType);
             module.getSubTypesWithName().forEach(this::addSubType);
             module.getSubTypes().forEach(this::addSubTypes);
-            module.getEqualsMap().forEach(StubCall::addEqualsForType);
         }
     }
 

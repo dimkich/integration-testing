@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.execution;
 
 import io.github.dimkich.integration.testing.*;
 import io.github.dimkich.integration.testing.assertion.AssertionConfig;
+import io.github.dimkich.integration.testing.comparison.ObjectComparisonService;
 import io.github.dimkich.integration.testing.execution.junit.ExecutionListener;
 import io.github.dimkich.integration.testing.format.CompositeTestMapper;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
@@ -93,6 +94,10 @@ public class TestExecutor {
      * during test execution.
      */
     private final TestMessages testMessages;
+    /**
+     * Service for comparing stub arguments during stub call matching.
+     */
+    private final ObjectComparisonService objectComparisonService;
     /**
      * Service for initializing and cleaning up test state before and after tests.
      */
@@ -328,7 +333,8 @@ public class TestExecutor {
      * <p>
      * The search traverses the test hierarchy from the current test up to the root,
      * looking for a StubCall that matches the given stub name, method name, and arguments.
-     * The first matching stub call found is returned.
+     * Arguments are compared with {@link ObjectComparisonService}. The first matching
+     * stub call found is returned and marked as used.
      *
      * @param stubName the name of the stub to search for
      * @param method   the method name to match
@@ -336,11 +342,37 @@ public class TestExecutor {
      * @return the matching StubCall if found, or null if no match is found
      */
     public StubCall search(String stubName, String method, List<Object> args) {
-        return test.getParentsAndItselfDesc()
-                .map(tc -> tc.search(stubName, method, args))
-                .filter(Objects::nonNull)
+        StubCall result = test.getParentsAndItselfDesc()
+                .flatMap(t -> t.getStubCall().stream())
+                .filter(stub -> matches(stub, stubName, method, args))
                 .findFirst()
                 .orElse(null);
+        if (result != null) {
+            result.setUsed(true);
+        }
+        return result;
+    }
+
+    private boolean matches(StubCall stub, String stubName, String method, List<Object> args) {
+        if (!Objects.equals(stub.getName(), stubName) || !Objects.equals(stub.getMethod(), method)) {
+            return false;
+        }
+        if (stub.isDisabled()) {
+            return true;
+        }
+        List<Object> expected = stub.getArg();
+        if (expected == null || args == null) {
+            return expected == args;
+        }
+        if (expected.size() != args.size()) {
+            return false;
+        }
+        for (int i = 0; i < expected.size(); i++) {
+            if (!objectComparisonService.isEquals(expected.get(i), args.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.config;
 import io.github.dimkich.integration.testing.DynamicTestBuilder;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.assertion.AssertionConfig;
+import io.github.dimkich.integration.testing.comparison.ComparisonConfig;
 import io.github.dimkich.integration.testing.date.time.DateTimeConfig;
 import io.github.dimkich.integration.testing.execution.StubConfig;
 import io.github.dimkich.integration.testing.format.TestFormatConfig;
@@ -34,7 +35,7 @@ import java.util.List;
 @Import({DynamicTestBuilder.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeConfig.class,
         InitializationConfig.class, StubConfig.class, OpenApiConfig.class, AssertionConfig.class,
         WebConfig.class, TestFormatConfig.class, PropertyInheritanceMerger.class, SerdeConfig.class,
-        MessageConfig.class, PluginSpringIntegrator.class})
+        MessageConfig.class, PluginSpringIntegrator.class, ComparisonConfig.class})
 public class IntegrationTestConfig {
     @Bean
     TestSetupModule integrationTestModule() {

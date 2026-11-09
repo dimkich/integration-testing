@@ -328,25 +328,6 @@ public abstract class Test {
     }
 
     /**
-     * Searches for a stub call matching the given criteria.
-     *
-     * @param stubName the name of the stub
-     * @param method the method name that was invoked
-     * @param args the arguments that were passed to the method
-     * @return the matching StubCall, or null if no match is found
-     */
-    public StubCall search(String stubName, String method, List<Object> args) {
-        StubCall result = stubCall.stream()
-                .filter(stub -> stub.equalsTo(stubName, method, args))
-                .findFirst()
-                .orElse(null);
-        if (result != null) {
-            result.setUsed(true);
-        }
-        return result;
-    }
-
-    /**
      * Removes stub calls that were declared in this test but were not used during execution.
      * <p>
      * Only leaf tests are cleaned: a {@link TestPart} or a {@link TestCase} without parts.

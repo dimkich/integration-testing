@@ -1,0 +1,95 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Container" name="presets">
+        <test type="Case" name="bigDecimal scale">
+            <bean>objectComparisonTestFacade</bean>
+            <method>compare</method>
+            <request type="BigDecimal">0.1</request>
+            <request type="BigDecimal">0.1000</request>
+            <response type="Boolean">true</response>
+        </test>
+        <test type="Case" name="bigDecimal different value">
+            <bean>objectComparisonTestFacade</bean>
+            <method>compare</method>
+            <request type="BigDecimal">0.1</request>
+            <request type="BigDecimal">0.2</request>
+            <response type="Boolean">false</response>
+        </test>
+        <test type="Case" name="map with bigDecimal keys">
+            <bean>objectComparisonTestFacade</bean>
+            <method>compare</method>
+            <request type="MapHolder">
+                <entry key="1.0">first</entry>
+                <entry key="2.00">second</entry>
+            </request>
+            <request type="MapHolder">
+                <entry key="1.00">first</entry>
+                <entry key="2.0">second</entry>
+            </request>
+            <response type="Boolean">true</response>
+        </test>
+        <test type="Case" name="map with different values">
+            <bean>objectComparisonTestFacade</bean>
+            <method>compare</method>
+            <request type="MapHolder">
+                <entry key="1.0">first</entry>
+            </request>
+            <request type="MapHolder">
+                <entry key="1.00">other</entry>
+            </request>
+            <response type="Boolean">false</response>
+        </test>
+        <test type="Case" name="zonedDateTime with different offsets">
+            <bean>objectComparisonTestFacade</bean>
+            <method>compare</method>
+            <request type="ZonedDateTime">2025-01-01T03:00:00+03:00</request>
+            <request type="ZonedDateTime">2025-01-01T00:00:00Z</request>
+            <response type="Boolean">true</response>
+        </test>
+        <test type="Case" name="zonedDateTime with different instants">
+            <bean>objectComparisonTestFacade</bean>
+            <method>compare</method>
+            <request type="ZonedDateTime">2025-01-01T03:00:00+03:00</request>
+            <request type="ZonedDateTime">2025-01-01T00:00:01Z</request>
+            <response type="Boolean">false</response>
+        </test>
+        <test type="Case" name="zonedDateTime null value">
+            <bean>objectComparisonTestFacade</bean>
+            <method>compare</method>
+            <request type="ZonedHolder">
+                <value>2025-01-01T03:00:00+03:00</value>
+            </request>
+            <request type="ZonedHolder"/>
+            <response type="Boolean">false</response>
+        </test>
+    </test>
+    <test type="Container" name="custom rules">
+        <test type="Case" name="custom equals predicate">
+            <bean>objectComparisonTestFacade</bean>
+            <method>compare</method>
+            <request type="CustomId">
+                <value>1</value>
+                <tag>before</tag>
+            </request>
+            <request type="CustomId">
+                <value>1</value>
+                <tag>after</tag>
+            </request>
+            <response type="Boolean">true</response>
+        </test>
+        <test type="Case" name="custom equals predicate with different values">
+            <bean>objectComparisonTestFacade</bean>
+            <method>compare</method>
+            <request type="CustomId">
+                <value>1</value>
+                <tag>before</tag>
+            </request>
+            <request type="CustomId">
+                <value>2</value>
+                <tag>before</tag>
+            </request>
+            <response type="Boolean">false</response>
+        </test>
+    </test>
+</test>
