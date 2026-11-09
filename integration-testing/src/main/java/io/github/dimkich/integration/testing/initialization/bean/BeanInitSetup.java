@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.initialization.bean;
 
 import io.github.dimkich.integration.testing.Test;
-import io.github.dimkich.integration.testing.execution.MockAnswer;
+import io.github.dimkich.integration.testing.execution.StubAnswer;
 import io.github.dimkich.integration.testing.initialization.InitSetup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import org.springframework.beans.factory.BeanFactory;
  * <ul>
  *   <li>Converts {@link BeanInit} configurations into {@link BeanInitState} objects</li>
  *   <li>Executes bean initialization methods via reflection during test setup</li>
- *   <li>Enables mock answer interception during bean initialization to capture mock interactions</li>
+ *   <li>Enables stub answer interception during bean initialization to capture stub interactions</li>
  *   <li>Runs with an execution order of 10000, allowing other initializations to occur first</li>
  * </ul>
  *
@@ -30,7 +30,7 @@ import org.springframework.beans.factory.BeanFactory;
  * @see InitSetup
  * @see BeanInit
  * @see BeanInitState
- * @see MockAnswer
+ * @see StubAnswer
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -81,7 +81,7 @@ public class BeanInitSetup implements InitSetup<BeanInit, BeanInitState> {
      *
      * <p>This method:
      * <ul>
-     *   <li>Enables mock answer interception during initialization to capture any mock interactions</li>
+     *   <li>Enables stub answer interception during initialization to capture any stub interactions</li>
      *   <li>Retrieves each configured bean from the Spring bean factory</li>
      *   <li>Invokes the specified method on each bean using reflection</li>
      *   <li>Logs debug information for each bean initialization</li>
@@ -98,7 +98,7 @@ public class BeanInitSetup implements InitSetup<BeanInit, BeanInitState> {
      */
     @Override
     public void apply(BeanInitState oldState, BeanInitState newState, Test test) throws Exception {
-        MockAnswer.enable(() -> {
+        StubAnswer.enable(() -> {
             for (BeanInit.BeanMethod beanMethod : newState.getBeans()) {
                 log.debug("Bean init {}", beanMethod);
                 Object bean = beanFactory.getBean(beanMethod.getName());

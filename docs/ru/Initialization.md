@@ -6,7 +6,7 @@
 
 Подсистема инициализации тестов предоставляет механизм для настройки состояния окружения перед выполнением тестов. Она
 позволяет декларативно конфигурировать различные аспекты тестовой среды через XML-файлы, включая время, данные в БД,
-состояние бинов, моки и хранилища ключ-значение.
+состояние бинов, стабы и хранилища ключ-значение.
 
 ### Ключевые возможности
 
@@ -58,13 +58,13 @@ xml
 xml
 <!-- Применится ко всем TestCase внутри этого контейнера одной записью -->
 <test type="Container">
-    <init type="mockInit" applyTo="TestCase" resetAll="true"/>
+    <init type="StubInit" applyTo="TestCase" resetAll="true"/>
 
     <test type="Case" name="кейс1">
-        <!-- mockInit применён автоматически -->
+        <!-- StubInit применён автоматически -->
     </test>
     <test type="Case" name="кейс2">
-        <!-- mockInit применён автоматически -->
+        <!-- StubInit применён автоматически -->
     </test>
 </test>
 
@@ -225,13 +225,13 @@ xml
 
 #### Параметры
 
-| Атрибут          | Описание                                            |
-|------------------|-----------------------------------------------------|
-| `name`           | Имя хранилища                                       |
-| `tablesToClear`  | Список таблиц, которые очищаются (данные удаляются) |
-| `tablesToLoad`   | Список таблиц для загрузки данных из DBUnit         |
-| `loadAllTables`  | `true` --- загрузить все таблицы из датасета        |
-| `sql`            | SQL-запросы для выполнения                          |
+| Атрибут         | Описание                                            |
+|-----------------|-----------------------------------------------------|
+| `name`          | Имя хранилища                                       |
+| `tablesToClear` | Список таблиц, которые очищаются (данные удаляются) |
+| `tablesToLoad`  | Список таблиц для загрузки данных из DBUnit         |
+| `loadAllTables` | `true` --- загрузить все таблицы из датасета        |
+| `sql`           | SQL-запросы для выполнения                          |
 
 #### История состояний и откат
 
@@ -438,11 +438,11 @@ json
 
 #### Параметры
 
-| Атрибут   | Описание                                                          |
-|-----------|-------------------------------------------------------------------|
-| `bean`    | Имя Spring-бина по умолчанию для всех вложенных `<property>`      |
-| `name`    | Псевдоним `bean` (не переопределяет явно заданный `bean`)         |
-| `applyTo` | Область применения: `TestCase`, `TestPart`                        |
+| Атрибут   | Описание                                                     |
+|-----------|--------------------------------------------------------------|
+| `bean`    | Имя Spring-бина по умолчанию для всех вложенных `<property>` |
+| `name`    | Псевдоним `bean` (не переопределяет явно заданный `bean`)    |
+| `applyTo` | Область применения: `TestCase`, `TestPart`                   |
 
 | Атрибут `<property>` | Описание                                                        |
 |----------------------|-----------------------------------------------------------------|
@@ -467,64 +467,64 @@ json
 
 *** ** * ** ***
 
-### 7. MockInit --- Сброс моков
+### 7. StubInit --- Сброс стабов
 
-**Назначение:** Сброс состояния всех моков в иерархии тестов.
+**Назначение:** Сброс состояния всех стабов в иерархии тестов.
 **Что именно сбрасывается:**
 
-* Счётчик результатов `<result>` в `<mockInvoke>` возвращается к первому значению
-* При нескольких `<result>` следующий вызов мока начнёт с первого результата, а не продолжит последовательность
-* Все моки в текущем тесте и родителях (при `resetAll="true"`)
+* Счётчик результатов `<result>` в `<stubCall>` возвращается к первому значению
+* При нескольких `<result>` следующий вызов стаба начнёт с первого результата, а не продолжит последовательность
+* Все стабы в текущем тесте и родителях (при `resetAll="true"`)
 
 #### Примеры
 
 ```
 xml
-<!-- Сбросить все моки -->
-<init type="mockInit" resetAll="true"/>
+<!-- Сбросить все стабы -->
+<init type="StubInit" resetAll="true"/>
 
 ```
 
 ```
 xml
 <!-- Сброс только для TestCase -->
-<init type="mockInit" applyTo="TestCase" resetAll="true"/>
+<init type="StubInit" applyTo="TestCase" resetAll="true"/>
 
 ```
 
 ```
 xml
 <!-- Сброс только для TestPart -->
-<init type="mockInit" applyTo="TestPart" resetAll="true"/>
+<init type="StubInit" applyTo="TestPart" resetAll="true"/>
 
 ```
 
 #### Поведение
 
-| `resetAll`          | Поведение                                                      |
-|---------------------|----------------------------------------------------------------|
-| `true`              | Сбрасываются все `MockInvoke` в текущем тесте и всех родителях |
-| `false` / не указан | Никаких действий                                               |
+| `resetAll`          | Поведение                                                    |
+|---------------------|--------------------------------------------------------------|
+| `true`              | Сбрасываются все `StubCall` в текущем тесте и всех родителях |
+| `false` / не указан | Никаких действий                                             |
 
 #### Пример с последовательностью результатов
 
 ```
 xml
 <test type="Container">
-    <!-- Mock с тремя результатами -->
-    <mockInvoke name="idGenerator" method="generate">
+    <!-- Стаб с тремя результатами -->
+    <stubCall name="idGenerator" method="generate">
         <result><return>ID-001</return></result>
         <result><return>ID-002</return></result>
         <result><return>ID-003</return></result>
-    </mockInvoke>
+    </stubCall>
 
     <test type="Case" name="тест1">
-        <init type="mockInit" resetAll="true"/>
+        <init type="StubInit" resetAll="true"/>
         <!-- Первый вызов вернёт ID-001 (счётчик сброшен) -->
     </test>
 
     <test type="Case" name="тест2">
-        <init type="mockInit" resetAll="true"/>
+        <init type="StubInit" resetAll="true"/>
         <!-- Первый вызов снова вернёт ID-001 (счётчик сброшен) -->
     </test>
 </test>
@@ -752,16 +752,16 @@ xml
 xml
 <!-- Применится ко всем TestCase внутри этого контейнера одной записью -->
 <test type="Container">
-    <init type="mockInit" applyTo="TestCase" resetAll="true"/>
+    <init type="StubInit" applyTo="TestCase" resetAll="true"/>
 
     <test type="Case" name="кейс1">
-        <!-- mockInit применён -->
+        <!-- StubInit применён -->
     </test>
 
     <test type="Case" name="кейс2">
-        <!-- mockInit применён -->
+        <!-- StubInit применён -->
         <test type="Part" name="шаг1">
-            <!-- mockInit НЕ применён (applyTo="TestCase") -->
+            <!-- StubInit НЕ применён (applyTo="TestCase") -->
         </test>
     </test>
 </test>
@@ -786,13 +786,13 @@ currentState = currentState.merge(newState);
 
 **Правила слияния:**
 
-| Тип инициализации     | Правила слияния                                      |
-|-----------------------|------------------------------------------------------|
-| `DateTimeInit`        | `dateTime` задаёт базу и сбрасывает `addDuration`    |
-| `BeanInit`            | Все бины добавляются в набор                         |
-| `MockInit`            | `resetAll=true` переопределяет всё                   |
-| `SqlStorageInit`      | Таблицы объединяются, состояние сравнивается         |
-| `KeyValueStorageInit` | `clear=true` очищает, `map` объединяется             |
+| Тип инициализации     | Правила слияния                                   |
+|-----------------------|---------------------------------------------------|
+| `DateTimeInit`        | `dateTime` задаёт базу и сбрасывает `addDuration` |
+| `BeanInit`            | Все бины добавляются в набор                      |
+| `StubInit`            | `resetAll=true` переопределяет всё                |
+| `SqlStorageInit`      | Таблицы объединяются, состояние сравнивается      |
+| `KeyValueStorageInit` | `clear=true` очищает, `map` объединяется          |
 
 `addDuration` суммируется с текущей базой `dateTime`.
 
@@ -920,21 +920,21 @@ xml
 
 ```
 
-### Пример 3: Сброс моков между тестами
+### Пример 3: Сброс стабов между тестами
 
 ```
 xml
 <?xml version='1.1' encoding='UTF-8'?>
 <test type="Container">
-    <!-- Общие моки для всех тестов -->
-    <mockInvoke name="idGenerator" method="generate">
+    <!-- Общие стабы для всех тестов -->
+    <stubCall name="idGenerator" method="generate">
         <result><return type="String">ID-001</return></result>
         <result><return type="String">ID-002</return></result>
-    </mockInvoke>
+    </stubCall>
 
     <test type="Case" name="тест1">
-        <!-- Сбросить моки перед этим тестом -->
-        <init type="mockInit" resetAll="true"/>
+        <!-- Сбросить стабы перед этим тестом -->
+        <init type="StubInit" resetAll="true"/>
 
         <bean>orderService</bean>
         <method>create</method>
@@ -944,8 +944,8 @@ xml
     </test>
 
     <test type="Case" name="тест2">
-        <!-- Сбросить моки перед этим тестом -->
-        <init type="mockInit" resetAll="true"/>
+        <!-- Сбросить стабы перед этим тестом -->
+        <init type="StubInit" resetAll="true"/>
 
         <bean>orderService</bean>
         <method>create</method>
@@ -1048,7 +1048,7 @@ xml
 
 1. **Выносите общие настройки на уровень контейнера** --- `dateTimeInit`, `sqlStorageSetup` можно определить в
    родительском `Container` для переиспользования.
-2. **Используйте `applyTo` для массового применения** --- например, `MockInit` с `applyTo="TestCase"` применится ко всем
+2. **Используйте `applyTo` для массового применения** --- например, `StubInit` с `applyTo="TestCase"` применится ко всем
    кейсам в контейнере одной записью.
 3. **Для `TestPart` всегда указывайте `applyTo="TestPart"`** --- если инициализация должна применяться к шагам
    многошагового теста.
@@ -1057,7 +1057,7 @@ xml
 5. **Проверяйте имена хранилищ и бинов** --- убедитесь, что `name` в инициализации совпадает с именами бинов в
    Spring-контексте.
 6. **Помните о порядке выполнения** --- если инициализация зависит от другой, убедитесь, что `order` настроен правильно.
-7. **Изолируйте тесты с помощью `MockInit`** --- используйте `resetAll="true"` для сброса моков между тестами.
+7. **Изолируйте тесты с помощью `StubInit`** --- используйте `resetAll="true"` для сброса стабов между тестами.
 8. **Используйте `loadAllTables` только при необходимости** --- загрузка всех таблиц может замедлить тесты.
 9. **Для сложных ключей в KeyValueStorageInit используйте `LinkedHashMapStringObject`** --- ключи с
    двоеточием (`user:123`, `config:timeout`) требуют специального формата через `entry key="..."`.

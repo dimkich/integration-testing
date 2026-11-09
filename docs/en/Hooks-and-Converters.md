@@ -370,7 +370,7 @@ Complete Test Lifecycle Diagram
 ┌─────────────────────────────────────────────────────────────┐  
 │              TestExecutor.runTest() (only Case/Part)        │  
 │  ├── waitCompletion.start()                                 │  
-│  ├── MockAnswer.enable()                                    │  
+│  ├── StubAnswer.enable()                                    │
 │  │   ├── sendInboundMessage() or executeMethod()            │  
 │  │   └── waitCompletion.waitCompletion()                    │  
 │  ├── pollMessages()                                         │  

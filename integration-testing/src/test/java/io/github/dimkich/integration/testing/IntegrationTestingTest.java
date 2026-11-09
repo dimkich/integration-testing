@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.dimkich.integration.testing.execution.TestBeanMock;
+import io.github.dimkich.integration.testing.execution.StubBean;
 import io.github.dimkich.integration.testing.format.common.map.JsonMapAsEntries;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,7 +22,7 @@ import java.util.TreeMap;
 import java.util.stream.Stream;
 
 @SpringBootTest(classes = IntegrationTestingTest.Config.class)
-@TestBeanMock(mockClass = IntegrationTestingTest.Converter.class)
+@StubBean(stubClass = IntegrationTestingTest.Converter.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class IntegrationTestingTest {
     private final DynamicTestBuilder dynamicTestBuilder;

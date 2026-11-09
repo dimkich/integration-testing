@@ -251,7 +251,7 @@ static class Config {
 ┌─────────────────────────────────────────────────────────────┐  
 │              TestExecutor.runTest() (только Case/Part)      │  
 │  ├── waitCompletion.start()                                 │  
-│  ├── MockAnswer.enable()                                    │  
+│  ├── StubAnswer.enable()                                    │
 │  │   ├── sendInboundMessage() или executeMethod()           │  
 │  │   └── waitCompletion.waitCompletion()                    │  
 │  ├── pollMessages()                                         │  

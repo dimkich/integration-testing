@@ -266,27 +266,27 @@
             </test>
         </test>
     </test>
-    <test type="Container" name="mockInit">
-        <mockInvoke name="mock11" method="name"/>
-        <test type="Container" name="accumulate two mocks">
-            <init type="MockInit" resetAll="true"/>
-            <mockInvoke name="mock21" method="name"/>
-            <test type="Case" name="{mock21=1, mock11=1}">
-                <bean>mockResetCounter</bean>
+    <test type="Container" name="stubInit">
+        <stubCall name="stub11" method="name"/>
+        <test type="Container" name="accumulate two stubs">
+            <init type="StubInit" resetAll="true"/>
+            <stubCall name="stub21" method="name"/>
+            <test type="Case" name="{stub21=1, stub11=1}">
+                <bean>stubResetCounter</bean>
                 <method>count</method>
                 <response type="LinkedHashMap">
-                    <mock21 type="Integer">1</mock21>
-                    <mock11 type="Integer">1</mock11>
+                    <stub21 type="Integer">1</stub21>
+                    <stub11 type="Integer">1</stub11>
                 </response>
             </test>
         </test>
-        <test type="Container" name="reset one mock">
-            <init type="MockInit" resetAll="true"/>
-            <test type="Case" name="{mock11=1}">
-                <bean>mockResetCounter</bean>
+        <test type="Container" name="reset one stub">
+            <init type="StubInit" resetAll="true"/>
+            <test type="Case" name="{stub11=1}">
+                <bean>stubResetCounter</bean>
                 <method>count</method>
                 <response type="LinkedHashMap">
-                    <mock11 type="Integer">1</mock11>
+                    <stub11 type="Integer">1</stub11>
                 </response>
             </test>
         </test>

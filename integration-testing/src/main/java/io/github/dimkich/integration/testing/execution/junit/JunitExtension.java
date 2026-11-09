@@ -1,8 +1,8 @@
 package io.github.dimkich.integration.testing.execution.junit;
 
-import io.github.dimkich.integration.testing.execution.TestBeanMock;
-import io.github.dimkich.integration.testing.execution.TestConstructorMock;
-import io.github.dimkich.integration.testing.execution.TestStaticMock;
+import io.github.dimkich.integration.testing.execution.StubBean;
+import io.github.dimkich.integration.testing.execution.StubConstruction;
+import io.github.dimkich.integration.testing.execution.StubStaticMethods;
 import io.github.dimkich.integration.testing.expression.PointcutRegistry;
 import io.github.dimkich.integration.testing.instrumentation.InstrumentationManager;
 import io.github.dimkich.integration.testing.openapi.TestOpenAPI;
@@ -26,7 +26,7 @@ import java.util.List;
  * possible where {@code SpringExtension.beforeAll} creates the Spring context
  * before {@link InstrumentationManager#install(Class)} has populated
  * {@link InstrumentationManager#getActivePlugins()} — and plugins that inspect
- * active instrumentations while the context is being built (for example
+ * active instrumentation while the context is being built (for example
  * {@code KafkaInFlightAgent.isInflightActive()} inside
  * {@code KafkaConfig.PostProcessor}) would silently observe an empty list.
  *
@@ -44,11 +44,11 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
     @Getter
     private static List<TestRestTemplate> testRestTemplates = List.of();
     @Getter
-    private static List<TestBeanMock> beanMocks = List.of();
+    private static List<StubBean> beanStubs = List.of();
     @Getter
-    private static List<TestConstructorMock> constructorMocks = List.of();
+    private static List<StubConstruction> constructionStubs = List.of();
     @Getter
-    private static List<TestStaticMock> staticMocks = List.of();
+    private static List<StubStaticMethods> staticMethodStubs = List.of();
     @Getter
     private static SpringBootTest springBootTest;
 
@@ -62,9 +62,9 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         InstrumentationManager.install(testClass);
 
         testOpenAPIS = List.of(testClass.getAnnotationsByType(TestOpenAPI.class));
-        beanMocks = List.of(testClass.getAnnotationsByType(TestBeanMock.class));
-        constructorMocks = List.of(testClass.getAnnotationsByType(TestConstructorMock.class));
-        staticMocks = List.of(testClass.getAnnotationsByType(TestStaticMock.class));
+        beanStubs = List.of(testClass.getAnnotationsByType(StubBean.class));
+        constructionStubs = List.of(testClass.getAnnotationsByType(StubConstruction.class));
+        staticMethodStubs = List.of(testClass.getAnnotationsByType(StubStaticMethods.class));
         testRestTemplates = List.of(testClass.getAnnotationsByType(TestRestTemplate.class));
     }
 
@@ -74,8 +74,8 @@ public class JunitExtension implements BeforeAllCallback, AfterAllCallback {
         PointcutRegistry.clear();
         testOpenAPIS = List.of();
         testRestTemplates = List.of();
-        beanMocks = List.of();
-        constructorMocks = List.of();
-        staticMocks = List.of();
+        beanStubs = List.of();
+        constructionStubs = List.of();
+        staticMethodStubs = List.of();
     }
 }

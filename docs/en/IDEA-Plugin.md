@@ -61,16 +61,16 @@ In UntilStopped mode, the internal InfiniteTestIterator re-executes the init() m
 
 *** ** * ** ***
 
-## 3. Mock Management (Mockito)
+## 3. Stub Management (Mockito)
 
-The plugin dynamically changes the behavior of objects declared with @TestBeanMock, @TestConstructorMock, and
-@TestStaticMock:
+The plugin dynamically changes the behavior of objects declared with @StubBean, @StubConstruction, and
+@StubStaticMethods:
 
-* **mockAlwaysCallRealMethods** : Forces all mocks to call real methods. Used to automatically harvest baseline data
+* **alwaysCallRealMethods** : Forces all stubs to call real methods. Used to automatically harvest baseline data
   from a working system.
-* **mockCallRealMethodsOnNoData** : If no <result> section is found in the XML for a specific call, the real method is
-  executed. If data exists, the mocked value is returned.
-* **mockReturnMockOnNoData** : Returns a "Deep Mock" (empty stub) if data is missing in the XML, helping to draft the
+* **callRealMethodsOnNoData** : If no <result> section is found in the XML for a specific call, the real method is
+  executed. If data exists, the stubbed value is returned.
+* **returnMockOnNoData** : Returns a "Deep Mock" (empty stub) if data is missing in the XML, helping to draft the
   test structure.
 * **spyCreateData** : Automatically records the results of spy object calls and prepares them for XML storage.
 

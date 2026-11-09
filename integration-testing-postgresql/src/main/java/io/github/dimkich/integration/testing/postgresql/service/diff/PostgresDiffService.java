@@ -1,6 +1,6 @@
 package io.github.dimkich.integration.testing.postgresql.service.diff;
 
-import io.github.dimkich.integration.testing.execution.MockAnswer;
+import io.github.dimkich.integration.testing.execution.StubAnswer;
 import io.github.dimkich.integration.testing.postgresql.model.change.PostgresChangeBatch;
 import io.github.dimkich.integration.testing.storage.ObjectsDifference;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class PostgresDiffService {
         if (diff.getBefore().isEmpty() && diff.getAfter().isEmpty()) {
             return null;
         }
-        return MockAnswer.enable(() -> objectsDifference.getDifference(
+        return StubAnswer.enable(() -> objectsDifference.getDifference(
                 storageName, diff.getBefore(), diff.getAfter()));
     }
 }

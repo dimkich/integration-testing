@@ -312,7 +312,7 @@ Test Fields
 | `method`          | String                | Method name to call                      |
 | `request`         | List<Object>          | Method arguments (list of `<value>`)     |
 | `response`        | Object                | Expected execution result                |
-| `mockInvoke`      | List                  | Expected mock calls                      |
+| `stubCall`        | List                  | Expected stub calls                      |
 | `inboundMessage`  | AbstractMessage       | Inbound message for testing              |
 | `outboundMessage` | List<AbstractMessage> | Expected outbound messages               |
 | `custom`          | Map                   | Custom test data                         |

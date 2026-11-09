@@ -13,7 +13,7 @@ import io.github.dimkich.integration.testing.execution.TestExecutor;
  * will be executed in sequence after each test completes.
  * <p>
  * The after hook is called during the after phase of test execution, which occurs after
- * the test method execution, message handling, and mock verification have completed.
+ * the test method execution, message handling, and stub verification have completed.
  *
  * @author dimkich
  * @see TestExecutor
@@ -31,5 +31,6 @@ public interface AfterTest {
      * @param test the test that has just completed execution
      * @throws Exception if an error occurs during the after-test hook execution
      */
+    @SuppressWarnings("RedundantThrows")
     void after(Test test) throws Exception;
 }

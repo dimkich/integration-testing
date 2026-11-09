@@ -17,14 +17,14 @@ import java.util.Set;
 
 /**
  * Mockito {@link Answer} implementation used by integration-testing to intercept method invocations,
- * record {@link MockInvoke} metadata and optionally call real methods or return mocked results.
+ * record {@link StubCall} metadata and optionally call real methods or return stubbed results.
  * <p>
  * Interception is globally controlled by the static {@link #enabled} flag which is switched on only
  * within the {@link #enable(SneakySupplier)} and {@link #enable(SneakyRunnable)} scopes.
  * Outside of these scopes the answer delegates directly to {@link InvocationOnMock#callRealMethod()}.
  */
 @RequiredArgsConstructor
-public class MockAnswer implements Answer<Object> {
+public class StubAnswer implements Answer<Object> {
     /**
      * Global flag that enables interception when {@code true}.
      * It is managed only by {@link #enable(SneakySupplier)} and {@link #enable(SneakyRunnable)}.
@@ -34,7 +34,7 @@ public class MockAnswer implements Answer<Object> {
 
     private final String name;
     private final Set<String> methods;
-    private final MockInvokeProperties properties;
+    private final StubProperties properties;
     private final TestExecutor testExecutor;
     private final Cloner cloner;
     private final boolean isSpy;
@@ -85,10 +85,10 @@ public class MockAnswer implements Answer<Object> {
 
     /**
      * Handles a Mockito invocation, optionally delegating to the real method and/or storing
-     * invocation data in {@link MockInvoke} instances according to {@link MockInvokeProperties}.
+     * invocation data in {@link StubCall} instances according to {@link StubProperties}.
      *
-     * @param invocation current mock invocation
-     * @return value to be returned from the mocked method
+     * @param invocation current stubbed invocation
+     * @return value to be returned from the stubbed method
      * @throws Throwable any error thrown by the real method
      */
     @Override
@@ -98,54 +98,58 @@ public class MockAnswer implements Answer<Object> {
         }
         List<Object> args = Arrays.stream(invocation.getArguments()).toList();
         args = args.isEmpty() ? null : args;
-        MockInvoke mi = testExecutor.search(name, invocation.getMethod().getName(), args);
-        if (mi != null && mi.isDisabled()) {
+        StubCall stubCall = testExecutor.search(name, invocation.getMethod().getName(), args);
+        if (stubCall != null && stubCall.isDisabled()) {
             return invocation.callRealMethod();
         }
 
-        boolean mockInvokeFound = mi != null;
-        if (mi == null) {
-            mi = new MockInvoke().setName(name).setMethod(invocation.getMethod().getName()).setArg(args);
+        boolean stubCallFound = stubCall != null;
+        if (stubCall == null) {
+            stubCall = new StubCall().setName(name).setMethod(invocation.getMethod().getName()).setArg(args)
+                    .setUsed(true);
         }
-        if (addMockInvoke(mockInvokeFound)) {
+        if (addStubCall(stubCallFound)) {
             if (cloneArgsAndResult) {
-                mi.setArg(mi.getArg().stream().map(cloner::clone).toList());
+                stubCall.setArg(stubCall.getArg().stream().map(cloner::clone).toList());
             }
-            testExecutor.addMockInvoke(mi);
+            testExecutor.addStubCall(stubCall);
         }
-        if (callRealMethod(mockInvokeFound)) {
+        if (callRealMethod(stubCallFound)) {
             nestedCalls++;
             try {
                 Object result = invocation.callRealMethod();
-                mi.addResult(result);
+                stubCall.addResult(result);
             } catch (Throwable e) {
-                mi.addException(e);
+                stubCall.addException(e);
             } finally {
                 nestedCalls--;
             }
         }
-        mi.tryThrowException();
-        if (returnMock(mockInvokeFound)) {
+        stubCall.tryThrowException();
+        if (returnMock(stubCallFound)) {
             if (invocation.getMethod().getReturnType().equals(Void.TYPE)) {
                 return null;
             }
-            mi.addResult(Mockito.mock(invocation.getMethod().getReturnType(), Mockito.withSettings()
+            stubCall.addResult(Mockito.mock(invocation.getMethod().getReturnType(), Mockito.withSettings()
                     .defaultAnswer(Answers.RETURNS_DEEP_STUBS).stubOnly()));
         }
-        return cloneArgsAndResult ? cloner.clone(mi.getCurrentResult()) : mi.getCurrentResult();
+        return cloneArgsAndResult ? cloner.clone(stubCall.getCurrentResult()) : stubCall.getCurrentResult();
     }
 
-    private boolean callRealMethod(boolean mockInvokeFound) {
-        return (isSpy && !mockInvokeFound) || properties.isMockAlwaysCallRealMethods()
-                || properties.isMockCallRealMethodsOnNoData() && !mockInvokeFound;
+    private boolean callRealMethod(boolean stubCallFound) {
+        return (isSpy && !stubCallFound) || properties.isAlwaysCallRealMethods()
+                || properties.isCallRealMethodsOnNoData() && !stubCallFound;
     }
 
-    private boolean addMockInvoke(boolean mockInvokeFound) {
-        return nestedCalls == 0 && (!mockInvokeFound || properties.isMockAlwaysCallRealMethods())
+    private boolean addStubCall(boolean stubCallFound) {
+        return nestedCalls == 0 && (!stubCallFound || properties.isAlwaysCallRealMethods())
                 && (!isSpy || properties.isSpyCreateData());
     }
 
-    private boolean returnMock(boolean mockInvokeFound) {
-        return properties.isMockReturnMockOnNoData() && !mockInvokeFound && !callRealMethod(mockInvokeFound);
+    private boolean returnMock(boolean stubCallFound) {
+        if (stubCallFound) {
+            return false;
+        }
+        return properties.isReturnMockOnNoData() && !callRealMethod(false);
     }
 }

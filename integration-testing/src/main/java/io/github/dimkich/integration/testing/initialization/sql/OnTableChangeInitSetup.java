@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.initialization.sql;
 
 import io.github.dimkich.integration.testing.Test;
-import io.github.dimkich.integration.testing.execution.MockAnswer;
+import io.github.dimkich.integration.testing.execution.StubAnswer;
 import io.github.dimkich.integration.testing.initialization.InitSetup;
 import io.github.dimkich.integration.testing.storage.TestDataStorages;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
@@ -54,7 +54,7 @@ public class OnTableChangeInitSetup implements InitSetup<OnTableChangeInit, OnTa
 
     @Override
     public void apply(OnTableChangeInitState oldState, OnTableChangeInitState newState, Test test) throws Exception {
-        MockAnswer.enable(() -> {
+        StubAnswer.enable(() -> {
             for (Map.Entry<SQLDataStorageService, List<OnTableChangeInit.TableChangeAction>> entry
                     : newState.getActionsByStorage().entrySet()) {
                 SQLDataStorageService storage = entry.getKey();

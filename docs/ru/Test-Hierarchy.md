@@ -312,7 +312,7 @@ xml
 | `method`          | String                | Имя метода для вызова                   |
 | `request`         | List<Object>          | Аргументы метода (список `<value>`)     |
 | `response`        | Object                | Ожидаемый результат выполнения          |
-| `mockInvoke`      | List                  | Ожидаемые вызовы моков                  |
+| `stubCall`        | List                  | Ожидаемые вызовы стабов                 |
 | `inboundMessage`  | AbstractMessage       | Входное сообщение для тестирования      |
 | `outboundMessage` | List<AbstractMessage> | Ожидаемые исходящие сообщения           |
 | `custom`          | Map                   | Пользовательские данные для теста       |

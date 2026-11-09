@@ -1,42 +1,42 @@
-Mocks in Integration Tests (TestBeanMock, TestConstructorMock, TestStaticMock)
+Stubs in Integration Tests (StubBean, StubConstruction, StubStaticMethods)
 ==============================================================================
 
 Overview
 --------
 
-The framework provides three annotations for configuring mocks based on Mockito:
+The framework provides three annotations for configuring stubs based on Mockito:
 
-| Annotation             | Purpose                | Scope                                                |
-|------------------------|------------------------|------------------------------------------------------|
-| `@TestBeanMock`        | Mocking Spring beans   | Bean instances in the context                        |
-| `@TestConstructorMock` | Mocking constructors   | Any objects created through constructors (not beans) |
-| `@TestStaticMock`      | Mocking static methods | Static methods of classes                            |
+| Annotation           | Purpose                 | Scope                                                |
+|----------------------|-------------------------|------------------------------------------------------|
+| `@StubBean`          | Stubbing Spring beans   | Bean instances in the context                        |
+| `@StubConstruction`  | Stubbing constructors   | Any objects created through constructors (not beans) |
+| `@StubStaticMethods` | Stubbing static methods | Static methods of classes                            |
 
 All annotations:
 
 * Are applied at the test class level
 * Support repetition (repeatable)
-* Integrate with the `MockInvoke` system for configuring expected calls in XML
+* Integrate with the `StubCall` system for configuring expected calls in XML
 
-TestBeanMock
+StubBean
 ------------
 
 ### Description
 
-Mocks or creates a spy for a **Spring bean** by name or type.
+Stubs or creates a spy for a **Spring bean** by name or type.
 
 ```
 java  
 @Inherited  
 @Target(TYPE)  
 @Retention(RUNTIME)  
-@Repeatable(TestBeanMock.List.class)  
-public @interface TestBeanMock {  
+@Repeatable(StubBean.List.class)
+public @interface StubBean {
     String name() default "";                    // Bean name in Spring context  
-    Class<?> mockClass() default Null.class;     // Bean type (if name not specified)  
-    String mockClassName() default "";           // FQN of type (alternative to mockClass)  
-    String[] methods() default {};               // Specific methods to mock  
-    boolean spy() default false;                 // Use spy instead of mock  
+    Class<?> stubClass() default Null.class;     // Bean type (if name not specified)
+    String stubClassName() default "";           // FQN of type (alternative to stubClass)
+    String[] methods() default {};               // Specific methods to stub
+    boolean spy() default false;                 // Use spy instead of stub
     boolean cloneArgsAndResult() default false;  // Deep clone arguments/results  
 }  
 
@@ -44,44 +44,44 @@ public @interface TestBeanMock {
 
 ### When to Use
 
-**Use `@TestBeanMock` when you need to mock a Spring bean:**
+**Use `@StubBean` when you need to stub a Spring bean:**
 
 ```
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestBeanMock(name = "paymentService")  
+@StubBean(name = "paymentService")
 public class OrderTest {  
-    // paymentService will be replaced with a mock  
+    // paymentService will be replaced with a stub
 }  
 
 ```
 
 ### Usage Examples
 
-**Mocking a bean by name:**
+**Stubbing a bean by name:**
 
 ```
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestBeanMock(name = "paymentService")  
+@StubBean(name = "paymentService")
 public class OrderTest {  
-    // paymentService will be replaced with a mock  
+    // paymentService will be replaced with a stub
 }  
 
 ```
 
-**Multiple mocks:**
+**Multiple stubs:**
 
 ```
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestBeanMock(name = "emailService")  
-@TestBeanMock(name = "smsService", spy = true)  
+@StubBean(name = "emailService")
+@StubBean(name = "smsService", spy = true)
 public class NotificationTest {  
-    // emailService --- mock, smsService --- spy  
+    // emailService --- stub, smsService --- spy
 }  
 
 ```
@@ -92,7 +92,7 @@ public class NotificationTest {
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestBeanMock(mockClass = UserService.class, spy = true)  
+@StubBean(stubClass = UserService.class, spy = true)
 public class UserTest {  
     // All beans of type UserService will be spies  
 }  
@@ -105,7 +105,7 @@ public class UserTest {
 
 ```
 java  
-@TestBeanMock(name = "paymentService", spy = true)  
+@StubBean(name = "paymentService", spy = true)
 
 ```
 
@@ -115,34 +115,34 @@ java
 * Partially preserving real logic
 * Verifying calls while maintaining behavior
 
-**Important:** You can also specify specific methods in mocks via `methods = {...}`. Spy is not needed just to limit
-mocked methods.
+**Important:** You can also specify specific methods in stubs via `methods = {...}`. Spy is not needed just to limit
+stubbed methods.
 
 ### Behavior
 
-| Parameter                   | Default Value                    | Effect                                                   |
-|-----------------------------|----------------------------------|----------------------------------------------------------|
-| `spy = false`               | Full mocking                     | Methods don't execute unless specified in `<mockInvoke>` |
-| `spy = true`                | Spy mode                         | Real methods execute unless overridden                   |
-| `cloneArgsAndResult = true` | Arguments and results are cloned | Avoids side effects from shared references               |
+| Parameter                   | Default Value                    | Effect                                                 |
+|-----------------------------|----------------------------------|--------------------------------------------------------|
+| `spy = false`               | Full stubbing                    | Methods don't execute unless specified in `<stubCall>` |
+| `spy = true`                | Spy mode                         | Real methods execute unless overridden                 |
+| `cloneArgsAndResult = true` | Arguments and results are cloned | Avoids side effects from shared references             |
 
-TestConstructorMock
+StubConstruction
 -------------------
 
 ### Description
 
-Mocks constructor calls of the specified class.
+Stubs constructor calls of the specified class.
 
 ```
 java  
 @Inherited  
 @Target(TYPE)  
 @Retention(RUNTIME)  
-@Repeatable(TestConstructorMock.List.class)  
-public @interface TestConstructorMock {  
+@Repeatable(StubConstruction.List.class)
+public @interface StubConstruction {
     String name() default "";                    // Logical configuration name  
-    Class<?> mockClass() default Null.class;     // Class for constructor mocking  
-    String mockClassName() default "";           // FQN of class (alternative to mockClass)  
+    Class<?> stubClass() default Null.class;     // Class for constructor stubbing
+    String stubClassName() default "";           // FQN of class (alternative to stubClass)
     String[] methods() default {};               // Constructor signatures (optional)  
     boolean spy() default false;                 // Spy for created instances  
     boolean cloneArgsAndResult() default false;  // Clone arguments/results  
@@ -152,15 +152,15 @@ public @interface TestConstructorMock {
 
 ### When to Use
 
-**Use `@TestConstructorMock` when you need to mock objects that are not Spring beans:**
+**Use `@StubConstruction` when you need to stub objects that are not Spring beans:**
 
 ```
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestConstructorMock(mockClass = ExternalApiClient.class)  
+@StubConstruction(stubClass = ExternalApiClient.class)
 public class ApiTest {  
-    // new ExternalApiClient(...) will return a mock instead of real object  
+    // new ExternalApiClient(...) will return a stub instead of real object
 }  
 
 ```
@@ -174,15 +174,15 @@ public class ApiTest {
 
 ### Usage Examples
 
-**Mocking all constructors of a class:**
+**Stubbing all constructors of a class:**
 
 ```
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestConstructorMock(mockClass = ExternalApiClient.class)  
+@StubConstruction(stubClass = ExternalApiClient.class)
 public class ApiTest {  
-    // new ExternalApiClient(...) will return a mock instead of real object  
+    // new ExternalApiClient(...) will return a stub instead of real object
 }  
 
 ```
@@ -193,16 +193,16 @@ public class ApiTest {
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestConstructorMock(mockClass = Order.class, spy = true)  
+@StubConstruction(stubClass = Order.class, spy = true)
 public class OrderTest {  
     // new Order(...) will create a real object but wrap it in a spy  
 }  
 
 ```
 
-### When to Use mockClassName
+### When to Use stubClassName
 
-`mockClassName` is useful when the class is **not directly accessible** :
+`stubClassName` is useful when the class is **not directly accessible** :
 
 * Private classes
 * Internal classes
@@ -210,36 +210,36 @@ public class OrderTest {
 
 ```
 java  
-@TestConstructorMock(mockClassName = "com.example.internal.PrivateClass")  
+@StubConstruction(stubClassName = "com.example.internal.PrivateClass")
 
 ```
 
 ### How It Works
 
 1. Mockito intercepts constructor calls via `Mockito.mockConstruction()`
-2. A mock/spy is created instead of the real instance
-3. `ConstructorMockAnswer` maintains the mock → original object mapping for spy mode
-4. Method calls on the mock are handled via `MockAnswer`
+2. A stub/spy is created instead of the real instance
+3. `StubConstructionAnswer` maintains the stub → original object mapping for spy mode
+4. Method calls on the stub are handled via `StubAnswer`
 
-TestStaticMock
+StubStaticMethods
 --------------
 
 ### Description
 
-Mocks static methods of the specified class.
+Stubs static methods of the specified class.
 
 ```
 java  
 @Inherited  
 @Target(TYPE)  
 @Retention(RUNTIME)  
-@Repeatable(TestStaticMock.List.class)  
-public @interface TestStaticMock {  
+@Repeatable(StubStaticMethods.List.class)
+public @interface StubStaticMethods {
     String name() default "";                    // Logical configuration name  
-    Class<?> mockClass() default Null.class;     // Class for static mocking  
-    String mockClassName() default "";           // FQN of class (alternative to mockClass)  
+    Class<?> stubClass() default Null.class;     // Class for static stubbing
+    String stubClassName() default "";           // FQN of class (alternative to stubClass)
     String[] methods() default {};               // Specific static methods  
-    boolean spy() default false;                 // Spy instead of full mock  
+    boolean spy() default false;                 // Spy instead of full stub
     boolean cloneArgsAndResult() default false;  // Clone arguments/results  
 }  
 
@@ -247,13 +247,13 @@ public @interface TestStaticMock {
 
 ### When to Use
 
-**Use `@TestStaticMock` for mocking static methods of utility classes:**
+**Use `@StubStaticMethods` for stubbing static methods of utility classes:**
 
 ```
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestStaticMock(mockClass = IdGenerator.class, methods = {"generate"})  
+@StubStaticMethods(stubClass = IdGenerator.class, methods = {"generate"})
 public class OrderTest {  
     // IdGenerator.generate() will be intercepted  
 }  
@@ -269,49 +269,49 @@ public class OrderTest {
 
 ### Usage Examples
 
-**Mocking a static method of a utility class:**
+**Stubbing a static method of a utility class:**
 
 ```
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestStaticMock(mockClass = IdGenerator.class, methods = {"generate"})  
+@StubStaticMethods(stubClass = IdGenerator.class, methods = {"generate"})
 public class OrderTest {  
-    // IdGenerator.generate() will return value from <mockInvoke>  
+    // IdGenerator.generate() will return value from <stubCall>
 }  
 
 ```
 
-**Mock for crypto utilities:**
+**Stub for crypto utilities:**
 
 ```
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestStaticMock(mockClassName = "com.example.utils.CryptoHelper")  
+@StubStaticMethods(stubClassName = "com.example.utils.CryptoHelper")
 public class CryptoTest {  
-    // All static methods of CryptoHelper will be mocked  
+    // All static methods of CryptoHelper will be stubbed
 }  
 
 ```
 
-**Multiple static mocks:**
+**Multiple static stubs:**
 
 ```
 java  
 @IntegrationTesting  
 @SpringBootTest  
-@TestStaticMock(mockClass = IdGenerator.class, methods = {"generate"})  
-@TestStaticMock(mockClass = Validators.class, methods = {"isValid"})  
+@StubStaticMethods(stubClass = IdGenerator.class, methods = {"generate"})
+@StubStaticMethods(stubClass = Validators.class, methods = {"isValid"})
 public class ValidationTest {  
-    // Both static classes will be mocked  
+    // Both static classes will be stubbed
 }  
 
 ```
 
-### When to Use mockClassName
+### When to Use stubClassName
 
-`mockClassName` is useful when the class is **not directly accessible** :
+`stubClassName` is useful when the class is **not directly accessible** :
 
 * Private classes
 * Internal classes
@@ -319,7 +319,7 @@ public class ValidationTest {
 
 ```
 java  
-@TestStaticMock(mockClassName = "com.example.internal.InternalUtils")  
+@StubStaticMethods(stubClassName = "com.example.internal.InternalUtils")
 
 ```
 
@@ -327,27 +327,27 @@ java
 
 * Uses `Mockito.mockStatic()` for interception
 * Requires ByteBuddy for class instrumentation
-* Static mocks are active only within the test scope
+* Static stubs are active only within the test scope
 
-⚠️ **Important:** For mocking time, use `@MockJavaTime` and `NowSetter`, not `<mockInvoke>`
+⚠️ **Important:** For stubbing time, use `@MockJavaTime` and `NowSetter`, not `<stubCall>`
 for `System.currentTimeMillis()`.
 
 Integration with XML Tests
 --------------------------
 
-Mocks are configured via the `<mockInvoke>` element in the test file:
+Stubs are configured via the `<stubCall>` element in the test file:
 
 ```
 xml  
-<test type="Case" name="withMock">  
+<test type="Case" name="withStub">
     <bean>orderService</bean>  
     <method>create</method>  
     <request>  
         <value>ORDER-123</value>  
     </request>  
     
-    <!-- Expected mock call -->  
-    <mockInvoke name="paymentService" method="charge">  
+    <!-- Expected stub call -->
+    <stubCall name="paymentService" method="charge">
         <args>  
             <value>ORDER-123</value>  
             <value type="BigDecimal">100.00</value>  
@@ -360,7 +360,7 @@ xml
         </result>  
         <!-- Or expected exception -->  
         <!-- <result><throw type="PaymentException">Error</throw></result> -->  
-    </mockInvoke>  
+    </stubCall>
     
     <response type="Order">  
         <id>ORDER-123</id>  
@@ -370,16 +370,16 @@ xml
 
 ```
 
-### mockInvoke Inheritance
+### stubCall Inheritance
 
-`<mockInvoke>` elements **inherit up the test hierarchy** . This allows you to move frequently used mocks to the
+`<stubCall>` elements **inherit up the test hierarchy** . This allows you to move frequently used stubs to the
 container level or even root:
 
 ```
 xml  
 <test type="Container">  
-    <!-- Common mocks for all tests in this container -->  
-    <mockInvoke name="IdGenerator" method="generate">  
+    <!-- Common stubs for all tests in this container -->
+    <stubCall name="IdGenerator" method="generate">
         <result>  
             <return type="String">ID-001</return>  
         </result>  
@@ -389,41 +389,50 @@ xml
         <result>  
             <return type="String">ID-003</return>  
         </result>  
-    </mockInvoke>  
+    </stubCall>
     
     <test type="Case" name="test1">  
         <bean>service1</bean>  
         <method>run</method>  
-        <!-- IdGenerator.generate() will return values from parent mockInvoke -->  
+        <!-- IdGenerator.generate() will return values from parent stubCall -->
     </test>  
     
     <test type="Case" name="test2">  
         <bean>service2</bean>  
         <method>run</method>  
-        <!-- IdGenerator.generate() will return values from parent mockInvoke -->  
+        <!-- IdGenerator.generate() will return values from parent stubCall -->
     </test>  
 </test>  
 
 ```
 
-**mockInvoke search** goes from the current test up to the root --- the first match by `name`/`method`/`args` is used.
+**stubCall search** goes from the current test up to the root --- the first match by `name`/`method`/`args` is used.
 
-### mockInvoke Attributes
+### Removing Unused stubCalls
+
+When a test file is updated, unused `<stubCall>` declarations are removed from leaf tests: a `Part` or a `Case`
+without nested parts. Container tests and cases with parts keep their `<stubCall>` declarations because nested tests
+may use them.
+
+A call is considered used if it was matched during test execution (including calls with `disabled="true"`) or if it
+was recorded after a real method invocation.
+
+### stubCall Attributes
 
 | Attribute  | Description                                           |
 |------------|-------------------------------------------------------|
-| `name`     | Mock name (matches `name` in annotation or bean name) |
+| `name`     | Stub name (matches `name` in annotation or bean name) |
 | `method`   | Method name to intercept                              |
 | `disabled` | Skip verification of this call                        |
 
-### Elements Inside mockInvoke
+### Elements Inside stubCall
 
 | Element    | Description                                 |
 |------------|---------------------------------------------|
 | `<args>`   | Expected call arguments (list of `<value>`) |
 | `<result>` | Expected result: `<return>` or `<throw>`    |
-| `<return>` | Value to return from the mocked method      |
-| `<throw>`  | Exception to throw from the mocked method   |
+| `<return>` | Value to return from the stubbed method     |
+| `<throw>`  | Exception to throw from the stubbed method  |
 
 ### Result Sequence
 
@@ -431,11 +440,11 @@ If multiple `<result>` are specified, they are returned in sequence:
 
 ```
 xml  
-<mockInvoke name="counter" method="next">  
+<stubCall name="counter" method="next">
     <result><return type="Integer">1</return></result>  
     <result><return type="Integer">2</return></result>  
     <result><return type="Integer">3</return></result>  
-</mockInvoke>  
+</stubCall>
 
 ```
 
@@ -458,26 +467,26 @@ public class TestConfig {
 
 ```
 
-MockAnswer Mechanism
+StubAnswer Mechanism
 --------------------
 
 ### Interception Lifecycle
 
 ```
-Method call on mock/spy  
+Method call on stub/spy
     ↓  
-MockAnswer.answer()  
+StubAnswer.answer()
     ├── enabled = false? → callRealMethod()  
     ├── methods != null && method not in list? → callRealMethod()  
-    ├── mockInvoke.disabled = true? → callRealMethod()  
+    ├── stubCall.disabled = true? → callRealMethod()
     │  
-    ├── Search MockInvoke by name/method/args (up the hierarchy)  
-    │   ├── Not found + mockCallRealMethodsOnNoData = true → callRealMethod()  
-    │   ├── Not found + mockReturnMockOnNoData = true → return deep mock  
+    ├── Search StubCall by name/method/args (up the hierarchy)
+    │   ├── Not found + callRealMethodsOnNoData = true → callRealMethod()
+    │   ├── Not found + returnMockOnNoData = true → return deep mock
     │   └── Not found + both false → error (no expected call)  
     │  
-    ├── MockInvoke found  
-    │   ├── Record call in test.mockInvoke (if addMockInvoke = true)  
+    ├── StubCall found
+    │   ├── Record call in test.stubCall (if addStubCall = true)
     │   ├── callRealMethod = true? → execute real method + record result  
     │   ├── tryThrowException() → throw exception if specified  
     │   └── Return result (cloned if cloneArgsAndResult = true)  
@@ -486,14 +495,14 @@ MockAnswer.answer()
 
 ### Global enabled Flag
 
-Interception is active **only** inside `MockAnswer.enable()`:
+Interception is active **only** inside `StubAnswer.enable()`:
 
 ```
 java  
 // In TestExecutor.runTest()  
-MockAnswer.enable(() -> {  
+StubAnswer.enable(() -> {
     // Interception is active here  
-    test.executeMethod(...);  // Calls on mock will be intercepted  
+    test.executeMethod(...);  // Calls on stub will be intercepted
 });  
 // Interception is disabled here  
 
@@ -504,7 +513,7 @@ This prevents interception of calls outside the test context.
 Common Problems
 ---------------
 
-### Mock Not Applied
+### Stub Not Applied
 
 **Cause:** Mismatch of name or type in annotation and configuration.  
 **Solution:**
@@ -512,29 +521,29 @@ Common Problems
 ```
 java  
 // ✅ Correct: name matches @Bean or @Component  
-@TestBeanMock(name = "myService")  
+@StubBean(name = "myService")
 
 // ❌ Error: name doesn't match  
-@TestBeanMock(name = "wrongName")  
+@StubBean(name = "wrongName")
 
 ```
 
-### Mock Name Conflict
+### Stub Name Conflict
 
-**Cause:** Multiple mocks with the same `name`.  
+**Cause:** Multiple stubs with the same `name`.
 **Solution:**
 
 ```
 java  
 // ✅ Use unique names  
-@TestBeanMock(name = "paymentServiceV1")  
-@TestBeanMock(name = "paymentServiceV2")  
+@StubBean(name = "paymentServiceV1")
+@StubBean(name = "paymentServiceV2")
 
 ```
 
 ### Arguments Don't Match During Comparison
 
-**Cause:** Argument comparison in `MockInvoke` uses recursive AssertJ comparison.  
+**Cause:** Argument comparison in `StubCall` uses recursive AssertJ comparison.
 **Solution:**
 
 * Ensure argument types match
@@ -550,7 +559,7 @@ TestSetupModule testSetupModule() {
 
 ```
 
-### Static Mock Not Working
+### Static Stub Not Working
 
 **Cause:** Class cannot be overridden (final, system class).  
 **Solution:**
@@ -561,13 +570,13 @@ TestSetupModule testSetupModule() {
 Recommendations
 ---------------
 
-1. **Use `name` for explicit identification** --- especially when mocking multiple beans of the same type.
+1. **Use `name` for explicit identification** --- especially when stubbing multiple beans of the same type.
 2. **Use spy for selective execution of real methods** --- for example, to throw exceptions under certain conditions.
-3. **Enable `cloneArgsAndResult` for mutable objects** --- prevents unexpected data changes between test and mock.
-4. **Move common mocks to container level** --- frequently used mocks (IdGenerator, random values) can be defined in a
+3. **Enable `cloneArgsAndResult` for mutable objects** --- prevents unexpected data changes between test and stub.
+4. **Move common stubs to container level** --- frequently used stubs (IdGenerator, random values) can be defined in a
    parent `Container` for reuse.
-5. **Don't use `<mockInvoke>` for time** --- use `@MockJavaTime` and `NowSetter` for time management.
+5. **Don't use `<stubCall>` for time** --- use `@MockJavaTime` and `NowSetter` for time management.
 6. **Check `name` uniqueness** --- duplicate names lead to `IllegalArgumentException`.
-7. **Use `disabled="true"` in `<mockInvoke>`** for temporarily disabling call verification without removing from XML.
+7. **Use `disabled="true"` in `<stubCall>`** for temporarily disabling call verification without removing from XML.
 8. **Register custom comparison in `TestSetupModule`** --- use `addEqualsForType()` for complex argument types.
-9. **Use `mockClassName` for inaccessible classes** --- private, internal classes, classes without direct access.  
+9. **Use `stubClassName` for inaccessible classes** --- private, internal classes, classes without direct access.

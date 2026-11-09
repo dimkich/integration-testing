@@ -8,9 +8,11 @@ import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonDifferenceCalculator;
+import org.assertj.core.util.introspection.IntrospectionError;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -20,35 +22,36 @@ import java.util.concurrent.atomic.AtomicMarkableReference;
 import java.util.function.BiPredicate;
 
 /**
- * Describes a single mock invocation configuration.
+ * Describes a single stubbed call configuration.
  * <p>
- * The instance holds a method name, arguments and a sequence of {@link MockInvokeResult}
+ * The instance holds a method name, arguments and a sequence of {@link StubCallResult}
  * objects that should be returned or thrown on subsequent invocations. Arguments are
  * compared using AssertJ's recursive comparison, with the possibility to register
  * custom equality implementations for specific types.
  */
 @Data
 @Accessors(chain = true)
-public class MockInvoke {
+public class StubCall {
     private static final RecursiveComparisonDifferenceCalculator compCalculator =
             new RecursiveComparisonDifferenceCalculator();
     private static final RecursiveComparisonConfiguration compConfig = new RecursiveComparisonConfiguration();
 
     static {
-        compConfig.registerEqualsForType((amr1, amr2) -> compCalculator.determineDifferences(amr1.getReference(),
-                amr2.getReference(), compConfig).isEmpty(), AtomicMarkableReference.class);
+        compConfig.registerEqualsForType((amr1, amr2) ->
+                recursiveEquals(amr1.getReference(), amr2.getReference()), AtomicMarkableReference.class);
         compConfig.registerEqualsForType((a, b) -> a.compareTo(b) == 0, BigDecimal.class);
         compConfig.registerEqualsForType((a, b) -> a.toInstant().equals(b.toInstant()), ZonedDateTime.class);
-        compConfig.registerEqualsForType(MockInvoke::mapsEquals, Map.class);
+        compConfig.registerEqualsForType(Temporal::equals, Temporal.class);
+        compConfig.registerEqualsForType(StubCall::mapsEquals, Map.class);
     }
 
     /**
-     * Mock name. Usually corresponds to a bean or component name.
+     * Stub name. Usually corresponds to a bean or component name.
      */
     @JacksonXmlProperty(isAttribute = true)
     private String name;
     /**
-     * Mocked method name.
+     * Stubbed method name.
      */
     @JacksonXmlProperty(isAttribute = true)
     private String method;
@@ -63,12 +66,21 @@ public class MockInvoke {
      */
     private List<Object> arg;
     /**
-     * Sequence of results/exceptions that will be produced by this mock.
+     * Sequence of results/exceptions that will be produced by this stub.
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private List<MockInvokeResult> result;
+    private List<StubCallResult> result;
     @JsonIgnore
     private int resultIndex = 0;
+    /**
+     * Whether this call was used during the current test run.
+     * <p>
+     * A call is marked as used when it matches a stub invocation or when it is recorded
+     * after a real method invocation. Unused calls are removed from leaf tests when the
+     * test is updated.
+     */
+    @JsonIgnore
+    private boolean used;
 
     /**
      * Registers a custom equality predicate for the given type that will be used
@@ -91,7 +103,7 @@ public class MockInvoke {
         if (this.result == null) {
             this.result = new ArrayList<>();
         }
-        this.result.add(new MockInvokeResult(result));
+        this.result.add(new StubCallResult(result));
     }
 
     /**
@@ -103,12 +115,12 @@ public class MockInvoke {
         if (this.result == null) {
             this.result = new ArrayList<>();
         }
-        this.result.add(new MockInvokeResult(e));
+        this.result.add(new StubCallResult(e));
     }
 
     /**
      * Resets the internal result index so that subsequent invocations start
-     * from the first configured {@link MockInvokeResult}.
+     * from the first configured {@link StubCallResult}.
      */
     @JsonIgnore
     public void reset() {
@@ -127,13 +139,13 @@ public class MockInvoke {
         if (this.result == null) {
             return null;
         }
-        MockInvokeResult r = result.get(resultIndex % result.size());
+        StubCallResult r = result.get(resultIndex % result.size());
         resultIndex++;
         return r.getReturn1();
     }
 
     /**
-     * If the current {@link MockInvokeResult} contains an exception, advances
+     * If the current {@link StubCallResult} contains an exception, advances
      * the internal index and throws that exception.
      *
      * @throws Throwable when the current result is configured with an exception
@@ -143,7 +155,7 @@ public class MockInvoke {
         if (this.result == null) {
             return;
         }
-        MockInvokeResult r = result.get(resultIndex % result.size());
+        StubCallResult r = result.get(resultIndex % result.size());
         if (r.getThrow1() != null) {
             resultIndex++;
             throw r.getThrow1();
@@ -151,7 +163,7 @@ public class MockInvoke {
     }
 
     /**
-     * Checks whether this mock configuration matches the supplied name, method and arguments.
+     * Checks whether this stub configuration matches the supplied name, method and arguments.
      * <ul>
      *     <li>Names and methods are compared using {@link Objects#equals(Object, Object)}.</li>
      *     <li>If {@link #disabled} is {@code true}, arguments are ignored.</li>
@@ -159,7 +171,7 @@ public class MockInvoke {
      *     (with registered custom equals predicates) or direct {@code equals} where applicable.</li>
      * </ul>
      *
-     * @param name   mock name
+     * @param name   stub name
      * @param method method name
      * @param arg    actual arguments of the invocation
      * @return {@code true} if this configuration matches the supplied data
@@ -190,7 +202,27 @@ public class MockInvoke {
         if (o1 == null || o2 == null) {
             return o1 == o2;
         }
-        return compCalculator.determineDifferences(o1, o2, compConfig).isEmpty();
+        return recursiveEquals(o1, o2);
+    }
+
+    /**
+     * Compares two non-null values with AssertJ's recursive comparison.
+     * <p>
+     * Some JDK value types (for example {@code java.time} classes) cannot be introspected when
+     * the {@code java.base} module is not opened for deep reflection. In that case AssertJ fails
+     * with {@link IntrospectionError} before it checks the comparators registered in
+     * {@link #compConfig}, so the values are compared with {@link Object#equals(Object)} instead.
+     *
+     * @param actual   actual value
+     * @param expected expected value
+     * @return {@code true} if the values are equal
+     */
+    private static boolean recursiveEquals(Object actual, Object expected) {
+        try {
+            return compCalculator.determineDifferences(actual, expected, compConfig).isEmpty();
+        } catch (IntrospectionError e) {
+            return Objects.equals(actual, expected);
+        }
     }
 
     /**

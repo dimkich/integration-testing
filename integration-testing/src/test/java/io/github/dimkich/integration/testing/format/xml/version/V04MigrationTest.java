@@ -27,6 +27,31 @@ class V04MigrationTest {
     }
 
     @Test
+    void renamesMockInvokeToStubCall() {
+        TNode root = create("<test>"
+                + "<mockInvoke name=\"a\" method=\"m1\"/>"
+                + "<test type=\"Case\"><mockInvoke name=\"b\" method=\"m2\"/></test>"
+                + "</test>");
+
+        assertTrue(migration.migrate(root));
+        assertEquals(List.of("a", "b"), attributeValues(root, "stubCall", "name"));
+        assertEquals(List.of(), root.findNodes("mockInvoke").toList());
+        assertFalse(migration.migrate(root));
+    }
+
+    @Test
+    void renamesMockInitToStubInit() {
+        TNode root = create("<test>"
+                + "<init type=\"mockInit\" resetAll=\"true\"/>"
+                + "<init type=\"MockInit\"/>"
+                + "</test>");
+
+        assertTrue(migration.migrate(root));
+        assertEquals(List.of("StubInit", "StubInit"), attributeValues(root, "init", "type"));
+        assertFalse(migration.migrate(root));
+    }
+
+    @Test
     void mergesTablesToChangeAndTablesToClear() {
         TNode root = create("<test><init type=\"SqlStorageInit\">"
                 + "<tablesToChange>t2, t3</tablesToChange>"
@@ -45,5 +70,9 @@ class V04MigrationTest {
 
     private static List<String> values(TNode root, String name) {
         return root.findNodes(name).map(TNode::getValue).toList();
+    }
+
+    private static List<String> attributeValues(TNode root, String name, String attribute) {
+        return root.findNodes(name).map(node -> node.getAttributeValue(attribute)).toList();
     }
 }

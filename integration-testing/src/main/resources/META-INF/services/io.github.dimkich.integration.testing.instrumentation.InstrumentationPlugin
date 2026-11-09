@@ -8,3 +8,4 @@ io.github.dimkich.integration.testing.date.time.MockJavaTimePlugin
 io.github.dimkich.integration.testing.date.time.LibFakeTimePlugin
 io.github.dimkich.integration.testing.execution.mockito.MockitoGlobalPlugin
 io.github.dimkich.integration.testing.execution.hook.MethodHookPlugin
+io.github.dimkich.integration.testing.collections.DeterministicCollectionsPlugin

@@ -16,15 +16,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@Import({MockService.class, TestExecutor.class})
-@EnableConfigurationProperties(MockInvokeProperties.class)
-public class MockInvokeConfig implements BeanFactoryPostProcessor, SmartInstantiationAwareBeanPostProcessor, PriorityOrdered {
-    private MockService mockService;
+@Import({StubService.class, TestExecutor.class})
+@EnableConfigurationProperties(StubProperties.class)
+public class StubConfig implements BeanFactoryPostProcessor, SmartInstantiationAwareBeanPostProcessor, PriorityOrdered {
+    private StubService stubService;
     private ConfigurableListableBeanFactory beanFactory;
 
     private boolean initialized = false;
-    private final Map<Class<?>, TestBeanMock> beanMocksByClass = new HashMap<>();
-    private final Map<String, TestBeanMock> beanMocksByName = new HashMap<>();
+    private final Map<Class<?>, StubBean> beanStubsByClass = new HashMap<>();
+    private final Map<String, StubBean> beanStubsByName = new HashMap<>();
 
     @Override
     public int getOrder() {
@@ -32,22 +32,24 @@ public class MockInvokeConfig implements BeanFactoryPostProcessor, SmartInstanti
     }
 
     @Override
+    @SuppressWarnings("NullableProblems")
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
     }
 
     @Override
+    @SuppressWarnings("NullableProblems")
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         init();
-        TestBeanMock beanMock = beanMocksByName.get(beanName);
-        if (beanMock == null) {
-            beanMock = beanMocksByClass.get(bean.getClass());
+        StubBean beanStub = beanStubsByName.get(beanName);
+        if (beanStub == null) {
+            beanStub = beanStubsByClass.get(bean.getClass());
         }
-        if (beanMock != null) {
-            if (mockService == null) {
-                mockService = beanFactory.getBean(MockService.class);
+        if (beanStub != null) {
+            if (stubService == null) {
+                stubService = beanFactory.getBean(StubService.class);
             }
-            return mockService.createBeanMock(beanMock, bean, beanName);
+            return stubService.createBeanStub(beanStub, bean, beanName);
         }
         return bean;
     }
@@ -57,15 +59,15 @@ public class MockInvokeConfig implements BeanFactoryPostProcessor, SmartInstanti
         if (initialized) {
             return;
         }
-        for (TestBeanMock beanMock : JunitExtension.getBeanMocks()) {
-            if (!beanMock.name().isEmpty()) {
-                beanMocksByName.put(beanMock.name(), beanMock);
+        for (StubBean beanStub : JunitExtension.getBeanStubs()) {
+            if (!beanStub.name().isEmpty()) {
+                beanStubsByName.put(beanStub.name(), beanStub);
             } else {
-                Class<?> cls = beanMock.mockClass();
-                if (beanMock.mockClass() == Null.class) {
-                    cls = Class.forName(beanMock.mockClassName());
+                Class<?> cls = beanStub.stubClass();
+                if (beanStub.stubClass() == Null.class) {
+                    cls = Class.forName(beanStub.stubClassName());
                 }
-                beanMocksByClass.put(cls, beanMock);
+                beanStubsByClass.put(cls, beanStub);
             }
         }
         initialized = true;

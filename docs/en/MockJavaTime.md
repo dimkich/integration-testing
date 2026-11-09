@@ -322,4 +322,4 @@ Recommendations
 4. **Use `addDuration` for time progression** inside multistep tests (`TestPart`).
 5. **Use `dockerImages()` for container-dependent tests** — synchronizes container system clocks with JVM test clocks.
 6. **Check package name uniqueness** in `value()` --- use fully qualified names.
-7. **Do not use `<mockInvoke>` for time** --- use `@MockJavaTime` and `DateTimeInit` for time management.  
+7. **Do not use `<stubCall>` for time** --- use `@MockJavaTime` and `DateTimeInit` for time management.

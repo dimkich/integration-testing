@@ -55,14 +55,14 @@ IDEA в интерактивную среду для разработки и з�
     в плагине.
   * Повторяйте, не останавливая отладку.
 
-## 3. Управление Моками (Mockito)
+## 3. Управление стабами (Mockito)
 
-Плагин динамически меняет поведение объектов @TestBeanMock, @TestConstructorMock и @TestStaticMock:
+Плагин динамически меняет поведение объектов @StubBean, @StubConstruction и @StubStaticMethods:
 
-* **mockAlwaysCallRealMethods** : Моки всегда вызывают реальные методы. Используется для автоматического сбора ответов
+* **alwaysCallRealMethods** : Стабы всегда вызывают реальные методы. Используется для автоматического сбора ответов
   из работающей системы.
-* **mockCallRealMethodsOnNoData** : Если для вызова в XML нет секции <result>, будет выполнен реальный метод.
-* **mockReturnMockOnNoData** : Если данных в XML нет, вернется пустой "Deep Mock".
+* **callRealMethodsOnNoData** : Если для вызова в XML нет секции <result>, будет выполнен реальный метод.
+* **returnMockOnNoData** : Если данных в XML нет, вернется пустой "Deep Mock".
 * **spyCreateData** : Автоматически записывает результаты вызовов spy-объектов для сохранения в XML.
 
 ## 4. Отладка базы данных (Hibernate)

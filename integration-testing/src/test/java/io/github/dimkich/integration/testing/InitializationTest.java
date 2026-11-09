@@ -3,8 +3,8 @@ package io.github.dimkich.integration.testing;
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.date.time.PeriodDuration;
 import io.github.dimkich.integration.testing.dbunit.DbUnitFixture;
-import io.github.dimkich.integration.testing.execution.ConstructorMockAnswer;
-import io.github.dimkich.integration.testing.execution.MockInvoke;
+import io.github.dimkich.integration.testing.execution.StubCall;
+import io.github.dimkich.integration.testing.execution.StubConstructionAnswer;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorage;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
@@ -49,22 +49,22 @@ import java.util.stream.Stream;
 public class InitializationTest {
     private final DynamicTestBuilder dynamicTestBuilder;
 
-    private static MockedConstruction<MockInvoke> mockInvoke;
+    private static MockedConstruction<StubCall> stubCall;
 
     @BeforeAll
     static void setUp() {
-        mockInvoke = Mockito.mockConstruction(MockInvoke.class,
-                Mockito.withSettings().defaultAnswer(new ConstructorMockAnswer(i -> {
+        stubCall = Mockito.mockConstruction(StubCall.class,
+                Mockito.withSettings().defaultAnswer(new StubConstructionAnswer(i -> {
                     if (i.getMethod().getName().equals("reset")) {
-                        MockInvoke mockInvoke = (MockInvoke) i.getMock();
-                        MockResetCounter.count.compute(mockInvoke.getName(), (n, c) -> c == null ? 1 : c + 1);
+                        StubCall stubCall = (StubCall) i.getMock();
+                        StubResetCounter.count.compute(stubCall.getName(), (n, c) -> c == null ? 1 : c + 1);
                     }
                     return i.callRealMethod();
                 })).stubOnly(),
                 (mock, context) -> {
-                    ConstructorMockAnswer ans = (ConstructorMockAnswer) MockUtil.getMockSettings(mock)
+                    StubConstructionAnswer ans = (StubConstructionAnswer) MockUtil.getMockSettings(mock)
                             .getDefaultAnswer();
-                    ans.getMockToObject().put(mock, new MockInvoke());
+                    ans.getMockToObject().put(mock, new StubCall());
                 });
     }
 
@@ -75,7 +75,7 @@ public class InitializationTest {
 
     @AfterAll
     static void tearDown() {
-        mockInvoke.close();
+        stubCall.close();
     }
 
     @Configuration
@@ -101,8 +101,8 @@ public class InitializationTest {
         }
 
         @Bean
-        MockResetCounter mockResetCounter() {
-            return new MockResetCounter();
+        StubResetCounter stubResetCounter() {
+            return new StubResetCounter();
         }
 
         @Bean
@@ -274,7 +274,7 @@ public class InitializationTest {
         }
     }
 
-    public static class MockResetCounter {
+    public static class StubResetCounter {
         public static final Map<String, Integer> count = new LinkedHashMap<>();
 
         public Map<String, Integer> count() {

@@ -3,7 +3,7 @@
 [Russian Version](../ru/README.md)
 
 A high-level framework for Spring Boot integration testing that allows you to define test scenarios declaratively in
-XML/JSON with full control over the environment (Database, Time, Mocks, and Asynchrony).
+XML/JSON with full control over the environment (Database, Time, Stubs, and Asynchrony).
 
 ## Core Features
 
@@ -11,7 +11,7 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
 * **State Management**: Automatic "dirty table" tracking and intelligent SQL cleanup/reload.
 * **Asynchrony Synchronization**: 4 built-in strategies to wait for background tasks (Wait-Completion).
 * **Time Manipulation**: Full JVM-wide system time mocking via `@MockJavaTime`.
-* **Advanced Mocking**: Support for static methods, constructors, and recording real interactions.
+* **Advanced Stubbing**: Support for static methods, constructors, and recording real interactions.
 
 ## Documentation Sections
 
@@ -21,7 +21,7 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
 * **[Test Hierarchy](Test-Hierarchy.md)** — Understanding Container, Case, and Part roles (bean/method or inboundMessage
   triggers).
 * **[TestSetupModule Configuration](TestSetupModule.md)** — Type registration, aliases, and cloning setup.
-* **[Test Initialization](Initialization.md)** — Environment setup: Time, DB, Caches, and Mocks.
+* **[Test Initialization](Initialization.md)** — Environment setup: Time, DB, Caches, and Stubs.
 
 ### Serialization (Serde)
 
@@ -82,8 +82,10 @@ XML/JSON with full control over the environment (Database, Time, Mocks, and Asyn
 
 * **[IntelliJ IDEA Integration](IDEA-Plugin.md)** — **(New!)** Manage tests via the IDEA Plugin, Visual Diff tool, and
   Live Coding mode.
-* **[Mocks in Integration Tests](Mocks.md)** — Using `@TestBeanMock`, `@TestConstructorMock`, and `@TestStaticMock`.
+* **[Stubs in Integration Tests](Stubs.md)** — Using `@StubBean`, `@StubConstruction`, and `@StubStaticMethods`.
 * **[Time Mocking](MockJavaTime.md)** — Deterministic time control with `@MockJavaTime`.
+* **[Deterministic Collections](Deterministic-Collections.md)** — Ordered
+  `Map.of`/`Set.of`/`HashMap`/`HashSet` and collectors via `@DeterministicCollections`.
 
 ### Advanced Features
 

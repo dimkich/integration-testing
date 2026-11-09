@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import eu.ciechanowiec.sneakyfun.SneakyConsumer;
-import io.github.dimkich.integration.testing.execution.MockInvoke;
+import io.github.dimkich.integration.testing.execution.StubCall;
 import io.github.dimkich.integration.testing.initialization.TestInit;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
 import lombok.AccessLevel;
@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * <ul>
  *   <li>Execute methods on Spring beans using reflection</li>
  *   <li>Handle inbound and outbound messages</li>
- *   <li>Define mock invocations for verification</li>
+ *   <li>Define stub calls for verification</li>
  *   <li>Store custom data for test-specific needs</li>
  *   <li>Track data storage differences</li>
  *   <li>Be disabled individually or inherit disabled state from parent</li>
@@ -49,7 +49,7 @@ import java.util.stream.Stream;
  *
  * @author dimkich
  * @see TestInit
- * @see MockInvoke
+ * @see StubCall
  * @see AbstractMessage
  * @see TestContainer
  * @see TestCase
@@ -59,7 +59,7 @@ import java.util.stream.Stream;
 @Setter
 @FieldNameConstants
 @JsonRootName(value = "test")
-@JsonPropertyOrder({"name", "init", "bean", "method", "request", "inboundMessage", "mockInvoke", "response",
+@JsonPropertyOrder({"name", "init", "bean", "method", "request", "inboundMessage", "stubCall", "response",
         "custom", "dataStorageDiff", "outboundMessages", "test"})
 public abstract class Test {
     /**
@@ -96,7 +96,7 @@ public abstract class Test {
     private List<Object> request;
     private AbstractMessage inboundMessage;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private List<MockInvoke> mockInvoke = new ArrayList<>();
+    private List<StubCall> stubCall = new ArrayList<>();
     private Object response;
     @Getter(value = AccessLevel.PACKAGE, onMethod_ = @JsonProperty)
     @Setter(value = AccessLevel.PACKAGE, onMethod_ = @JsonProperty)
@@ -328,18 +328,34 @@ public abstract class Test {
     }
 
     /**
-     * Searches for a mock invocation matching the given criteria.
+     * Searches for a stub call matching the given criteria.
      *
-     * @param mockName the name of the mock
+     * @param stubName the name of the stub
      * @param method the method name that was invoked
      * @param args the arguments that were passed to the method
-     * @return the matching MockInvoke, or null if no match is found
+     * @return the matching StubCall, or null if no match is found
      */
-    public MockInvoke search(String mockName, String method, List<Object> args) {
-        return mockInvoke.stream()
-                .filter(mi -> mi.equalsTo(mockName, method, args))
+    public StubCall search(String stubName, String method, List<Object> args) {
+        StubCall result = stubCall.stream()
+                .filter(stub -> stub.equalsTo(stubName, method, args))
                 .findFirst()
                 .orElse(null);
+        if (result != null) {
+            result.setUsed(true);
+        }
+        return result;
+    }
+
+    /**
+     * Removes stub calls that were declared in this test but were not used during execution.
+     * <p>
+     * Only leaf tests are cleaned: a {@link TestPart} or a {@link TestCase} without parts.
+     * Container tests and cases with parts keep their stub calls because nested tests may use them.
+     */
+    public void removeUnusedStubCalls() {
+        if (!isContainer()) {
+            stubCall.removeIf(stubCall -> !stubCall.isUsed());
+        }
     }
 
     /**

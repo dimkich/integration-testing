@@ -1,8 +1,8 @@
 <?xml version='1.1' encoding='UTF-8'?>
 <!-- @formatter:off -->
 <test type="Container">
-    <test type="Container" name="mockInvoke">
-        <mockInvoke name="converter" method="convertToString">
+    <test type="Container" name="stubCall">
+        <stubCall name="converter" method="convertToString">
             <arg type="Integer">1</arg>
             <result>
                 <return>1</return>
@@ -20,7 +20,7 @@
             <result>
                 <return>4</return>
             </result>
-        </mockInvoke>
+        </stubCall>
         <test type="Case" name="1">
             <bean>converter</bean>
             <method>convertToString</method>
@@ -57,66 +57,66 @@
         </test>
     </test>
     <test type="Container" name="argument equality">
-        <mockInvoke name="converter" method="charge">
+        <stubCall name="converter" method="charge">
             <arg type="BigDecimal">0.2</arg>
             <result>
                 <return>wrong</return>
             </result>
-        </mockInvoke>
-        <mockInvoke name="converter" method="charge">
+        </stubCall>
+        <stubCall name="converter" method="charge">
             <arg type="BigDecimal">0.1</arg>
             <result>
                 <return>right</return>
             </result>
-        </mockInvoke>
-        <mockInvoke name="converter" method="amount">
+        </stubCall>
+        <stubCall name="converter" method="amount">
             <arg type="Amount">
                 <value>0.2</value>
             </arg>
             <result>
                 <return>wrong</return>
             </result>
-        </mockInvoke>
-        <mockInvoke name="converter" method="amount">
+        </stubCall>
+        <stubCall name="converter" method="amount">
             <arg type="Amount">
                 <value>0.1</value>
             </arg>
             <result>
                 <return>right</return>
             </result>
-        </mockInvoke>
-        <mockInvoke name="converter" method="sorted">
+        </stubCall>
+        <stubCall name="converter" method="sorted">
             <arg type="SortedBook">
                 <bid key="0.2">12.3</bid>
             </arg>
             <result>
                 <return>wrong</return>
             </result>
-        </mockInvoke>
-        <mockInvoke name="converter" method="sorted">
+        </stubCall>
+        <stubCall name="converter" method="sorted">
             <arg type="SortedBook">
                 <bid key="0.1">12.3</bid>
             </arg>
             <result>
                 <return>right</return>
             </result>
-        </mockInvoke>
-        <mockInvoke name="converter" method="unordered">
+        </stubCall>
+        <stubCall name="converter" method="unordered">
             <arg type="UnorderedBook">
                 <entry key="0.1">other</entry>
             </arg>
             <result>
                 <return>wrong</return>
             </result>
-        </mockInvoke>
-        <mockInvoke name="converter" method="unordered">
+        </stubCall>
+        <stubCall name="converter" method="unordered">
             <arg type="UnorderedBook">
                 <entry key="0.1">first</entry>
             </arg>
             <result>
                 <return>right</return>
             </result>
-        </mockInvoke>
+        </stubCall>
         <test type="Case" name="bigDecimal scalar">
             <bean>converter</bean>
             <method>charge</method>

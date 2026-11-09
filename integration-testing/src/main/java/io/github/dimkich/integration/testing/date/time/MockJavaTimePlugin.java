@@ -2,7 +2,7 @@ package io.github.dimkich.integration.testing.date.time;
 
 import eu.ciechanowiec.sneakyfun.SneakyFunction;
 import eu.ciechanowiec.sneakyfun.SneakySupplier;
-import io.github.dimkich.integration.testing.execution.MockAnswer;
+import io.github.dimkich.integration.testing.execution.StubAnswer;
 import io.github.dimkich.integration.testing.instrumentation.InstrumentationPlugin;
 import io.github.dimkich.integration.testing.util.ByteBuddyUtils;
 import lombok.Getter;
@@ -105,7 +105,7 @@ public class MockJavaTimePlugin implements InstrumentationPlugin {
             return;
         }
         DateTimeService dateTimeService = beanFactory.getBean(DateTimeService.class);
-        JavaTimeAdvice.setCallRealMethod(() -> !MockAnswer.isEnabled());
+        JavaTimeAdvice.setCallRealMethod(() -> !StubAnswer.isEnabled());
         JavaTimeAdvice.setCurrentTimeMillis(() -> dateTimeService.getDateTime().toInstant().toEpochMilli());
         JavaTimeAdvice.setGetNanoTimeAdjustment(o -> ChronoUnit.NANOS.between(Instant.ofEpochSecond(o),
                 dateTimeService.getDateTime().toInstant()));

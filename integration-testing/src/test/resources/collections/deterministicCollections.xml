@@ -1,0 +1,209 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Container" name="Map.of">
+        <test type="Case" name="keeps insertion order">
+            <bean>collectionsProbe</bean>
+            <method>mapOfOrder</method>
+            <request type="String">c</request>
+            <request type="String">a</request>
+            <request type="String">b</request>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+            </response>
+        </test>
+        <test type="Case" name="arities, wrapper class and ofEntries">
+            <bean>collectionsProbe</bean>
+            <method>mapOfReport</method>
+            <response type="ArrayList">
+                <response>class=java.util.Collections$UnmodifiableMap</response>
+                <response>empty=0</response>
+                <response>single=a</response>
+                <response>ten=k1,k2,k3,k4,k5,k6,k7,k8,k9,k10</response>
+                <response>entries=c,a,b</response>
+            </response>
+        </test>
+        <test type="Case" name="contract">
+            <bean>collectionsProbe</bean>
+            <method>mapOfContract</method>
+            <response>nullKey=java.lang.NullPointerException,nullValue=java.lang.NullPointerException,duplicate=java.lang.IllegalArgumentException,unmodifiable=java.lang.UnsupportedOperationException</response>
+        </test>
+    </test>
+
+    <test type="Container" name="Map.copyOf">
+        <test type="Case" name="order, wrapper class and contract">
+            <bean>collectionsProbe</bean>
+            <method>mapCopyOfReport</method>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+                <response>class=java.util.Collections$UnmodifiableMap</response>
+                <response>unmodifiable=java.lang.UnsupportedOperationException</response>
+                <response>nullValue=java.lang.NullPointerException</response>
+            </response>
+        </test>
+    </test>
+
+    <test type="Container" name="Set.of">
+        <test type="Case" name="keeps insertion order">
+            <bean>collectionsProbe</bean>
+            <method>setOfOrder</method>
+            <request type="String">c</request>
+            <request type="String">a</request>
+            <request type="String">b</request>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+            </response>
+        </test>
+        <test type="Case" name="arities, wrapper class and varargs">
+            <bean>collectionsProbe</bean>
+            <method>setOfReport</method>
+            <response type="ArrayList">
+                <response>class=java.util.Collections$UnmodifiableSet</response>
+                <response>empty=0</response>
+                <response>single=a</response>
+                <response>ten=k1,k2,k3,k4,k5,k6,k7,k8,k9,k10</response>
+                <response>varargs=k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11</response>
+            </response>
+        </test>
+        <test type="Case" name="contract">
+            <bean>collectionsProbe</bean>
+            <method>setOfContract</method>
+            <response>null=java.lang.NullPointerException,duplicate=java.lang.IllegalArgumentException,unmodifiable=java.lang.UnsupportedOperationException</response>
+        </test>
+    </test>
+
+    <test type="Container" name="Set.copyOf">
+        <test type="Case" name="order, wrapper class, dedupe and contract">
+            <bean>collectionsProbe</bean>
+            <method>setCopyOfReport</method>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+                <response>class=java.util.Collections$UnmodifiableSet</response>
+                <response>dedupe=b,a</response>
+                <response>unmodifiable=java.lang.UnsupportedOperationException</response>
+                <response>null=java.lang.NullPointerException</response>
+            </response>
+        </test>
+    </test>
+
+    <test type="Container" name="Collectors">
+        <test type="Case" name="toSet order, class and mutability">
+            <bean>collectionsProbe</bean>
+            <method>toSetReport</method>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+                <response>class=java.util.LinkedHashSet</response>
+                <response>mutable=true</response>
+            </response>
+        </test>
+        <test type="Case" name="toUnmodifiableSet order, class and contract">
+            <bean>collectionsProbe</bean>
+            <method>toUnmodifiableSetReport</method>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+                <response>class=java.util.Collections$UnmodifiableSet</response>
+                <response>unmodifiable=java.lang.UnsupportedOperationException</response>
+                <response>null=java.lang.NullPointerException</response>
+            </response>
+        </test>
+        <test type="Case" name="toMap order, class, mutability and duplicate">
+            <bean>collectionsProbe</bean>
+            <method>toMapReport</method>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+                <response>class=java.util.LinkedHashMap</response>
+                <response>mutable=true</response>
+                <response>duplicate=java.lang.IllegalStateException</response>
+            </response>
+        </test>
+        <test type="Case" name="toUnmodifiableMap order, class and contract">
+            <bean>collectionsProbe</bean>
+            <method>toUnmodifiableMapReport</method>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+                <response>class=java.util.Collections$UnmodifiableMap</response>
+                <response>unmodifiable=java.lang.UnsupportedOperationException</response>
+                <response>nullKey=java.lang.NullPointerException</response>
+                <response>nullValue=java.lang.NullPointerException</response>
+            </response>
+        </test>
+        <test type="Case" name="groupingBy key order and downstream">
+            <bean>collectionsProbe</bean>
+            <method>groupingByReport</method>
+            <response type="ArrayList">
+                <response>b=b1,b2</response>
+                <response>a=a1</response>
+                <response>downstream=b,a</response>
+            </response>
+        </test>
+    </test>
+
+    <test type="Container" name="HashMap">
+        <test type="Case" name="constructors keep insertion order">
+            <bean>collectionsProbe</bean>
+            <method>hashMapReport</method>
+            <response type="ArrayList">
+                <response>class=java.util.LinkedHashMap</response>
+                <response>default=c,a,b</response>
+                <response>capacity=c,a,b</response>
+                <response>loadFactor=c,a,b</response>
+                <response>copy=c,a,b</response>
+            </response>
+        </test>
+        <test type="Case" name="nested Map.of and branch keep insertion order">
+            <bean>collectionsProbe</bean>
+            <method>hashMapNestedAndBranch</method>
+            <request type="String">x</request>
+            <response type="ArrayList">
+                <response>nested=c,a,b</response>
+                <response>branch=c,a,b</response>
+            </response>
+        </test>
+        <test type="Case" name="nested Map.of and else branch keep insertion order">
+            <bean>collectionsProbe</bean>
+            <method>hashMapNestedAndBranch</method>
+            <request type="String">y</request>
+            <response type="ArrayList">
+                <response>nested=c,a,b</response>
+                <response>branch=c,a,b</response>
+            </response>
+        </test>
+        <test type="Case" name="subclass super constructor and anonymous subclass">
+            <bean>collectionsProbe</bean>
+            <method>hashMapSubclasses</method>
+            <response type="ArrayList">
+                <response>subclassSize=1</response>
+                <response>anonymousSuperclass=java.util.HashMap</response>
+            </response>
+        </test>
+    </test>
+
+    <test type="Container" name="HashSet">
+        <test type="Case" name="constructors keep insertion order">
+            <bean>collectionsProbe</bean>
+            <method>hashSetReport</method>
+            <response type="ArrayList">
+                <response>class=java.util.LinkedHashSet</response>
+                <response>default=c,a,b</response>
+                <response>capacity=c,a,b</response>
+                <response>collection=c,a,b</response>
+            </response>
+        </test>
+    </test>
+</test>

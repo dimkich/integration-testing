@@ -3,7 +3,7 @@ package io.github.dimkich.integration.testing.format.common.type;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import io.github.dimkich.integration.testing.TestSetupModule;
-import io.github.dimkich.integration.testing.execution.MockInvoke;
+import io.github.dimkich.integration.testing.execution.StubCall;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -48,7 +48,7 @@ public class TypeResolverFactory {
      *     <li>register all parent types</li>
      *     <li>register aliases for already known subtypes</li>
      *     <li>register base types, named subtypes, unnamed subtypes and custom
-     *     equality rules for {@link MockInvoke}</li>
+     *     equality rules for {@link StubCall}</li>
      * </ol>
      */
     @PostConstruct
@@ -63,7 +63,7 @@ public class TypeResolverFactory {
             module.getBaseTypes().forEach(this::addBaseType);
             module.getSubTypesWithName().forEach(this::addSubType);
             module.getSubTypes().forEach(this::addSubTypes);
-            module.getEqualsMap().forEach(MockInvoke::addEqualsForType);
+            module.getEqualsMap().forEach(StubCall::addEqualsForType);
         }
     }
 
@@ -84,7 +84,7 @@ public class TypeResolverFactory {
      * Resolves a concrete Java {@link Class} for the given logical type name.
      * <p>
      * If the supplied name matches a configured subtype alias, the corresponding
-     * class is returned. Otherwise the name is treated as a fully qualified class
+     * class is returned. Otherwise, the name is treated as a fully qualified class
      * name and resolved via {@link Class#forName(String)}.
      *
      * @param type logical type id or fully qualified class name
@@ -196,7 +196,7 @@ public class TypeResolverFactory {
     }
 
     /**
-     * Adds an additional logical name for an already known subtype and associates
+     * Adds a logical name for an already known subtype and associates
      * it with all compatible parent types.
      */
     private void addAlias(Class<?> subType, String alias) {

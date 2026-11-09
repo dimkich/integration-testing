@@ -32,6 +32,11 @@ public class V0_4Migration implements XmlMigration {
     private static final String LEGACY_TABLES_TO_CHANGE_ELEMENT = "tablesToChange";
     private static final String TABLES_TO_CLEAR_ELEMENT = "tablesToClear";
     private static final String INIT_ELEMENT = "init";
+    private static final String LEGACY_MOCK_CALL_ELEMENT = "mockInvoke";
+    private static final String STUB_CALL_ELEMENT = "stubCall";
+    private static final String LEGACY_MOCK_INIT_TYPE = "mockInit";
+    private static final String LEGACY_MOCK_INIT_TYPE_CAPITALIZED = "MockInit";
+    private static final String STUB_INIT_TYPE = "StubInit";
 
     @Override
     public void migrate(String path) {
@@ -65,8 +70,49 @@ public class V0_4Migration implements XmlMigration {
         if (migrateMessages(root, OUTBOUND_MESSAGE)) {
             changed = true;
         }
+        if (renameMockCalls(root)) {
+            changed = true;
+        }
+        if (renameMockInit(root)) {
+            changed = true;
+        }
         if (normalizeTypes(root)) {
             changed = true;
+        }
+        return changed;
+    }
+
+    /**
+     * Renames the legacy {@code mockInvoke} element to {@code stubCall}.
+     *
+     * @param root the root node of the test XML document
+     * @return {@code true} if the document was changed and has to be saved
+     */
+    private boolean renameMockCalls(TNode root) {
+        boolean changed = false;
+        for (TNode node : root.findNodes(LEGACY_MOCK_CALL_ELEMENT).toList()) {
+            node.setName(STUB_CALL_ELEMENT);
+            changed = true;
+        }
+        return changed;
+    }
+
+    /**
+     * Renames the legacy {@code mockInit}/{@code MockInit} initialization type to {@code StubInit}.
+     * Both lowercase and capitalized values are supported, because {@link #normalizeTypes(TNode)}
+     * capitalizes type names and the migration may run on documents in either form.
+     *
+     * @param root the root node of the test XML document
+     * @return {@code true} if the document was changed and has to be saved
+     */
+    private boolean renameMockInit(TNode root) {
+        boolean changed = false;
+        for (TNode init : root.findNodes(INIT_ELEMENT).toList()) {
+            String type = init.getAttributeValue(TYPE_ATTRIBUTE);
+            if (LEGACY_MOCK_INIT_TYPE.equals(type) || LEGACY_MOCK_INIT_TYPE_CAPITALIZED.equals(type)) {
+                init.setAttributeValue(TYPE_ATTRIBUTE, STUB_INIT_TYPE);
+                changed = true;
+            }
         }
         return changed;
     }

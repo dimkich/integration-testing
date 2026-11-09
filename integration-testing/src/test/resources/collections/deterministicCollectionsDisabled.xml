@@ -1,0 +1,39 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Container" name="HASH_COLLECTIONS disabled">
+        <test type="Case" name="new HashMap stays HashMap">
+            <bean>collectionsProbe</bean>
+            <method>newHashMapClass</method>
+            <response>java.util.HashMap</response>
+        </test>
+        <test type="Case" name="new HashSet stays HashSet">
+            <bean>collectionsProbe</bean>
+            <method>newHashSetClass</method>
+            <response>java.util.HashSet</response>
+        </test>
+        <test type="Case" name="Map.of is still ordered">
+            <bean>collectionsProbe</bean>
+            <method>mapOfOrder</method>
+            <request type="String">c</request>
+            <request type="String">a</request>
+            <request type="String">b</request>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+            </response>
+        </test>
+        <test type="Case" name="Collectors.toSet is still ordered">
+            <bean>collectionsProbe</bean>
+            <method>toSetReport</method>
+            <response type="ArrayList">
+                <response>c</response>
+                <response>a</response>
+                <response>b</response>
+                <response>class=java.util.LinkedHashSet</response>
+                <response>mutable=true</response>
+            </response>
+        </test>
+    </test>
+</test>

@@ -4,7 +4,7 @@ import io.github.dimkich.integration.testing.BeforeTest;
 import io.github.dimkich.integration.testing.Test;
 import io.github.dimkich.integration.testing.TestDataStorage;
 import io.github.dimkich.integration.testing.dbunit.DbUnitFixture;
-import io.github.dimkich.integration.testing.execution.MockAnswer;
+import io.github.dimkich.integration.testing.execution.StubAnswer;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInit;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInitState;
@@ -100,7 +100,7 @@ public class SQLDataStorageService implements TestDataStorage, BeforeTest {
             return false;
         }
 
-        MockAnswer.enable(() -> transitionExecutor.execute(plan));
+        StubAnswer.enable(() -> transitionExecutor.execute(plan));
         revisions.increment(plan.getChangedTables());
         plan.applyMutationLog(newState);
         if (!plan.getForwardSql().isEmpty()) {

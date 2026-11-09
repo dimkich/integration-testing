@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.initialization.bean.property;
 
 import io.github.dimkich.integration.testing.Test;
-import io.github.dimkich.integration.testing.execution.MockAnswer;
+import io.github.dimkich.integration.testing.execution.StubAnswer;
 import io.github.dimkich.integration.testing.expression.wrapper.TypeUtils;
 import io.github.dimkich.integration.testing.initialization.InitSetup;
 import lombok.RequiredArgsConstructor;
@@ -136,7 +136,7 @@ public class BeanPropertyInitSetup implements InitSetup<BeanPropertyInit, BeanPr
      */
     @Override
     public void apply(BeanPropertyInitState oldState, BeanPropertyInitState newState, Test test) {
-        MockAnswer.enable(() -> {
+        StubAnswer.enable(() -> {
             Set<BeanPropertyInitState.PropertyKey> allKeys = new LinkedHashSet<>();
             if (oldState != null) {
                 allKeys.addAll(oldState.getProperties().keySet());

@@ -4,7 +4,7 @@ import io.github.dimkich.integration.testing.DynamicTestBuilder;
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.assertion.AssertionConfig;
 import io.github.dimkich.integration.testing.date.time.DateTimeConfig;
-import io.github.dimkich.integration.testing.execution.MockInvokeConfig;
+import io.github.dimkich.integration.testing.execution.StubConfig;
 import io.github.dimkich.integration.testing.format.TestFormatConfig;
 import io.github.dimkich.integration.testing.initialization.InitializationConfig;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
@@ -32,7 +32,7 @@ import java.util.List;
 @Configuration
 @ConditionalOnProperty(value = "integration.testing.enabled", havingValue = "true", matchIfMissing = true)
 @Import({DynamicTestBuilder.class, WaitCompletionConfig.class, StorageConfig.class, DateTimeConfig.class,
-        InitializationConfig.class, MockInvokeConfig.class, OpenApiConfig.class, AssertionConfig.class,
+        InitializationConfig.class, StubConfig.class, OpenApiConfig.class, AssertionConfig.class,
         WebConfig.class, TestFormatConfig.class, PropertyInheritanceMerger.class, SerdeConfig.class,
         MessageConfig.class, PluginSpringIntegrator.class})
 public class IntegrationTestConfig {

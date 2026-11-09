@@ -8,60 +8,60 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Declares constructor mocking configuration for integration tests.
+ * Declares construction stubbing configuration for integration tests.
  * <p>
  * This annotation is processed by {@link IntegrationTesting} to replace or spy
  * on constructor calls of the specified class during a test run.
  * </p>
  * <p>
  * It can be declared multiple times on the same test class via
- * {@link TestConstructorMock.List}.
+ * {@link StubConstruction.List}.
  * </p>
  */
 @Inherited
 @Target(TYPE)
 @Retention(RUNTIME)
 @IntegrationTesting
-@Repeatable(TestConstructorMock.List.class)
-public @interface TestConstructorMock {
+@Repeatable(StubConstruction.List.class)
+public @interface StubConstruction {
     /**
-     * Optional logical name of this mock configuration.
+     * Optional logical name of this stub configuration.
      * <p>
-     * May be used for identification when several constructor mocks are
+     * May be used for identification when several construction stubs are
      * declared on the same test class.
      * </p>
      */
     String name() default "";
 
     /**
-     * Target class whose constructors should be mocked.
+     * Target class whose constructors should be stubbed.
      * <p>
-     * Either this attribute or {@link #mockClassName()} must be specified.
+     * Either this attribute or {@link #stubClassName()} must be specified.
      * When both are specified, this one typically has precedence.
      * </p>
      */
-    Class<?> mockClass() default Null.class;
+    Class<?> stubClass() default Null.class;
 
     /**
      * Fully qualified name of the target class whose constructors
-     * should be mocked.
+     * should be stubbed.
      * <p>
      * This is useful when the class is not available at compile time.
      * </p>
      */
-    String mockClassName() default "";
+    String stubClassName() default "";
 
     /**
-     * Names of constructors (signatures) or factory methods to be mocked.
+     * Names of constructors (signatures) or factory methods to be stubbed.
      * <p>
      * An empty array usually means that all constructors of the target class
-     * are subject to mocking.
+     * are subject to stubbing.
      * </p>
      */
     String[] methods() default {};
 
     /**
-     * Whether the created instances should be spies instead of full mocks.
+     * Whether the created instances should be spies instead of full stubs.
      * <p>
      * When {@code true}, the original constructor executes, but the created
      * instance is wrapped, allowing selective stubbing and verification.
@@ -80,7 +80,7 @@ public @interface TestConstructorMock {
     boolean cloneArgsAndResult() default false;
 
     /**
-     * Container annotation that allows multiple {@link TestConstructorMock}
+     * Container annotation that allows multiple {@link StubConstruction}
      * declarations on the same test class.
      */
     @Inherited
@@ -89,8 +89,8 @@ public @interface TestConstructorMock {
     @Documented
     @interface List {
         /**
-         * Collection of {@link TestConstructorMock} declarations.
+         * Collection of {@link StubConstruction} declarations.
          */
-        TestConstructorMock[] value();
+        StubConstruction[] value();
     }
 }

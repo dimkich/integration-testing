@@ -11,13 +11,13 @@ import java.util.WeakHashMap;
 /**
  * {@link Answer} implementation that delegates calls to a wrapped {@link Answer}
  * while allowing real method invocations on the original object instance that
- * corresponds to a given mock.
+ * corresponds to a given stub instance.
  * <p>
- * The mapping between mock instances and the corresponding original objects is
+ * The mapping between stub instances and the corresponding original objects is
  * stored in a {@link WeakHashMap} to avoid memory leaks.
  */
 @Data
-public class ConstructorMockAnswer implements Answer<Object> {
+public class StubConstructionAnswer implements Answer<Object> {
     private final Answer<Object> answer;
     private final Map<Object, Object> mockToObject = new WeakHashMap<>();
 

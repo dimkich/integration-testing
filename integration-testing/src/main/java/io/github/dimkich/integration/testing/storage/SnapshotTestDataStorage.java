@@ -1,7 +1,7 @@
 package io.github.dimkich.integration.testing.storage;
 
 import io.github.dimkich.integration.testing.TestDataStorage;
-import io.github.dimkich.integration.testing.execution.MockAnswer;
+import io.github.dimkich.integration.testing.execution.StubAnswer;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
@@ -48,15 +48,15 @@ public abstract class SnapshotTestDataStorage implements TestDataStorage {
         if (!affected) {
             return;
         }
-        this.currentValue = MockAnswer.enable(this::doGetCurrentValue);
+        this.currentValue = StubAnswer.enable(this::doGetCurrentValue);
         affected = false;
     }
 
     @Override
     public Object getDiff() throws Exception {
         Map<String, Object> previousValue = this.currentValue;
-        this.currentValue = MockAnswer.enable(this::doGetCurrentValue);
+        this.currentValue = StubAnswer.enable(this::doGetCurrentValue);
         affected = false;
-        return MockAnswer.enable(() -> objectsDifference.getDifference(getName(), previousValue, currentValue));
+        return StubAnswer.enable(() -> objectsDifference.getDifference(getName(), previousValue, currentValue));
     }
 }

@@ -16,7 +16,7 @@ Supported Initialization Types
 | `BeanInit`          | `BeanInit`          | Invokes methods on Spring beans for setup/teardown                  |
 | `BeanPropertyInit`  | `BeanPropertyInit`  | Sets bean fields/properties for a test and restores them afterward  |
 | `DateTimeInit`      | `DateTimeInit`      | Sets or shifts the mocked system time (requires `@MockJavaTime`)    |
-| `MockInit`          | `MockInit`          | Resets mock invocation counters                                     |
+| `StubInit`          | `StubInit`          | Resets stub call counters                                           |
 | `SqlStorageSetup`   | `SqlStorageSetup`   | Configures SQL storage: SQL scripts and DBUnit datasets             |
 | `SqlStorageInit`    | `SqlStorageInit`    | Configures SQL storage: table clearing, data loading, SQL execution |
 | `OnTableChangeInit` | `OnTableChangeInit` | Refreshes the application cache of stale tables                     |
@@ -26,7 +26,7 @@ Common Attributes
 
 | Attribute | Type   | Description                                                                                                                          | Default      |
 |-----------|--------|--------------------------------------------------------------------------------------------------------------------------------------|--------------|
-| `type`    | String | **Required** . Initialization type: `BeanInit`, `DateTimeInit`, `MockInit`, `SqlStorageSetup`, `SqlStorageInit`, `OnTableChangeInit` | ---          |
+| `type`    | String | **Required** . Initialization type: `BeanInit`, `DateTimeInit`, `StubInit`, `SqlStorageSetup`, `SqlStorageInit`, `OnTableChangeInit` | ---          |
 | `applyTo` | String | Scope of application: `TestCase`, `TestPart`, or `All`                                                                               | `All`        |
 | `name`    | String | Storage name (for `SqlStorageInit` only)                                                                                             | `dataSource` |
 
@@ -227,31 +227,31 @@ xml
 
 ```
 
-MockInit
+StubInit
 --------
 
 ### Description
 
-Resets mock invocation counters tracked by the `MockInvoke` system.
+Resets stub call counters tracked by the `StubCall` system.
 
 ### Attributes
 
 | Attribute  | Type    | Description                                                     | Default |
 |------------|---------|-----------------------------------------------------------------|---------|
-| `resetAll` | Boolean | Reset all mock counters vs. only those defined in current scope | `false` |
+| `resetAll` | Boolean | Reset all stub counters vs. only those defined in current scope | `false` |
 
 ### Example
 
 ```
 xml  
 <test type="Container">  
-    <mockInvoke name="idGenerator" method="generate">  
+    <stubCall name="idGenerator" method="generate">
         <result><return type="String">ID-001</return></result>  
-    </mockInvoke>  
+    </stubCall>
     
-    <test type="Case" name="resetMocks">  
-        <init type="MockInit" resetAll="true"/>  
-        <!-- All mock counters are reset before this test -->  
+    <test type="Case" name="resetStubs">
+        <init type="StubInit" resetAll="true"/>
+        <!-- All stub counters are reset before this test -->
         <bean>service</bean>  
         <method>run</method>  
     </test>  
@@ -524,7 +524,7 @@ and that an `OnTableChangeInit` is visible in the current test. When actions are
 an empty `OnTableChangeInit` they are deferred: the affected tables stay stale and their actions fire on the
 next test where the initialization is active again.
 
-### Mock Counters Not Reset
+### Stub Counters Not Reset
 
-**Cause:** `resetAll="false"` with mocks defined in parent scope. **Solution:** Set `resetAll="true"` or
-define `MockInit` at the appropriate hierarchy level.  
+**Cause:** `resetAll="false"` with stubs defined in parent scope. **Solution:** Set `resetAll="true"` or
+define `StubInit` at the appropriate hierarchy level.

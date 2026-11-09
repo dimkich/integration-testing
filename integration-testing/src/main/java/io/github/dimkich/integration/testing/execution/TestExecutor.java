@@ -244,7 +244,7 @@ public class TestExecutor {
             return;
         }
         waitCompletion.start();
-        MockAnswer.enable(() -> {
+        StubAnswer.enable(() -> {
             try {
                 AbstractMessage message = test.getInboundMessage();
                 if (message != null) {
@@ -270,6 +270,7 @@ public class TestExecutor {
         test.setOutboundMessages(messages.isEmpty() ? null : messages);
         test.setDataStorageDiff(testDataStorages.getMapDiff());
         testConverters.forEach(c -> c.convertNoException(test));
+        test.removeUnusedStubCalls();
         if (test.getOutboundMessages() != null) {
             test.setOutboundMessages(alignActualToExpected(expectedOutboundMessages, test.getOutboundMessages()));
         }
@@ -323,35 +324,35 @@ public class TestExecutor {
     }
 
     /**
-     * Searches for a mock invocation matching the specified criteria in the test hierarchy.
+     * Searches for a stub call matching the specified criteria in the test hierarchy.
      * <p>
      * The search traverses the test hierarchy from the current test up to the root,
-     * looking for a MockInvoke that matches the given mock name, method name, and arguments.
-     * The first matching mock invocation found is returned.
+     * looking for a StubCall that matches the given stub name, method name, and arguments.
+     * The first matching stub call found is returned.
      *
-     * @param mockName the name of the mock to search for
+     * @param stubName the name of the stub to search for
      * @param method   the method name to match
-     * @param args     the list of arguments to match against the mock invocation
-     * @return the matching MockInvoke if found, or null if no match is found
+     * @param args     the list of arguments to match against the stub call
+     * @return the matching StubCall if found, or null if no match is found
      */
-    public MockInvoke search(String mockName, String method, List<Object> args) {
+    public StubCall search(String stubName, String method, List<Object> args) {
         return test.getParentsAndItselfDesc()
-                .map(tc -> tc.search(mockName, method, args))
+                .map(tc -> tc.search(stubName, method, args))
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
     }
 
     /**
-     * Adds a mock invocation to the current test's mock invocation list.
+     * Adds a stub call to the current test's stub call list.
      * <p>
-     * Mock invocations are used to track and verify method calls on mocked objects
+     * Stub calls are used to track and verify method calls on stubbed objects
      * during test execution.
      *
-     * @param invoke the mock invocation to add to the current test
+     * @param stubCall the stub call to add to the current test
      */
-    public void addMockInvoke(MockInvoke invoke) {
-        test.getMockInvoke().add(invoke);
+    public void addStubCall(StubCall stubCall) {
+        test.getStubCall().add(stubCall);
     }
 
     /**

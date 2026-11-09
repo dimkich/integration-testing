@@ -13,7 +13,7 @@ import io.github.dimkich.integration.testing.execution.TestExecutor;
  * will be executed in sequence before each test begins.
  * <p>
  * The before hook is called during the before phase of test execution, which occurs before
- * the test method execution, message handling, and mock verification begin.
+ * the test method execution, message handling, and stub verification begin.
  *
  * @author dimkich
  * @see TestExecutor
