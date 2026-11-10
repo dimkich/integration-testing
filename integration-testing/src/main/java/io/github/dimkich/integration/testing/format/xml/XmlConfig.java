@@ -9,6 +9,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.xml.util.DefaultXmlPrettyPrinter;
+import io.github.dimkich.integration.testing.config.SimpleTypeDetector;
 import io.github.dimkich.integration.testing.format.common.CommonFormatConfig;
 import io.github.dimkich.integration.testing.format.common.ObjectMapperConfigurer;
 import io.github.dimkich.integration.testing.format.common.scalar.ScalarTypeModule;
@@ -39,7 +40,7 @@ public class XmlConfig {
 
     @Bean
     @Lazy
-    XmlTestMapper xmlTestMapper(ObjectMapperConfigurer configurer) {
+    XmlTestMapper xmlTestMapper(ObjectMapperConfigurer configurer, SimpleTypeDetector simpleTypeDetector) {
         XmlMapper.Builder builder = new XmlMapper.Builder(new XmlMapperFixed(new XmlFactoryFixed()));
         builder.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         builder.configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
@@ -63,7 +64,7 @@ public class XmlConfig {
 
         builder.addModules(new SimpleModule()
                         .setDeserializerModifier(new WrapperHandlingModifier()),
-                new PolymorphicUnwrappedModule(resolverBuilder),
+                new PolymorphicUnwrappedModule(resolverBuilder, simpleTypeDetector),
                 new ScalarTypeModule(Set.of(Boolean.class, Integer.class, Double.class)),
                 new WrapperModule());
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.dimkich.integration.testing.*;
+import io.github.dimkich.integration.testing.config.SimpleTypeDetector;
 import io.github.dimkich.integration.testing.format.common.location.StoreLocationModule;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapObjectObject;
 import io.github.dimkich.integration.testing.format.common.map.LinkedHashMapStringObject;
@@ -37,7 +38,8 @@ import java.util.*;
 
 @Configuration
 @ConditionalOnClass(ObjectMapper.class)
-@Import({ObjectMapperConfigurer.class, TypeResolverFactory.class, TypeParser.class, TypeGenerator.class})
+@Import({ObjectMapperConfigurer.class, TypeResolverFactory.class, TypeParser.class, TypeGenerator.class,
+        SimpleTypeDetector.class})
 public class CommonFormatConfig {
     @Bean
     TestSetupModule commonFormatTestSetupModule(ConfigurableListableBeanFactory beanFactory) throws ClassNotFoundException {

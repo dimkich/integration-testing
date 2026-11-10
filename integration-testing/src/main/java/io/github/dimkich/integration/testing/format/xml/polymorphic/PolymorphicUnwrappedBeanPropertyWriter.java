@@ -1,14 +1,13 @@
 package io.github.dimkich.integration.testing.format.xml.polymorphic;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.UnwrappingBeanPropertyWriter;
-import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
+import io.github.dimkich.integration.testing.config.SimpleTypeDetector;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -17,12 +16,15 @@ import java.util.Map;
 public class PolymorphicUnwrappedBeanPropertyWriter extends UnwrappingBeanPropertyWriter {
     private final TypeSerializer unwrappedTypeSerializer;
     private final String unwrappedTypeProperty;
+    private final SimpleTypeDetector simpleTypeDetector;
 
     public PolymorphicUnwrappedBeanPropertyWriter(BeanPropertyWriter base, NameTransformer nameTransformer,
-                                                  TypeSerializer unwrappedTypeSerializer, String unwrappedTypeProperty) {
+                                                  TypeSerializer unwrappedTypeSerializer, String unwrappedTypeProperty,
+                                                  SimpleTypeDetector simpleTypeDetector) {
         super(base, nameTransformer);
         this.unwrappedTypeSerializer = unwrappedTypeSerializer;
         this.unwrappedTypeProperty = unwrappedTypeProperty;
+        this.simpleTypeDetector = simpleTypeDetector;
     }
 
     @Override
@@ -46,23 +48,13 @@ public class PolymorphicUnwrappedBeanPropertyWriter extends UnwrappingBeanProper
             return true;
         }
         Class<?> cls = value.getClass();
-        if (cls.isPrimitive() || cls.isArray() || Number.class.isAssignableFrom(cls)) {
+        if (cls.isArray()) {
             return false;
         }
         if (Map.class.isAssignableFrom(cls) || Collection.class.isAssignableFrom(cls)
                 || Iterable.class.isAssignableFrom(cls) || Iterator.class.isAssignableFrom(cls)) {
             return true;
         }
-        return isBeanSerializer(prov.findValueSerializer(cls));
-    }
-
-    private boolean isBeanSerializer(JsonSerializer<?> serializer) {
-        while (serializer != null) {
-            if (serializer instanceof BeanSerializerBase) {
-                return true;
-            }
-            serializer = serializer.getDelegatee();
-        }
-        return false;
+        return !simpleTypeDetector.isSimple(cls, prov);
     }
 }

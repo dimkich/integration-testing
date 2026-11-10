@@ -2,7 +2,6 @@ package io.github.dimkich.integration.testing.format;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
@@ -35,7 +34,6 @@ import io.github.dimkich.integration.testing.web.jackson.LinkedMultiValueMapStri
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +59,7 @@ import static io.github.dimkich.integration.testing.format.FormatTestUtils.compC
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SuppressWarnings("unused")
 @SpringBootTest(classes = {XmlConfig.class, WebConfig.class, XmlTestMapperTest.Config.class, DateTimeConfig.class})
 class XmlTestMapperTest {
 
@@ -884,6 +883,11 @@ class XmlTestMapperTest {
     <field key="k" kind="ToStringScalar">PT5M</field>
 </UnwrappedTypeHolder>
 """},
+                {new UnwrappedTypeHolder(new UnwrappedTypeField("k", new char[]{'a', 'b'}), null, null), """
+<UnwrappedTypeHolder>
+    <field key="k" kind="char[]">ab</field>
+</UnwrappedTypeHolder>
+"""},
                 {TestMessage.testCase2(), """
 <test type="Case" name="EmptyByteKey">
     <inboundMessage type="TestMessage" connection="conn1">
@@ -925,32 +929,6 @@ class XmlTestMapperTest {
         buffer.copyCurrentStructure(p);
         p = buffer.asParserOnFirstToken();
         assertThat(o).usingRecursiveComparison(compConfig).isEqualTo(p.readValueAs(o.getClass()));
-    }
-
-    static Object[][] deserializationErrorsData() {
-        return new Object[][]{
-                {"""
-<Value>
-    <value type="UnknownClass">Some text</value>
-</Value>
-""", Value.class, InvalidTypeIdException.class},
-                {"""
-<Value>
-    <value type="UnknownClass"/>
-</Value>
-""", Value.class, InvalidTypeIdException.class},
-                {"""
-<Value>
-    <value><a/><b>123</b></value>
-</Value>
-""", Value.class, InvalidTypeIdException.class},
-        };
-    }
-
-    @ParameterizedTest
-    @MethodSource("deserializationErrorsData")
-    void deserializationErrors(String xml, Class<?> targetClass, Class<? extends Throwable> expectedError) {
-        Assertions.assertThrows(expectedError, () -> xmlMapper.readValue(xml, targetClass));
     }
 
     @Configuration

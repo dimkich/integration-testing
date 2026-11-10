@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ser.std.MapSerializer;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import io.github.dimkich.integration.testing.config.SimpleTypeDetector;
 import io.github.dimkich.integration.testing.format.common.polymorphic.unwrapped.UnwrappedTypeProperty;
 import io.github.dimkich.integration.testing.format.common.type.TestTypeResolverBuilder;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PolymorphicUnwrappedSerializerModifier extends BeanSerializerModifier {
     private final TestTypeResolverBuilder typeResolverBuilder;
+    private final SimpleTypeDetector simpleTypeDetector;
 
     @Override
     public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
@@ -32,7 +34,7 @@ public class PolymorphicUnwrappedSerializerModifier extends BeanSerializerModifi
                 TypeSerializer unwrappedTypeSerializer = propertyWriter.getTypeSerializer();
                 propertyWriter.assignTypeSerializer(null);
                 propertyWriter = new PolymorphicUnwrappedBeanPropertyWriter(propertyWriter, NameTransformer.NOP,
-                        unwrappedTypeSerializer, findTypePropertyName(propertyWriter, beanDesc));
+                        unwrappedTypeSerializer, findTypePropertyName(propertyWriter, beanDesc), simpleTypeDetector);
                 beanProperties.set(i, propertyWriter);
             }
         }

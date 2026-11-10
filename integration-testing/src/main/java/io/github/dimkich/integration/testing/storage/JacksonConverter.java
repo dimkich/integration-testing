@@ -86,6 +86,16 @@ public class JacksonConverter {
     }
 
     /**
+     * Returns the serializer provider of the current test mapper.
+     *
+     * @return serializer provider, or {@code null} if no test format has been selected yet
+     */
+    public SerializerProvider getSerializerProvider() {
+        Object mapper = compositeTestMapper.unwrapOrNull();
+        return mapper instanceof ObjectMapper objectMapper ? objectMapper.getSerializerProviderInstance() : null;
+    }
+
+    /**
      * Determines whether a property value should be included based on Jackson's
      * {@link JsonInclude.Include} rules.
      *

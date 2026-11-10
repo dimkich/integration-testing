@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.format.common.type;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import io.github.dimkich.integration.testing.TestSetupModule;
+import io.github.dimkich.integration.testing.format.util.JacksonUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -103,11 +104,7 @@ public class TypeResolverFactory {
      */
     public boolean isCollection(String type) {
         Pair<Class<?>, String> pair = subTypes.get(type);
-        if (pair != null) {
-            Class<?> cls = pair.getKey();
-            return (cls.isArray() && cls != byte[].class) || Collection.class.isAssignableFrom(cls);
-        }
-        return false;
+        return pair != null && JacksonUtils.isCollectionType(pair.getKey());
     }
 
     /**

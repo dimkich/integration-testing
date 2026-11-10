@@ -1,0 +1,298 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Container" name="value diff">
+        <test type="Case" name="array value is compared as a whole">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffValue</method>
+            <request type="int[]">
+                <item>1</item>
+                <item>2</item>
+            </request>
+            <request type="int[]">
+                <item>1</item>
+                <item>3</item>
+            </request>
+            <response type="int[]">
+                <item>1</item>
+                <item>3</item>
+            </response>
+        </test>
+        <test type="Case" name="collection value is compared as a whole">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffValue</method>
+            <request type="ArrayList">
+                <item>a</item>
+                <item>b</item>
+            </request>
+            <request type="ArrayList">
+                <item>a</item>
+                <item>c</item>
+            </request>
+            <response type="ArrayList">
+                <response>a</response>
+                <response>c</response>
+            </response>
+        </test>
+        <test type="Case" name="custom scalar value is compared as a whole">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffValue</method>
+            <request type="ScalarValue">left</request>
+            <request type="ScalarValue">right</request>
+            <response type="ScalarValue">right</response>
+        </test>
+        <test type="Case" name="custom structured value is diffed by properties">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffValue</method>
+            <request type="StructuredValue">
+                <payload>left</payload>
+            </request>
+            <request type="StructuredValue">
+                <payload>right</payload>
+            </request>
+            <response type="MapStringKeyObjectValue">
+                <payload>right</payload>
+            </response>
+        </test>
+        <test type="Case" name="structured value without format visitor is diffed by properties">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffValue</method>
+            <request type="StructuredValueWithoutVisitor">
+                <payload>left</payload>
+            </request>
+            <request type="StructuredValueWithoutVisitor">
+                <payload>right</payload>
+            </request>
+            <response type="MapStringKeyObjectValue">
+                <payload>right</payload>
+            </response>
+        </test>
+        <test type="Case" name="null left value is replaced with the right one">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffValue</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="ScalarValue">right</request>
+            <response type="ScalarValue">right</response>
+        </test>
+        <test type="Case" name="null right value has no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffValue</method>
+            <request type="ScalarValue">left</request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        </test>
+        <test type="Case" name="nested map value is diffed by keys">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffValue</method>
+            <request type="LinkedHashMap">
+                <same>value</same>
+                <changed>old</changed>
+            </request>
+            <request type="LinkedHashMap">
+                <same>value</same>
+                <changed>new</changed>
+            </request>
+            <response type="MapStringKeyObjectValue">
+                <changed>new</changed>
+            </response>
+        </test>
+        <test type="Case" name="pojo value is diffed by properties">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffValue</method>
+            <request type="Item">
+                <name>old</name>
+                <count type="Integer">1</count>
+            </request>
+            <request type="Item">
+                <name>new</name>
+                <count type="Integer">2</count>
+            </request>
+            <response type="MapStringKeyObjectValue">
+                <name>new</name>
+                <count type="Integer">2</count>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="map diff">
+        <test type="Case" name="added key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffMap</method>
+            <request type="LinkedHashMap">
+                <a>1</a>
+            </request>
+            <request type="LinkedHashMap">
+                <a>1</a>
+                <b>2</b>
+            </request>
+            <response type="MapStringKeyObjectValue">
+                <b>2</b>
+            </response>
+        </test>
+        <test type="Case" name="changed key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffMap</method>
+            <request type="LinkedHashMap">
+                <a>1</a>
+            </request>
+            <request type="LinkedHashMap">
+                <a>2</a>
+            </request>
+            <response type="MapStringKeyObjectValue">
+                <a>2</a>
+            </response>
+        </test>
+        <test type="Case" name="deleted key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffMap</method>
+            <request type="LinkedHashMap">
+                <a>1</a>
+                <b>2</b>
+            </request>
+            <request type="LinkedHashMap">
+                <a>1</a>
+            </request>
+            <response type="MapStringKeyObjectValue">
+                <b xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            </response>
+        </test>
+        <test type="Case" name="equal maps have no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffMap</method>
+            <request type="LinkedHashMap">
+                <a>1</a>
+            </request>
+            <request type="LinkedHashMap">
+                <a>1</a>
+            </request>
+            <response xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        </test>
+        <test type="Case" name="nested map is diffed by keys">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffMap</method>
+            <request type="LinkedHashMap">
+                <nested type="LinkedHashMap">
+                    <a>1</a>
+                    <b>2</b>
+                </nested>
+            </request>
+            <request type="LinkedHashMap">
+                <nested type="LinkedHashMap">
+                    <a>1</a>
+                    <c>3</c>
+                </nested>
+            </request>
+            <response type="MapStringKeyObjectValue">
+                <nested type="MapStringKeyObjectValue">
+                    <c>3</c>
+                    <b xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                </nested>
+            </response>
+        </test>
+        <test type="Case" name="null left map is fully added">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffMap</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <a>1</a>
+                <b>2</b>
+            </request>
+            <response type="MapStringKeyObjectValue">
+                <a>1</a>
+                <b>2</b>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="entries diff">
+        <test type="Case" name="added, changed and deleted keys">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffEntries</method>
+            <request type="LinkedHashMap">
+                <a>1</a>
+                <b>2</b>
+                <c>3</c>
+            </request>
+            <request type="LinkedHashMap">
+                <a>1</a>
+                <b>20</b>
+                <d>4</d>
+            </request>
+            <response type="EntriesObjectKeyObjectValue">
+                <entry change="added">
+                    <key>d</key>
+                    <value>4</value>
+                </entry>
+                <entry change="changed">
+                    <key>b</key>
+                    <value>20</value>
+                </entry>
+                <entry change="deleted">
+                    <key>c</key>
+                    <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                </entry>
+            </response>
+        </test>
+        <test type="Case" name="set difference reports added and deleted items">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffEntries</method>
+            <request type="LinkedHashSet">
+                <item>a</item>
+                <item>b</item>
+            </request>
+            <request type="LinkedHashSet">
+                <item>b</item>
+                <item>c</item>
+            </request>
+            <response type="EntriesObjectKeyObjectValue">
+                <entry change="added">
+                    <key xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <value>c</value>
+                </entry>
+                <entry change="deleted">
+                    <key xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <value>a</value>
+                </entry>
+            </response>
+        </test>
+        <test type="Case" name="pojo diff reports changed properties">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffEntries</method>
+            <request type="Item">
+                <name>old</name>
+                <count type="Integer">1</count>
+            </request>
+            <request type="Item">
+                <name>new</name>
+                <count type="Integer">2</count>
+            </request>
+            <response type="EntriesObjectKeyObjectValue">
+                <entry change="changed">
+                    <key>name</key>
+                    <value>new</value>
+                </entry>
+                <entry change="changed">
+                    <key>count</key>
+                    <value type="Integer">2</value>
+                </entry>
+            </response>
+        </test>
+        <test type="Case" name="null left map is fully added">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diffEntries</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <a>1</a>
+                <b>2</b>
+            </request>
+            <response type="EntriesObjectKeyObjectValue">
+                <entry change="added">
+                    <key>a</key>
+                    <value>1</value>
+                </entry>
+                <entry change="added">
+                    <key>b</key>
+                    <value>2</value>
+                </entry>
+            </response>
+        </test>
+    </test>
+</test>

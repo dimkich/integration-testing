@@ -54,4 +54,8 @@ public class CompositeTestMapper {
     public Object unwrap() {
         return currentMapper.unwrap();
     }
+
+    public Object unwrapOrNull() {
+        return currentMapper == null ? null : currentMapper.unwrap();
+    }
 }

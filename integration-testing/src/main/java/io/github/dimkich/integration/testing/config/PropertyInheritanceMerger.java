@@ -134,7 +134,7 @@ public class PropertyInheritanceMerger {
             }
         } else if (target instanceof Map && source instanceof Map) {
             mergeMaps((Map<Object, Object>) target, (Map<Object, Object>) source);
-        } else if (!BeanUtils.isSimpleValueType(target.getClass())) {
+        } else if (!BeanUtils.isSimpleValueType(target.getClass()) && !target.getClass().isArray()) {
             merge(target, source);
         }
     }
