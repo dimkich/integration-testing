@@ -53,7 +53,8 @@ How it works:
 * the message offset is remembered, so it can be told apart from application messages
   (see `ignore-inbound` in [Configuration](Configuration.md)).
 
-You can send to several topics — just specify several `<inboundMessage>` blocks in a row.
+One `<inboundMessage>` is sent per case or part. To send messages to several topics, use separate
+cases or parts.
 
 A tombstone (a key without a value) is described by an empty element:
 
@@ -89,33 +90,31 @@ Rules:
 * several `<outboundMessage>` blocks are checked independently — their number does not have to match
   the number of calls in the case.
 
-Verifying application state (`<dataStorageDiff>`)
+Verifying application state (`<diff>`)
 -------------------------------------------------
 
 `<outboundMessage>` shows what the application **sent**. If you need to verify what it **received** or
-how its state changed, use the regular `<dataStorageDiff>` — for example, over a storage maintained by
+how its state changed, use the regular `<diff>` — for example, over a storage maintained by
 your test fixture:
 
 ```xml
 
-<dataStorageDiff type="MapStringKeyObjectValue">
-    <receivedMessages type="MapStringKeyObjectValue">
-        <msg-0 type="KafkaRecord" topic="order-in">
-            <key>order-1</key>
-            <value>{"orderId": 1, "item": "Book"}</value>
-        </msg-0>
-    </receivedMessages>
-</dataStorageDiff>
+<diff storage="receivedMessages">
+    <insert key="msg-0" type="KafkaRecord" topic="order-in">
+        <key>order-1</key>
+        <value>{"orderId": 1, "item": "Book"}</value>
+    </insert>
+</diff>
 ```
 
 Here `receivedMessages` is an example storage: in the module tests this is the bean where a listener
 stores the messages it received. In your project it can be any storage (a database, a cache, a bean
-collection). See [Test Initialization](../Initialization.md) for more about diffs.
+collection). See [Storage Changes](../Storage-Diff.md) for more about diffs.
 
-`<dataStorageDiff>` is a diff against the **previous case**, not the absolute state of the storage. If the
+`<diff>` is a diff against the **previous case**, not the absolute state of the storage. If the
 previous case left a record in the storage, the next case describes only the changes relative to it
-(deleted fields use `xsi:nil`). A case that leaves data behind therefore affects the next case's
-expectation.
+(deleted fields are written with a `delete` tag). A case that leaves data behind therefore affects the
+next case's expectation.
 
 Headers
 -------
@@ -157,7 +156,7 @@ Deserialization errors
 ----------------------
 
 If the sniffer cannot parse an application message, the case does not fail immediately: the record is
-stored together with the error description, and the exception is rethrown later, during assertions.
+stored together with the error description and is compared as a regular diff during assertions.
 The original bytes are kept as is: key, value and header values are written as `byte[]`, so binary
 payloads (Protobuf, Avro, gzip, ...) are not corrupted by a UTF-8 conversion. In XML, `byte[]` is
 rendered as Base64 (`type="byte[]"`); in JSON — as `["byte[]", "<Base64>"]`. In an expectation, such

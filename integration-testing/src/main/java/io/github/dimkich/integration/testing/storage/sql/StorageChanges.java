@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.storage.sql;
 
 import eu.ciechanowiec.sneakyfun.SneakySupplier;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffEntry;
 import io.github.dimkich.integration.testing.storage.sql.state.StorageMutation;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +14,10 @@ import java.util.List;
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class StorageChanges {
-    private final SneakySupplier<Object, Exception> diffSupplier;
+    private final SneakySupplier<List<DiffEntry>, Exception> diffSupplier;
     private final SneakySupplier<List<StorageMutation>, Exception> mutationsSupplier;
 
-    private Object diff;
+    private List<DiffEntry> diff;
     private boolean diffResolved;
     private List<StorageMutation> mutations;
     private boolean mutationsResolved;
@@ -25,7 +26,7 @@ public final class StorageChanges {
      * Creates a lazy result. Each accessor calls its supplier on first use and memoizes the
      * resulting value.
      */
-    public static StorageChanges of(SneakySupplier<Object, Exception> diff,
+    public static StorageChanges of(SneakySupplier<List<DiffEntry>, Exception> diff,
                                     SneakySupplier<List<StorageMutation>, Exception> mutations) {
         return new StorageChanges(diff, mutations);
     }
@@ -34,7 +35,7 @@ public final class StorageChanges {
      * Difference for the SUT changes captured by this read, or null when there were no SUT
      * mutations.
      */
-    public Object getDiff() throws Exception {
+    public List<DiffEntry> getDiff() throws Exception {
         if (!diffResolved) {
             diff = diffSupplier.get();
             diffResolved = true;

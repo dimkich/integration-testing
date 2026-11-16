@@ -23,8 +23,7 @@ TestSetupModule
 Создание модуля
 ---------------
 
-```
-java  
+```java
 @Bean  
 TestSetupModule testSetupModule() {  
     return new TestSetupModule()  
@@ -64,12 +63,12 @@ TestSetupModule testSetupModule() {
 
 ### Настройка клонирования
 
-| Метод                                                               | Описание                        | Пример                                                                      |
-|---------------------------------------------------------------------|---------------------------------|-----------------------------------------------------------------------------|
-| `clonerFieldAction(Class<?> type, String field, CopyAction action)` | Действие для конкретного поля   | `.clonerFieldAction(Throwable.class, "stackTrace", CopyAction.ORIGINAL)`    |
-| `clonerFieldAction(Field field, CopyAction action)`                 | Действие для поля через反射       | `.clonerFieldAction(field, CopyAction.ORIGINAL)`                            |
-| `clonerTypeAction(Class<?> type, CopyAction action)`                | Действие для всех полей типа    | `.clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)`                |
-| `clonerTypeAction(Predicate<Class<?>> type, CopyAction action)`     | Действие для типов по предикату | `.clonerTypeAction(Throwable.class::isAssignableFrom, CopyAction.ORIGINAL)` |
+| Метод                                                               | Описание                          | Пример                                                                      |
+|---------------------------------------------------------------------|-----------------------------------|-----------------------------------------------------------------------------|
+| `clonerFieldAction(Class<?> type, String field, CopyAction action)` | Действие для конкретного поля     | `.clonerFieldAction(Throwable.class, "stackTrace", CopyAction.ORIGINAL)`    |
+| `clonerFieldAction(Field field, CopyAction action)`                 | Действие для поля через рефлексию | `.clonerFieldAction(field, CopyAction.ORIGINAL)`                            |
+| `clonerTypeAction(Class<?> type, CopyAction action)`                | Действие для всех полей типа      | `.clonerTypeAction(SecureRandom.class, CopyAction.ORIGINAL)`                |
+| `clonerTypeAction(Predicate<Class<?>> type, CopyAction action)`     | Действие для типов по предикату   | `.clonerTypeAction(Throwable.class::isAssignableFrom, CopyAction.ORIGINAL)` |
 
 ### Кастомное сравнение
 
@@ -77,13 +76,29 @@ TestSetupModule testSetupModule() {
 |-----------------------------------------------------------------------------|------------------------------------------|-------------------------------------------------------------|
 | `addEqualsForType(Class<T> type, BiPredicate<? super T, ? super T> equals)` | Регистрирует предикат равенства для типа | `.addEqualsForType(SecureRandom.class, (sr1, sr2) -> true)` |
 
+### Представление в `<diff>`
+
+Методы ниже задают, как ваши типы выглядят в `<diff>`:
+
+| Метод                                                                     | Что задаёт                                                                     |
+|---------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| `addDiffKeyPresenter(Class<T> type, DiffPresenter<? super T> presenter)`  | представление ключа записи: скалярное тело — строкой, структурное — объектом   |
+| `addDiffPresenter(Class<T> type, DiffPresenter<? super T> presenter)`     | представление значения: тело, тип и атрибуты (сам diff считает фреймворк)      |
+| `addDiffRenderer(Class<T> type, DiffRenderer<? extends T> renderer)`      | рендерер тела: как считается и записывается разница тела                       |
+| `addEqualsForType(Class<T> type, BiPredicate<? super T, ? super T>)`      | предикат равенства: изменение такого типа не попадает в diff                   |
+
+Пользовательская регистрация того же типа перекрывает встроенную: встроенные презентеры и
+рендереры применяются первыми. Презентеры ключей и значений ищутся раздельно.
+
+Контракты, примеры и правила — в разделе [Расширение diff](Storage-Diff-Extensibility.md). Как
+читать и писать `<diff>`, описано в разделе [Изменения хранилищ](Storage-Diff.md).
+
 Пример конфигурации
 -------------------
 
 ### Базовая конфигурация
 
-```
-java  
+```java
 @Configuration  
 public class TestConfig {  
     
@@ -106,8 +121,7 @@ public class TestConfig {
 
 ### Расширенная конфигурация
 
-```
-java  
+```java
 @Configuration  
 public class AdvancedTestConfig {  
     
@@ -140,10 +154,9 @@ public class AdvancedTestConfig {
 
 ```
 
-### Пример с клонированием поля через反射
+### Пример с клонированием поля через рефлексию
 
-```
-java  
+```java
 @Configuration  
 public class TestConfig {  
     
@@ -165,7 +178,7 @@ public class TestConfig {
 Предварительно зарегистрированные типы
 --------------------------------------
 
-Фреймворк уже регистрирует следующие распространённые типы через `CommonFormatConfig`:
+Фреймворк уже регистрирует следующие распространённые типы:
 
 ### Типы тестов
 
@@ -212,65 +225,9 @@ public class TestConfig {
 Как это работает
 ----------------
 
-### 1. Регистрация типа
-
-```
-java  
-// В конфигурации  
-.addSubTypes(MyDto.class, "MyDto")  
-
-// В XML  
-<response type="MyDto">  
-    <id>1</id>  
-    <name>test</name>  
-</response>  
-
-// В JSON  
-{  
-    "type": "MyDto",  
-    "id": 1,  
-    "name": "test"  
-}  
-
-```
-
-### 2. Сериализация
-
-При сериализации фреймворк использует **короткое имя** типа, зарегистрированное в `TestSetupModule`:
-
-```
-java  
-// Если MyDto.class зарегистрирован как "MyDto"  
-// В XML/JSON всегда будет type="MyDto"  
-// Полное квалифицированное имя не используется  
-
-```
-
-### 3. Десериализация
-
-При десериализации фреймворк ищет тип по короткому имени:
-
-```
-1. Jackson читает атрибут/поле "type": "MyDto"  
-2. TypeResolverFactory.resolve("MyDto") → MyDto.class  
-3. Jackson десериализует в MyDto.class  
-
-```
-
-⚠️ **Важно:** Если тип не зарегистрирован, десериализация завершится ошибкой. Использование полного квалифицированного
-имени в XML/JSON не работает --- фреймворк всегда ожидает короткое имя.
-
-Взаимодействие с другими компонентами
--------------------------------------
-
-| Компонент                  | Взаимодействие                                                  |
-|----------------------------|-----------------------------------------------------------------|
-| `TypeResolverFactory`      | Собирает данные из всех `TestSetupModule`                       |
-| `TestTypeResolverBuilder`  | Использует `TypeResolverFactory` для разрешения типов           |
-| `SharedTypeNameIdResolver` | Создаётся `TypeResolverFactory` на основе настроек модуля       |
-| `IntegrationTestConfig`    | Импортирует конфигурацию, создаёт `Cloner` с настройками модуля |
-| `XmlConfig` / `JsonConfig` | Используют `TestTypeResolverBuilder` для полиморфизма           |
-| `CommonFormatConfig`       | Предоставляет базовый `TestSetupModule` со стандартными типами  |
+Тип, который встречается в атрибуте `type`, должен быть зарегистрирован. В тестовом файле используется
+**короткое имя** из регистрации; полное имя класса не поддерживается. Одинаковое имя для двух типов —
+ошибка при старте. Если тип не зарегистрирован, десериализация завершится ошибкой.
 
 CopyAction для клонирования
 ---------------------------
@@ -289,8 +246,7 @@ CopyAction для клонирования
 **Причина:** Два типа зарегистрированы с одинаковым логическим именем.  
 **Решение:**
 
-```
-java  
+```java
 // ❌ Ошибка: два типа с именем "Dto"  
 .addSubTypes(FirstDto.class, "Dto")  
 .addSubTypes(SecondDto.class, "Dto")  
@@ -306,8 +262,7 @@ java
 **Причина:** Тип не зарегистрирован в `TestSetupModule`.  
 **Решение:**
 
-```
-java  
+```java
 // Добавить регистрацию типа  
 .addSubTypes(MyMissingType.class, "MyMissingType")  
 
@@ -324,8 +279,7 @@ java
 **Причина:** Не настроено действие клонирования для типа.  
 **Решение:**
 
-```
-java  
+```java
 // Настроить клонирование  
 .clonerTypeAction(MyType.class, CopyAction.DEEP_COPY)  
 
@@ -342,12 +296,11 @@ java
 2. **Проверяйте уникальность имён** --- фреймворк выбросит исключение при дублировании имени типа.
 3. **Используйте сканирование пакетов для DTO** --- вместо ручной регистрации каждого типа:
 
-   ```
-   java  
+   ```java
    .addSubTypes("com.example.dto")  
 
    ```
 
 4. **Настраивайте клонирование для типов с состоянием** --- особенно для `Throwable`, `Resource`, `InputStream`.
 5. **Используйте алиасы для стандартных типов** --- если нужно использовать альтернативное имя для типа, уже
-   зарегистрированного в `CommonFormatConfig`.  
+   зарегистрированного фреймворком.

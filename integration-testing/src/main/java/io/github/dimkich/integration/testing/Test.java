@@ -6,6 +6,7 @@ import eu.ciechanowiec.sneakyfun.SneakyConsumer;
 import io.github.dimkich.integration.testing.execution.StubCall;
 import io.github.dimkich.integration.testing.initialization.TestInit;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
+import io.github.dimkich.integration.testing.storage.diff.model.StorageDiff;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -60,7 +61,7 @@ import java.util.stream.Stream;
 @FieldNameConstants
 @JsonRootName(value = "test")
 @JsonPropertyOrder({"name", "init", "bean", "method", "request", "inboundMessage", "stubCall", "response",
-        "custom", "dataStorageDiff", "outboundMessages", "test"})
+        "custom", "diff", "outboundMessages", "test"})
 public abstract class Test {
     /**
      * Enumeration of test types in the hierarchical test structure.
@@ -102,7 +103,8 @@ public abstract class Test {
     @Setter(value = AccessLevel.PACKAGE, onMethod_ = @JsonProperty)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, Object> custom;
-    private Object dataStorageDiff;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<StorageDiff> diff;
     @JsonProperty("outboundMessage")
     private List<AbstractMessage> outboundMessages;
     @JsonBackReference
@@ -119,6 +121,17 @@ public abstract class Test {
     private int lineNumber;
     @JsonIgnore
     private int columnNumber;
+
+    /**
+     * Sets storage differences in storage name order, so the order of blocks in a test file does
+     * not affect the result.
+     *
+     * @param diff storage differences, may be {@code null}
+     */
+    public void setDiff(List<StorageDiff> diff) {
+        this.diff = diff == null ? null
+                : diff.stream().sorted(Comparator.comparing(StorageDiff::storage)).toList();
+    }
 
     /**
      * Returns the type of this test.

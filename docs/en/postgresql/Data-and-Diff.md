@@ -6,7 +6,7 @@ Data and Diff
 A PostgreSQL test usually has two parts:
 
 1. **Preparation.** In `<init>` you create the schema, load a DBUnit dataset, and optionally run SQL.
-2. **Verification.** In `<dataStorageDiff>` you describe which rows and columns should change after the
+2. **Verification.** In `<diff>` you describe which rows and columns should change after the
    application code runs.
 
 ## SqlStorageSetup
@@ -22,12 +22,12 @@ SQL, and registers a DBUnit dataset.
 </init>
 ```
 
-| Element       | Description                                                       |
-|---------------|-------------------------------------------------------------------|
-| `name`        | Connection name from `integration.testing.postgresql.connections` |
-| `sqlFilePath` | Classpath SQL file paths; executed in order                       |
-| `sql`         | Inline SQL; executed after `sqlFilePath`                          |
-| `dbUnitPath`  | Classpath DBUnit dataset paths                                    |
+| Attribute/Element | Description                                                       |
+|-------------------|-------------------------------------------------------------------|
+| `name`            | Connection name from `integration.testing.postgresql.connections` |
+| `sqlFilePath`     | Classpath SQL file paths; executed in order                       |
+| `sql`             | Inline SQL; executed after `sqlFilePath`                          |
+| `dbUnitPath`      | Classpath DBUnit dataset paths                                    |
 
 `dbUnitPath` only registers the dataset. Data is loaded later by `SqlStorageInit` with `tablesToLoad`
 or `loadAllTables="true"`.
@@ -146,28 +146,32 @@ Notes:
 * Identity columns are usually omitted: PostgreSQL generates the value.
 * The `hstore` extension is required for `hstore`.
 
-## dataStorageDiff
+## `<diff>`
 
-`<dataStorageDiff>` describes the changes after the test. The diff is row-based and contains only the
-columns that changed.
+`<diff>` describes the changes after the test. The `storage` attribute names the storage
+(`storage="dataSource"`); inside are records: table rows. A record always has a single `key`
+attribute, and the operation is the element tag: `insert`, `update` or `delete`.
+
+Record fields are written in table column order (`CREATE TABLE` or `ALTER TABLE ... ADD COLUMN`),
+not alphabetically.
+
+The remaining rules are shared by all storages and are collected in
+[Storage Changes](../Storage-Diff.md). PostgreSQL-specific rules: `hstore` is written alphabetically
+(PostgreSQL does not guarantee its field order), `json` in document order, and `jsonb` in the order
+PostgreSQL returned it.
 
 ### Insert
 
 An inserted row shows the complete row:
 
 ```xml
-<dataStorageDiff type="MapStringKeyObjectValue">
-    <dataSource type="EntriesObjectKeyObjectValue">
-        <entry change="added">
-            <key>users_100</key>
-            <value type="MapStringKeyObjectValue">
-                <id type="Long">100</id>
-                <name>Ivan</name>
-                <email>ivan@example.com</email>
-            </value>
-        </entry>
-    </dataSource>
-</dataStorageDiff>
+<diff storage="dataSource">
+    <insert key="users/100">
+        <id type="Integer">100</id>
+        <name>Ivan</name>
+        <email>ivan@example.com</email>
+    </insert>
+</diff>
 ```
 
 ### Update
@@ -175,68 +179,63 @@ An inserted row shows the complete row:
 An update shows only the changed columns:
 
 ```xml
-<dataStorageDiff type="MapStringKeyObjectValue">
-    <dataSource type="EntriesObjectKeyObjectValue">
-        <entry change="changed">
-            <key>users_1</key>
-            <value type="MapStringKeyObjectValue">
-                <name>Ivan Updated</name>
-            </value>
-        </entry>
-    </dataSource>
-</dataStorageDiff>
+<diff storage="dataSource">
+    <update key="users/1">
+        <name>Ivan Updated</name>
+    </update>
+</diff>
 ```
 
 ### Delete
 
-A deleted row must have a `nil` value:
+A deleted row is written without a body, only the key:
 
 ```xml
-<dataStorageDiff type="MapStringKeyObjectValue">
-    <dataSource type="EntriesObjectKeyObjectValue">
-        <entry change="deleted">
-            <key>users_1</key>
-            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-        </entry>
-    </dataSource>
-</dataStorageDiff>
+<diff storage="dataSource">
+    <delete key="users/1"/>
+</diff>
 ```
+
+JSONB and hstore are diffed by keys, events and nested objects by fields. The same logic works at any
+depth: a changed field is a tag or `update key`, an added one is `insert key`, a removed one is
+`delete key`.
 
 ### Row Keys
 
-If the table has a primary key, the row key is:
+If the table has a primary key, the row key is `[schema.]table/value`:
 
 ```text
-<table>_<primary key value>
+users/1
+orders/42
+billing.invoices/7
 ```
 
-Examples:
+For a composite primary key, the values are comma-separated:
 
 ```text
-users_1
-orders_42
-billing.invoices_7
+orders/1,2
 ```
 
-For a composite primary key, the values are appended with `_`. Simple primary keys are easier to read.
+The table part of the key follows `defaultSchema`: a table from `defaultSchema` is written without the
+schema (`users/1`), a table from another schema keeps the prefix (`billing.invoices/7`). Unqualified
+names in configuration and fixtures resolve to `defaultSchema`; use `schema.table` to address a table
+in another schema.
 
-The table part of the key follows `defaultSchema`: a table from `defaultSchema` is written without
-the schema (`users_1`), while a table from another schema keeps the prefix (`billing.invoices_7`).
-Unqualified names in configuration and fixtures resolve to `defaultSchema`; use `schema.table` to
-address a table in another schema.
-
-If there is no primary key, the row is identified by a hash of its entire content:
+If there is no primary key, the row is identified by the first 16 hex characters of its content hash:
 
 ```text
-nokey_data_20e4a4ea34a193578fdcbb989221baab40a137646521718fbe55d9df70db52ad
+nokey_data/20e4a4ea34a19357
 ```
 
 In a table without a primary key, an update appears as a deleted old row and an added new row. Add a
 primary key if such diffs are inconvenient.
 
+The characters `/`, `,` and `%` inside key parts are escaped as `%2F`, `%2C` and `%25`, so a key is
+always unambiguous.
+
 ### Multiple Test Parts
 
-Inside one case, `<dataStorageDiff>` can be specified for every `<test type="Part">`. Each part's diff
+Inside one case, `<diff>` can be specified for every `<test type="Part">`. Each part's diff
 is relative to the state after the previous part:
 
 ```xml
@@ -247,17 +246,17 @@ is relative to the state after the previous part:
 
     <test type="Part" name="Insert">
         <!-- ... -->
-        <dataStorageDiff>... added ...</dataStorageDiff>
+        <diff storage="dataSource">... added ...</diff>
     </test>
 
     <test type="Part" name="Update">
         <!-- ... -->
-        <dataStorageDiff>... changed ...</dataStorageDiff>
+        <diff storage="dataSource">... changed ...</diff>
     </test>
 
     <test type="Part" name="Delete">
         <!-- ... -->
-        <dataStorageDiff>... deleted ...</dataStorageDiff>
+        <diff storage="dataSource">... deleted ...</diff>
     </test>
 </test>
 ```

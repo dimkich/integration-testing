@@ -4,12 +4,15 @@ import io.github.dimkich.integration.testing.postgresql.model.metadata.PostgresC
 import lombok.Value;
 
 import java.nio.ByteBuffer;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
- * Converts a PostgreSQL {@code hstore} literal into an insertion-ordered map. Quoted and escaped
- * tokens are supported, and unquoted {@code NULL} becomes a {@code null} map value.
+ * Converts a PostgreSQL {@code hstore} literal into a sorted map. Quoted and escaped tokens are
+ * supported, and unquoted {@code NULL} becomes a {@code null} map value.
+ * <p>
+ * PostgreSQL does not guarantee the order of {@code hstore} entries, so the keys are sorted to keep
+ * the expected test data stable.
  */
 final class PostgresHstoreConverter extends PostgresConverter {
 
@@ -22,7 +25,7 @@ final class PostgresHstoreConverter extends PostgresConverter {
     }
 
     private static Map<String, Object> parseHstore(String text) {
-        Map<String, Object> result = new LinkedHashMap<>();
+        Map<String, Object> result = new TreeMap<>();
         int pos = 0;
         while (pos < text.length()) {
             while (pos < text.length() && (Character.isWhitespace(text.charAt(pos)) || text.charAt(pos) == ',')) {

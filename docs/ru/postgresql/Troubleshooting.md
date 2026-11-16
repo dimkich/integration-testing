@@ -7,7 +7,7 @@
 
 Проверьте по порядку:
 
-1. **Имя подключения.** `name` в `<init>` и тег внутри `<dataStorageDiff>` должны совпадать с ключом
+1. **Имя подключения.** `name` в `<init>` и атрибут `storage` в `<diff>` должны совпадать с ключом
    в `integration.testing.postgresql.connections`.
 2. **Одна и та же база.** Фреймворк открывает своё JDBC-подключение. Если приложение пишет в другую
    базу или схему, diff ничего не увидит.
@@ -22,8 +22,8 @@
 
 ## `PostgreSQL connection '...' is not configured`
 
-В конфигурации нет подключения с таким именем. Проверьте ключ в
-`integration.testing.postgresql.connections` и `name` в XML. Помните, что имя подключения — это не
+В `integration.testing.postgresql.connections` нет подключения с таким именем. Это ошибка
+конфигурации подключений, а не атрибута `name` в XML. Помните, что имя подключения — это не
 обязательно имя бина `DataSource`.
 
 ## `TestDataStorage '...' not found`
@@ -57,7 +57,7 @@
 Если `SET session_replication_role` запрещён, модуль не сможет загружать фикстуры и выполнять
 служебные SQL-переходы.
 
-## `bytea` отображается как текст
+## `bytea` отображается некорректно при `bytea_output = 'escape'`
 
 Проверьте настройку PostgreSQL:
 
@@ -65,8 +65,8 @@
 SHOW bytea_output;
 ```
 
-Модуль рассчитан на `hex`. При `escape` бинарные значения могут выглядеть как текст, а не как
-`byte[]` в Base64.
+Модуль рассчитан на `hex`. При `escape` значение не декодируется: escape-литерал остаётся
+`byte[]` и в Base64 выглядит неверно.
 
 ## Ошибка конвертации колонки
 
@@ -105,20 +105,10 @@ CREATE EXTENSION IF NOT EXISTS hstore;
 
 ## Нет атрибута `change` в diff
 
-Проверьте настройку формы diff:
-
-```yaml
-integration:
-  testing:
-    storage:
-      storages:
-        dataSource:
-          keyType: [ STRING, OBJECT ]
-          valueType: [ OBJECT, OBJECT ]
-          changeType: [ false, true ]
-```
-
-Без `changeType` записи могут выводиться без `change="added|changed|deleted"`.
+Атрибута `change` больше нет: операция задаётся тегом элемента — `insert`, `update` или `delete`.
+Настройка `integration.testing.storage.storages.*.changeType`, которая раньше его включала, не
+читается. Если в diff нет ожидаемой записи, проверьте, что изменение прошло через триггеры
+PostgreSQL и что колонка не исключена (`ignore`, `excludedFields`).
 
 ## Данные не загрузились из DBUnit
 

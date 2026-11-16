@@ -35,6 +35,11 @@ integration:
                 bean-ref: testValueSerializer
             "[redisson.base]":
               type: json
+            "[redisson.objkey]":
+              hash-key:
+                type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
+              hash-value:
+                type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
             "[redisson.mix]":
               type: json
               value:
@@ -78,6 +83,10 @@ integration:
                 type: org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
             "[redisson.hidden]":
               ignore: true
+            "[redisson.expired.index]":
+              ignore: true
+            "[redisson.expired.received]":
+              ignore: true
         jedisConnectionFactory:
           host: ${embedded.redis.host}
           port: ${embedded.redis.port}
@@ -86,17 +95,3 @@ integration:
           schemas:
             redisson:
               ignore: true
-    storage:
-      storages:
-        redissonConnectionFactory:
-          valueType: [ OBJECT, OBJECT, OBJECT, OBJECT ]
-          keyType: [ STRING, OBJECT, OBJECT, OBJECT ]
-          changeType: [ false, true, true, true ]
-        jedisConnectionFactory:
-          valueType: [ OBJECT, OBJECT, OBJECT, OBJECT ]
-          keyType: [ STRING, OBJECT, OBJECT, OBJECT ]
-          changeType: [ false, true, true, true ]
-        snapshotTestFactory:
-          valueType: [ OBJECT, OBJECT, OBJECT, OBJECT ]
-          keyType: [ STRING, OBJECT, OBJECT, OBJECT ]
-          changeType: [ false, true, true, true ]

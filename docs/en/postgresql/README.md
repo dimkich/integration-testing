@@ -14,7 +14,7 @@ the configured parameters.
 ## Features
 
 * Prepare schemas and data with SQL files, inline SQL, and DBUnit datasets.
-* Show row changes automatically in `dataStorageDiff`.
+* Show row changes automatically in `<diff>`.
 * Compare the state before and after a test instead of writing an assertion for every column.
 * Support PostgreSQL types: arrays, `json`/`jsonb`, `hstore`, `bytea`, composite types, time,
   identity and generated columns.
@@ -29,7 +29,7 @@ the configured parameters.
 2. **Execution.** The test calls an application method or sends a message. Changes the application
    makes in PostgreSQL are captured in a technical journal.
 3. **Verification.** After the test, the framework reads the journal and compares the initial and
-   final row states. The result is shown in `<dataStorageDiff>`.
+   final row states. The result is shown in `<diff>`.
 4. **Transition to the next test.** The next `init` restores the database to its target state. If
    reverting rows is cheaper than reloading a table, the framework reverts them; otherwise it reloads
    the table from the DBUnit dataset.
@@ -84,7 +84,7 @@ the embedded mode through test properties.
 ### Connection Configuration
 
 `dataSource` in the example is the framework connection name. It does not have to match an application
-`DataSource` bean name, but it must match `name` in `<init>` and in `<dataStorageDiff>`.
+`DataSource` bean name, but it must match `name` in `<init>` and the `storage` attribute in `<diff>`.
 
 ```yaml
 integration:
@@ -98,16 +98,10 @@ integration:
           user: "${embedded.postgresql.user}"
           password: "${embedded.postgresql.password}"
           defaultSchema: public
-    storage:
-      storages:
-        dataSource:
-          keyType: [ STRING, OBJECT ]
-          valueType: [ OBJECT, OBJECT ]
-          changeType: [ false, true ]
 ```
 
-`integration.testing.storage.storages` controls the XML diff shape. It can be omitted if not needed;
-see [Configuration](Configuration.md) for details.
+The `<diff>` shape is not configurable: it follows the general rules (see
+[Data and Diff](Data-and-Diff.md)).
 
 ### Test File
 
@@ -132,23 +126,18 @@ see [Configuration](Configuration.md) for details.
         <request>Ivan</request>
         <request>ivan@example.com</request>
 
-        <dataStorageDiff type="MapStringKeyObjectValue">
-            <dataSource type="EntriesObjectKeyObjectValue">
-                <entry change="added">
-                    <key>users_100</key>
-                    <value type="MapStringKeyObjectValue">
-                        <id type="Long">100</id>
-                        <name>Ivan</name>
-                        <email>ivan@example.com</email>
-                    </value>
-                </entry>
-            </dataSource>
-        </dataStorageDiff>
+        <diff storage="dataSource">
+            <insert key="users/100">
+                <id type="Integer">100</id>
+                <name>Ivan</name>
+                <email>ivan@example.com</email>
+            </insert>
+        </diff>
     </test>
 </test>
 ```
 
-The `dataStorageDiff` format and row key rules are described in
+The `<diff>` format and row key rules are described in
 [Data and Diff](Data-and-Diff.md).
 
 ## Requirements
@@ -164,7 +153,7 @@ The `dataStorageDiff` format and row key rules are described in
 ## Next
 
 * [Configuration](Configuration.md) — connections, permissions, `columns`, `ignore`, and `excludedFields`.
-* [Data and Diff](Data-and-Diff.md) — `SqlStorageSetup`, `SqlStorageInit`, DBUnit, and `dataStorageDiff`.
+* [Data and Diff](Data-and-Diff.md) — `SqlStorageSetup`, `SqlStorageInit`, DBUnit, and `<diff>`.
 * [Types and Serde](Types-and-Serde.md) — PostgreSQL type representations and custom converters.
 * [Troubleshooting](Troubleshooting.md) — empty diff, permission, conversion, and schema errors.
 

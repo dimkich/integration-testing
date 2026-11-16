@@ -6,6 +6,10 @@ import io.github.dimkich.integration.testing.redis.RedisTestDataStorage;
 import io.github.dimkich.integration.testing.redis.RedisWaitCompletion;
 import io.github.dimkich.integration.testing.redis.accessor.*;
 import io.github.dimkich.integration.testing.redis.client.RedisClient;
+import io.github.dimkich.integration.testing.redis.diff.RedisEntryPresenter;
+import io.github.dimkich.integration.testing.redis.diff.RedisStreamPresenter;
+import io.github.dimkich.integration.testing.redis.diff.RedisZSetEntryPresenter;
+import io.github.dimkich.integration.testing.redis.diff.RedisZSetPresenter;
 import io.github.dimkich.integration.testing.redis.client.Resp2RedisClient;
 import io.github.dimkich.integration.testing.redis.message.RedisPush;
 import io.github.dimkich.integration.testing.redis.message.RedisPushCapture;
@@ -90,8 +94,12 @@ public class RedisConfig {
     @Bean
     TestSetupModule redisModule() {
         return new TestSetupModule().addParentType(RedisValue.class).addSubTypes(RedisHash.class, RedisList.class,
-                RedisSet.class, RedisStream.class, RedisStreamEntry.class, RedisZSet.class, RedisEntry.class,
-                RedisZSetEntry.class, RedisKey.class, RedisHyperLogLog.class, RedisPush.class);
+                        RedisSet.class, RedisStream.class, RedisStreamEntry.class, RedisZSet.class, RedisEntry.class,
+                        RedisZSetEntry.class, RedisKey.class, RedisHyperLogLog.class, RedisPush.class)
+                .addDiffPresenter(RedisEntry.class, new RedisEntryPresenter())
+                .addDiffPresenter(RedisZSet.class, new RedisZSetPresenter())
+                .addDiffPresenter(RedisZSetEntry.class, new RedisZSetEntryPresenter())
+                .addDiffPresenter(RedisStream.class, new RedisStreamPresenter());
     }
 
     /**

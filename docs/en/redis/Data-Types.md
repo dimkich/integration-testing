@@ -6,7 +6,7 @@ Data Preparation and Database Snapshots
 Testing logic with Redis always consists of two steps:
 
 1. **Writing the Initial State (Seed):** Using the `<init>` block you populate Redis with test keys.
-2. **Verifying Changes (Assert):** Using the `<dataStorageDiff>` block you describe which keys should
+2. **Verifying Changes (Assert):** Using the `<diff>` block you describe which keys should
    have been added, changed, or deleted in the database after your application code ran.
 
 Solving the Colon Problem in Redis Keys
@@ -34,11 +34,11 @@ Initializing the Database via `<init>`
 --------------------------------------
 
 The initialization section is described at the beginning of a container or test case. For Redis,
-the `keyValueStorageInit` initializer type is used:
+the `KeyValueStorageInit` initializer type is used:
 
 ```xml
 
-<init type="keyValueStorageInit" name="connection_name" clear="true/false">
+<init type="KeyValueStorageInit" name="connection_name" clear="true/false">
     <map type="LinkedHashMapStringObject">
         <!-- Your data -->
     </map>
@@ -47,7 +47,8 @@ the `keyValueStorageInit` initializer type is used:
 
 * `name` — the connection name from `integration.testing.redis.connections` (for example,
   `redissonConnectionFactory`).
-* `clear="true"` — completely clear the database before the test (executes `FLUSHALL` on the server).
+* `clear="true"` — completely clear the database before the test. When the in-memory mirror is
+  empty, the `FLUSHALL` command is not sent.
 * `clear="false"` — do not clear the database (new keys will be added or existing ones updated).
 
 The initializer supports two data formats: **Abbreviated** and **Full**.
@@ -60,7 +61,7 @@ In this format, the key value is written as text directly inside the `<entry>` t
 
 ```xml
 
-<init type="keyValueStorageInit" name="redissonConnectionFactory" clear="true">
+<init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
     <map type="LinkedHashMapStringObject">
         <!-- Will be saved as a String -->
         <entry key="global:app:status">ACTIVE</entry>
@@ -82,16 +83,16 @@ In this format, the key value is written as text directly inside the `<entry>` t
 Used when you need to set a key's time-to-live (`ttl`) or write complex data structures (hashes,
 lists, sets, sorted sets, streams).
 
-In full mode, the key value must be wrapped in a `<value type="RedisEntry">` tag containing
-`<data>` (the value itself) and `<ttl>` (the lifetime duration):
+In full mode, the key value is marked with `utype="RedisEntry"`, and the `<data>` (the value
+itself) and `<ttl>` (the lifetime duration) tags are placed inside:
 
 ```xml
 
-<init type="keyValueStorageInit" name="redissonConnectionFactory" clear="true">
+<init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
     <map type="LinkedHashMapStringObject">
 
         <!-- Example string with a 5-minute TTL -->
-        <entry key="temp:otp:code" type="RedisEntry">
+        <entry key="temp:otp:code" utype="RedisEntry">
             <data>9941</data>
             <ttl>PT5M</ttl> <!-- ISO-8601 format: PT5M = 5 minutes, PT30S = 30 seconds -->
         </entry>
@@ -100,50 +101,73 @@ In full mode, the key value must be wrapped in a `<value type="RedisEntry">` tag
 </init>
 ```
 
-> **Tip:** If TTL is not needed, use the abbreviated format with `utype` — examples for each
+> **Tip:** If TTL is not needed, use the abbreviated format without `RedisEntry` — examples for each
 > data type are shown in the sections below.
 
-Verifying Changes via `<dataStorageDiff>`
+Verifying Changes via `<diff>`
 ------------------------------------------
 
-The `<dataStorageDiff>` block describes what changes occurred in Redis after your application ran.
+The `<diff>` block describes what changes occurred in Redis after your application ran.
 It is built by comparing the state "before" and "after" the test execution.
 
-Each entry inside the diff has a `change` attribute that indicates the type of change:
+A storage record is a Redis key: the `key` attribute, or `db/key` when `multipleDatabases` is
+enabled. The operation is the element tag (`insert`, `update` or `delete`). The body is the key
+value: a string is written as text, a structure as fields or items, a TTL as the `ttl` attribute. A
+value that did not exist is written as `insert`, a changed one as `update`, a removed one as
+`delete`.
 
-* `change="added"` — a key or element was added to the empty database.
-* `change="changed"` — an existing key or element value was modified.
-* `change="deleted"` — a key or element was completely removed.
-
-Example diff for a deleted key:
+Example: the key was deleted:
 
 ```xml
-<dataStorageDiff type="MapStringKeyObjectValue">
-    <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-        <!-- Indicate that the key was deleted -->
-        <entry change="deleted">
-            <key>user:session:100</key>
-            <!-- Always pass an empty nil value for a deleted element -->
-            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
-        </entry>
-    </redissonConnectionFactory>
-</dataStorageDiff>
+<diff storage="redissonConnectionFactory">
+    <delete key="user:session:100"/>
+</diff>
 ```
+
+Example: a string with a TTL:
+
+```xml
+<diff storage="redissonConnectionFactory">
+    <insert key="user:session:100" ttl="PT30M">ACTIVE_SESSION</insert>
+</diff>
+```
+
+Example: a field with its own TTL was added to a hash:
+
+```xml
+<diff storage="redissonConnectionFactory">
+    <update key="user:profile:100" type="RedisHash">
+        <insert key="temp_token" ttl="PT30S">token_abc_123</insert>
+    </update>
+</diff>
+```
+
+The TTL is an ordinary attribute of the record. Like every attribute, it describes the state after
+the test: an `update` repeats the `ttl` even when the TTL did not change, and a record without the
+attribute has no TTL. A TTL decrease caused by a time shift is not a change by itself: the "before"
+and "after" snapshots are recalculated at the same instant.
+
+A hash field key can be an object too: when the field key type is structured, the field name is
+written as a `<key>` structure, exactly like a key of any other map; return a scalar from
+`addDiffKeyPresenter` to shorten it to a line (see
+[Diff Extensibility](../Storage-Diff-Extensibility.md#record-key--adddiffkeypresenter)).
 
 XML Representation for All Redis Data Structures (Full Format)
 ---------------------------------------------------------------
 
-Below are ready-to-use templates for writing and comparing all Redis data types in full format.
-You can use them both in `<init>` (for preparation) and in `<dataStorageDiff>` (for verification).
+Below are ready-to-use templates for writing any Redis data type in full format. Use them in
+`<init>` (to prepare the state) — this is the value format, not the diff. `<diff>` is
+built according to the rules above; the shared contract is collected in
+[Storage Changes](../Storage-Diff.md).
 
 ### HASH
 
 In Redis, a hash stores a set of fields and values. In our system it is represented by the
 `RedisHash` type. Each hash field is an independent `RedisEntry`, so each field can have its
-own TTL (via the `HEXPIRE` command).
+own TTL (via the `HPEXPIREAT` command, Redis 7.4+).
 
 ```xml
-<entry key="user:profile:100" type="RedisEntry">
+<entry key="user:profile:100" utype="RedisEntry">
     <data type="RedisHash">
         <!-- Field without TTL (permanent) -->
         <entry>
@@ -188,7 +212,7 @@ own TTL (via the `HEXPIRE` command).
 Lists preserve strict insertion order. They are represented by the `RedisList` type.
 
 ```xml
-<entry key="notifications:queue" type="RedisEntry">
+<entry key="notifications:queue" utype="RedisEntry">
     <data type="RedisList">
         <value>first_message</value>
         <value>second_message</value>
@@ -207,11 +231,11 @@ Lists preserve strict insertion order. They are represented by the `RedisList` t
 
 ### SET
 
-Sets contain only unique elements. Elements in XML are automatically sorted alphabetically for
-stable test comparison. Represented by the `RedisSet` type.
+Sets contain only unique elements. Elements are sorted by `RedisDataComparator`: strings
+lexicographically, numbers numerically. Represented by the `RedisSet` type.
 
 ```xml
-<entry key="user:roles:1" type="RedisEntry">
+<entry key="user:roles:1" utype="RedisEntry">
     <data type="RedisSet">
         <value>ROLE_ADMIN</value>
         <value>ROLE_USER</value>
@@ -234,7 +258,7 @@ Each entry consists of a member and its numeric score, which determines sort ord
 by the `RedisZSet` type, with elements of type `RedisZSetEntry`.
 
 ```xml
-<entry key="leaderboard" type="RedisEntry">
+<entry key="leaderboard" utype="RedisEntry">
     <data type="RedisZSet">
         <value type="RedisZSetEntry">
             <member>player_A</member>
@@ -263,6 +287,40 @@ by the `RedisZSet` type, with elements of type `RedisZSetEntry`.
 </entry>
 ```
 
+**In a diff** a sorted set is written by members: a member identifies the element, so it becomes the
+`key`, and its score is the `score` attribute. A member that appears is an `insert`, a changed score
+is an `update`, a removed member is a `delete`:
+
+```xml
+<insert key="leaderboard" type="RedisZSet">
+    <player_A score="1500"/>
+    <player_C score="1200"/>
+</insert>
+```
+
+A score change keeps the member in place, so a sorted set update is one line rather than a new
+element. This requires a member to be expressible as an identifier: a string is defined by
+[`addDiffKeyPresenter`](../Storage-Diff-Extensibility.md#record-key--adddiffkeypresenter) returning a scalar,
+while a structured object is written as an object key by default, and its projection can be
+refined by the same method. The member is then written as a structure, while the score stays an
+attribute:
+
+```xml
+<insert key="leaderboard" type="RedisZSet">
+    <insert score="1500">
+        <key type="MarketInstrumentKey">
+            <exchange>MOEX</exchange>
+            <ticker>SBER</ticker>
+        </key>
+    </insert>
+</insert>
+```
+
+If members are large values without an identifier, the sorted set is better presented as a
+collection: register a presenter for `RedisZSet` that returns the set itself and a presenter for
+`RedisZSetEntry` whose body is the member and whose attribute is the score — then the framework reads
+the value as an ordinary collection and writes `<insert score="1500">{big member}</insert>`.
+
 ### STREAM
 
 Streams store an ordered sequence of records, each with a unique ID (e.g., `1716530000000-0`)
@@ -271,18 +329,14 @@ and a set of fields. Represented by the `RedisStream` type, with elements of typ
 
 ```xml
 
-<entry key="orders:stream" type="RedisEntry">
+<entry key="orders:stream" utype="RedisEntry">
     <data type="RedisStream">
         <value type="RedisStreamEntry" id="1716530000000-0">
             <fields>
-                <entry>
-                    <key>order_id</key>
-                    <value>ORD-99</value>
-                </entry>
-                <entry>
-                    <key>amount</key>
-                    <value>450.00</value>
-                </entry>
+                <key>order_id</key>
+                <value>ORD-99</value>
+                <key>amount</key>
+                <value>450.00</value>
             </fields>
         </value>
     </data>
@@ -295,14 +349,10 @@ and a set of fields. Represented by the `RedisStream` type, with elements of typ
 <entry key="orders:stream" utype="RedisStream">
     <value type="RedisStreamEntry" id="1716530000000-0">
         <fields>
-            <entry>
-                <key>order_id</key>
-                <value>ORD-99</value>
-            </entry>
-            <entry>
-                <key>amount</key>
-                <value>450.00</value>
-            </entry>
+            <key>order_id</key>
+            <value>ORD-99</value>
+            <key>amount</key>
+            <value>450.00</value>
         </fields>
     </value>
 </entry>
@@ -314,7 +364,7 @@ Since HyperLogLog is used for probabilistic unique element counting, the framewo
 as a regular unique set for testing convenience. Represented by the `RedisHyperLogLog` type.
 
 ```xml
-<entry key="unique:visitors" type="RedisEntry">
+<entry key="unique:visitors" utype="RedisEntry">
     <data type="RedisHyperLogLog">
         <value>user_ip_1</value>
         <value>user_ip_2</value>

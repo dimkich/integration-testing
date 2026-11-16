@@ -50,7 +50,9 @@ public class LibFakeTimeTracker {
     @SuppressWarnings("resource")
     private static GenericContainer<?> createFakeTimeServerContainer() {
         return new GenericContainer<>("dimkich/libfaketime-server:0.2")
-                .withExposedPorts(9999);
+                .withExposedPorts(9999)
+                .withCreateContainerCmdModifier(cmd ->
+                        Objects.requireNonNull(cmd.getHostConfig()).withIpcMode("shareable"));
     }
 
     /**

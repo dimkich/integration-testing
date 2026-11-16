@@ -11,8 +11,9 @@ import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegis
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataCodec;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
-import io.github.dimkich.integration.testing.storage.ObjectsDifference;
+import io.github.dimkich.integration.testing.storage.diff.ObjectsDifference;
 import io.github.dimkich.integration.testing.storage.SnapshotTestDataStorage;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffEntry;
 import io.github.dimkich.integration.testing.storage.keyvalue.KeyValueDataStorage;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -162,8 +163,8 @@ public class RedisTestDataStorage extends SnapshotTestDataStorage implements Key
      * Resets initialization status to {@link KeyValueStorageInit} after the diff.
      */
     @Override
-    public Object getDiff() throws Exception {
-        Object diff = super.getDiff();
+    public List<DiffEntry> getDiff() throws Exception {
+        List<DiffEntry> diff = super.getDiff();
         initializationService.changeCurrentStatus(KeyValueStorageInit.class);
         return diff;
     }

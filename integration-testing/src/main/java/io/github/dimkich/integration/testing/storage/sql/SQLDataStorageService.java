@@ -8,6 +8,7 @@ import io.github.dimkich.integration.testing.execution.StubAnswer;
 import io.github.dimkich.integration.testing.initialization.InitializationService;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInit;
 import io.github.dimkich.integration.testing.initialization.sql.SqlStorageInitState;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffEntry;
 import io.github.dimkich.integration.testing.storage.sql.state.StorageMutation;
 import io.github.dimkich.integration.testing.storage.sql.state.StorageState;
 import io.github.dimkich.integration.testing.storage.sql.state.TransitionAnalyzer;
@@ -196,7 +197,7 @@ public class SQLDataStorageService implements TestDataStorage, BeforeTest {
     }
 
     @Override
-    public Object getDiff() throws Exception {
+    public List<DiffEntry> getDiff() throws Exception {
         String resetSql = sequenceResetScheduler.pendingResetSql();
         StorageChanges result = storage.getStorageChanges(resetSql);
         sequenceResetScheduler.clearPending();

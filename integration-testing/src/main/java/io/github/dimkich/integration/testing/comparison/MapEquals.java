@@ -19,6 +19,9 @@ import java.util.function.BiPredicate;
  * ("RecursiveComparisonConfiguration is not taken into account for map keys"). It is fixed
  * in AssertJ 4.0.0-M2 and later, where map keys are compared with the configured
  * recursive comparison; after upgrading to that version this class can be removed.
+ * <p>
+ * The preset is an equality rule only: the diff engine leaves a map to {@code MapDiffRenderer}, so
+ * the preset cannot hide metadata attributes or a changed map class on its own.
  */
 public class MapEquals implements BiPredicate<Map<?, ?>, Map<?, ?>> {
     private final BiPredicate<Object, Object> recursiveEquals;
@@ -32,18 +35,12 @@ public class MapEquals implements BiPredicate<Map<?, ?>, Map<?, ?>> {
         if (actual.size() != expected.size()) {
             return false;
         }
-        if (hasSameKeys(actual, expected)) {
-            for (Map.Entry<?, ?> actualEntry : actual.entrySet()) {
-                if (!recursiveEquals.test(actualEntry.getValue(), expected.get(actualEntry.getKey()))) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        List<Map.Entry<?, ?>> unmatched = new ArrayList<>(expected.entrySet());
         for (Map.Entry<?, ?> actualEntry : actual.entrySet()) {
-            Map.Entry<?, ?> expectedEntry = removeEntryWithEqualKey(unmatched, actualEntry.getKey());
-            if (expectedEntry == null || !recursiveEquals.test(actualEntry.getValue(), expectedEntry.getValue())) {
+            Object expectedValue = expected.get(actualEntry.getKey());
+            if (expectedValue == null && !expected.containsKey(actualEntry.getKey())) {
+                return equalsByPredicate(actual, expected);
+            }
+            if (!recursiveEquals.test(actualEntry.getValue(), expectedValue)) {
                 return false;
             }
         }
@@ -51,15 +48,14 @@ public class MapEquals implements BiPredicate<Map<?, ?>, Map<?, ?>> {
     }
 
     /**
-     * Checks whether both maps contain the same keys according to their own lookup rules,
-     * so that values can be compared by {@link Map#get(Object)} without scanning the entries.
+     * Matches keys by the configured predicates when they are not equal as map keys. Sizes are
+     * already known to be equal, so a match of every key means that the key sets are equal.
      */
-    private boolean hasSameKeys(Map<?, ?> actual, Map<?, ?> expected) {
-        if (!actual.keySet().equals(expected.keySet())) {
-            return false;
-        }
-        for (Object key : actual.keySet()) {
-            if (!expected.containsKey(key)) {
+    private boolean equalsByPredicate(Map<?, ?> actual, Map<?, ?> expected) {
+        List<Map.Entry<?, ?>> unmatched = new ArrayList<>(expected.entrySet());
+        for (Map.Entry<?, ?> actualEntry : actual.entrySet()) {
+            Map.Entry<?, ?> expectedEntry = removeEntryWithEqualKey(unmatched, actualEntry.getKey());
+            if (expectedEntry == null || !recursiveEquals.test(actualEntry.getValue(), expectedEntry.getValue())) {
                 return false;
             }
         }

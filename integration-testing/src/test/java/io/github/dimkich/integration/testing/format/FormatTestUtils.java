@@ -3,6 +3,14 @@ package io.github.dimkich.integration.testing.format;
 import io.github.dimkich.integration.testing.TestCase;
 import io.github.dimkich.integration.testing.TestContainer;
 import io.github.dimkich.integration.testing.TestPart;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffEntry;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffOperation;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffValue;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffNullValue;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffObjectKey;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffObjectValue;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffScalarValue;
+import io.github.dimkich.integration.testing.storage.diff.model.StorageDiff;
 import lombok.SneakyThrows;
 import org.assertj.core.api.recursive.comparison.ComparisonDifference;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
@@ -33,7 +41,7 @@ public class FormatTestUtils {
         try {
             Class<?> sr2Class = Class.forName("org.springframework.http.converter.ResourceHttpMessageConverter$2");
 
-            compConfig.registerEqualsForType((o1, o2) -> true, SecureRandom.class);
+            compConfig.registerEqualsForType((o1, o2) -> o1 != null && o2 != null, SecureRandom.class);
             compConfig.registerEqualsForType((o1, o2) -> Arrays.equals(((ByteArrayResource) o1).getByteArray(),
                     ((ByteArrayResource) o2).getByteArray()), sr2Class);
             compConfig.registerEqualsForType((o1, o2) -> o1.stripTrailingZeros().equals(o2.stripTrailingZeros()),
@@ -106,5 +114,120 @@ public class FormatTestUtils {
             }
             return diff.isEmpty();
         };
+    }
+
+    /**
+     * A difference with an inserted record, an updated record and a deleted record: the inserted
+     * record carries a snapshot body, the updated one a difference body.
+     */
+    public static TestCase diffInsertUpdateDelete() {
+        DiffEntry inserted = new DiffEntry(DiffOperation.INSERT, "users/1", "User", Map.of(),
+                new DiffObjectValue(List.of(scalarEntry("name", "Ivan"))));
+        DiffEntry updated = DiffEntry.of(DiffOperation.UPDATE, "orders/100",
+                new DiffObjectValue(List.of(scalarEntry("status", "PAID"))));
+        DiffEntry deleted = DiffEntry.of(DiffOperation.DELETE, "orders/101", null);
+        return diffTestCase("diff insert, update and delete", inserted, updated, deleted);
+    }
+
+    /**
+     * A changed field with an explicit null: the element carries {@code xsi:nil} and the
+     * {@code nil} attribute must not be confused with a child element.
+     */
+    public static TestCase diffNullValue() {
+        DiffEntry updated = DiffEntry.of(DiffOperation.UPDATE, "orders/100",
+                new DiffObjectValue(List.of(fieldEntry("note", new DiffNullValue()))));
+        return diffTestCase("diff null value", updated);
+    }
+
+    /**
+     * Data fields named exactly as the service attributes: the record has {@code key} and
+     * {@code type} attributes, and its body contains fields with the same names.
+     */
+    public static TestCase diffAttributeNames() {
+        DiffEntry updated = new DiffEntry(DiffOperation.UPDATE, "orders/100", "Order", Map.of(),
+                new DiffObjectValue(List.of(
+                        scalarEntry("key", "abc"),
+                        scalarEntry("type", "LIMIT"))));
+        return diffTestCase("diff fields named as attributes", updated);
+    }
+
+    /**
+     * A nested object with a changed field and an added field: the difference body keeps its shape
+     * at every level.
+     */
+    public static TestCase diffNestedObject() {
+        DiffEntry age = new DiffEntry(DiffOperation.INSERT, "age", "Integer", Map.of(), new DiffScalarValue("5"));
+        DiffEntry profile = fieldEntry("profile", new DiffObjectValue(List.of(
+                scalarEntry("name", "Ivan"),
+                age)));
+        DiffEntry updated = DiffEntry.of(DiffOperation.UPDATE, "orders/100", new DiffObjectValue(List.of(profile)));
+        return diffTestCase("diff nested object", updated);
+    }
+
+    /**
+     * A difference with an object key: the key is written as a structure, the value as a snapshot
+     * and the deleted element keeps only the key.
+     */
+    public static TestCase diffObjectKey() {
+        DiffObjectKey key = new DiffObjectKey("MDKey", Map.of(),
+                new DiffObjectValue(List.of(
+                        scalarEntry("exchange", "MOEX"),
+                        scalarEntry("classCode", "TQCB"),
+                        scalarEntry("ticker", "SBER"))));
+        DiffEntry inserted = new DiffEntry(DiffOperation.INSERT, key, "MD", Map.of(),
+                new DiffObjectValue(List.of(
+                        new DiffEntry(null, "closePrice", "BigDecimal", Map.of(),
+                                new DiffScalarValue("259.43")))));
+        DiffEntry deleted = new DiffEntry(DiffOperation.DELETE, key, null, Map.of(), null);
+        return diffTestCase("diff object key", inserted, deleted);
+    }
+
+    /**
+     * A difference with a text key and a body field named {@code key}: the key attribute wins
+     * over the child element even when the child is the only one.
+     */
+    public static TestCase diffKeyAttributeAndKeyField() {
+        DiffEntry updated = new DiffEntry(DiffOperation.UPDATE, "orders/100", "Order", Map.of(),
+                new DiffObjectValue(List.of(scalarEntry("key", "abc"))));
+        return diffTestCase("diff key attribute and key field", updated);
+    }
+
+    /**
+     * A snapshot insert without a key and with a body field named {@code key}: the first child
+     * stays an ordinary field because it is not followed by a {@code <value>} wrapper.
+     */
+    public static TestCase diffKeylessInsertWithKeyField() {
+        DiffEntry inserted = new DiffEntry(DiffOperation.INSERT, (String) null, "Order", Map.of(),
+                new DiffObjectValue(List.of(
+                        scalarEntry("key", "abc"),
+                        scalarEntry("status", "PAID"))));
+        return diffTestCase("diff keyless insert with key field", inserted);
+    }
+
+    /**
+     * A difference with an object key and a scalar value: the value is written into the
+     * {@code <value>} wrapper as text.
+     */
+    public static TestCase diffObjectKeyScalarValue() {
+        DiffObjectKey key = new DiffObjectKey("MDKey", Map.of(),
+                new DiffObjectValue(List.of(scalarEntry("ticker", "SBER"))));
+        DiffEntry inserted = new DiffEntry(DiffOperation.INSERT, key, "MD", Map.of(),
+                new DiffScalarValue("one"));
+        return diffTestCase("diff object key with scalar value", inserted);
+    }
+
+    private static TestCase diffTestCase(String name, DiffEntry... entries) {
+        TestCase test = new TestCase();
+        test.setName(name);
+        test.setDiff(List.of(new StorageDiff("dataSource", List.of(entries))));
+        return test;
+    }
+
+    private static DiffEntry scalarEntry(String name, String text) {
+        return fieldEntry(name, new DiffScalarValue(text));
+    }
+
+    private static DiffEntry fieldEntry(String name, DiffValue value) {
+        return DiffEntry.of(null, name, value);
     }
 }

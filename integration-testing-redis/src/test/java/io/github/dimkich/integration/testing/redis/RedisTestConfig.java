@@ -14,12 +14,7 @@ import io.github.dimkich.integration.testing.format.common.type.TypeParser;
 import io.github.dimkich.integration.testing.redis.client.RedisClient;
 import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.config.RedisProperties;
-import io.github.dimkich.integration.testing.redis.facade.RedisClientTestFacade;
-import io.github.dimkich.integration.testing.redis.facade.RedisPushTestFacade;
-import io.github.dimkich.integration.testing.redis.facade.RedisReplicationMockFacade;
-import io.github.dimkich.integration.testing.redis.facade.RedisReplicatorSpyProcessor;
-import io.github.dimkich.integration.testing.redis.facade.RedisSerdeTestFacade;
-import io.github.dimkich.integration.testing.redis.facade.RedisTestFacade;
+import io.github.dimkich.integration.testing.redis.facade.*;
 import io.github.dimkich.integration.testing.redis.jackson.*;
 import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegistry;
 import io.github.dimkich.integration.testing.serde.SerdeManager;
@@ -47,10 +42,14 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.redis.connection.*;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.connection.zset.Aggregate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.lang.Nullable;
 import redis.clients.jedis.Jedis;
 
 import java.nio.ByteBuffer;
@@ -104,6 +103,34 @@ public class RedisTestConfig {
             jedis.auth(redisPassword);
         }
         return jedis;
+    }
+
+    /**
+     * Enables keyspace notifications and registers a listener that mimics an application
+     * cleaning index sets on natural key expiration. The listener removes expired keys from
+     * {@code redisson.expired.index}; the test class waits for {@code onMessage} with
+     * {@link io.github.dimkich.integration.testing.wait.completion.MethodCountingAwait}.
+     */
+    @Bean
+    public RedisMessageListenerContainer expiredKeyspaceListenerContainer(
+            RedisConnectionFactory redissonConnectionFactory,
+            StringRedisTemplate expiredKeyspaceStringRedisTemplate) {
+        try (Jedis jedis = new Jedis(redisHost, redisPort)) {
+            if (!redisPassword.isEmpty()) {
+                jedis.auth(redisPassword);
+            }
+            jedis.configSet("notify-keyspace-events", "KEA");
+        }
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(redissonConnectionFactory);
+        container.addMessageListener(new ExpiredKeyspaceListener(expiredKeyspaceStringRedisTemplate),
+                new PatternTopic("__keyevent@*__:expired"));
+        return container;
+    }
+
+    @Bean
+    public StringRedisTemplate expiredKeyspaceStringRedisTemplate(RedisConnectionFactory redissonConnectionFactory) {
+        return new StringRedisTemplate(redissonConnectionFactory);
     }
 
     @Bean
@@ -249,7 +276,7 @@ public class RedisTestConfig {
     @Bean
     TestSetupModule module() {
         return new TestSetupModule().addSubTypes(DumpKeyValuePair.class, TestRedisDto.class,
-                        InvalidDataAccessApiUsageException.class,
+                        RedisComplexKey.class, InvalidDataAccessApiUsageException.class,
                         RedisListCommands.Direction.class, Aggregate.class, RedisStringCommands.BitOperation.class,
                         BitFieldSubCommands.class, BitFieldSubCommands.BitFieldGet.class,
                         BitFieldSubCommands.BitFieldSet.class, BitFieldSubCommands.BitFieldIncrBy.class,
@@ -419,4 +446,30 @@ public class RedisTestConfig {
             throw new Exception("codec lookup failed");
         }
     }
+
+    /**
+     * Mimics an application listener that cleans index sets when a key expires. The listener
+     * removes the expired key from {@code redisson.expired.index} and then pushes it to
+     * {@code redisson.expired.received}; keys outside the {@code redisson.expired.} prefix are
+     * ignored. The signal is pushed after the removal, so the test's blocking {@code BRPOP}
+     * proves that the index cleanup has already happened.
+     */
+    @RequiredArgsConstructor
+    public static class ExpiredKeyspaceListener implements MessageListener {
+        private static final String PREFIX = "redisson.expired.";
+        private static final String INDEX_KEY = "redisson.expired.index";
+        private static final String RECEIVED_KEY = "redisson.expired.received";
+
+        private final StringRedisTemplate template;
+
+        @Override
+        public void onMessage(Message message, @Nullable byte[] pattern) {
+            String key = new String(message.getBody(), StandardCharsets.UTF_8);
+            if (key.startsWith(PREFIX)) {
+                template.opsForSet().remove(INDEX_KEY, key);
+                template.opsForList().rightPush(RECEIVED_KEY, key);
+            }
+        }
+    }
+
 }

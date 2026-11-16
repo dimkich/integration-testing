@@ -369,6 +369,16 @@ public class RedisTestFacade<K, V> {
                 (int) timeoutSeconds));
     }
 
+    /**
+     * Blocking {@code BRPOP} used as a synchronization point: returns the popped value or
+     * {@code null} when the timeout expires. The timeout must stay below the Jedis socket
+     * timeout so the server replies before the client gives up.
+     */
+    public V brPop(K key, long timeoutSeconds) {
+        List<byte[]> result = jedis.brpop((int) timeoutSeconds, serializeKey(key));
+        return result == null || result.size() < 2 ? null : deserializeValue(result.get(1));
+    }
+
     public V blMove(K sourceKey, K destKey, RedisListCommands.Direction from, RedisListCommands.Direction to,
                     long timeoutSeconds) {
         return deserializeValue(jedis.blmove(serializeKey(sourceKey), serializeKey(destKey),

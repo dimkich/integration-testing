@@ -96,22 +96,22 @@ public class JacksonUtils {
      * serializers the Jackson format visitor is used. If the serializer does not declare its
      * shape, the bean description is inspected: {@code @JsonValue} means a scalar, while
      * properties or {@code @JsonAnyGetter} mean a structured value.
+     * <p>
+     * A failure of the format visitor is not a missing shape but a broken serializer, so it
+     * propagates to the caller instead of being replaced by a bean description guess.
      *
      * @param serializer serializer of the type
      * @param provider   serializer provider that created the serializer
      * @param type       Java type being serialized
      * @return {@code true} if the serializer produces an object, array or map
      */
-    public static boolean isStructured(JsonSerializer<?> serializer, SerializerProvider provider, JavaType type) {
+    public static boolean isStructured(JsonSerializer<?> serializer, SerializerProvider provider, JavaType type)
+            throws JsonMappingException {
         if (isStructuredSerializer(serializer)) {
             return true;
         }
         ShapeVisitor visitor = new ShapeVisitor(provider);
-        try {
-            serializer.acceptJsonFormatVisitor(visitor, type);
-        } catch (JsonMappingException e) {
-            return isStructuredByBeanDescription(provider, type);
-        }
+        serializer.acceptJsonFormatVisitor(visitor, type);
         if (visitor.shape == JsonShape.UNKNOWN) {
             return isStructuredByBeanDescription(provider, type);
         }

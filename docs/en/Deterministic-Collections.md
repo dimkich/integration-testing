@@ -20,7 +20,7 @@ them untouched.
 `HashMap`/`HashSet` also produce unpredictable order for keys with identity hash codes, and
 `Collectors.toSet`/`toMap`/`groupingBy` depend on the internal table.
 
-When XML snapshots or `dataStorageDiff` contain such collections, tests start to flake.
+When XML snapshots or `<diff>` contain such collections, tests start to flake.
 
 ## Quick start
 
@@ -89,18 +89,11 @@ Disabling `MAP_OF`, `SET_OF`, `COPY_OF` or `COLLECTORS` brings non-deterministic
 use it for diagnostics only. The main practical case is disabling `HASH_COLLECTIONS` when
 constructor rewriting conflicts with a particular library.
 
-## Class loading and re-instrumentation
+## Re-instrumentation
 
-The agent is installed before the Spring context is created, so all application beans and classes
-are loaded already instrumented. Already loaded classes (including the test class itself) are
-retransformed during agent installation.
-
-If another tool reloads classes later, add `@RepeatInstrumentation` with the same prefix:
-
-```java
-@DeterministicCollections("com.example.myapp")
-@RepeatInstrumentation({"com.example.myapp"})
-```
+The agent is installed before the Spring context is created, so beans are loaded already
+instrumented. If another tool reloads classes later, add `@RepeatInstrumentation` with the same
+prefix.
 
 ## Limitations
 

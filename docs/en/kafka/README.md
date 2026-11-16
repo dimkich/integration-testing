@@ -14,8 +14,9 @@ The framework takes care of the broker side completely:
 
 1. **Sending messages:** before the case, the framework publishes messages from `<inboundMessage>`
    blocks to the specified topics.
-2. **Running the test:** your scenario runs — a bean method call or an HTTP request. When the case is
-   triggered by an `<inboundMessage>`, this step is just waiting for processing.
+2. **Running the test:** your scenario runs — a bean method call (an HTTP request is made through a
+   test bean, for example `testRestTemplate`). When the case is triggered by an `<inboundMessage>`,
+   this step is just waiting for processing.
 3. **Watching topics:** a background consumer (sniffer) reads all user topics and picks up everything
    the application sends.
 4. **Checking results:** at the end of the case, the framework compares the captured messages with

@@ -26,14 +26,20 @@ It has no knowledge that time has moved forward in your test.
 On every time shift in your XML test (e.g., via `addDuration="PT10S"`):
 
 1. The framework updates its internal virtual clock.
-2. A background analyzer walks all keys in the local in-memory database mirror and computes
-   which keys have a relative TTL less than or equal to zero relative to the new virtual
-   time.
-3. For all expired keys, the framework instantly sends commands to the real Redis to
-   physically delete them (`DEL` for keys or `HDEL` for individual hash fields).
+2. The framework finds keys and hash fields whose relative TTL is less than or equal to zero
+   relative to the new virtual time.
+3. For every expired key and field the framework first runs `EXISTS`/`HEXISTS`. Redis switches
+   them to lazy expiration: it removes them and publishes `expired`/`hexpired` events, which
+   applications subscribe to (for example, Spring Data Redis cleans index sets). The following
+   `DEL`/`HDEL` removes entries Redis does not consider expired: real clock, replica, clock not
+   shifted yet.
 4. **Result:** The real Redis database is synchronized with your virtual time. If your
    application tries to read this key at the same moment, Redis returns `null` (key not
    found).
+
+Container clocks (libfaketime) are updated before storages purge TTL data. Otherwise, Redis
+would not see the key as expired, `EXISTS` would return `1`, and `DEL` would remove the key
+without an `expired` event.
 
 Managing Time in XML (`DateTimeInit`)
 --------------------------------------
@@ -46,7 +52,7 @@ initialization element.
 Used in the root container to set a single starting point for all tests.
 
 ```xml
-<init type="dateTimeInit" dateTime="2026-01-01T12:00:00Z" />
+<init type="DateTimeInit" dateTime="2026-01-01T12:00:00Z" />
 ```
 
 ### Option B: Relative Time Shift
@@ -56,7 +62,7 @@ Used inside test steps (`TestPart`) to simulate the passage of time.
 ```xml
 <!-- Apply a 15-second time shift only for steps in the current case.
      A base dateTime must be defined in the current or an enclosing scope. -->
-<init type="dateTimeInit" applyTo="TestPart" addDuration="PT15S"/>
+<init type="DateTimeInit" applyTo="TestPart" addDuration="PT15S"/>
 ```
 
 The `addDuration` format follows the ISO-8601 standard:
@@ -81,7 +87,7 @@ rest untouched.
 ### Describing a Hash with Per-Field TTL in XML:
 
 ```xml
-<entry key="user:session:active" type="RedisEntry">
+<entry key="user:session:active" utype="RedisEntry">
     <data type="RedisHash">
         <!-- Field without TTL (permanent) -->
         <entry>
@@ -138,40 +144,20 @@ Below is a ready-to-use XML scenario demonstrating key expiration testing.
             <response />
             
             <!-- Expect the key to appear with a TTL of 15 seconds -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>user:session:temp</key>
-                        <value type="RedisEntry">
-                            <data>ACTIVE_SESSION</data>
-                            <ttl>PT15S</ttl>
-                        </value>
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+            <diff storage="redissonConnectionFactory">
+                <insert key="user:session:temp" ttl="PT15S">ACTIVE_SESSION</insert>
+            </diff>
         </test>
 
         <test type="Part" name="2. Time shift by 10 seconds (key exists, TTL decreased)">
             <!-- Time shifted by +10s (10s from start). Key lives for another 5s -->
             <bean>redisStringFacade</bean>
-            <method>get</method>
+            <method>pttl</method>
             <request>user:session:temp</request>
-            <response>ACTIVE_SESSION</response>
-            
-            <!-- Verify that the TTL in the database decreased to 5 seconds -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>user:session:temp</key>
-                        <value type="EntriesObjectKeyObjectValue">
-                            <entry change="changed">
-                                <key>ttl</key>
-                                <value type="PeriodDuration">PT5S</value>
-                            </entry>
-                        </value>
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+            <!-- The TTL in the database decreased to 5 seconds -->
+            <response type="Long">5000</response>
+
+            <!-- A TTL decrease alone is not a diff entry: the key value did not change -->
         </test>
 
         <test type="Part" name="3. Time shift by another 10 seconds (key should be deleted)">
@@ -181,16 +167,8 @@ Below is a ready-to-use XML scenario demonstrating key expiration testing.
             <request>user:session:temp</request>
             <!-- The get method should return null (session deleted) -->
             <response xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
-            
-            <!-- Verify that the key was physically removed from the store -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="deleted">
-                        <key>user:session:temp</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+
+            <!-- The key is removed during part initialization (time shift), so it is not in the diff -->
         </test>
     </test>
 </test>

@@ -3,6 +3,8 @@ package io.github.dimkich.integration.testing;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.databind.cfg.HandlerInstantiator;
 import com.fasterxml.jackson.databind.ser.PropertyFilter;
+import io.github.dimkich.integration.testing.storage.diff.presenter.DiffPresenter;
+import io.github.dimkich.integration.testing.storage.diff.renderer.DiffRenderer;
 import io.github.sugarcubes.cloner.CopyAction;
 import io.github.sugarcubes.cloner.ReflectionUtils;
 import lombok.Getter;
@@ -35,9 +37,19 @@ public class TestSetupModule {
     private final List<com.fasterxml.jackson.databind.Module> jacksonModules = new ArrayList<>();
     private final List<Pair<String, PropertyFilter>> jacksonFilters = new ArrayList<>();
     private final Map<Class<?>, BiPredicate<?, ?>> equalsMap = new HashMap<>();
+    private final Map<Class<?>, BiPredicate<?, ?>> presetEqualsMap = new HashMap<>();
     private final Map<Field, CopyAction> fieldActions = new LinkedHashMap<>();
     private final Map<Class<?>, CopyAction> typeActions = new LinkedHashMap<>();
     private final Map<Predicate<Class<?>>, CopyAction> predicateTypeActions = new LinkedHashMap<>();
+    private final List<Pair<Class<?>, DiffPresenter<?>>> diffPresenters = new ArrayList<>();
+    /**
+     * Key presenters registered by this module, by key type.
+     */
+    private final List<Pair<Class<?>, DiffPresenter<?>>> diffKeyPresenters = new ArrayList<>();
+    /**
+     * Renderers of body types registered by this module.
+     */
+    private final List<Pair<Class<?>, DiffRenderer<?>>> diffRenderers = new ArrayList<>();
     private HandlerInstantiator handlerInstantiator;
 
     /**
@@ -210,6 +222,89 @@ public class TestSetupModule {
      */
     public <T> TestSetupModule addEqualsForType(Class<T> type, BiPredicate<? super T, ? super T> equals) {
         equalsMap.put(type, equals);
+        return this;
+    }
+
+    /**
+     * Registers an equality preset of the framework.
+     * <p>
+     * A preset is used for comparing values like a custom predicate, but it does not suppress a
+     * difference on its own: the renderer of the value decides, so metadata attributes and a
+     * changed body stay visible. User code should register its own predicates with
+     * {@link #addEqualsForType(Class, BiPredicate)}; this method is intended for framework
+     * modules.
+     *
+     * @param type   the target type
+     * @param equals equality predicate of the preset
+     * @param <T>    the type parameter
+     * @return this module for chaining
+     */
+    public <T> TestSetupModule addPresetEqualsForType(Class<T> type, BiPredicate<? super T, ? super T> equals) {
+        presetEqualsMap.put(type, equals);
+        return this;
+    }
+
+    /**
+     * Registers a presenter that describes how a value type looks in the storage difference: its
+     * presentation — body and metadata attributes — and its type. The difference itself is built by
+     * the engine. A user registration of the same type replaces the built-in presenter.
+     *
+     * @param type      value type
+     * @param presenter presenter of the type
+     * @param <T>       value type
+     * @return this module for chaining
+     */
+    public <T> TestSetupModule addDiffPresenter(Class<T> type, DiffPresenter<? super T> presenter) {
+        diffPresenters.add(Pair.of(type, presenter));
+        return this;
+    }
+
+    /**
+     * Registers a presenter of a map key.
+     * <p>
+     * The form of the key is decided by the body returned by the presenter, using the same type
+     * detector as for values: a scalar body is written as a text key, a structured body as an
+     * object key with a type, attributes and body. A {@code null} body produces an
+     * attributes-only object key.
+     * <p>
+     * A text key identifies a record inside its map and is never read back into an object. Its
+     * text must be stable between runs and unique within one map; the engine fails with a clear
+     * error when two keys of one map render the same text. An object key is a snapshot: the engine
+     * never writes operations inside it.
+     * <p>
+     * Key and value presenters are looked up separately: a presenter registered with
+     * {@link #addDiffPresenter(Class, DiffPresenter)} is not applied to a key automatically.
+     *
+     * @param type      key type
+     * @param presenter presenter of the key
+     * @param <T>       key type
+     * @return this module for chaining
+     */
+    public <T> TestSetupModule addDiffKeyPresenter(Class<T> type, DiffPresenter<? super T> presenter) {
+        diffKeyPresenters.add(Pair.of(type, presenter));
+        return this;
+    }
+
+    /**
+     * Registers the renderer of a body type.
+     * <p>
+     * The renderer is selected by the type of the body returned by a presenter. A body without a
+     * registered renderer is rendered by its shape: a scalar or an array. A user registration of
+     * the same type replaces the built-in renderer.
+     * <p>
+     * The type argument of the renderer is usually the registered type; it may be a subtype, which
+     * keeps raw container classes registrable: {@code Map.class} with a
+     * {@code DiffRenderer<Map<?, ?>>}. The renderer must accept every subtype of the registered
+     * type: a renderer typed for {@code HashMap} registered under {@code Map.class} compiles, but
+     * fails with a {@code ClassCastException} when the body is another map implementation.
+     *
+     * @param type     body type
+     * @param renderer renderer of the body type
+     * @param <T>      body type
+     * @return this module for chaining
+     */
+    public <T> TestSetupModule addDiffRenderer(Class<T> type, DiffRenderer<? extends T> renderer) {
+        diffRenderers.add(Pair.of(type, renderer));
         return this;
     }
 

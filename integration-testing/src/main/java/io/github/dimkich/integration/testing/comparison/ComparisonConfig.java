@@ -5,11 +5,13 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.util.function.SingletonSupplier;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicMarkableReference;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
@@ -34,17 +36,22 @@ public class ComparisonConfig {
      */
     @Bean
     TestSetupModule comparisonTestSetupModule(ObjectProvider<ObjectComparisonService> comparisonService) {
+        // The service is resolved once: the predicate runs for every value of a difference, and a
+        // bean lookup per call costs far more than the comparison itself.
+        SingletonSupplier<ObjectComparisonService> service =
+                SingletonSupplier.of(comparisonService::getObject);
         BiPredicate<Object, Object> recursiveEquals = (actual, expected) ->
-                comparisonService.getObject().isEquals(actual, expected);
+                Objects.requireNonNull(service.get(), "ObjectComparisonService is not available")
+                        .isEquals(actual, expected);
         return new TestSetupModule()
-                .addEqualsForType(AtomicMarkableReference.class,
+                .addPresetEqualsForType(AtomicMarkableReference.class,
                         castPredicate(new AtomicMarkableReferenceEquals(recursiveEquals)))
-                .addEqualsForType(AtomicReference.class,
+                .addPresetEqualsForType(AtomicReference.class,
                         castPredicate(new AtomicReferenceEquals(recursiveEquals)))
-                .addEqualsForType(BigDecimal.class, new BigDecimalEquals())
-                .addEqualsForType(ZonedDateTime.class, new ZonedDateTimeEquals())
-                .addEqualsForType(Temporal.class, new TemporalEquals())
-                .addEqualsForType(Map.class, castPredicate(new MapEquals(recursiveEquals)));
+                .addPresetEqualsForType(BigDecimal.class, new BigDecimalEquals())
+                .addPresetEqualsForType(ZonedDateTime.class, new ZonedDateTimeEquals())
+                .addPresetEqualsForType(Temporal.class, new TemporalEquals())
+                .addPresetEqualsForType(Map.class, castPredicate(new MapEquals(recursiveEquals)));
     }
 
     @SuppressWarnings("unchecked")

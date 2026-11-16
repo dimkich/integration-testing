@@ -11,7 +11,7 @@ mode a message counts as processed only when the consumer group has committed an
 while `endOffset > committedOffset` for at least one subscribed partition of a live group, lag is
 non-zero. The `inflight = false` mode asks the broker the same question through the Admin API.
 
-The wait is bounded by `lag-polling-timeout-ms` (10000 ms by default; do not confuse it with
+The wait is bounded by `lag-polling-timeout-ms` (15000 ms by default; do not confuse it with
 `startup-stabilization-timeout-seconds`, 30 s — that timeout awaits SUT readiness before the lag is
 polled). When the time is up, the case fails:
 

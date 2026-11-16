@@ -62,8 +62,8 @@ Provider reference
 
 The providers shared by all platforms (`string`, `json`, `xml`, `yaml`, `bytes`), the
 `target-class`/`object-mapper-ref` fields and the source selection rules are described in the
-[Serde overview](../serde/README.md). In Kafka the core formats are available both as a whole
-record and as parts; platform providers are whole-record only:
+[Serde overview](../serde/README.md). In Kafka the providers below are available both as a whole
+record and as parts; the table lists their roles:
 
 | `type`                                   | Available at     | What it does                                                                                                        |
 |------------------------------------------|------------------|---------------------------------------------------------------------------------------------------------------------|

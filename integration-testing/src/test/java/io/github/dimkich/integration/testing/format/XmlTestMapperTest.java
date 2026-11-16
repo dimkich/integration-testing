@@ -900,6 +900,104 @@ class XmlTestMapperTest {
     </outboundMessage>
 </test>
 """},
+                {FormatTestUtils.diffInsertUpdateDelete(), """
+<test type="Case" name="diff insert, update and delete">
+    <diff storage="dataSource">
+        <insert key="users/1" type="User">
+            <name>Ivan</name>
+        </insert>
+        <update key="orders/100">
+            <status>PAID</status>
+        </update>
+        <delete key="orders/101"/>
+    </diff>
+</test>
+"""},
+                {FormatTestUtils.diffNullValue(), """
+<test type="Case" name="diff null value">
+    <diff storage="dataSource">
+        <update key="orders/100">
+            <note xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        </update>
+    </diff>
+</test>
+"""},
+                {FormatTestUtils.diffAttributeNames(), """
+<test type="Case" name="diff fields named as attributes">
+    <diff storage="dataSource">
+        <update key="orders/100" type="Order">
+            <key>abc</key>
+            <type>LIMIT</type>
+        </update>
+    </diff>
+</test>
+"""},
+                {FormatTestUtils.diffNestedObject(), """
+<test type="Case" name="diff nested object">
+    <diff storage="dataSource">
+        <update key="orders/100">
+            <profile>
+                <name>Ivan</name>
+                <insert key="age" type="Integer">5</insert>
+            </profile>
+        </update>
+    </diff>
+</test>
+"""},
+                {FormatTestUtils.diffObjectKey(), """
+<test type="Case" name="diff object key">
+    <diff storage="dataSource">
+        <insert type="MD">
+            <key type="MDKey">
+                <exchange>MOEX</exchange>
+                <classCode>TQCB</classCode>
+                <ticker>SBER</ticker>
+            </key>
+            <value>
+                <closePrice type="BigDecimal">259.43</closePrice>
+            </value>
+        </insert>
+        <delete>
+            <key type="MDKey">
+                <exchange>MOEX</exchange>
+                <classCode>TQCB</classCode>
+                <ticker>SBER</ticker>
+            </key>
+        </delete>
+    </diff>
+</test>
+"""},
+                {FormatTestUtils.diffKeyAttributeAndKeyField(), """
+<test type="Case" name="diff key attribute and key field">
+    <diff storage="dataSource">
+        <update key="orders/100" type="Order">
+            <key>abc</key>
+        </update>
+    </diff>
+</test>
+"""},
+                {FormatTestUtils.diffKeylessInsertWithKeyField(), """
+<test type="Case" name="diff keyless insert with key field">
+    <diff storage="dataSource">
+        <insert type="Order">
+            <key>abc</key>
+            <status>PAID</status>
+        </insert>
+    </diff>
+</test>
+"""},
+                {FormatTestUtils.diffObjectKeyScalarValue(), """
+<test type="Case" name="diff object key with scalar value">
+    <diff storage="dataSource">
+        <insert type="MD">
+            <key type="MDKey">
+                <ticker>SBER</ticker>
+            </key>
+            <value>one</value>
+        </insert>
+    </diff>
+</test>
+"""},
         };
     }
 

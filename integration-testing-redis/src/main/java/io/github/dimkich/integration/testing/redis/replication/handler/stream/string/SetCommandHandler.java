@@ -1,6 +1,7 @@
 package io.github.dimkich.integration.testing.redis.replication.handler.stream.string;
 
 import com.moilioncircle.redis.replicator.cmd.impl.SetCommand;
+import com.moilioncircle.redis.replicator.cmd.impl.XATType;
 import com.moilioncircle.redis.replicator.event.Event;
 import com.moilioncircle.redis.replicator.rdb.datatype.ExpiredType;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
@@ -29,12 +30,10 @@ public class SetCommandHandler implements RedisStreamHandler<SetCommand> {
                 entry.setExpireAt(now, now.plusSeconds(event.getExpiredValue()));
             } else if (event.getExpiredType() == ExpiredType.MS) {
                 entry.setExpireAt(now, now.plus(event.getExpiredValue(), ChronoUnit.MILLIS));
-            } else if (event.getXatType() != null) {
-                if (event.getXatType().name().equals("EXAT")) {
-                    entry.setExpireAt(now, Instant.ofEpochSecond(event.getXatValue()).atZone(now.getZone()));
-                } else if (event.getXatType().name().equals("PXAT")) {
-                    entry.setExpireAt(now, Instant.ofEpochMilli(event.getXatValue()).atZone(now.getZone()));
-                }
+            } else if (event.getXatType() == XATType.EXAT) {
+                entry.setExpireAt(now, Instant.ofEpochSecond(event.getXatValue()).atZone(now.getZone()));
+            } else if (event.getXatType() == XATType.PXAT) {
+                entry.setExpireAt(now, Instant.ofEpochMilli(event.getXatValue()).atZone(now.getZone()));
             } else if (!event.getKeepTtl()) {
                 entry.setExpireAt(now, (ZonedDateTime) null);
             }

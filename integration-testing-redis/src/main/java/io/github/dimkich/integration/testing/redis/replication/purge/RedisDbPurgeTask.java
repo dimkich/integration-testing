@@ -7,6 +7,7 @@ import io.github.dimkich.integration.testing.redis.registry.RedisDataSchemaRegis
 import io.github.dimkich.integration.testing.redis.serde.RedisDataCodec;
 import lombok.RequiredArgsConstructor;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -15,6 +16,15 @@ import java.util.Map;
 
 /**
  * Per-database batch of keys and hash fields to delete when their in-memory TTL has expired.
+ * <p>
+ * Before deleting, the batch queues {@code EXISTS} for every key and {@code HEXISTS} for every
+ * hash field. These commands perform lazy expiration: when Redis considers a key or field
+ * expired, it removes it and publishes an {@code expired}/{@code hexpired} keyspace
+ * notification. Applications subscribed to keyspace events (for example, Spring Data Redis
+ * cleaning index sets) therefore observe a natural expiration instead of a silent delete.
+ * The following {@code DEL}/{@code HDEL} commands are a fallback for entries Redis does not
+ * consider expired (real clock, replica, clock not shifted yet); for entries already removed
+ * by lazy expiration they publish nothing.
  * <p>
  * When every field of a hash is scheduled for removal, the whole key is deleted with {@code DEL}
  * instead of individual {@code HDEL} calls. Commands are queued into the pipeline as whole lists;
@@ -25,6 +35,9 @@ import java.util.Map;
  */
 @RequiredArgsConstructor
 public class RedisDbPurgeTask {
+    private static final byte[] EXISTS = "EXISTS".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] HEXISTS = "HEXISTS".getBytes(StandardCharsets.US_ASCII);
+
     private final List<byte[]> keysToDel = new ArrayList<>();
     private final Map<RedisKey, List<Object>> hashFieldsToDel = new LinkedHashMap<>();
     private final Map<RedisKey, Integer> hashTotalSizes = new LinkedHashMap<>();
@@ -47,9 +60,13 @@ public class RedisDbPurgeTask {
     }
 
     /**
-     * Promotes full-hash deletes, then queues {@code DEL} and {@code HDEL} commands for the rest.
+     * Promotes full-hash deletes, then queues lazy-expiration probes followed by the actual
+     * {@code DEL} and {@code HDEL} commands.
      * <p>
-     * Whole lists are handed to the pipeline, which splits them into command-sized chunks.
+     * {@code EXISTS} is sent as one command for the whole key list and {@code HEXISTS} once per
+     * hash field. Replies are not inspected: the pipeline only drains them, while the commands
+     * themselves trigger the expiration notifications. Whole lists are handed to the pipeline,
+     * which splits them into command-sized chunks.
      *
      * @param pipeline    open pipeline (caller selects the database)
      * @param storageName connection name for schema lookup
@@ -71,7 +88,9 @@ public class RedisDbPurgeTask {
         }
 
         if (!keysToDel.isEmpty()) {
-            pipeline.del(keysToDel.toArray(new byte[0][]));
+            byte[][] keys = keysToDel.toArray(new byte[0][]);
+            pipeline.execute(EXISTS, keys);
+            pipeline.del(keys);
         }
 
         hashFieldsToDel.forEach((rootKey, fields) -> {
@@ -83,6 +102,9 @@ public class RedisDbPurgeTask {
                     .map(fieldCodec::serialize)
                     .toArray(byte[][]::new);
 
+            for (byte[] field : fieldsRaw) {
+                pipeline.execute(HEXISTS, rootKeyRaw, field);
+            }
             pipeline.hDel(rootKeyRaw, fieldsRaw);
         });
     }

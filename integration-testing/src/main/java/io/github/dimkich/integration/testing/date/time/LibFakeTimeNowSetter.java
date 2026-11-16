@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.date.time;
 
 import io.github.dimkich.integration.testing.NowSetter;
 import lombok.SneakyThrows;
+import org.springframework.core.Ordered;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,11 +24,16 @@ import java.time.format.DateTimeFormatter;
  * only after atomically replacing the shared timestamp file, so a successful
  * {@link #setNow(ZonedDateTime)} guarantees that all instrumented containers already
  * observe the new time.
+ * <p>
+ * Ordered before every other {@link NowSetter} so containers see the new time before a
+ * storage setter purges TTL data. Otherwise Redis would not consider expired entries
+ * expired and would delete them without publishing {@code expired}/{@code hexpired}
+ * keyspace notifications.
  * </p>
  *
  * @see NowSetter
  */
-public class LibFakeTimeNowSetter implements NowSetter {
+public class LibFakeTimeNowSetter implements NowSetter, Ordered {
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
     /** Expected daemon acknowledgement after the timestamp file has been replaced. */
@@ -38,6 +44,17 @@ public class LibFakeTimeNowSetter implements NowSetter {
     private static Socket socket;
     private static OutputStream socketStream;
     private static BufferedReader socketReader;
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The highest precedence makes libfaketime run before storage setters such as the Redis
+     * TTL purge.
+     */
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE;
+    }
 
     /**
      * Establishes the TCP connection to the libfaketime daemon.

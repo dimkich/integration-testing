@@ -1,5 +1,6 @@
 package io.github.dimkich.integration.testing.serde;
 
+import io.github.dimkich.integration.testing.util.TypeSpecificity;
 import org.springframework.lang.Nullable;
 
 /**
@@ -135,7 +136,7 @@ public interface TestSerdeComponent<I, O, C extends TestSerdeContext, R extends 
      * {@code other} is, {@code 0} when they are equally specific
      */
     default int compare(TestSerdeComponent<?, ?, ?, ?, ?> other) {
-        int result = TypeSpecificity.compareRoles(getRole(), getRoleClass(),
+        int result = SerdeSpecificity.compareRoles(getRole(), getRoleClass(),
                 other.getRole(), other.getRoleClass());
         if (result == 0) {
             result = TypeSpecificity.compare(getPropertiesClass(), other.getPropertiesClass());

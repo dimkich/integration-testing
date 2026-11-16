@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.redis.replication.handler.stream.h
 
 import com.moilioncircle.redis.replicator.cmd.impl.HIncrByCommand;
 import com.moilioncircle.redis.replicator.event.Event;
+import io.github.dimkich.integration.testing.redis.model.RedisEntry;
 import io.github.dimkich.integration.testing.redis.model.RedisHash;
 import io.github.dimkich.integration.testing.redis.replication.RedisInMemoryStore;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisStreamHandler;
@@ -18,7 +19,12 @@ public class HIncrByCommandHandler implements RedisStreamHandler<HIncrByCommand>
     public void handle(HIncrByCommand event, RedisInMemoryStore store) {
         store.compute(event.getKey(), RedisHash.class, (schema, hash) -> {
             Object field = schema.getHashKeyCodec().deserialize(event.getField());
-            hash.get(field).increment(event.getIncrement());
+            RedisEntry entry = hash.get(field);
+            if (entry == null) {
+                entry = new RedisEntry();
+                hash.put(field, entry);
+            }
+            entry.increment(event.getIncrement());
         });
     }
 }

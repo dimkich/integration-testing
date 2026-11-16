@@ -70,7 +70,7 @@ The binary side of every converter is `java.nio.ByteBuffer`:
 * a deserializer reads the remaining bytes (`position..limit`) and must not change the position;
   start with `input.slice()` or `input.duplicate()` and work with the view;
 * never assume that data starts at position zero: use `remaining()`;
-* use the static helpers `TestSerdeConverter.wrap(byte[])` and
+* use the static helpers `ByteBuffer.wrap(byte[])` and
   `TestSerdeConverter.toByteArray(ByteBuffer)`. `toByteArray` always returns a defensive copy of
   the remaining bytes and does not change the buffer position.
 
@@ -211,7 +211,7 @@ public class NativeSerializerToCoreAdapter implements TestSerdeAdapter<
             return null;
         }
         return TestSerdeConverter.of(inputClass, outputClass, contextClass,
-                (input, context) -> TestSerdeConverter.wrap(source.serialize(input)));
+                (input, context) -> ByteBuffer.wrap(source.serialize(input)));
     }
 }
 ```

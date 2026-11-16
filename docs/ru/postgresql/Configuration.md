@@ -17,9 +17,7 @@
 ```xml
 <init type="SqlStorageSetup" name="dataSource">...</init>
 <init type="SqlStorageInit" name="dataSource">...</init>
-<dataStorageDiff>
-    <dataSource>...</dataSource>
-</dataStorageDiff>
+<diff storage="dataSource">...</diff>
 ```
 
 Имя может быть любым, например `dataSource`, `orders`, `billing`. Оно не обязано совпадать с именем
@@ -60,9 +58,9 @@
 `defaultSchema` влияет на разрешение имён `users`, `orders` и т.п. Если таблицы лежат в другой
 схеме, укажите её в `defaultSchema` или используйте полные имена `schema.table`.
 
-Это же значение определяет префикс таблицы в ключах строк `<dataStorageDiff>`: таблицы из
-`defaultSchema` используют короткое имя (`users_1`), таблицы из других схем сохраняют схему
-(`billing.users_1`).
+Это же значение определяет префикс таблицы в ключах строк `<diff>`: таблицы из
+`defaultSchema` используют короткое имя (`users/1`), таблицы из других схем сохраняют схему
+(`billing.users/1`).
 
 Пример с двумя подключениями:
 
@@ -126,27 +124,13 @@ integration:
 
 ## Форма diff в XML
 
-Модуль складывает изменения в обычное хранилище фреймворка. Чтобы получить привычный вид
-`MapStringKeyObjectValue` → `EntriesObjectKeyObjectValue` с атрибутом `change`, добавьте настройку:
-
-```yaml
-integration:
-  testing:
-    storage:
-      storages:
-        dataSource:
-          keyType: [ STRING, OBJECT ]
-          valueType: [ OBJECT, OBJECT ]
-          changeType: [ false, true ]
-```
-
-Здесь уровни означают:
-
-* первый элемент — корневой diff, ключ — имя подключения;
-* второй элемент — записи внутри подключения, ключ — строка вида `users_100`.
-
-`changeType` включает атрибут `change="added|changed|deleted"`. Для второго подключения добавьте
-аналогичный блок `storages.billing`.
+Отдельная настройка формы diff не нужна: `<diff>` строится по общим правилам —
+операция задаётся тегом `insert`, `update` или `delete`, идентификатор — атрибутом `key`
+(см. [Изменения хранилищ](../Storage-Diff.md) и [Данные и diff](Data-and-Diff.md)). Ключ строки
+PostgreSQL всегда текстовый (`[schema.]table/pk`); объектные ключи относятся к мапам внутри
+значений, если их тип структурный. Бывшая секция
+`integration.testing.storage.storages` с `keyType`, `valueType` и `changeType` не читается: если
+она осталась в конфигурации, её можно удалить.
 
 ## Настройки колонок
 
@@ -218,11 +202,13 @@ integration:
 CREATE EXTENSION IF NOT EXISTS hstore;
 ```
 
-Модуль ожидает стандартный `bytea_output = 'hex'`. При `bytea_output = 'escape'` бинарные значения
-могут отображаться как текст, а не как `byte[]`.
+Модуль ожидает стандартный `bytea_output = 'hex'`. При `bytea_output = 'escape'` значение не
+декодируется: конвертер оставляет escape-литерал как `byte[]`, поэтому в XML оно выглядит неверно.
+Используйте `hex`.
 
-Служебные таблицы с префиксом `_it_` не предназначены для тестовых данных: модуль сам исключает их
-из метаданных и фикстур. Не очищайте и не изменяйте их вручную.
+Служебные таблицы журнала модуля (legacy audit log и таблицы с префиксом `_it_postgres_journal_`)
+исключаются из метаданных. DBUnit-фикстуры при этом не фильтруются: не добавляйте эти таблицы в
+датасет. Не очищайте и не изменяйте их вручную.
 
 По умолчанию `@EnableTestPostgreSQL` подключает `postgresql.properties` и включает embedded PostgreSQL
 из Testcontainers. Для внешней базы отключите embedded-режим через свойства теста, например:
@@ -256,12 +242,6 @@ integration:
               type: json
               excludedFields:
                 - secret
-    storage:
-      storages:
-        dataSource:
-          keyType: [ STRING, OBJECT ]
-          valueType: [ OBJECT, OBJECT ]
-          changeType: [ false, true ]
 ```
 
 ---

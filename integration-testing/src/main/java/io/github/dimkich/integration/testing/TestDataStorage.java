@@ -1,5 +1,9 @@
 package io.github.dimkich.integration.testing;
 
+import io.github.dimkich.integration.testing.storage.diff.model.DiffEntry;
+
+import java.util.List;
+
 /**
  * Interface for test data storage implementations used in integration testing.
  * <p>
@@ -49,10 +53,8 @@ public interface TestDataStorage {
      * directly.
      * </p>
      *
-     * @return the computed difference (a
-     * {@link io.github.dimkich.integration.testing.storage.mapping.Container}) or {@code null}
-     * if there were no changes
+     * @return record entries of the storage, empty if there were no changes
      * @throws Exception if an error occurs while computing the difference
      */
-    Object getDiff() throws Exception;
+    List<DiffEntry> getDiff() throws Exception;
 }

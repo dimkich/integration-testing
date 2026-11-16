@@ -58,14 +58,20 @@ public class MethodCountingTracker {
     private static volatile boolean anyActivity;
 
     /**
-     * Resets the active task counter and the activity flag.
-     * <p>Should be called at the start of a test case to ensure no leaked counts
-     * from previous tests affect the current results.</p>
+     * Opens a new activity window: clears the activity flag and reports activity straight
+     * away if tasks are already in flight.
+     *
+     * <p>The in-flight counter is deliberately kept. A task that started before this call
+     * (for example, a message handler triggered by initialization) must still be awaited by
+     * the current window. Zeroing the counter would make its later {@link #endTask} decrement
+     * below zero, after which {@link #awaitAndCheckActivity()} would never block again.
+     * Keeping the counter makes the wait engage until such a task finishes, and the
+     * {@code true} flag forces one extra stabilization step to re-check the system after
+     * it is done.</p>
      */
     public static void reset() {
         synchronized (lock) {
-            activeTasks.set(0);
-            anyActivity = false;
+            anyActivity = activeTasks.get() > 0;
         }
     }
 

@@ -1,9 +1,6 @@
 <?xml version='1.1' encoding='UTF-8'?>
 <!-- @formatter:off -->
 <test type="Container">
-    <!-- ==================================================================== -->
-    <!-- Fixture: shared schema and dataset.                                  -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Fixture">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -16,18 +13,13 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO users (id, name, email) VALUES (1, 'John Doe', 'john@test.com')</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>users_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">1</id>
-                            <name>John Doe</name>
-                            <email>john@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="users/1">
+                    <id type="Integer">1</id>
+                    <name>John Doe</name>
+                    <email>john@test.com</email>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="Upsert with ON CONFLICT DO UPDATE">
             <init type="SqlStorageInit" name="dataSource">
@@ -37,17 +29,12 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO users (id, name, email) VALUES (1, 'Upserted', 'upserted@test.com') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>users_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <name>Upserted</name>
-                            <email>upserted@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <update key="users/1">
+                    <name>Upserted</name>
+                    <email>upserted@test.com</email>
+                </update>
+            </diff>
         </test>
         <test type="Case" name="Accumulated changes between parts">
             <init type="SqlStorageInit" name="dataSource">
@@ -57,46 +44,31 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO users (id, name, email) VALUES (1, 'John Doe', 'john@test.com')</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>users_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">1</id>
-                                <name>John Doe</name>
-                                <email>john@test.com</email>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="users/1">
+                        <id type="Integer">1</id>
+                        <name>John Doe</name>
+                        <email>john@test.com</email>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Update user">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE users SET name = 'John Updated' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>users_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <name>John Updated</name>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="users/1">
+                        <name>John Updated</name>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Delete user">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>DELETE FROM users WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="deleted">
-                            <key>users_1</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <delete key="users/1"/>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Watermark isolation">
@@ -107,18 +79,13 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO users (id, name, email) VALUES (3, 'Carol', 'carol@test.com')</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>users_3</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">3</id>
-                            <name>Carol</name>
-                            <email>carol@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="users/3">
+                    <id type="Integer">3</id>
+                    <name>Carol</name>
+                    <email>carol@test.com</email>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="Squash insert then update">
             <init type="SqlStorageInit" name="dataSource">
@@ -127,18 +94,13 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO users (id, name, email) VALUES (10, 'A', 'a@test.com'); UPDATE users SET name = 'B' WHERE id = 10</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>users_10</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">10</id>
-                            <name>B</name>
-                            <email>a@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="users/10">
+                    <id type="Integer">10</id>
+                    <name>B</name>
+                    <email>a@test.com</email>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="Squash insert then delete">
             <init type="SqlStorageInit" name="dataSource">
@@ -156,19 +118,13 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE users SET name = 'First' WHERE id = 1; UPDATE users SET name = 'Second', email = 'second@test.com' WHERE id = 1</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>users_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <name>Second</name>
-                            <email>second@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <update key="users/1">
+                    <name>Second</name>
+                    <email>second@test.com</email>
+                </update>
+            </diff>
         </test>
-
         <test type="Case" name="Squash update then delete">
             <init type="SqlStorageInit" name="dataSource">
                 <tablesToClear>users</tablesToClear>
@@ -177,14 +133,9 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE users SET name = 'Changed' WHERE id = 1; DELETE FROM users WHERE id = 1</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="deleted">
-                        <key>users_1</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <delete key="users/1"/>
+            </diff>
         </test>
         <test type="Case" name="Squash delete then insert">
             <init type="SqlStorageInit" name="dataSource">
@@ -194,17 +145,12 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>DELETE FROM users WHERE id = 1; INSERT INTO users (id, name, email) VALUES (1, 'New', 'new@test.com')</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>users_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <name>New</name>
-                            <email>new@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <update key="users/1">
+                    <name>New</name>
+                    <email>new@test.com</email>
+                </update>
+            </diff>
         </test>
         <test type="Case" name="Value stays changed between parts">
             <init type="SqlStorageInit" name="dataSource">
@@ -215,16 +161,11 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE users SET name = 'Changed' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>users_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <name>Changed</name>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="users/1">
+                        <name>Changed</name>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Value stays changed">
                 <bean>postgresqlFacade</bean>
@@ -254,16 +195,11 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE users SET name = CASE WHEN id = 1 THEN name ELSE 'Changed' END WHERE id IN (1, 2)</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>users_2</key>
-                        <value type="MapStringKeyObjectValue">
-                            <name>Changed</name>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <update key="users/2">
+                    <name>Changed</name>
+                </update>
+            </diff>
         </test>
         <test type="Case" name="No-op update is reverted with the changed row">
             <init type="SqlStorageInit" name="dataSource">
@@ -297,39 +233,23 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO users (id, name, email) VALUES (5, 'Five', 'five@test.com')</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>users_5</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">5</id>
-                                <name>Five</name>
-                                <email>five@test.com</email>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="users/5">
+                        <id type="Integer">5</id>
+                        <name>Five</name>
+                        <email>five@test.com</email>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Execute truncate">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>TRUNCATE TABLE users</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="deleted">
-                            <key>users_1</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                        <entry change="deleted">
-                            <key>users_2</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                        <entry change="deleted">
-                            <key>users_5</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <delete key="users/1"/>
+                    <delete key="users/2"/>
+                    <delete key="users/5"/>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Fixture reloaded after truncate">
@@ -350,58 +270,38 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO users (id, name, email) SELECT g, 'u' || g, 'u' || g || '@test.com' FROM generate_series(1, 6) g</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>users_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">1</id>
-                                <name>u1</name>
-                                <email>u1@test.com</email>
-                            </value>
-                        </entry>
-                        <entry change="added">
-                            <key>users_2</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">2</id>
-                                <name>u2</name>
-                                <email>u2@test.com</email>
-                            </value>
-                        </entry>
-                        <entry change="added">
-                            <key>users_3</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">3</id>
-                                <name>u3</name>
-                                <email>u3@test.com</email>
-                            </value>
-                        </entry>
-                        <entry change="added">
-                            <key>users_4</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">4</id>
-                                <name>u4</name>
-                                <email>u4@test.com</email>
-                            </value>
-                        </entry>
-                        <entry change="added">
-                            <key>users_5</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">5</id>
-                                <name>u5</name>
-                                <email>u5@test.com</email>
-                            </value>
-                        </entry>
-                        <entry change="added">
-                            <key>users_6</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">6</id>
-                                <name>u6</name>
-                                <email>u6@test.com</email>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="users/1">
+                        <id type="Integer">1</id>
+                        <name>u1</name>
+                        <email>u1@test.com</email>
+                    </insert>
+                    <insert key="users/2">
+                        <id type="Integer">2</id>
+                        <name>u2</name>
+                        <email>u2@test.com</email>
+                    </insert>
+                    <insert key="users/3">
+                        <id type="Integer">3</id>
+                        <name>u3</name>
+                        <email>u3@test.com</email>
+                    </insert>
+                    <insert key="users/4">
+                        <id type="Integer">4</id>
+                        <name>u4</name>
+                        <email>u4@test.com</email>
+                    </insert>
+                    <insert key="users/5">
+                        <id type="Integer">5</id>
+                        <name>u5</name>
+                        <email>u5@test.com</email>
+                    </insert>
+                    <insert key="users/6">
+                        <id type="Integer">6</id>
+                        <name>u6</name>
+                        <email>u6@test.com</email>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Changes kept because reload is cheaper">
                 <bean>postgresqlFacade</bean>
@@ -429,14 +329,9 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>DELETE FROM generated_users WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="deleted">
-                            <key>generated_users_1</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <delete key="generated_users/1"/>
+                </diff>
             </test>
             <test type="Part" name="Row stays deleted because revert failed">
                 <bean>postgresqlFacade</bean>
@@ -464,14 +359,9 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>DELETE FROM generated_users WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="deleted">
-                            <key>generated_users_1</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <delete key="generated_users/1"/>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Generated column delete is restored on next init">
@@ -495,17 +385,12 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE generated_users SET name = 'bob' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>generated_users_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <name>bob</name>
-                                <name_upper>BOB</name_upper>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="generated_users/1">
+                        <name>bob</name>
+                        <name_upper>BOB</name_upper>
+                    </update>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Generated column update is restored on next init">
@@ -529,14 +414,9 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>DELETE FROM identity_users WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="deleted">
-                            <key>identity_users_1</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <delete key="identity_users/1"/>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Identity delete is restored on next init">
@@ -565,21 +445,13 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE identity_users SET id = DEFAULT WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>identity_users_3</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Long">3</id>
-                                <name>alice</name>
-                            </value>
-                        </entry>
-                        <entry change="deleted">
-                            <key>identity_users_1</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <delete key="identity_users/1"/>
+                    <insert key="identity_users/3">
+                        <id type="Long">3</id>
+                        <name>alice</name>
+                    </insert>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Identity primary key update is restored on next init">
@@ -618,16 +490,11 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE identity_profiles SET token = DEFAULT WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>identity_profiles_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <token type="Long">3</token>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="identity_profiles/1">
+                        <token type="Long">3</token>
+                    </update>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Identity non-primary-key token is restored on next init">
@@ -650,16 +517,11 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE documents SET status = 'PROCESSED' WHERE id = 100</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>documents_100</key>
-                        <value type="MapStringKeyObjectValue">
-                            <status>PROCESSED</status>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <update key="documents/100">
+                    <status>PROCESSED</status>
+                </update>
+            </diff>
         </test>
         <test type="Case" name="TOAST columns">
             <init type="SqlStorageInit" name="dataSource">
@@ -669,17 +531,12 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO documents (id, status, content) VALUES (10, 'NEW', repeat('A', 3000))</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>documents_10</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">10</id>
-                                <status>NEW</status>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="documents/10">
+                        <id type="Integer">10</id>
+                        <status>NEW</status>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Update fixture document with a large TOAST column">
                 <init type="SqlStorageInit" name="dataSource">
@@ -689,16 +546,11 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE documents SET status = 'PROCESSED', content = repeat('B', 3000) WHERE id = 100</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>documents_100</key>
-                            <value type="MapStringKeyObjectValue">
-                                <status>PROCESSED</status>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="documents/100">
+                        <status>PROCESSED</status>
+                    </update>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Postgres data types">
@@ -708,46 +560,38 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO advanced (id, data, tags, ext_id) VALUES (50, '{"version": 1, "active": true}'::jsonb, ARRAY['tag_a', 'tag_b'], 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid)</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>advanced_50</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">50</id>
-                            <data type="MapStringKeyObjectValue">
-                                <active type="Boolean">true</active>
-                                <version type="Integer">1</version>
-                            </data>
-                            <tags type="ArrayList">
-                                <tags>tag_a</tags>
-                                <tags>tag_b</tags>
-                            </tags>
-                            <ext_id>a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11</ext_id>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="advanced/50">
+                    <id type="Integer">50</id>
+                    <data>
+                        <active type="Boolean">true</active>
+                        <version type="Integer">1</version>
+                    </data>
+                    <tags type="ArrayList">
+                        <tags>tag_a</tags>
+                        <tags>tag_b</tags>
+                    </tags>
+                    <ext_id>a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11</ext_id>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="Advanced update fixture row">
             <init type="SqlStorageInit" name="dataSource">
                 <tablesToClear>advanced</tablesToClear>
                 <tablesToLoad>advanced</tablesToLoad>
             </init>
-            <bean>postgresqlFacade</bean>
-            <method>execute</method>
-            <request>UPDATE advanced SET data = '{"version": 6, "active": true}'::jsonb WHERE id = 500</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>advanced_500</key>
-                        <value type="MapStringKeyObjectValue">
-                            <data type="MapStringKeyObjectValue">
-                                <version type="Integer">6</version>
-                            </data>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <test type="Part" name="Update fixture row">
+                <bean>postgresqlFacade</bean>
+                <method>execute</method>
+                <request>UPDATE advanced SET data = '{"version": 6, "active": true}'::jsonb WHERE id = 500</request>
+                <diff storage="dataSource">
+                    <update key="advanced/500">
+                        <data>
+                            <version type="Integer">6</version>
+                        </data>
+                    </update>
+                </diff>
+            </test>
             <test type="Part" name="Fixture array column is loaded">
                 <bean>postgresqlFacade</bean>
                 <method>selectValue</method>
@@ -765,85 +609,65 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO excluded_values (id, ignored_text, ignored_number, payload, payload_hstore) VALUES (1, 'text', 42, '{"secret": "s1", "visible": "v1"}'::jsonb, '"secret"=>"h1", "visible"=>"hv1"'::hstore)</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>excluded_values_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">1</id>
-                                <payload type="MapStringKeyObjectValue">
-                                    <visible>v1</visible>
-                                </payload>
-                                <payload_hstore type="MapStringKeyObjectValue">
-                                    <visible>hv1</visible>
-                                </payload_hstore>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="excluded_values/1">
+                        <id type="Integer">1</id>
+                        <payload>
+                            <visible>v1</visible>
+                        </payload>
+                        <payload_hstore>
+                            <visible>hv1</visible>
+                        </payload_hstore>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Update ignores configured fields on both sides">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE excluded_values SET ignored_text = 'changed', ignored_number = 43, payload = '{"secret": "s2", "visible": "v2"}'::jsonb, payload_hstore = '"secret"=>"h2", "visible"=>"hv2"'::hstore WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>excluded_values_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <payload type="MapStringKeyObjectValue">
-                                    <visible>v2</visible>
-                                </payload>
-                                <payload_hstore type="MapStringKeyObjectValue">
-                                    <visible>hv2</visible>
-                                </payload_hstore>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="excluded_values/1">
+                        <payload>
+                            <visible>v2</visible>
+                        </payload>
+                        <payload_hstore>
+                            <visible>hv2</visible>
+                        </payload_hstore>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Insert excludes nested fields inside JSONB array">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO excluded_values (id, payload) VALUES (2, '[{"secret": "s3", "visible": "v3"}, {"secret": "s4", "visible": "v4"}]'::jsonb)</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>excluded_values_2</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">2</id>
-                                <payload type="ArrayList">
-                                    <payload type="LinkedHashMap">
-                                        <visible>v3</visible>
-                                    </payload>
-                                    <payload type="LinkedHashMap">
-                                        <visible>v4</visible>
-                                    </payload>
-                                </payload>
-                                <payload_hstore xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="excluded_values/2">
+                        <id type="Integer">2</id>
+                        <payload type="ArrayList">
+                            <payload>
+                                <visible>v3</visible>
+                            </payload>
+                            <payload>
+                                <visible>v4</visible>
+                            </payload>
+                        </payload>
+                        <payload_hstore xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Update excludes nested fields inside JSONB array">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE excluded_values SET payload = '[{"secret": "s5", "visible": "v5"}]'::jsonb WHERE id = 2</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>excluded_values_2</key>
-                            <value type="MapStringKeyObjectValue">
-                                <payload type="ArrayList">
-                                    <payload type="LinkedHashMap">
-                                        <visible>v5</visible>
-                                    </payload>
-                                </payload>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="excluded_values/2">
+                        <payload type="ArrayList">
+                            <payload>
+                                <visible>v5</visible>
+                            </payload>
+                        </payload>
+                    </update>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Postgres array data types">
@@ -856,47 +680,37 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO array_types (id, ts_arr, uuid_arr, num_arr) VALUES (60, ARRAY['2026-01-01 00:00:00', '2026-01-02 00:00:00']::timestamp[], ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'b1ff5c2d-3e4a-4b6c-8d7e-9f0a1b2c3d4e']::uuid[], ARRAY[123.45, 678.90]::numeric(10,2)[])</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>array_types_60</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">60</id>
-                                <ts_arr type="ArrayList">
-                                    <ts_arr type="LocalDateTime">2026-01-01T00:00:00</ts_arr>
-                                    <ts_arr type="LocalDateTime">2026-01-02T00:00:00</ts_arr>
-                                </ts_arr>
-                                <uuid_arr type="ArrayList">
-                                    <uuid_arr>a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11</uuid_arr>
-                                    <uuid_arr>b1ff5c2d-3e4a-4b6c-8d7e-9f0a1b2c3d4e</uuid_arr>
-                                </uuid_arr>
-                                <num_arr type="ArrayList">
-                                    <num_arr type="BigDecimal">123.45</num_arr>
-                                    <num_arr type="BigDecimal">678.9</num_arr>
-                                </num_arr>
-                                <matrix xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="array_types/60">
+                        <id type="Integer">60</id>
+                        <ts_arr type="ArrayList">
+                            <ts_arr type="LocalDateTime">2026-01-01T00:00:00</ts_arr>
+                            <ts_arr type="LocalDateTime">2026-01-02T00:00:00</ts_arr>
+                        </ts_arr>
+                        <uuid_arr type="ArrayList">
+                            <uuid_arr>a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11</uuid_arr>
+                            <uuid_arr>b1ff5c2d-3e4a-4b6c-8d7e-9f0a1b2c3d4e</uuid_arr>
+                        </uuid_arr>
+                        <num_arr type="ArrayList">
+                            <num_arr type="BigDecimal">123.45</num_arr>
+                            <num_arr type="BigDecimal">678.9</num_arr>
+                        </num_arr>
+                        <matrix xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Update array fixture row">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE array_types SET num_arr = ARRAY[1.11, 2.22]::numeric(10,2)[] WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>array_types_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <num_arr type="ArrayList">
-                                    <num_arr type="BigDecimal">1.11</num_arr>
-                                    <num_arr type="BigDecimal">2.22</num_arr>
-                                </num_arr>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="array_types/1">
+                        <num_arr type="ArrayList">
+                            <num_arr type="BigDecimal">1.11</num_arr>
+                            <num_arr type="BigDecimal">2.22</num_arr>
+                        </num_arr>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Updated arrays persist between parts">
                 <bean>postgresqlFacade</bean>
@@ -910,25 +724,20 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE array_types SET matrix = ARRAY[[1,2],[3,4]] WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>array_types_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <matrix type="ArrayList">
-                                    <matrix type="ArrayList">
-                                        <matrix type="Integer">1</matrix>
-                                        <matrix type="Integer">2</matrix>
-                                    </matrix>
-                                    <matrix type="ArrayList">
-                                        <matrix type="Integer">3</matrix>
-                                        <matrix type="Integer">4</matrix>
-                                    </matrix>
-                                </matrix>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="array_types/1">
+                        <matrix type="ArrayList">
+                            <matrix type="ArrayList">
+                                <matrix type="Integer">1</matrix>
+                                <matrix type="Integer">2</matrix>
+                            </matrix>
+                            <matrix type="ArrayList">
+                                <matrix type="Integer">3</matrix>
+                                <matrix type="Integer">4</matrix>
+                            </matrix>
+                        </matrix>
+                    </update>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Array literal edge cases">
@@ -940,54 +749,39 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE advanced SET tags = '[0:1]={tag_a,tag_b}' WHERE id = 500</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>advanced_500</key>
-                            <value type="MapStringKeyObjectValue">
-                                <tags type="ArrayList">
-                                    <tags>tag_a</tags>
-                                    <tags>tag_b</tags>
-                                </tags>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="advanced/500">
+                        <tags type="ArrayList">
+                            <tags>tag_a</tags>
+                            <tags>tag_b</tags>
+                        </tags>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Quoted, escaped and NULL elements">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE advanced SET tags = ARRAY['a"b', E'c\\d', NULL, 'NULL'] WHERE id = 500</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>advanced_500</key>
-                            <value type="MapStringKeyObjectValue">
-                                <tags type="ArrayList">
-                                    <tags>a"b</tags>
-                                    <tags>c\d</tags>
-                                    <tags xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                    <tags>NULL</tags>
-                                </tags>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="advanced/500">
+                        <tags type="ArrayList">
+                            <tags>a"b</tags>
+                            <tags>c\d</tags>
+                            <tags xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            <tags>NULL</tags>
+                        </tags>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Empty array">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE advanced SET tags = '{}'::text[] WHERE id = 500</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>advanced_500</key>
-                            <value type="MapStringKeyObjectValue">
-                                <tags type="ArrayList"/>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="advanced/500">
+                        <tags type="ArrayList"/>
+                    </update>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Exotic data types">
@@ -1000,69 +794,54 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO exotic (id, status, status_arr, addr, rng, drange, tsrng, tstzrng, numrng, tsv, hs) VALUES (10, 'PROCESSED', ARRAY['NEW', 'DONE']::order_status[], ROW('Minsk', '220000')::address, int4range(1, 10), daterange('2026-01-01', '2026-02-01'), tsrange('2026-01-01 10:00', '2026-01-02 12:00'), tstzrange('2026-01-01 10:00+03', '2026-02-01 12:00+03'), numrange(1.5, 9.99), to_tsvector('english', 'the fat cat sat'), '"k1"=>"v1", "k2"=>"v2"')</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>exotic_10</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">10</id>
-                                <status>PROCESSED</status>
-                                <status_arr type="ArrayList">
-                                    <status_arr>NEW</status_arr>
-                                    <status_arr>DONE</status_arr>
-                                </status_arr>
-                                <addr type="MapStringKeyObjectValue">
-                                    <city>Minsk</city>
-                                    <zip>220000</zip>
-                                </addr>
-                                <rng>[1,10)</rng>
-                                <drange>[2026-01-01,2026-02-01)</drange>
-                                <tsrng>["2026-01-01 10:00:00","2026-01-02 12:00:00")</tsrng>
-                                <tstzrng>["2026-01-01 07:00:00+00","2026-02-01 09:00:00+00")</tstzrng>
-                                <numrng>[1.5,9.99)</numrng>
-                                <tsv>'cat':3 'fat':2 'sat':4</tsv>
-                                <hs type="MapStringKeyObjectValue">
-                                    <k1>v1</k1>
-                                    <k2>v2</k2>
-                                </hs>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="exotic/10">
+                        <id type="Integer">10</id>
+                        <status>PROCESSED</status>
+                        <status_arr type="ArrayList">
+                            <status_arr>NEW</status_arr>
+                            <status_arr>DONE</status_arr>
+                        </status_arr>
+                        <addr>
+                            <city>Minsk</city>
+                            <zip>220000</zip>
+                        </addr>
+                        <rng>[1,10)</rng>
+                        <drange>[2026-01-01,2026-02-01)</drange>
+                        <tsrng>["2026-01-01 10:00:00","2026-01-02 12:00:00")</tsrng>
+                        <tstzrng>["2026-01-01 07:00:00+00","2026-02-01 09:00:00+00")</tstzrng>
+                        <numrng>[1.5,9.99)</numrng>
+                        <tsv>'cat':3 'fat':2 'sat':4</tsv>
+                        <hs>
+                            <k1>v1</k1>
+                            <k2>v2</k2>
+                        </hs>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Update exotic row">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE exotic SET status = 'DONE', rng = int4range(5, 20), tsv = to_tsvector('english', 'the big dog ran') WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>exotic_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <status>DONE</status>
-                                <rng>[5,20)</rng>
-                                <tsv>'big':2 'dog':3 'ran':4</tsv>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="exotic/1">
+                        <status>DONE</status>
+                        <rng>[5,20)</rng>
+                        <tsv>'big':2 'dog':3 'ran':4</tsv>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update composite with null field">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE exotic SET addr = ROW(NULL, '220000')::address WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>exotic_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <addr type="MapStringKeyObjectValue">
-                                    <city xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                </addr>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="exotic/1">
+                        <addr>
+                            <city xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </addr>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Updated exotic values persist between parts">
                 <bean>postgresqlFacade</bean>
@@ -1184,338 +963,233 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET ts = '2027-02-03 11:22:33.654321' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <ts type="LocalDateTime">2027-02-03T11:22:33.654321</ts>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <ts type="LocalDateTime">2027-02-03T11:22:33.654321</ts>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update timestamp to infinity">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET ts = 'infinity' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <ts>infinity</ts>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <ts>infinity</ts>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update timestamptz">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET ts_tz = '2027-02-03 11:22:33.654321+00' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <ts_tz type="LocalDateTime">2027-02-03T11:22:33.654321</ts_tz>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <ts_tz type="LocalDateTime">2027-02-03T11:22:33.654321</ts_tz>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update json">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET js = '{"code": "C", "qty": 4}' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <js type="MapStringKeyObjectValue">
-                                    <code>C</code>
-                                    <qty type="Integer">4</qty>
-                                </js>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <js>
+                            <code>C</code>
+                            <qty type="Integer">4</qty>
+                        </js>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update hstore">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET hs = '"k3"=>"v3"' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <hs type="MapStringKeyObjectValue">
-                                    <k3>v3</k3>
-                                    <k1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                    <k2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                </hs>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <hs>
+                            <insert key="k3">v3</insert>
+                            <delete key="k1"/>
+                            <delete key="k2"/>
+                        </hs>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update bytes">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET bin = '\x040506' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <bin type="byte[]">BAUG</bin>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <bin type="byte[]">BAUG</bin>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update bytes with escape output">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>SET bytea_output = 'escape'; UPDATE datatypes SET bin = 'abc' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <bin type="byte[]">YWJj</bin>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <bin type="byte[]">YWJj</bin>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update bytes to empty">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET bin = '\x' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <bin type="byte[]"></bin>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <bin type="byte[]"/>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update bytes with zero and high byte">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET bin = '\x00ff' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <bin type="byte[]">AP8=</bin>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <bin type="byte[]">AP8=</bin>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update interval">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET ivl = interval '2 hours' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <ivl>02:00:00</ivl>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <ivl>02:00:00</ivl>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update bits">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET bits_col = B'11010111' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <bits_col>11010111</bits_col>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <bits_col>11010111</bits_col>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update numeric">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET num = 999.99 WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <num type="BigDecimal">999.99</num>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <num type="BigDecimal">999.99</num>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update typed numeric values">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET tiny = 12, sm = 12, big = 9007199254740994, f4 = 3.25, f8 = 4.75, num = 123.46 WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <tiny type="Short">12</tiny>
-                                <num type="BigDecimal">123.46</num>
-                                <sm type="Short">12</sm>
-                                <big type="Long">9007199254740994</big>
-                                <f4 type="Float">3.25</f4>
-                                <f8 type="Double">4.75</f8>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <tiny type="Short">12</tiny>
+                        <num type="BigDecimal">123.46</num>
+                        <sm type="Short">12</sm>
+                        <big type="Long">9007199254740994</big>
+                        <f4 type="Float">3.25</f4>
+                        <f8 type="Double">4.75</f8>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update jsonb">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET jsb = '{"code": "C", "qty": 4}' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <jsb type="MapStringKeyObjectValue">
-                                    <qty type="Integer">4</qty>
-                                    <code>C</code>
-                                </jsb>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <jsb>
+                            <qty type="Integer">4</qty>
+                            <code>C</code>
+                        </jsb>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update boolean to false">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET flag = false WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <flag type="Boolean">false</flag>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <flag type="Boolean">false</flag>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update numeric to NaN">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET num = 'NaN' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <num>NaN</num>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <num>NaN</num>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update timetz">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET t_tz = '11:22:33+04:30' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <t_tz type="OffsetTime">11:22:33+04:30</t_tz>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <t_tz type="OffsetTime">11:22:33+04:30</t_tz>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update timetz with whole-hour offset">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET t_tz = '11:22:33+04' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <t_tz type="OffsetTime">11:22:33+04:00</t_tz>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <t_tz type="OffsetTime">11:22:33+04:00</t_tz>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update hstore to empty">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET hs = ''::hstore WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <hs type="MapStringKeyObjectValue">
-                                    <k3 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                </hs>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <hs>
+                            <delete key="k3"/>
+                        </hs>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update hstore with null value">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET hs = hstore('k', NULL) WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <hs type="MapStringKeyObjectValue">
-                                    <k xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                </hs>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <hs>
+                            <insert key="k" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        </hs>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Update hstore with escaped value">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET hs = hstore('k3', E'v"1\\2') WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <hs type="MapStringKeyObjectValue">
-                                    <k3>v"1\2</k3>
-                                    <k xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                </hs>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <hs>
+                            <insert key="k3">v"1\2</insert>
+                            <delete key="k"/>
+                        </hs>
+                    </update>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Typed null values">
@@ -1527,34 +1201,29 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE datatypes SET ts = NULL, ts_tz = NULL, d = NULL, t = NULL, t_tz = NULL, ivl = NULL, num = NULL, flag = NULL, sm = NULL, big = NULL, f4 = NULL, f8 = NULL, bin = NULL, js = NULL, jsb = NULL, hs = NULL, inet_c = NULL, xml_c = NULL, bits_col = NULL, varbit_col = NULL WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>datatypes_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <ts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <ts_tz xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <d xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <t xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <t_tz xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <ivl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <num xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <flag xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <sm xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <big xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <f4 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <f8 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <js xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <jsb xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <hs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <inet_c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <xml_c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <bits_col xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                                <varbit_col xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="datatypes/1">
+                        <ts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <ts_tz xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <d xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <t xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <t_tz xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <ivl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <num xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <flag xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <sm xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <big xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <f4 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <f8 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <js xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <jsb xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <hs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <inet_c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <xml_c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <bits_col xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <varbit_col xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </update>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Multi-column update with null transition">
@@ -1565,17 +1234,12 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE users SET name = 'Renamed', email = NULL WHERE id = 1</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>users_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <name>Renamed</name>
-                            <email xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <update key="users/1">
+                    <name>Renamed</name>
+                    <email xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                </update>
+            </diff>
         </test>
         <test type="Case" name="Empty values from SQL">
             <init type="SqlStorageInit" name="dataSource">
@@ -1584,22 +1248,17 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO nullable (id, txt, tags, ts) VALUES (10, '', '{}'::text[], NULL)</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>nullable_10</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">10</id>
-                            <txt></txt>
-                            <num xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                            <ts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                            <js xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                            <tags type="ArrayList"/>
-                            <status xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="nullable/10">
+                    <id type="Integer">10</id>
+                    <txt/>
+                    <num xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <ts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <js xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <tags type="ArrayList"/>
+                    <status xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="NULL and empty values in fixture">
             <init type="SqlStorageInit" name="dataSource">
@@ -1659,16 +1318,11 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE users SET name = 'Changed' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>users_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <name>Changed</name>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="users/1">
+                        <name>Changed</name>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Own sql init of next part must not discard application changes">
                 <init type="SqlStorageInit" name="dataSource">
@@ -1699,16 +1353,11 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE users SET name = 'Changed' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>users_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <name>Changed</name>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="users/1">
+                        <name>Changed</name>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="SQL init updates document">
                 <init type="SqlStorageInit" name="dataSource">
@@ -1746,18 +1395,13 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO users (id, name, email) VALUES (11, 'Carol', 'carol@test.com')</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>users_11</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">11</id>
-                            <name>Carol</name>
-                            <email>carol@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="users/11">
+                    <id type="Integer">11</id>
+                    <name>Carol</name>
+                    <email>carol@test.com</email>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="TC-3 cleared table is reloaded by the next init">
             <init type="SqlStorageInit" name="dataSource">
@@ -1789,17 +1433,12 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO orders (name) VALUES ('John Doe')</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>orders_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Long">1</id>
-                                <name>John Doe</name>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="orders/1">
+                        <id type="Long">1</id>
+                        <name>John Doe</name>
+                    </insert>
+                </diff>
             </test>
         </test>
         <test type="Container" name="Sequence is reset for a table without a primary key">
@@ -1827,8 +1466,6 @@
             </test>
         </test>
         <test type="Container" name="Duplicate SQL">
-            <!-- The row is created by the parent state and is a common prefix for both cases.
-                 orders is absent from the fixture, so the rollback must use the per-step undo. -->
             <init type="SqlStorageInit" name="dataSource">
                 <tablesToClear>orders</tablesToClear>
                 <sql>insert into orders (id, name) values (30, 'O')</sql>
@@ -1860,15 +1497,12 @@
             </test>
         </test>
     </test>
-    <!-- ==================================================================== -->
-    <!-- Cache: the cases that test the users table cache invalidation hook.  -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Cache">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
             <dbUnitPath>db-data.xml</dbUnitPath>
         </init>
-        <init type="OnTableChangeInit" name="dataSource" applyTo="TestCase">
+        <init type="OnTableChangeInit" applyTo="TestCase" name="dataSource">
             <onTableChange tableName="users" beanName="cacheHook" beanMethod="reloadUsers"/>
         </init>
         <test type="Case" name="TC-1 load calls hook">
@@ -1951,7 +1585,7 @@
             </response>
         </test>
         <test type="Case" name="SUT mutation survives an empty part">
-            <init type="OnTableChangeInit" name="dataSource" applyTo="TestPart">
+            <init type="OnTableChangeInit" applyTo="TestPart" name="dataSource">
                 <onTableChange tableName="users" beanName="cacheHook" beanMethod="reloadUsers"/>
             </init>
             <init type="SqlStorageInit" name="dataSource">
@@ -1969,16 +1603,11 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE users SET name = 'Sut' WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>users_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <name>Sut</name>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="users/1">
+                        <name>Sut</name>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="[]">
                 <bean>cacheHook</bean>
@@ -2053,11 +1682,6 @@
             <response type="ArrayList"/>
         </test>
     </test>
-    <!-- ==================================================================== -->
-    <!-- Cache independence: one shared SQL step changes both tables, but    -->
-    <!-- only one of them has a hook in the current test. The other table's   -->
-    <!-- stale cache must survive until its own hook appears.                 -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Cache independent hooks">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -2104,16 +1728,12 @@
             </response>
         </test>
     </test>
-    <!-- ==================================================================== -->
-    <!-- Orders hook: the cases that test the orders table cache hook and     -->
-    <!-- the batching of the revert.                                          -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Orders hook">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
             <dbUnitPath>db-data.xml</dbUnitPath>
         </init>
-        <init type="OnTableChangeInit" name="dataSource" applyTo="TestCase">
+        <init type="OnTableChangeInit" applyTo="TestCase" name="dataSource">
             <onTableChange tableName="orders" beanName="cacheHook" beanMethod="reloadOrders"/>
         </init>
         <test type="Case" name="TC-10 three sqls applied in order in one batch">
@@ -2249,9 +1869,6 @@
                 <response>Alice</response>
             </test>
         </test>
-        <!-- Two orders reloads accumulated since the last drain: TC-11 re-applies the -->
-        <!-- shared orders node and TC-12 clears orders. The later user-only SQL nodes  -->
-        <!-- do not invalidate the orders cache anymore.                                -->
         <test type="Case" name="Orders hook log before the LCA cases">
             <bean>cacheHook</bean>
             <method>drain</method>
@@ -2284,9 +1901,6 @@
             </response>
         </test>
     </test>
-    <!-- ==================================================================== -->
-    <!-- No fixture: cases that need tables without the shared dataset.       -->
-    <!-- ==================================================================== -->
     <test type="Container" name="No fixture">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -2299,18 +1913,13 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO users (id, name, email) VALUES (1, 'John', 'john@test.com')</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>users_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">1</id>
-                                <name>John</name>
-                                <email>john@test.com</email>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="users/1">
+                        <id type="Integer">1</id>
+                        <name>John</name>
+                        <email>john@test.com</email>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Insert is kept">
                 <bean>postgresqlFacade</bean>
@@ -2329,18 +1938,10 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>TRUNCATE TABLE users</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="deleted">
-                            <key>users_1</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                        <entry change="deleted">
-                            <key>users_2</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <delete key="users/1"/>
+                    <delete key="users/2"/>
+                </diff>
             </test>
             <test type="Part" name="Truncate is kept">
                 <bean>postgresqlFacade</bean>
@@ -2359,18 +1960,10 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>TRUNCATE TABLE users</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="deleted">
-                            <key>users_1</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                        <entry change="deleted">
-                            <key>users_2</key>
-                            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <delete key="users/1"/>
+                    <delete key="users/2"/>
+                </diff>
             </test>
             <test type="Part" name="No truncate marker is written">
                 <bean>postgresqlFacade</bean>
@@ -2397,33 +1990,23 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO orders (name) VALUES ('first')</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>orders_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Long">1</id>
-                                <name>first</name>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="orders/1">
+                        <id type="Long">1</id>
+                        <name>first</name>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Second order gets id 2">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO orders (name) VALUES ('second')</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>orders_2</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Long">2</id>
-                                <name>second</name>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="orders/2">
+                        <id type="Long">2</id>
+                        <name>second</name>
+                    </insert>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Multi table diff order is stable">
@@ -2433,31 +2016,18 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO orders (name) VALUES ('o'); INSERT INTO messages (id, body) VALUES (1, 'm')</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>messages_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">1</id>
-                            <body>m</body>
-                        </value>
-                    </entry>
-                    <entry change="added">
-                        <key>orders_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Long">1</id>
-                            <name>o</name>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="messages/1">
+                    <id type="Integer">1</id>
+                    <body>m</body>
+                </insert>
+                <insert key="orders/1">
+                    <id type="Long">1</id>
+                    <name>o</name>
+                </insert>
+            </diff>
         </test>
     </test>
-
-    <!-- ==================================================================== -->
-    <!-- LCA: a target step that re-declares a step already applied on top   -->
-    <!-- of another one must be rolled back and re-applied, not kept as-is.  -->
-    <!-- ==================================================================== -->
     <test type="Container" name="LCA suffix overlap, drop the base step">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -2528,12 +2098,6 @@
             </test>
         </test>
     </test>
-
-    <!-- ==================================================================== -->
-    <!-- Cross-table: one init SQL changes two tables. A preceding single-    -->
-    <!-- table step forces it to be rolled back and applied again; a third    -->
-    <!-- table must stay untouched.                                           -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Cross table sql">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -2589,10 +2153,6 @@
             </test>
         </test>
     </test>
-
-    <!-- ==================================================================== -->
-    <!-- Primary key changes form one logical row for both diff and revert.  -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Primary key chain">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -2606,22 +2166,14 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE users SET id = 3, name = 'Moved' WHERE id = 1; UPDATE users SET email = 'moved@test.com' WHERE id = 3</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>users_3</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">3</id>
-                            <name>Moved</name>
-                            <email>moved@test.com</email>
-                        </value>
-                    </entry>
-                    <entry change="deleted">
-                        <key>users_1</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <delete key="users/1"/>
+                <insert key="users/3">
+                    <id type="Integer">3</id>
+                    <name>Moved</name>
+                    <email>moved@test.com</email>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="PK chain is reverted on next init">
             <init type="SqlStorageInit" name="dataSource">
@@ -2643,10 +2195,6 @@
             </test>
         </test>
     </test>
-
-    <!-- ==================================================================== -->
-    <!-- A primary-key update frees the old key for another row.              -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Primary key reuse">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -2660,25 +2208,17 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE users SET id = 3, name = 'Moved' WHERE id = 1; INSERT INTO users (id, name, email) VALUES (1, 'New', 'new@test.com')</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>users_3</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">3</id>
-                            <name>Moved</name>
-                            <email>alice@test.com</email>
-                        </value>
-                    </entry>
-                    <entry change="changed">
-                        <key>users_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <name>New</name>
-                            <email>new@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <update key="users/1">
+                    <name>New</name>
+                    <email>new@test.com</email>
+                </update>
+                <insert key="users/3">
+                    <id type="Integer">3</id>
+                    <name>Moved</name>
+                    <email>alice@test.com</email>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="PK move then insert is reverted on next init">
             <init type="SqlStorageInit" name="dataSource">
@@ -2707,7 +2247,6 @@
                 <response type="Integer">2</response>
             </test>
         </test>
-
         <test type="Case" name="Insert, move, delete and reinsert at the final key">
             <init type="SqlStorageInit" name="dataSource">
                 <tablesToClear>users</tablesToClear>
@@ -2716,18 +2255,13 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO users (id, name, email) VALUES (10, 'A', 'a@test.com'); UPDATE users SET id = 11, name = 'B' WHERE id = 10; DELETE FROM users WHERE id = 11; INSERT INTO users (id, name, email) VALUES (11, 'C', 'c@test.com')</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>users_11</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">11</id>
-                            <name>C</name>
-                            <email>c@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="users/11">
+                    <id type="Integer">11</id>
+                    <name>C</name>
+                    <email>c@test.com</email>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="Insert, move, delete and reinsert is reverted on next init">
             <init type="SqlStorageInit" name="dataSource">
@@ -2748,7 +2282,6 @@
                 <response type="Integer">2</response>
             </test>
         </test>
-
         <test type="Case" name="Delete then move into the freed key">
             <init type="SqlStorageInit" name="dataSource">
                 <tablesToClear>users</tablesToClear>
@@ -2757,21 +2290,13 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>DELETE FROM users WHERE id = 2; UPDATE users SET id = 2, name = 'Moved' WHERE id = 1</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>users_2</key>
-                        <value type="MapStringKeyObjectValue">
-                            <name>Moved</name>
-                            <email>alice@test.com</email>
-                        </value>
-                    </entry>
-                    <entry change="deleted">
-                        <key>users_1</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <delete key="users/1"/>
+                <update key="users/2">
+                    <name>Moved</name>
+                    <email>alice@test.com</email>
+                </update>
+            </diff>
         </test>
         <test type="Case" name="Delete then move is reverted on next init">
             <init type="SqlStorageInit" name="dataSource">
@@ -2800,7 +2325,6 @@
                 <response type="Integer">2</response>
             </test>
         </test>
-
         <test type="Case" name="Swap two keys through a temporary key">
             <init type="SqlStorageInit" name="dataSource">
                 <tablesToClear>users</tablesToClear>
@@ -2809,24 +2333,16 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE users SET id = 99 WHERE id = 1; UPDATE users SET id = 1, name = 'BobMoved' WHERE id = 2; UPDATE users SET id = 2, name = 'AliceMoved' WHERE id = 99</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>users_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <name>BobMoved</name>
-                            <email>bob@test.com</email>
-                        </value>
-                    </entry>
-                    <entry change="changed">
-                        <key>users_2</key>
-                        <value type="MapStringKeyObjectValue">
-                            <name>AliceMoved</name>
-                            <email>alice@test.com</email>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <update key="users/1">
+                    <name>BobMoved</name>
+                    <email>bob@test.com</email>
+                </update>
+                <update key="users/2">
+                    <name>AliceMoved</name>
+                    <email>alice@test.com</email>
+                </update>
+            </diff>
         </test>
         <test type="Case" name="Key swap is reverted on next init">
             <init type="SqlStorageInit" name="dataSource">
@@ -2856,10 +2372,6 @@
             </test>
         </test>
     </test>
-
-    <!-- ==================================================================== -->
-    <!-- Tables without a primary key use a full-row identity fallback.      -->
-    <!-- ==================================================================== -->
     <test type="Container" name="No primary key">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -2873,21 +2385,13 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE nokey_data SET name = 'updated' WHERE id = 1; UPDATE nokey_data SET name = 'final' WHERE id = 1</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>nokey_data_20e4a4ea34a193578fdcbb989221baab40a137646521718fbe55d9df70db52ad</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Long">1</id>
-                            <name>final</name>
-                        </value>
-                    </entry>
-                    <entry change="deleted">
-                        <key>nokey_data_f5f7177f38284a5f24fb7257ee61bc10626e963013c4df3c83bc82b7312c3d65</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="nokey_data/20e4a4ea34a19357">
+                    <id type="Long">1</id>
+                    <name>final</name>
+                </insert>
+                <delete key="nokey_data/f5f7177f38284a5f"/>
+            </diff>
         </test>
         <test type="Case" name="No-PK update is reverted">
             <init type="SqlStorageInit" name="dataSource">
@@ -2916,17 +2420,12 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO nokey_data (id, name) VALUES (3, 'three')</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>nokey_data_923171aed235fa6969a6fb2bea976ba29fc3635520f2864ce939fe0e2ed1a292</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Long">3</id>
-                            <name>three</name>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="nokey_data/923171aed235fa69">
+                    <id type="Long">3</id>
+                    <name>three</name>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="No-PK insert is reverted on next init">
             <init type="SqlStorageInit" name="dataSource">
@@ -2947,14 +2446,9 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>DELETE FROM nokey_data WHERE id = 2</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="deleted">
-                        <key>nokey_data_38f5004579c5037f95bc006c62ee5251280059ce9c4e12e6fcc9ccd479f51895</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <delete key="nokey_data/38f5004579c5037f"/>
+            </diff>
         </test>
         <test type="Case" name="No-PK delete is reverted on next init">
             <init type="SqlStorageInit" name="dataSource">
@@ -3000,36 +2494,24 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE nokey_complex SET payload = '\x0102'::bytea WHERE id = 1</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>nokey_complex_8ebf929d1e7d88b3b89d269f627fd166ffbc736ff68ddd085ca8ed5fe39164fe</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Long">1</id>
-                            <name xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                            <data type="MapStringKeyObjectValue">
-                                <a type="Integer">1</a>
-                                <b type="Integer">2</b>
-                            </data>
-                            <tags type="ArrayList">
-                                <tags>x</tags>
-                                <tags>y</tags>
-                            </tags>
-                            <payload type="byte[]">AQI=</payload>
-                        </value>
-                    </entry>
-                    <entry change="deleted">
-                        <key>nokey_complex_446439462f3d65a1d44b2f30893e3f9456d720b180ef74c5f479743ce013ec44</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <delete key="nokey_complex/446439462f3d65a1"/>
+                <insert key="nokey_complex/8ebf929d1e7d88b3">
+                    <id type="Long">1</id>
+                    <name xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <data>
+                        <a type="Integer">1</a>
+                        <b type="Integer">2</b>
+                    </data>
+                    <tags type="ArrayList">
+                        <tags>x</tags>
+                        <tags>y</tags>
+                    </tags>
+                    <payload type="byte[]">AQI=</payload>
+                </insert>
+            </diff>
         </test>
     </test>
-
-    <!-- ==================================================================== -->
-    <!-- Custom SPI normalization and column-level Serde overrides.           -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Serde column overrides">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -3042,22 +2524,17 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO spi_values (id, location) VALUES (1, point(3, 4))</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>spi_values_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">1</id>
-                            <location type="MapStringKeyObjectValue">
-                                <x type="Double">3.0</x>
-                                <y type="Double">4.0</y>
-                                <table>public.spi_values</table>
-                                <column>location</column>
-                            </location>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="spi_values/1">
+                    <id type="Integer">1</id>
+                    <location>
+                        <x type="Double">3.0</x>
+                        <y type="Double">4.0</y>
+                        <table>public.spi_values</table>
+                        <column>location</column>
+                    </location>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="Custom byte Serde provider">
             <init type="SqlStorageInit" name="dataSource">
@@ -3067,47 +2544,32 @@
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>INSERT INTO serde_custom_values (id, tiny) VALUES (1, 12)</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="added">
-                            <key>serde_custom_values_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <id type="Integer">1</id>
-                                <tiny type="Byte">12</tiny>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <insert key="serde_custom_values/1">
+                        <id type="Integer">1</id>
+                        <tiny type="Byte">12</tiny>
+                    </insert>
+                </diff>
             </test>
             <test type="Part" name="Update custom type">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE serde_custom_values SET tiny = 127 WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>serde_custom_values_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <tiny type="Byte">127</tiny>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="serde_custom_values/1">
+                        <tiny type="Byte">127</tiny>
+                    </update>
+                </diff>
             </test>
             <test type="Part" name="Set custom type to null">
                 <bean>postgresqlFacade</bean>
                 <method>execute</method>
                 <request>UPDATE serde_custom_values SET tiny = NULL WHERE id = 1</request>
-                <dataStorageDiff type="MapStringKeyObjectValue">
-                    <dataSource type="EntriesObjectKeyObjectValue">
-                        <entry change="changed">
-                            <key>serde_custom_values_1</key>
-                            <value type="MapStringKeyObjectValue">
-                                <tiny xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                            </value>
-                        </entry>
-                    </dataSource>
-                </dataStorageDiff>
+                <diff storage="dataSource">
+                    <update key="serde_custom_values/1">
+                        <tiny xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </update>
+                </diff>
             </test>
         </test>
         <test type="Case" name="Dropped column insert is positional">
@@ -3117,17 +2579,12 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO dropped_columns (id, value) VALUES (1, 'kept')</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>dropped_columns_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">1</id>
-                            <value>kept</value>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="dropped_columns/1">
+                    <id type="Integer">1</id>
+                    <value>kept</value>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="Dropped column insert is reverted">
             <init type="SqlStorageInit" name="dataSource">
@@ -3156,21 +2613,16 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>INSERT INTO serde_values (id, data, payload) VALUES (2, '{"id": 2, "name": "inserted"}'::jsonb, decode('010000000568656c6c6f', 'hex'))</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>serde_values_2</key>
-                        <value type="MapStringKeyObjectValue">
-                            <id type="Integer">2</id>
-                            <data type="PostgresSerdeDto">
-                                <id>2</id>
-                                <name>inserted</name>
-                            </data>
-                            <payload>hello</payload>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <insert key="serde_values/2">
+                    <id type="Integer">2</id>
+                    <data type="PostgresSerdeDto">
+                        <id type="Integer">2</id>
+                        <name>inserted</name>
+                    </data>
+                    <payload>hello</payload>
+                </insert>
+            </diff>
         </test>
         <test type="Case" name="Serde insert is reverted">
             <init type="SqlStorageInit" name="dataSource">
@@ -3198,19 +2650,14 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>UPDATE serde_values SET data = '{"id": 1, "name": "updated"}'::jsonb, payload = decode('0100000005776f726c64', 'hex') WHERE id = 1</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>serde_values_1</key>
-                        <value type="MapStringKeyObjectValue">
-                            <data type="MapStringKeyObjectValue">
-                                <name>updated</name>
-                            </data>
-                            <payload>world</payload>
-                        </value>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <update key="serde_values/1">
+                    <data type="PostgresSerdeDto">
+                        <name>updated</name>
+                    </data>
+                    <payload>world</payload>
+                </update>
+            </diff>
         </test>
         <test type="Case" name="Serde update is reverted">
             <init type="SqlStorageInit" name="dataSource">
@@ -3266,14 +2713,9 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>DELETE FROM serde_values WHERE id = 1</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="deleted">
-                        <key>serde_values_1</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <delete key="serde_values/1"/>
+            </diff>
         </test>
         <test type="Case" name="Serde delete is reverted">
             <init type="SqlStorageInit" name="dataSource">
@@ -3303,10 +2745,6 @@
             </test>
         </test>
     </test>
-
-    <!-- ==================================================================== -->
-    <!-- Values that require escaping inside the generated JSON SQL literal.  -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Escape values">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -3314,8 +2752,8 @@
         </init>
         <test type="Case" name="Delete rows with special values">
             <init type="SqlStorageInit" name="dataSource">
-                <tablesToLoad>escape_values</tablesToLoad>
                 <tablesToClear>escape_values</tablesToClear>
+                <tablesToLoad>escape_values</tablesToLoad>
                 <sql>DELETE FROM escape_values</sql>
             </init>
             <test type="Part" name="all rows deleted">
@@ -3381,7 +2819,8 @@
                 <request>escape_values</request>
                 <request>value</request>
                 <request type="Long">6</request>
-                <response>line&#10;next&#9;tab</response>
+                <response>line
+next	tab</response>
             </test>
             <test type="Part" name="kitchen sink is restored">
                 <bean>postgresqlFacade</bean>
@@ -3394,8 +2833,8 @@
         </test>
         <test type="Case" name="Update rows with special values">
             <init type="SqlStorageInit" name="dataSource">
-                <tablesToLoad>escape_values</tablesToLoad>
                 <tablesToClear>escape_values</tablesToClear>
+                <tablesToLoad>escape_values</tablesToLoad>
                 <sql>UPDATE escape_values SET value = 'changed'</sql>
             </init>
             <test type="Part" name="rows updated">
@@ -3444,8 +2883,8 @@
         </test>
         <test type="Case" name="Insert row with special values">
             <init type="SqlStorageInit" name="dataSource">
-                <tablesToLoad>escape_values</tablesToLoad>
                 <tablesToClear>escape_values</tablesToClear>
+                <tablesToLoad>escape_values</tablesToLoad>
                 <sql>INSERT INTO escape_values (id, value) VALUES (99, 'O''Reilly\path $itjson$; DROP TABLE escape_values; --')</sql>
             </init>
             <test type="Part" name="row inserted">
@@ -3475,12 +2914,6 @@
             </test>
         </test>
     </test>
-
-    <!-- ==================================================================== -->
-    <!-- The same payload with standard_conforming_strings = off.             -->
-    <!-- This is the last container: if the revert fails, the session stays   -->
-    <!-- in the nonstandard mode and must not affect other scenarios.          -->
-    <!-- ==================================================================== -->
     <test type="Container" name="Escape values with nonstandard strings">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -3488,8 +2921,8 @@
         </init>
         <test type="Case" name="Prepare nonstandard strings and delete rows">
             <init type="SqlStorageInit" name="dataSource">
-                <tablesToLoad>escape_values</tablesToLoad>
                 <tablesToClear>escape_values</tablesToClear>
+                <tablesToLoad>escape_values</tablesToLoad>
                 <sql>DELETE FROM escape_values</sql>
             </init>
             <test type="Part" name="all rows deleted">
@@ -3529,7 +2962,6 @@
             </test>
         </test>
     </test>
-
     <test type="Container" name="Revert tag values">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>
@@ -3543,14 +2975,9 @@
             <bean>postgresqlFacade</bean>
             <method>execute</method>
             <request>DELETE FROM tag_values WHERE id = 1</request>
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <dataSource type="EntriesObjectKeyObjectValue">
-                    <entry change="deleted">
-                        <key>tag_values_1</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </entry>
-                </dataSource>
-            </dataStorageDiff>
+            <diff storage="dataSource">
+                <delete key="tag_values/1"/>
+            </diff>
         </test>
         <test type="Case" name="Revert tag suffix is escaped">
             <init type="SqlStorageInit" name="dataSource">
@@ -3565,8 +2992,6 @@
             <response>$itrow$ and $itrow1$</response>
         </test>
     </test>
-
-    <!-- Schema-qualified table names must stay distinct. -->
     <test type="Container" name="Schema-qualified tables">
         <init type="SqlStorageSetup" name="dataSource">
             <sqlFilePath>schema.sql</sqlFilePath>

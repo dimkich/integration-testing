@@ -4,7 +4,7 @@ Types and Serde
 [Russian version](../../ru/postgresql/Types-and-Serde.md)
 
 The module converts PostgreSQL values into regular Java/XML values, so they can be compared in
-`dataStorageDiff`. Built-in converters cover most types. Individual columns can use custom serde.
+`<diff>`. Built-in converters cover most types. Individual columns can use custom serde.
 
 ## Built-in Conversions
 
@@ -79,7 +79,7 @@ are supported. The lower bound is not shown in the diff; element order matters.
 A composite type becomes a map keyed by field names. `NULL` fields appear as `nil`:
 
 ```xml
-<addr type="MapStringKeyObjectValue">
+<addr>
     <city xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <zip>220000</zip>
 </addr>
@@ -99,8 +99,9 @@ An empty byte array is an empty tag:
 <bin type="byte[]"></bin>
 ```
 
-The module expects the standard `bytea_output = 'hex'`. With the escape format, the value may remain
-text.
+The module expects the standard `bytea_output = 'hex'`. With the escape format, the value is not
+decoded: the converter keeps the escape literal as `byte[]`, so it renders incorrectly in XML. Use
+`hex`.
 
 ## Custom Column Converters
 

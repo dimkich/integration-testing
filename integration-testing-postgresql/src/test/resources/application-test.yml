@@ -39,9 +39,3 @@ integration:
             "[public.excluded_values.payload_hstore]":
               excludedFields:
                 - secret
-    storage:
-      storages:
-        dataSource:
-          keyType: [ STRING, OBJECT ]
-          valueType: [ OBJECT, OBJECT ]
-          changeType: [ false, true ]

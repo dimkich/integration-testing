@@ -5,11 +5,13 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.dataformat.xml.XmlNameProcessor;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
+import com.fasterxml.jackson.dataformat.xml.deser.XmlTokenStream;
+import io.github.dimkich.integration.testing.format.xml.AttributeAwareParser;
 
 import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
 
-public class FromXmlParserFixed extends FromXmlParser {
+public class FromXmlParserFixed extends FromXmlParser implements AttributeAwareParser {
     private boolean xsiNil = false;
 
     public FromXmlParserFixed(IOContext ctxt, int genericParserFeatures, int xmlFeatures, ObjectCodec codec,
@@ -51,5 +53,19 @@ public class FromXmlParserFixed extends FromXmlParser {
 
     public String getRawText() {
         return _currText;
+    }
+
+    /**
+     * Reports whether the current field name is an XML attribute rather than a child element.
+     * <p>
+     * Needed by deserializers that render both attributes and children as fields, for example the
+     * storage difference reader where {@code key} and {@code type} are attributes but a field of a
+     * record may also be called {@code key}.
+     *
+     * @return {@code true} when the current token is an attribute name
+     */
+    @Override
+    public boolean isCurrentTokenAttribute() {
+        return _xmlTokens.getCurrentToken() == XmlTokenStream.XML_ATTRIBUTE_NAME;
     }
 }

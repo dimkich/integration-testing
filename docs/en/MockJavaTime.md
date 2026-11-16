@@ -79,20 +79,14 @@ sufficient to use `@MockJavaTime` without parameters.
 
 This attribute enables deterministic time control inside Testcontainers Docker containers using libfaketime.
 
-When non-empty, the framework:
+When non-empty, the framework starts a shared `libfaketime-server` container, mounts libfaketime
+into the matching Testcontainers and synchronizes their system time with the test's virtual time.
+The server acknowledges an update only after the shared timestamp file has been replaced, so once
+`DateTimeInit` returns the containers already observe the new time.
 
-    Starts a shared libfaketime-server container (dimkich/libfaketime-server:0.2) to handle time updates.
-    Intercepts container startup via a ByteBuddy agent.
-    Detects the container OS (glibc Linux vs Alpine) and architecture (x64 vs arm64) to select the correct libfaketime binary.
-    Mounts the shared library and configures environment variables (LD_PRELOAD, FAKETIME_TIMESTAMP_FILE, TZ, etc.).
-    Connects the container to the server using shared IPC mode.
-
-The server acknowledges every time update only after the shared timestamp file has been replaced, so once
-`DateTimeInit` returns the containers already observe the new time. Without that handshake a container could
-still report the previous instant and, for example, drop a freshly seeded key whose absolute TTL is now in the past.
-
-This ensures that the OS-level time inside the matched Docker containers is dynamically updated alongside the mocked
-Java Time API during test execution.
+Time setters are applied before storage setters: a Redis TTL purge runs with the container already
+at the new time and publishes `expired`/`hexpired`. See
+[TTL & Time Shift](redis/TTL-Time-Shift.md) for details.
 
 Each entry is a regular expression matched against the full Docker image name.
 
@@ -209,40 +203,8 @@ Using `addDuration` to shift time relative to the previous state or base time.
 
 ### Example 3: Combined Usage
 
-Combining absolute time and shift at different hierarchy levels.
-
-```xml  
-<?xml version='1.1' encoding='UTF-8'?>  
-<test type="Container">  
-    <!-- Base time is required for addDuration -->  
-    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>  
-    <test type="Case" name="increment with additional init">  
-        <init type="DateTimeInit" applyTo="TestPart" addDuration="PT1M"/>  
-        
-        <test type="Part" name="step 1">  
-            <bean>dateTimeService</bean>  
-            <method>getDateTime</method>  
-            <response type="ZonedDateTime">2025-01-01T00:01:00Z</response>  
-        </test>  
-        
-        <test type="Part" name="step 2">  
-            <!-- Override absolute time -->  
-            <init type="DateTimeInit" dateTime="2025-02-02T00:00:00Z"/>  
-            <bean>dateTimeService</bean>  
-            <method>getDateTime</method>  
-            <response type="ZonedDateTime">2025-02-02T00:00:00Z</response>  
-        </test>  
-        
-        <test type="Part" name="step 3">  
-            <!-- Shift applies to the new base time -->  
-            <bean>dateTimeService</bean>  
-            <method>getDateTime</method>  
-            <response type="ZonedDateTime">2025-02-02T00:01:00Z</response>  
-        </test>  
-    </test>  
-</test>  
-
-```
+An absolute time can be overridden in a specific part; the next `addDuration` is calculated from the
+new value. A full example with an override is in [Test Initialization](Initialization.md).
 
 Supported Java Time Classes
 ---------------------------

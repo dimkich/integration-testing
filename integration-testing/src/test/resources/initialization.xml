@@ -869,5 +869,84 @@
                 </response>
             </test>
         </test>
+        <test type="Container" name="applyTo on the declaring element">
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=case, currencies=RUB, optional=set, count=7}">
+                <init type="BeanPropertyInit" bean="fieldAccessBean" applyTo="TestCase">
+                    <property name="text" type="String">case</property>
+                </init>
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>case</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=initial, currencies=RUB, optional=set, count=7}">
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>initial</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
+            <test type="Case" name="applyTo TestPart on the part itself">
+                <test type="Part" name="{bean1=1, bean2=0}">
+                    <init type="BeanInit" applyTo="TestPart">
+                        <bean name="bean1" method="init"/>
+                    </init>
+                    <bean>beanInitCount</bean>
+                    <method>count</method>
+                    <response type="LinkedHashMap">
+                        <bean1 type="Integer">1</bean1>
+                        <bean2 type="Integer">0</bean2>
+                    </response>
+                </test>
+                <test type="Part" name="{bean1=0, bean2=0}">
+                    <bean>beanInitCount</bean>
+                    <method>count</method>
+                    <response type="LinkedHashMap">
+                        <bean1 type="Integer">0</bean1>
+                        <bean2 type="Integer">0</bean2>
+                    </response>
+                </test>
+            </test>
+            <test type="Container" name="applyTo TestContainer on the container itself">
+                <init type="BeanPropertyInit" bean="fieldAccessBean" applyTo="TestContainer">
+                    <property name="text" type="String">container</property>
+                </init>
+                <test type="Case" name="{activeFlag=false, duration=P1D, text=container, currencies=RUB, optional=set, count=7}">
+                    <bean>fieldAccessProbe</bean>
+                    <method>state</method>
+                    <response type="LinkedHashMap">
+                        <activeFlag>false</activeFlag>
+                        <duration>P1D</duration>
+                        <text>container</text>
+                        <currencies>RUB</currencies>
+                        <optional>set</optional>
+                        <count>7</count>
+                    </response>
+                </test>
+            </test>
+            <test type="Case" name="{activeFlag=false, duration=P1D, text=initial, currencies=RUB, optional=set, count=7}">
+                <bean>fieldAccessProbe</bean>
+                <method>state</method>
+                <response type="LinkedHashMap">
+                    <activeFlag>false</activeFlag>
+                    <duration>P1D</duration>
+                    <text>initial</text>
+                    <currencies>RUB</currencies>
+                    <optional>set</optional>
+                    <count>7</count>
+                </response>
+            </test>
+        </test>
     </test>
 </test>

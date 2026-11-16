@@ -23,7 +23,7 @@ import io.github.dimkich.integration.testing.postgresql.service.journal.Postgres
 import io.github.dimkich.integration.testing.postgresql.service.journal.PostgresJournalReader;
 import io.github.dimkich.integration.testing.serde.SerdeManager;
 import io.github.dimkich.integration.testing.serde.impl.JacksonDeserializer;
-import io.github.dimkich.integration.testing.storage.ObjectsDifference;
+import io.github.dimkich.integration.testing.storage.diff.ObjectsDifference;
 import io.github.dimkich.integration.testing.storage.exclusion.FieldExclusionProcessor;
 import io.github.dimkich.integration.testing.storage.mapping.StorageMappingConfig;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
@@ -185,7 +185,6 @@ public class PostgresConfig {
                             .getBeanDefinition());
             registerIfAbsent(registry, beans.diffService,
                     BeanDefinitionBuilder.genericBeanDefinition(PostgresDiffService.class)
-                            .addConstructorArgValue(name)
                             .addConstructorArgReference(objectsDifference)
                             .getBeanDefinition());
             registerIfAbsent(registry, beans.exactMutationImpactFactory,

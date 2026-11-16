@@ -60,8 +60,9 @@ public class MethodCountingWaitCompletion implements WaitCompletion, Instrumenta
     }
 
     /**
-     * Resets the internal {@link MethodCountingTracker} state: the active task counter and
-     * the activity flag.
+     * Opens a new activity window in {@link MethodCountingTracker}: clears the activity flag
+     * and keeps the tasks that are already in flight, so they are still awaited by the
+     * current window.
      */
     @Override
     public void start() {

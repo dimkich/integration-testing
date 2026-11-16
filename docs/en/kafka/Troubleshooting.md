@@ -15,7 +15,7 @@ usually appears when the application does not have enough time to process messag
 
 The application processes messages in batches, calls an external service or replies with a delay.
 
-**Fix:** increase `lag-polling-timeout-ms` (10000 ms by default):
+**Fix:** increase `lag-polling-timeout-ms` (15000 ms by default):
 
 ```yaml
 integration:
@@ -52,9 +52,10 @@ initialization, and then fails with
 `Kafka wait completion timeout. expected consumer groups are not ready: ...`.
 
 **Fix:** verify that the SUT containers actually start and increase
-`startup-stabilization-timeout-seconds` if needed. Make sure `expected-groups` lists only
-subscription-based groups: groups with manual `assign` appear as `EMPTY` on the broker, and waiting
-for them will not complete.
+`startup-stabilization-timeout-seconds` if needed. In `inflight = false` mode, make sure
+`expected-groups` lists only subscription-based groups: groups with manual `assign` appear as
+`EMPTY` on the broker, and waiting for them will not complete. In `inflight = true` mode manual
+`assign` is tracked, so such groups can be listed.
 
 Serde resolution errors
 -----------------------

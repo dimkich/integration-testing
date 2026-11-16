@@ -8,10 +8,7 @@ import com.fasterxml.jackson.databind.ser.impl.UnwrappingBeanPropertyWriter;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import io.github.dimkich.integration.testing.config.SimpleTypeDetector;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import io.github.dimkich.integration.testing.util.FastPath;
 
 public class PolymorphicUnwrappedBeanPropertyWriter extends UnwrappingBeanPropertyWriter {
     private final TypeSerializer unwrappedTypeSerializer;
@@ -47,14 +44,6 @@ public class PolymorphicUnwrappedBeanPropertyWriter extends UnwrappingBeanProper
         if (value == null) {
             return true;
         }
-        Class<?> cls = value.getClass();
-        if (cls.isArray()) {
-            return false;
-        }
-        if (Map.class.isAssignableFrom(cls) || Collection.class.isAssignableFrom(cls)
-                || Iterable.class.isAssignableFrom(cls) || Iterator.class.isAssignableFrom(cls)) {
-            return true;
-        }
-        return !simpleTypeDetector.isSimple(cls, prov);
+        return FastPath.isStructuredValue(value.getClass(), simpleTypeDetector, prov);
     }
 }

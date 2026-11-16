@@ -70,7 +70,7 @@ public class Base64SerdeProvider implements TestSerdeProviderFactory<ByteBuffer,
 * десериализатор читает остаток буфера (`position..limit`) и не должен менять его позицию;
   первым делом сделайте `input.slice()` или `input.duplicate()` и работайте с представлением;
 * не рассчитывайте, что данные начинаются с нулевой позиции: используйте `remaining()`;
-* для преобразований используйте статические хелперы `TestSerdeConverter.wrap(byte[])` и
+* для преобразований используйте статические хелперы `ByteBuffer.wrap(byte[])` и
   `TestSerdeConverter.toByteArray(ByteBuffer)`. `toByteArray` всегда делает защитную копию
   остатка буфера и не меняет его позицию.
 
@@ -210,7 +210,7 @@ public class NativeSerializerToCoreAdapter implements TestSerdeAdapter<
             return null;
         }
         return TestSerdeConverter.of(inputClass, outputClass, contextClass,
-                (input, context) -> TestSerdeConverter.wrap(source.serialize(input)));
+                (input, context) -> ByteBuffer.wrap(source.serialize(input)));
     }
 }
 ```

@@ -24,11 +24,21 @@ public class InitializationService {
     }
 
     public void beforeTest(Test test) throws Exception {
+        // Inits of the current element with applyTo must be pushed to their level cursor
+        // before it is read: otherwise they apply to the next element instead of this one.
+        for (TestInit init : test.getInits()) {
+            if (init.getApplyTo() != null) {
+                inits.get(init.getClass()).getAddBuilder().add(init);
+            }
+        }
         for (InitStateBuilder<TestInit, ?> builder : inits.values()) {
             builder.getAddBuilder().add(test);
         }
+        // Inits without applyTo go after inherited ones, as in 0.3.x.
         for (TestInit init : test.getInits()) {
-            inits.get(init.getClass()).getAddBuilder().add(init);
+            if (init.getApplyTo() == null) {
+                inits.get(init.getClass()).getAddBuilder().add(init);
+            }
         }
         for (InitStateBuilder<TestInit, ?> builder : inits.values()) {
             builder.getAddBuilder().build(test);

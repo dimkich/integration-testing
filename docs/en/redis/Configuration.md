@@ -12,10 +12,10 @@ parameters, and resolve serialization rules without conflicts.
 Linking Configuration to Connections
 ------------------------------------
 
-The key section is the `connections` block. Its keys are **logical connection names**. The module
-registers its own beans under these names (`<name>TestDataStorage`, `<name>SyncState`,
-`<name>RedisClient`, etc.), and the same names are used in `<init name="...">` and
-`<dataStorageDiff>`.
+The key section is the `connections` block. Its keys are **logical connection names**. They are
+used in `<init name="...">` and in the `storage` attribute of `<diff>`. Module beans get suffixed
+names: `<name>RedisClient`, `<name>SyncState`, `<name>TestDataStorage`, and so on; there is no bean
+under the bare connection name.
 
 The framework opens its own connection using the settings below and does **not** use a
 `RedisConnectionFactory` from the application. Therefore, the Redis driver used by the system
@@ -129,7 +129,8 @@ common fields and source selection rules are defined by the serde core config
 A schema is described by components — `value`, `hash-key`, `hash-value`, each with its own
 single-slot source (a core provider, a Spring Data `RedisSerializer` or a Redisson
 `Codec`/`RedissonClient`). Unset components are inherited from the parent schema by the property
-merge; a component may set only `binary-envelope` — the source comes from the parent schema.
+merge; a component may set `target-class`, `object-mapper-ref` and `binary-envelope` — the source
+(`type`/`bean-ref`) comes from the parent schema.
 
 | Parameter           | Type          | Description                                                                                          | Exclusivity   |
 |---------------------|---------------|------------------------------------------------------------------------------------------------------|---------------|
@@ -303,7 +304,7 @@ Ignoring Technical Noise (`ignore: true`)
 -----------------------------------------
 
 During a test, background application processes often write technical information to Redis
-(service logs, background task sessions, lock keys). These changes clutter the `dataStorageDiff`
+(service logs, background task sessions, lock keys). These changes clutter the `<diff>`
 comparison block and can cause test failures due to unpredictable behavior.
 
 You can tell the framework to completely ignore such keys using the `ignore: true` parameter:
@@ -316,7 +317,7 @@ schemas:
 ```
 
 Ignored keys are automatically filtered out and will not appear in comparison reports or
-`dataStorageDiff` blocks.
+`<diff>` blocks.
 
 Complete Configuration Example (application-test.yml)
 ------------------------------------------------------

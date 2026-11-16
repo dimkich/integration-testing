@@ -22,9 +22,11 @@ public interface WaitCompletion {
     /**
      * Marks the beginning of the waiting lifecycle.
      * <p>
-     * Implementations reset their counters, accumulated errors and primary activity flags.
-     * This method must not block waiting for external readiness (started consumers,
-     * connections and the like): all waiting belongs to {@link #awaitAndCheckActivity()}.
+     * Implementations open a new activity window and reset accumulated errors and primary
+     * activity flags. The in-flight state is not necessarily cleared: a task that started
+     * before this call may still be awaited by the current window. This method must not block
+     * waiting for external readiness (started consumers, connections and the like): all waiting
+     * belongs to {@link #awaitAndCheckActivity()}.
      */
     void start();
 

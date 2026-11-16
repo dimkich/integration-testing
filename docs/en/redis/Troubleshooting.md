@@ -135,12 +135,12 @@ Ensure that neither your application code nor your test scenarios subscribe to t
 `__integration_testing_sync__` channel. If necessary, rename the channel in your code,
 avoiding the `__integration_testing_` prefix.
 
-Problem: Database changes not showing in dataStorageDiff (empty diff)
+Problem: Database changes not showing in `<diff>` (empty diff)
 ----------------------------------------------------------------------
 
 ### Symptoms
 
-The application ran successfully and wrote data to Redis, but the `dataStorageDiff` block
+The application ran successfully and wrote data to Redis, but the `<diff>` block
 shows no database changes (or shows an empty block).
 
 ### Cause 1: Connection name mismatch in YAML
@@ -149,9 +149,9 @@ You configured serialization schemas for one connection name, but your applicati
 a different one.
 
 **How to fix:** Ensure that the `connections` block of your YAML configuration declares a
-connection with the same name used in `<init name="...">` and `<dataStorageDiff>` (see
-`Configuration.md` for details). This is a logical name; it does not have to match the
-application's `RedisConnectionFactory` bean name.
+connection with the same name used in `<init name="...">` and in the `storage` attribute of
+`<diff>` (see `Configuration.md` for details). This is a logical name; it does not have to match
+the application's `RedisConnectionFactory` bean name.
 
 ### Cause 2: Key matched an ignore filter (`ignore: true`)
 
@@ -164,8 +164,9 @@ business keys do not fall under the technical key masks you decided to hide.
 ### Cause 3: Multiple database mode is not enabled
 
 Your application executes `SELECT 1` (writes to database index 1), but the `multipleDatabases`
-parameter is not enabled in the connection settings. In this case, the replicator treats all
-keys as belonging to database 0 and finds no changes.
+parameter is not enabled in the connection settings. In this case, the replicator does not add the
+`db/` prefix to keys: same-named keys from different databases collapse into one snapshot, and an
+expected `1/...` key does not match the actual one.
 
 **How to fix:** Enable multiple database support in the connection properties:
 
@@ -223,7 +224,8 @@ Framework Redis Connection Errors
 ### Symptoms
 
 `RedisClientException` in the logs: `Cannot connect to Redis [...]`, `Redis authentication
-failed`, `Redis command [...] failed`, or `Redis Sync Timeout`.
+failed`, `Redis command [...] failed`. A `Redis Sync Timeout` is separate: it is a plain
+`RuntimeException` from the replication barrier, not a `RedisClientException`.
 
 ### What to check
 

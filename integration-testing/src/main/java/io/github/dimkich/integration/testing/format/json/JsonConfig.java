@@ -9,6 +9,7 @@ import io.github.dimkich.integration.testing.format.common.CommonFormatConfig;
 import io.github.dimkich.integration.testing.format.common.ObjectMapperConfigurer;
 import io.github.dimkich.integration.testing.format.common.polymorphic.unwrapped.DisablePolymorphicUnwrappedModule;
 import io.github.dimkich.integration.testing.format.common.type.TestTypeResolverBuilder;
+import io.github.dimkich.integration.testing.storage.diff.format.DiffModule;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -40,6 +41,7 @@ public class JsonConfig {
         builder.defaultPrettyPrinter(new CustomPrettyPrinter());
 
         builder.addModules(new DisablePolymorphicUnwrappedModule());
+        builder.addModules(DiffModule.json());
 
         configurer.configure(builder);
         JsonMapper jsonMapper = builder.build();

@@ -6,16 +6,19 @@ import io.github.dimkich.integration.testing.postgresql.model.change.PostgresTab
 import io.github.dimkich.integration.testing.postgresql.model.metadata.PostgresRowValues;
 import lombok.Getter;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Net diff of one change batch: the logical rows before and after the recorded changes.
+ * <p>
+ * The row maps are unordered, so the difference engine sorts the records by key. An ordered map
+ * would keep the order of changes instead.
  */
 @Getter
 final class PostgresDiff {
-    private final Map<String, Object> before = new LinkedHashMap<>();
-    private final Map<String, Object> after = new LinkedHashMap<>();
+    private final Map<String, Object> before = new HashMap<>();
+    private final Map<String, Object> after = new HashMap<>();
 
     static PostgresDiff from(PostgresChangeBatch batch) {
         PostgresDiff diff = new PostgresDiff();

@@ -6,20 +6,20 @@ Customization and Extension in Java
 If the configuration capabilities are not enough, write your own class and register it as a Spring
 bean. Below are the extension points that require code.
 
-Custom record serializer
-------------------------
+Custom part converters
+----------------------
 
-A whole record is an ordinary core converter. Implement `TestSerdeConverter<KafkaRecord, ProducerRecord,
-TestSerdeContext>`; the record key and value are `ByteBuffer`:
+There is no whole-record converter: a record is always assembled from the three components —
+`key`, `value` and `headers` (`KafkaRecordSerdeFactory`). Register a converter for a component:
+for value and key use `TestSerdeConverter<Object, ByteBuffer, KafkaSerdeContext>`, and for headers
+see “Custom headers”.
 
 ```java
 package com.example.kafka;
 
-import io.github.dimkich.integration.testing.kafka.KafkaRecord;
-import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.kafka.serde.KafkaSerdeContext;
 import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
 import lombok.Getter;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.stereotype.Component;
 
 import java.nio.ByteBuffer;
@@ -27,51 +27,40 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 @Getter
-public class PlainTextRecordSerializer implements TestSerdeConverter<KafkaRecord, ProducerRecord, TestSerdeContext> {
+public class PlainTextValueSerializer
+        implements TestSerdeConverter<Object, ByteBuffer, KafkaSerdeContext> {
 
-    private final Class<KafkaRecord> inputClass = KafkaRecord.class;
-    private final Class<ProducerRecord> outputClass = ProducerRecord.class;
-    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
+    private final Class<Object> inputClass = Object.class;
+    private final Class<ByteBuffer> outputClass = ByteBuffer.class;
+    private final Class<KafkaSerdeContext> contextClass = KafkaSerdeContext.class;
 
     @Override
-    public ProducerRecord<ByteBuffer, ByteBuffer> convert(KafkaRecord record, TestSerdeContext context) {
-        return new ProducerRecord<>(
-                record.getTopic(),
-                record.getPartition(),
-                toBuffer(record.getKey()),
-                toBuffer(record.getValue()));
-    }
-
-    private ByteBuffer toBuffer(Object value) {
+    public ByteBuffer convert(Object value, KafkaSerdeContext context) {
         if (value == null) {
             return null;
         }
-        return TestSerdeConverter.wrap(value.toString().getBytes(StandardCharsets.UTF_8));
+        return ByteBuffer.wrap(value.toString().getBytes(StandardCharsets.UTF_8));
     }
 }
 ```
 
-Attach it to a topic via `bean-ref`:
+Attach it to the value component:
 
 ```yaml
 "custom-in":
   serializer:
-    bean-ref: plainTextRecordSerializer
+    value:
+      bean-ref: plainTextValueSerializer
 ```
 
-Custom record deserializer
---------------------------
-
-The deserializer is the reverse converter `ConsumerRecord → KafkaRecord`:
+The reverse converter for reading:
 
 ```java
 package com.example.kafka;
 
-import io.github.dimkich.integration.testing.kafka.KafkaRecord;
-import io.github.dimkich.integration.testing.serde.TestSerdeContext;
+import io.github.dimkich.integration.testing.kafka.serde.KafkaSerdeContext;
 import io.github.dimkich.integration.testing.serde.TestSerdeConverter;
 import lombok.Getter;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.stereotype.Component;
 
 import java.nio.ByteBuffer;
@@ -79,26 +68,15 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 @Getter
-public class PlainTextRecordDeserializer
-        implements TestSerdeConverter<ConsumerRecord, KafkaRecord, TestSerdeContext> {
+public class PlainTextValueDeserializer
+        implements TestSerdeConverter<ByteBuffer, Object, KafkaSerdeContext> {
 
-    private final Class<ConsumerRecord> inputClass = ConsumerRecord.class;
-    private final Class<KafkaRecord> outputClass = KafkaRecord.class;
-    private final Class<TestSerdeContext> contextClass = TestSerdeContext.class;
+    private final Class<ByteBuffer> inputClass = ByteBuffer.class;
+    private final Class<Object> outputClass = Object.class;
+    private final Class<KafkaSerdeContext> contextClass = KafkaSerdeContext.class;
 
     @Override
-    public KafkaRecord convert(ConsumerRecord record, TestSerdeContext context) {
-        KafkaRecord message = new KafkaRecord();
-        message.setTopic(record.topic());
-        message.setKey(toString((ByteBuffer) record.key()));
-        message.setValue(toString((ByteBuffer) record.value()));
-        message.setPartition(record.partition());
-        message.setOffset(record.offset());
-        message.setTimestamp(record.timestamp());
-        return message;
-    }
-
-    private String toString(ByteBuffer data) {
+    public Object convert(ByteBuffer data, KafkaSerdeContext context) {
         if (data == null) {
             return null;
         }
@@ -110,8 +88,11 @@ public class PlainTextRecordDeserializer
 ```yaml
 "custom-out":
   deserializer:
-    bean-ref: plainTextRecordDeserializer
+    value:
+      bean-ref: plainTextValueDeserializer
 ```
+
+Use `key:` instead of `value:` for a key converter and `headers:` for headers.
 
 Custom headers
 --------------

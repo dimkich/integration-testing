@@ -19,6 +19,7 @@ import io.github.dimkich.integration.testing.format.xml.fixed.XmlFactoryFixed;
 import io.github.dimkich.integration.testing.format.xml.fixed.XmlMapperFixed;
 import io.github.dimkich.integration.testing.format.xml.polymorphic.PolymorphicUnwrappedModule;
 import io.github.dimkich.integration.testing.format.xml.wrapper.WrapperModule;
+import io.github.dimkich.integration.testing.storage.diff.format.DiffModule;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,8 @@ public class XmlConfig {
                         .setDeserializerModifier(new WrapperHandlingModifier()),
                 new PolymorphicUnwrappedModule(resolverBuilder, simpleTypeDetector),
                 new ScalarTypeModule(Set.of(Boolean.class, Integer.class, Double.class)),
-                new WrapperModule());
+                new WrapperModule(),
+                DiffModule.xml());
 
         XmlMapper xmlMapper = builder.build();
         if (xmlMapper.getFactory().getXMLOutputFactory().isPropertySupported(WstxOutputProperties.P_OUTPUT_INVALID_CHAR_HANDLER)) {

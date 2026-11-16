@@ -15,6 +15,7 @@ import io.github.dimkich.integration.testing.format.common.serializer.IteratorDe
 import io.github.dimkich.integration.testing.format.common.type.TypeGenerator;
 import io.github.dimkich.integration.testing.format.common.type.TypeParser;
 import io.github.dimkich.integration.testing.format.common.type.TypeResolverFactory;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffResult;
 import io.github.dimkich.integration.testing.openapi.FieldErrorMixIn;
 import io.github.dimkich.integration.testing.openapi.SpringErrorDto;
 import io.github.sugarcubes.cloner.CopyAction;
@@ -51,6 +52,7 @@ public class CommonFormatConfig {
                 .addSubTypes(TestContainer.class, "Container")
                 .addSubTypes(TestCase.class, "Case")
                 .addSubTypes(TestPart.class, "Part")
+                .addSubTypes(DiffResult.class)
                 .addSubTypes(byte[].class, "byte[]")
                 .addSubTypes(short[].class, "short[]")
                 .addSubTypes(int[].class, "int[]")
@@ -83,8 +85,8 @@ public class CommonFormatConfig {
                 .clonerTypeAction(ByteArrayInputStream.class, CopyAction.ORIGINAL)
                 .clonerTypeAction(Resource.class::isAssignableFrom, CopyAction.ORIGINAL)
                 .clonerTypeAction(Type.class::isAssignableFrom, CopyAction.ORIGINAL)
-                .addEqualsForType(SecureRandom.class, (sr1, sr2) -> true)
-                .addEqualsForType(ByteArrayInputStream.class, (o1, o2) -> {
+                .addPresetEqualsForType(SecureRandom.class, (sr1, sr2) -> true)
+                .addPresetEqualsForType(ByteArrayInputStream.class, (o1, o2) -> {
                     byte[] b1 = o1.readAllBytes();
                     o1.reset();
                     byte[] b2 = o2.readAllBytes();

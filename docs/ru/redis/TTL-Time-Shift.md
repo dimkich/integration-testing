@@ -26,13 +26,19 @@ JVM и продолжает жить по реальному системном�
 При каждом сдвиге времени в XML-тесте (например, через `addDuration="PT10S"`):
 
 1. Фреймворк обновляет внутренние виртуальные часы теста.
-2. Фоновый анализатор обходит все ключи в локальном зеркале базы данных и вычисляет, у каких ключей
-   относительный TTL стал меньше или равен нулю относительно нового виртуального времени.
-3. Для всех просроченных ключей фреймворк мгновенно отправляет в реальный Redis команды на их физическое
-   удаление (`DEL` для ключей или `HDEL` для отдельных полей хэшей).
+2. Фреймворк находит ключи и поля хэшей, у которых относительный TTL стал меньше или равен нулю
+   относительно нового виртуального времени.
+3. Для каждого просроченного ключа и поля фреймворк сначала выполняет `EXISTS`/`HEXISTS`. Redis переводит
+   их в ленивое истечение: удаляет и публикует `expired`/`hexpired` — на эти события подписаны приложения
+   (например, Spring Data Redis чистит index-сеты). Затем `DEL`/`HDEL` удаляет то, что Redis не считает
+   истёкшим (реальные часы, реплика, ещё не сдвинутые часы).
 4. **Результат:** Реальная база данных Redis синхронизируется с вашим виртуальным временем. Если ваше
    приложение попытается прочитать этот ключ в этот же момент времени, Redis вернёт `null` (ключ не
    найден).
+
+Время контейнерам (libfaketime) обновляется до того, как хранилища выполняют purge по виртуальному
+времени. Иначе Redis не увидит ключ истёкшим, `EXISTS` вернёт `1`, а `DEL` удалит ключ без
+`expired`-события.
 
 Управление временем в XML (`DateTimeInit`)
 ------------------------------------------
@@ -44,7 +50,7 @@ JVM и продолжает жить по реальному системном�
 Используется в корневом контейнере, чтобы зафиксировать единую стартовую точку для всех тестов.
 
 ```xml
-<init type="dateTimeInit" dateTime="2026-01-01T12:00:00Z" />
+<init type="DateTimeInit" dateTime="2026-01-01T12:00:00Z" />
 ```
 
 ### Вариант Б: Относительный сдвиг времени (Time Shift)
@@ -54,7 +60,7 @@ JVM и продолжает жить по реальному системном�
 ```xml
 <!-- Применяем сдвиг времени на 15 секунд только для шагов текущего кейса.
      База dateTime должна быть задана в текущем или внешнем скоупе. -->
-<init type="dateTimeInit" applyTo="TestPart" addDuration="PT15S"/>
+<init type="DateTimeInit" applyTo="TestPart" addDuration="PT15S"/>
 ```
 
 Формат длительности `addDuration` следует стандарту ISO-8601:
@@ -78,7 +84,7 @@ JVM и продолжает жить по реальному системном�
 ### Как описать хэш с TTL полей в XML:
 
 ```xml
-<entry key="user:session:active" type="RedisEntry">
+<entry key="user:session:active" utype="RedisEntry">
     <data type="RedisHash">
         <!-- Поле без TTL (вечное) -->
         <entry>
@@ -135,40 +141,20 @@ JVM и продолжает жить по реальному системном�
             <response />
             
             <!-- Ожидаем появление ключа с TTL 15 секунд -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>user:session:temp</key>
-                        <value type="RedisEntry">
-                            <data>ACTIVE_SESSION</data>
-                            <ttl>PT15S</ttl>
-                        </value>
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+            <diff storage="redissonConnectionFactory">
+                <insert key="user:session:temp" ttl="PT15S">ACTIVE_SESSION</insert>
+            </diff>
         </test>
 
         <test type="Part" name="2. Сдвиг времени на 10 секунд (ключ существует, TTL уменьшился)">
             <!-- Время сдвинулось на +10s (прошло 10s от старта). Ключ живет еще 5s -->
             <bean>redisStringFacade</bean>
-            <method>get</method>
+            <method>pttl</method>
             <request>user:session:temp</request>
-            <response>ACTIVE_SESSION</response>
-            
-            <!-- Проверяем, что в базе данных TTL уменьшился до 5 секунд -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="changed">
-                        <key>user:session:temp</key>
-                        <value type="EntriesObjectKeyObjectValue">
-                            <entry change="changed">
-                                <key>ttl</key>
-                                <value type="PeriodDuration">PT5S</value>
-                            </entry>
-                        </value>
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+            <!-- В базе данных TTL уменьшился до 5 секунд -->
+            <response type="Long">5000</response>
+
+            <!-- Уменьшение TTL само по себе в diff не попадает: значение ключа не изменилось -->
         </test>
 
         <test type="Part" name="3. Сдвиг времени еще на 10 секунд (ключ должен удалиться)">
@@ -178,16 +164,8 @@ JVM и продолжает жить по реальному системном�
             <request>user:session:temp</request>
             <!-- Метод get должен вернуть null (профиль удален) -->
             <response xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
-            
-            <!-- Проверяем, что ключ физически удалился из хранилища -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="deleted">
-                        <key>user:session:temp</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+
+            <!-- Ключ удалён на инициализации части (сдвиг времени), поэтому в diff его нет -->
         </test>
     </test>
 </test>

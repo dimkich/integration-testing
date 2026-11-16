@@ -23,9 +23,9 @@
 3. **Слежение за базой:** Специальный фоновый механизм фреймворка мгновенно подхватывает любые изменения,
    которые ваше приложение делает в Redis (создание, изменение, удаление ключей или изменение их времени
    жизни TTL).
-4. **Проверка результатов:** В конце теста фреймворк сравнивает реальное состояние базы данных с тем,
-   что вы описали в блоке `<dataStorageDiff>`, и показывает разницу в виде удобного визуального
-   сравнения (Diff), если что-то пошло не так.
+4. **Проверка результатов:** В конце теста фреймворк сравнивает снимок in-memory mirror, который
+   обновляется репликацией Redis, с тем, что вы описали в блоке `<diff>`, и показывает разницу в виде
+   удобного визуального сравнения (Diff), если что-то пошло не так.
 
 Подключение к проекту
 ---------------------
@@ -74,7 +74,7 @@ public class UserRedisIntegrationTest {
 <!-- @formatter:off -->
 <test type="Container">
     <!-- Очищаем базу данных Redis перед запуском теста -->
-    <init type="keyValueStorageInit" name="redissonConnectionFactory" clear="true" />
+    <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true" />
 
     <test type="Case" name="Тестирование сессий в Redis">
         
@@ -86,16 +86,9 @@ public class UserRedisIntegrationTest {
             <request>ACTIVE</request>
             
             <!-- Проверяем, что в Redis добавился наш ключ -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>user:session:100</key>
-                        <value type="RedisEntry">
-                            <data>ACTIVE</data>
-                        </value>
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+            <diff storage="redissonConnectionFactory">
+                <insert key="user:session:100">ACTIVE</insert>
+            </diff>
         </test>
 
         <test type="Part" name="Шаг 2: Проверка чтения сессии">
@@ -114,14 +107,9 @@ public class UserRedisIntegrationTest {
             <response type="Boolean">true</response>
             
             <!-- Проверяем, что ключ действительно удалился из Redis -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="deleted">
-                        <key>user:session:100</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+            <diff storage="redissonConnectionFactory">
+                <delete key="user:session:100"/>
+            </diff>
         </test>
         
     </test>

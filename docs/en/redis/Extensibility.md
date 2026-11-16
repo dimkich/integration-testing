@@ -89,14 +89,13 @@ package com.example.redis.accessor;
 import io.github.dimkich.integration.testing.redis.accessor.RedisDataAccessor;
 import io.github.dimkich.integration.testing.redis.client.RedisPipeline;
 import io.github.dimkich.integration.testing.redis.serde.RedisDataSchema;
-import io.github.dimkich.integration.testing.redis.model.RedisValue;
 import org.springframework.stereotype.Component;
 
 @Component  // Automatically registered in RedisAccessorCoordinator
 public class BloomFilterAccessor implements RedisDataAccessor<CustomBloomFilter> {
 
     @Override
-    public Class<? extends RedisValue> getSupportedClass() {
+    public Class<CustomBloomFilter> getSupportedClass() {
         return CustomBloomFilter.class;
     }
 
@@ -193,7 +192,7 @@ public class CustomSerializerAdapter
             return null;
         }
         return TestSerdeConverter.of(inputClass, outputClass, contextClass,
-                (input, context) -> TestSerdeConverter.wrap(source.write(input)));
+                (input, context) -> ByteBuffer.wrap(source.write(input)));
     }
 }
 ```
@@ -304,9 +303,7 @@ public class MyCustomCommandHandler implements RedisStreamHandler<MyCustomComman
 
     @Override
     public void handle(MyCustomCommand event, RedisInMemoryStore store) {
-        store.compute(event.getKey(), (schema, entry) -> {
-            entry.setValue(schema, event.getValue());
-        });
+        store.compute(event.getKey(), (schema, entry) -> entry.setValue(schema, event.getValue()));
     }
 }
 ```

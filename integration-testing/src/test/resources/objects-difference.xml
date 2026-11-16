@@ -1,0 +1,4245 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- @formatter:off -->
+<test type="Container">
+    <test type="Container" name="value diff">
+        <test type="Case" name="array value is compared as a whole">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="int[]">
+                    <item>1</item>
+                    <item>2</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="int[]">
+                    <item>1</item>
+                    <item>3</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="int[]">
+                        <item type="Integer">1</item>
+                        <item type="Integer">3</item>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="unchanged array has no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="int[]">
+                    <item>1</item>
+                    <item>2</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="int[]">
+                    <item>1</item>
+                    <item>2</item>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="collection value is compared as a whole">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>a</item>
+                    <item>b</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>a</item>
+                    <item>c</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="ArrayList">
+                        <item>a</item>
+                        <item>c</item>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="custom scalar value is compared as a whole">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ScalarValue">left</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ScalarValue">right</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="ScalarValue">right</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="custom structured value is diffed by properties">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="StructuredValue">
+                    <payload>left</payload>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="StructuredValue">
+                    <payload>right</payload>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="StructuredValue">
+                        <payload>right</payload>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="presenter projects a value: insert is written as plain data">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>left</name>
+                        <score type="Integer">1</score>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="PresentedValue" ttl="1">
+                        <name>left</name>
+                        <score type="Integer">1</score>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="presenter projects a value: update contains only changed body fields">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>left</name>
+                        <score type="Integer">1</score>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>right</name>
+                        <score type="Integer">1</score>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="1">
+                        <name>right</name>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="presenter projects a value: delete has no body and no attributes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>left</name>
+                        <score type="Integer">1</score>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response type="DiffResult">
+                <test>
+                    <delete key="value" type="PresentedValue"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="presenter whose body has no presentation keeps an empty element">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="TypedPayload">
+                        <payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </body>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="PresentedValue"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="structured value without format visitor is diffed by properties">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="StructuredValueWithoutVisitor">
+                    <payload>left</payload>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="StructuredValueWithoutVisitor">
+                    <payload>right</payload>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="StructuredValueWithoutVisitor">
+                        <payload>right</payload>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="null left value is replaced with the right one">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="ScalarValue">right</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="ScalarValue">right</insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="null right value has no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ScalarValue">left</value>
+            </request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response type="DiffResult">
+                <test>
+                    <delete key="value" type="ScalarValue"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="nested map value is diffed by keys">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <same>value</same>
+                    <changed>old</changed>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <same>value</same>
+                    <changed>new</changed>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <changed>new</changed>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="pojo value is diffed by properties">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="Item">
+                    <name>old</name>
+                    <count>1</count>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="Item">
+                    <name>new</name>
+                    <count>2</count>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="Item">
+                        <name>new</name>
+                        <count type="Integer">2</count>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="empty map keeps its type">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="LinkedHashMap"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="null collection item is written as nil">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>a</item>
+                    <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="ArrayList">
+                        <item>a</item>
+                        <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="char array is a scalar">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="char[]">ab</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="char[]">cd</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="char[]">cd</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="byte array is a scalar">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="byte[]">YWI=</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="byte[]">Y2Q=</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="byte[]">Y2Q=</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="long byte array is a scalar">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="byte[]">YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFh</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="byte[]">YmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJi</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="byte[]">YmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJi
+YmJi</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="uuid value is a scalar">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="UUID">00000000-0000-0000-0000-000000000001</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="UUID">00000000-0000-0000-0000-000000000002</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="UUID">00000000-0000-0000-0000-000000000002</update>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="comparison presets">
+        <test type="Case" name="bigDecimal scale">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="BigDecimal">0.1</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="BigDecimal">0.1000</value>
+            </request>
+        </test>
+        <test type="Case" name="bigDecimal different value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="BigDecimal">0.1</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="BigDecimal">0.2</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="BigDecimal">0.2</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="map with bigDecimal keys">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="MapHolder">
+                    <entry key="1.0">first</entry>
+                    <entry key="2.00">second</entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="MapHolder">
+                    <entry key="1.00">first</entry>
+                    <entry key="2.0">second</entry>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="map with different values">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="MapHolder">
+                    <entry key="1.0">first</entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="MapHolder">
+                    <entry key="1.00">other</entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="MapHolder">
+                        <entry>
+                            <update key="1">other</update>
+                        </entry>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="zonedDateTime with different offsets">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ZonedDateTime">2025-01-01T03:00:00+03:00</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ZonedDateTime">2025-01-01T00:00:00Z</value>
+            </request>
+        </test>
+        <test type="Case" name="zonedDateTime with different instants">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ZonedDateTime">2025-01-01T03:00:00+03:00</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ZonedDateTime">2025-01-01T00:00:01Z</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="ZonedDateTime">2025-01-01T00:00:01Z</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="zonedDateTime null value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ZonedHolder">
+                    <value>2025-01-01T03:00:00+03:00</value>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ZonedHolder"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="ZonedHolder">
+                        <delete key="value" type="ZonedDateTime"/>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="custom equals predicate">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="CustomId">
+                    <value>1</value>
+                    <tag>before</tag>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="CustomId">
+                    <value>1</value>
+                    <tag>after</tag>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="custom equals predicate with different values">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="CustomId">
+                    <value>1</value>
+                    <tag>before</tag>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="CustomId">
+                    <value>2</value>
+                    <tag>before</tag>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="CustomId">
+                        <value>2</value>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="equals predicate of a superclass applies to a subtype">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="DerivedValue">
+                    <payload>x</payload>
+                    <detail>before</detail>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="DerivedValue">
+                    <payload>x</payload>
+                    <detail>after</detail>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="temporal preset compares dates by equals">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LocalDate">2024-01-01</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LocalDate">2024-02-01</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="LocalDate">2024-02-01</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="jdk value types are compared by equals">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <uuid type="UUID">00000000-0000-0000-0000-000000000001</uuid>
+                    <bigInteger type="BigInteger">12345678901234567890</bigInteger>
+                    <duration type="Duration">PT1H</duration>
+                    <date type="Date">1704067200000</date>
+                    <zoneId type="ZoneId">Europe/Moscow</zoneId>
+                    <period type="Period">P1D</period>
+                    <monthDay type="MonthDay">--01-01</monthDay>
+                    <file type="File">C:/temp/a</file>
+                    <uri type="URI">https://example.com/a</uri>
+                    <locale type="Locale">en_US</locale>
+                    <currency type="Currency">EUR</currency>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <uuid type="UUID">00000000-0000-0000-0000-000000000001</uuid>
+                    <bigInteger type="BigInteger">12345678901234567890</bigInteger>
+                    <duration type="Duration">PT1H</duration>
+                    <date type="Date">1704067200000</date>
+                    <zoneId type="ZoneId">Europe/Moscow</zoneId>
+                    <period type="Period">P1D</period>
+                    <monthDay type="MonthDay">--01-01</monthDay>
+                    <file type="File">C:/temp/a</file>
+                    <uri type="URI">https://example.com/a</uri>
+                    <locale type="Locale">en_US</locale>
+                    <currency type="Currency">EUR</currency>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="atomic references are compared by content">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <holder type="AtomicHolder">
+                        <reference>a</reference>
+                        <markable>b</markable>
+                    </holder>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <holder type="AtomicHolder">
+                        <reference>a</reference>
+                        <markable>b</markable>
+                    </holder>
+                </value>
+            </request>
+        </test>
+    </test>
+    <test type="Container" name="map diff">
+        <test type="Case" name="added key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                    <b>2</b>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="b">2</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="changed key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>2</a>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <a>2</a>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="empty tag field keeps the element pair">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <empty>old</empty>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <empty></empty>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <empty></empty>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="empty non-tag field keeps the element pair">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">some key</key>
+                        <value>old</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">some key</key>
+                        <value></value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <update key="some key"></update>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="null value of a non-tag field is written as nil">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">some key</key>
+                        <value>v</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">some key</key>
+                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <update key="some key" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="removed field with a null value has no body">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <delete key="a"/>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="snapshot field with non-tag name is written as insert">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">some key</key>
+                        <value>v</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value">
+                        <insert key="some key">v</insert>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="changed field with non-tag name is written as update">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">some key</key>
+                        <value>v</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">some key</key>
+                        <value>w</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <update key="some key">w</update>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="deleted key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                    <b>2</b>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <delete key="b"/>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="equal maps have no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="nested map is diffed by keys">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <nested type="LinkedHashMap">
+                        <a>1</a>
+                        <b>2</b>
+                    </nested>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <nested type="LinkedHashMap">
+                        <a>1</a>
+                        <c>3</c>
+                    </nested>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <nested>
+                            <insert key="c">3</insert>
+                            <delete key="b"/>
+                        </nested>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="nested collection keeps the field tag">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <tags type="ArrayList">
+                        <item>a</item>
+                    </tags>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <tags type="ArrayList">
+                        <item>a</item>
+                        <item>b</item>
+                    </tags>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <tags type="ArrayList">
+                            <tags>a</tags>
+                            <tags>b</tags>
+                        </tags>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="null left map is fully added">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                    <b>2</b>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value">
+                        <a>1</a>
+                        <b>2</b>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="scalar field becomes a map">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <field>v</field>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <field type="LinkedHashMap">
+                        <a>1</a>
+                    </field>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <field>
+                            <insert key="a">1</insert>
+                        </field>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="list value becomes a set">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>a</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet">
+                    <item>a</item>
+                    <item>b</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="LinkedHashSet">
+                        <insert>a</insert>
+                        <insert>b</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="map value becomes empty">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                    <b>2</b>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <delete key="a"/>
+                        <delete key="b"/>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="map value becomes a list">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>x</item>
+                    <item>y</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="ArrayList">
+                        <item>x</item>
+                        <item>y</item>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="map value becomes a set">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet">
+                    <item>x</item>
+                    <item>y</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="LinkedHashSet">
+                        <insert>x</insert>
+                        <insert>y</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="set value becomes a map">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet">
+                    <item>a</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="a">1</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="list value becomes a map">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>a</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="a">1</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="array value becomes a list">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="int[]">
+                    <item>1</item>
+                    <item>2</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>3</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="ArrayList">
+                        <item>3</item>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="null key is an empty identifier">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap"/>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <value>v</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="">v</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="field null on both sides is not a change">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">a</key>
+                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </entry>
+                    <entry>
+                        <key type="String">b</key>
+                        <value>1</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">a</key>
+                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </entry>
+                    <entry>
+                        <key type="String">b</key>
+                        <value>2</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <b>2</b>
+                    </update>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="entries diff">
+        <test type="Case" name="added, changed and deleted keys">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                    <b>2</b>
+                    <c>3</c>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                    <b>20</b>
+                    <d>4</d>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <b>20</b>
+                        <insert key="d">4</insert>
+                        <delete key="c"/>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="set difference reports added and deleted items">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet">
+                    <item>a</item>
+                    <item>b</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet">
+                    <item>b</item>
+                    <item>c</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="LinkedHashSet">
+                        <insert>c</insert>
+                        <delete>a</delete>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="deleted set element body is plain data">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="HashSet">
+                    <item type="PresentedValue">
+                        <body type="LinkedHashMapObjectObject">
+                            <entry>
+                                <key type="String">some key</key>
+                                <value>v</value>
+                            </entry>
+                        </body>
+                    </item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="HashSet"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="HashSet">
+                        <delete type="PresentedValue">
+                            <delete key="some key">v</delete>
+                        </delete>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="hash set elements with equal keys are ordered by body">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="HashSet">
+                    <item type="Item">
+                        <name>a</name>
+                        <count>1</count>
+                        <note>b</note>
+                    </item>
+                    <item type="Item">
+                        <name>a</name>
+                        <count>1</count>
+                        <note>aa</note>
+                    </item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="HashSet">
+                        <item type="Item">
+                            <name>a</name>
+                            <count type="Integer">1</count>
+                            <note>aa</note>
+                        </item>
+                        <item type="Item">
+                            <name>a</name>
+                            <count type="Integer">1</count>
+                            <note>b</note>
+                        </item>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="pojo diff reports changed properties">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="Item">
+                    <name>old</name>
+                    <count>1</count>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="Item">
+                    <name>new</name>
+                    <count>2</count>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="Item">
+                        <name>new</name>
+                        <count type="Integer">2</count>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="null left map is fully added">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                    <b>2</b>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value">
+                        <a>1</a>
+                        <b>2</b>
+                    </insert>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="key presenter">
+        <test type="Case" name="object key is rendered by presenter">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="Item">
+                            <name>first</name>
+                            <count>1</count>
+                        </key>
+                        <value>one</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="Item">
+                            <name>first</name>
+                            <count>1</count>
+                        </key>
+                        <value>one</value>
+                    </entry>
+                    <entry>
+                        <key type="Item">
+                            <name>second</name>
+                            <count>2</count>
+                        </key>
+                        <value>two</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="second,2">two</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="keys with the same identifier are rejected">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="CollidingKey"/>
+                        <value>one</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="CollidingKey"/>
+                        <value>one</value>
+                    </entry>
+                    <entry>
+                        <key type="CollidingKey"/>
+                        <value>two</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="IllegalStateException">
+                <message>Map keys CollidingKey 'same' and CollidingKey 'same' are rendered as the same object key. Register a presenter via TestSetupModule.addDiffKeyPresenter that renders them differently</message>
+            </response>
+        </test>
+        <test type="Case" name="keys with the same text are rejected">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="Item">
+                            <name>one</name>
+                            <count>1</count>
+                            <note>a</note>
+                        </key>
+                        <value>one</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="Item">
+                            <name>one</name>
+                            <count>1</count>
+                            <note>a</note>
+                        </key>
+                        <value>one</value>
+                    </entry>
+                    <entry>
+                        <key type="Item">
+                            <name>one</name>
+                            <count>1</count>
+                            <note>b</note>
+                        </key>
+                        <value>two</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="IllegalStateException">
+                <message>Map keys Item 'Item(name=one, count=1, note=a)' and Item 'Item(name=one, count=1, note=b)' are rendered as the same text key 'one,1'. Register a presenter via TestSetupModule.addDiffKeyPresenter that renders them differently</message>
+            </response>
+        </test>
+        <test type="Case" name="absent records are skipped when the collision is searched">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="CollidingKey"/>
+                </entry>
+                <entry>
+                    <key type="CollidingKey"/>
+                    <value>one</value>
+                </entry>
+                <entry>
+                    <key type="CollidingKey"/>
+                    <value>two</value>
+                </entry>
+            </request>
+            <response type="IllegalStateException">
+                <message>Map keys CollidingKey 'same' and CollidingKey 'same' are rendered as the same object key. Register a presenter via TestSetupModule.addDiffKeyPresenter that renders them differently</message>
+            </response>
+        </test>
+        <test type="Case" name="structured key without toString is written as an object">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap"/>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="UnstableKey"/>
+                        <value>one</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert>
+                            <key type="UnstableKey"/>
+                            <value>one</value>
+                        </insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="scalar key is rendered by the format serializer">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap"/>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="ScalarKey">some</key>
+                        <value>one</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="some">one</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="field order">
+        <test type="Case" name="JsonPropertyOrder overrides the declaration order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="AnnotatedOrder">
+                    <first>first</first>
+                    <second>second</second>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="AnnotatedOrder">
+                    <first>first-new</first>
+                    <second>second-new</second>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="AnnotatedOrder">
+                        <second>second-new</second>
+                        <first>first-new</first>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="LinkedHashMap keeps the insertion order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <zeta>1</zeta>
+                    <alpha>2</alpha>
+                    <middle>3</middle>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <zeta>10</zeta>
+                    <alpha>20</alpha>
+                    <middle>30</middle>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <zeta>10</zeta>
+                        <alpha>20</alpha>
+                        <middle>30</middle>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="HashMap keys are sorted">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="HashMap">
+                    <zeta>1</zeta>
+                    <alpha>2</alpha>
+                    <middle>3</middle>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="HashMap">
+                    <zeta>10</zeta>
+                    <alpha>20</alpha>
+                    <middle>30</middle>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <alpha>20</alpha>
+                        <middle>30</middle>
+                        <zeta>10</zeta>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="TreeMap keeps the comparator order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="DescendingTreeMap">
+                    <alpha>1</alpha>
+                    <middle>2</middle>
+                    <zeta>3</zeta>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="DescendingTreeMap">
+                    <alpha>10</alpha>
+                    <middle>20</middle>
+                    <zeta>30</zeta>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <zeta>30</zeta>
+                        <middle>20</middle>
+                        <alpha>10</alpha>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="TreeMap with object keys keeps the comparator order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="NoteOrderTreeMap">
+                    <entry>
+                        <key type="Item">
+                            <name>b</name>
+                            <count>1</count>
+                            <note>aaa</note>
+                        </key>
+                        <value>old</value>
+                    </entry>
+                    <entry>
+                        <key type="Item">
+                            <name>a</name>
+                            <count>2</count>
+                            <note>zzz</note>
+                        </key>
+                        <value>old</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="NoteOrderTreeMap">
+                    <entry>
+                        <key type="Item">
+                            <name>b</name>
+                            <count>1</count>
+                            <note>aaa</note>
+                        </key>
+                        <value>new</value>
+                    </entry>
+                    <entry>
+                        <key type="Item">
+                            <name>a</name>
+                            <count>2</count>
+                            <note>zzz</note>
+                        </key>
+                        <value>new</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <update key="b,1">new</update>
+                        <update key="a,2">new</update>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="LinkedHashSet keeps the insertion order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet">
+                    <item>zeta</item>
+                    <item>alpha</item>
+                    <item>middle</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="LinkedHashSet">
+                        <item>zeta</item>
+                        <item>alpha</item>
+                        <item>middle</item>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="HashSet elements are sorted">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="HashSet">
+                    <item>zeta</item>
+                    <item>alpha</item>
+                    <item>middle</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="HashSet">
+                        <item>alpha</item>
+                        <item>middle</item>
+                        <item>zeta</item>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="TreeSet keeps the sorted order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="TreeSet">
+                    <item type="Integer">10</item>
+                    <item type="Integer">2</item>
+                    <item type="Integer">1</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="TreeSet">
+                        <item type="Integer">1</item>
+                        <item type="Integer">2</item>
+                        <item type="Integer">10</item>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="ArrayDeque keeps its order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="ArrayDeque">
+                    <item>zeta</item>
+                    <item>alpha</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="ArrayDeque">
+                        <item>zeta</item>
+                        <item>alpha</item>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="LinkedMultiValueMap keeps the insertion order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <zeta>1</zeta>
+                    <zeta>3</zeta>
+                    <alpha>2</alpha>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value">
+                        <zeta>1</zeta>
+                        <zeta>3</zeta>
+                        <alpha>2</alpha>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="record identifiers are sorted">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="HashMap">
+                <c>1</c>
+                <a>2</a>
+                <b>3</b>
+            </request>
+            <request type="HashMap">
+                <c>10</c>
+                <a>20</a>
+                <b>30</b>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="a">20</update>
+                    <update key="b">30</update>
+                    <update key="c">10</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="ordered snapshot keeps its order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <c>1</c>
+                <a>2</a>
+                <b>3</b>
+            </request>
+            <request type="LinkedHashMap">
+                <c>10</c>
+                <a>20</a>
+                <b>30</b>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="c">10</update>
+                    <update key="a">20</update>
+                    <update key="b">30</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="unordered MultiValueMap is sorted">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="UnorderedMultiValueMap">
+                    <zeta>1</zeta>
+                    <alpha>2</alpha>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value">
+                        <alpha>2</alpha>
+                        <zeta>1</zeta>
+                    </insert>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="multi-value map diff">
+        <test type="Case" name="added key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <zeta>b</zeta>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="zeta">b</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="removed key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <zeta>b</zeta>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <delete key="zeta">b</delete>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="added value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <header>b</header>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="header">b</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="removed value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <header>b</header>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <delete key="header">b</delete>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="only changed key is written">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <zeta>b</zeta>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <zeta>c</zeta>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="zeta">c</insert>
+                        <delete key="zeta">b</delete>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="reordered values have no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedMultiValueMapStringObject">
+                        <header>a</header>
+                        <header>b</header>
+                    </body>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedMultiValueMapStringObject">
+                        <header>b</header>
+                        <header>a</header>
+                    </body>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="duplicate value is deleted once">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <header>a</header>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <delete key="header">a</delete>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="duplicate value is inserted once">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <header>a</header>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="header">a</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="added, removed and unchanged keys together">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <alpha>1</alpha>
+                    <gamma>5</gamma>
+                    <zeta>2</zeta>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <beta>3</beta>
+                    <alpha>4</alpha>
+                    <gamma>5</gamma>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="beta">3</insert>
+                        <insert key="alpha">4</insert>
+                        <delete key="alpha">1</delete>
+                        <delete key="zeta">2</delete>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="unordered map sorts changed keys">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="UnorderedMultiValueMap">
+                    <zeta>1</zeta>
+                    <alpha>2</alpha>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="UnorderedMultiValueMap">
+                    <zeta>1</zeta>
+                    <zeta>3</zeta>
+                    <alpha>2</alpha>
+                    <alpha>4</alpha>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="alpha">4</insert>
+                        <insert key="zeta">3</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="value equality follows the configured rules">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedMultiValueMapStringObject">
+                        <header type="BigDecimal">1.0</header>
+                    </body>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedMultiValueMapStringObject">
+                        <header type="BigDecimal">1.00</header>
+                    </body>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="list value becomes a multi-value map">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>a</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>b</header>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="header">b</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="map value becomes a multi-value map">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <header>a</header>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <header>b</header>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <insert key="header">b</insert>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="removed key writes all its values">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                    <zeta>b</zeta>
+                    <zeta>c</zeta>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedMultiValueMapStringObject">
+                    <header>a</header>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <delete key="zeta">b</delete>
+                        <delete key="zeta">c</delete>
+                    </update>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="reserved attributes">
+        <test type="Case" name="key attribute is rejected">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="AttributedValue">
+                    <body>v</body>
+                    <attributeName>key</attributeName>
+                    <attributeValue>x</attributeValue>
+                </value>
+            </request>
+            <response type="IllegalArgumentException">
+                <message>Attribute 'key' is reserved by the difference format; choose another name in DiffPresenter</message>
+            </response>
+        </test>
+        <test type="Case" name="type attribute is rejected">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="AttributedValue">
+                    <body>v</body>
+                    <attributeName>type</attributeName>
+                    <attributeValue>x</attributeValue>
+                </value>
+            </request>
+            <response type="IllegalArgumentException">
+                <message>Attribute 'type' is reserved by the difference format; choose another name in DiffPresenter</message>
+            </response>
+        </test>
+        <test type="Case" name="nil attribute is rejected">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="AttributedValue">
+                    <body>v</body>
+                    <attributeName>nil</attributeName>
+                    <attributeValue>x</attributeValue>
+                </value>
+            </request>
+            <response type="IllegalArgumentException">
+                <message>Attribute 'nil' is reserved by the difference format; choose another name in DiffPresenter</message>
+            </response>
+        </test>
+        <test type="Case" name="xmlns attribute is rejected">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="AttributedValue">
+                    <body>v</body>
+                    <attributeName>xmlns</attributeName>
+                    <attributeValue>x</attributeValue>
+                </value>
+            </request>
+            <response type="IllegalArgumentException">
+                <message>Attribute 'xmlns' is reserved by the difference format; choose another name in DiffPresenter</message>
+            </response>
+        </test>
+        <test type="Case" name="invalid attribute name is rejected">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="AttributedValue">
+                    <body>v</body>
+                    <attributeName>bad name</attributeName>
+                    <attributeValue>x</attributeValue>
+                </value>
+            </request>
+            <response type="IllegalArgumentException">
+                <message>Attribute name 'bad name' is not a valid XML name</message>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="presenter details">
+        <test type="Case" name="attribute only presentation has no body">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="PresentedValue" ttl="10"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="attribute only presentation of a changed value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <ttl>20</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="20"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="presenter takes the payload type from the context">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="TypedPayload">
+                    <payload>
+                        <a>1</a>
+                    </payload>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="LinkedHashMap">
+                        <a>1</a>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="changed payload keeps the type from the context">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="TypedPayload">
+                    <payload>
+                        <a>1</a>
+                    </payload>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="TypedPayload">
+                    <payload>
+                        <a>2</a>
+                    </payload>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="LinkedHashMap">
+                        <a>2</a>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="property serialized as an xml attribute">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="AttributeTagged" version="1">
+                    <payload>old</payload>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="AttributeTagged" version="2">
+                    <payload>new</payload>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="AttributeTagged" version="2">
+                        <payload>new</payload>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="null xml attribute is not written">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="AttributeTagged">
+                    <payload>old</payload>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="AttributeTagged">
+                    <payload>new</payload>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="AttributeTagged">
+                        <payload>new</payload>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="presenter of the base type applies to a subtype">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="DerivedValue">
+                    <payload>x</payload>
+                    <detail>hidden</detail>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="BaseValue" presented="base">
+                        <payload>x</payload>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="changed value is presented by the base type presenter">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="DerivedValue">
+                    <payload>x</payload>
+                    <detail>hidden</detail>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="DerivedValue">
+                    <payload>y</payload>
+                    <detail>hidden</detail>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="BaseValue" presented="base">
+                        <payload>y</payload>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="presenter body keeps its own presenter">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="PresentedList">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="PresentedValue">
+                        <size type="Integer">2</size>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="nested body attributes are merged">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <ttl>5</ttl>
+                    <body type="AttributedValue">
+                        <body>x</body>
+                        <attributeName>version</attributeName>
+                        <attributeValue>1</attributeValue>
+                    </body>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="PresentedValue" ttl="5" version="1">x</insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="nested body attribute change keeps the entry">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="AttributedValue">
+                        <body>x</body>
+                        <attributeName>version</attributeName>
+                        <attributeValue>1</attributeValue>
+                    </body>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="AttributedValue">
+                        <body>x</body>
+                        <attributeName>version</attributeName>
+                        <attributeValue>2</attributeValue>
+                    </body>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" version="2">x</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="presenter body is a set">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashSet">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="PresentedValue">
+                        <item>a</item>
+                        <item>b</item>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="presenter body is a multi-value map">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedMultiValueMapStringObject">
+                        <header>a</header>
+                        <header>b</header>
+                    </body>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="PresentedValue">
+                        <header>a</header>
+                        <header>b</header>
+                    </insert>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="presenter projection">
+        <test type="Case" name="empty fields are skipped and an always-included null is written">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="IncludeAware">
+                    <text></text>
+                    <map/>
+                    <number>5</number>
+                    <always xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <anyValue>a</anyValue>
+                    <writeOnly>hidden</writeOnly>
+                    <first>f</first>
+                    <second>s</second>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value" type="IncludeAware">
+                        <number type="Integer">5</number>
+                        <always xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <anyValue>a</anyValue>
+                        <first>f</first>
+                        <second>s</second>
+                        <extra>a</extra>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="non-empty fields are written">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="IncludeAware">
+                    <text>old</text>
+                    <map>
+                        <k>old</k>
+                    </map>
+                    <anyValue>old</anyValue>
+                    <first>old</first>
+                    <second>s</second>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="IncludeAware">
+                    <text>new</text>
+                    <map>
+                        <k>new</k>
+                    </map>
+                    <anyValue>new</anyValue>
+                    <first>new</first>
+                    <second>s</second>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="IncludeAware">
+                        <text>new</text>
+                        <map>
+                            <k>new</k>
+                        </map>
+                        <anyValue>new</anyValue>
+                        <first>new</first>
+                        <extra>new</extra>
+                    </update>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="field names">
+        <test type="Case" name="reserved names are not tags">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <insert>old</insert>
+                    <update>old</update>
+                    <delete>old</delete>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <insert>new</insert>
+                    <update>new</update>
+                    <delete>new</delete>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <update key="insert">new</update>
+                        <update key="update">new</update>
+                        <update key="delete">new</update>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="xmlns is not a tag">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">xmlns</key>
+                        <value>old</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">xmlns</key>
+                        <value>new</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <update key="xmlns">new</update>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="name starting with a digit is not a tag">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">1 field</key>
+                        <value>old</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String">1 field</key>
+                        <value>new</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <update key="1 field">new</update>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="non-ascii name is a tag">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <поле>старое</поле>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <поле>новое</поле>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <поле>новое</поле>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="underscore dot and hyphen are allowed in a tag">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <_under>old</_under>
+                    <a.b>old</a.b>
+                    <a-b>old</a-b>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <_under>new</_under>
+                    <a.b>new</a.b>
+                    <a-b>new</a-b>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <_under>new</_under>
+                        <a.b>new</a.b>
+                        <a-b>new</a-b>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="empty name and invalid characters are not tags">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String"></key>
+                        <value>old</value>
+                    </entry>
+                    <entry>
+                        <key type="String">a№b</key>
+                        <value>old</value>
+                    </entry>
+                    <entry>
+                        <key type="String">😀</key>
+                        <value>old</value>
+                    </entry>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMapObjectObject">
+                    <entry>
+                        <key type="String"></key>
+                        <value>new</value>
+                    </entry>
+                    <entry>
+                        <key type="String">a№b</key>
+                        <value>new</value>
+                    </entry>
+                    <entry>
+                        <key type="String">😀</key>
+                        <value>new</value>
+                    </entry>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <update key="">new</update>
+                        <update key="a№b">new</update>
+                        <update key="😀">new</update>
+                    </update>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="snapshot diff">
+        <test type="Case" name="both snapshots are absent">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+        </test>
+        <test type="Case" name="snapshot before the test is absent">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <a>1</a>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="a">1</insert>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="object key">
+        <test type="Case" name="top-level insert with an object key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="ComplexKey">
+                        <exchange>MOEX</exchange>
+                        <classCode>TQCB</classCode>
+                        <ticker>SBER</ticker>
+                    </key>
+                    <value type="Item">
+                        <name>one</name>
+                        <count>1</count>
+                    </value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert type="Item">
+                        <key type="ComplexKey">
+                            <exchange>MOEX</exchange>
+                            <classCode>TQCB</classCode>
+                            <ticker>SBER</ticker>
+                        </key>
+                        <value>
+                            <name>one</name>
+                            <count type="Integer">1</count>
+                        </value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="top-level update with an object key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="ComplexKey">
+                        <exchange>MOEX</exchange>
+                        <classCode>TQCB</classCode>
+                        <ticker>SBER</ticker>
+                    </key>
+                    <value type="Item">
+                        <name>old</name>
+                        <count>1</count>
+                    </value>
+                </entry>
+            </request>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="ComplexKey">
+                        <exchange>MOEX</exchange>
+                        <classCode>TQCB</classCode>
+                        <ticker>SBER</ticker>
+                    </key>
+                    <value type="Item">
+                        <name>new</name>
+                        <count>2</count>
+                    </value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update type="Item">
+                        <key type="ComplexKey">
+                            <exchange>MOEX</exchange>
+                            <classCode>TQCB</classCode>
+                            <ticker>SBER</ticker>
+                        </key>
+                        <value>
+                            <name>new</name>
+                            <count type="Integer">2</count>
+                        </value>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="top-level delete with an object key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="ComplexKey">
+                        <exchange>MOEX</exchange>
+                        <classCode>TQCB</classCode>
+                        <ticker>SBER</ticker>
+                    </key>
+                    <value type="Item">
+                        <name>one</name>
+                        <count>1</count>
+                    </value>
+                </entry>
+            </request>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <response type="DiffResult">
+                <test>
+                    <delete type="Item">
+                        <key type="ComplexKey">
+                            <exchange>MOEX</exchange>
+                            <classCode>TQCB</classCode>
+                            <ticker>SBER</ticker>
+                        </key>
+                    </delete>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="object key with a scalar value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="ComplexKey">
+                        <exchange>MOEX</exchange>
+                        <classCode>TQCB</classCode>
+                        <ticker>SBER</ticker>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="ComplexKey">
+                            <exchange>MOEX</exchange>
+                            <classCode>TQCB</classCode>
+                            <ticker>SBER</ticker>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="object key with an attributes-only value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="ComplexKey">
+                        <exchange>MOEX</exchange>
+                        <classCode>TQCB</classCode>
+                        <ticker>SBER</ticker>
+                    </key>
+                    <value type="PresentedValue">
+                        <ttl>10</ttl>
+                    </value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert type="PresentedValue" ttl="10">
+                        <key type="ComplexKey">
+                            <exchange>MOEX</exchange>
+                            <classCode>TQCB</classCode>
+                            <ticker>SBER</ticker>
+                        </key>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="nested map with object keys">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key type="ComplexKey">
+                                <exchange>MOEX</exchange>
+                                <classCode>TQCB</classCode>
+                                <ticker>SBER</ticker>
+                            </key>
+                            <value>one</value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key type="ComplexKey">
+                                <exchange>MOEX</exchange>
+                                <classCode>TQCB</classCode>
+                                <ticker>SBER</ticker>
+                            </key>
+                            <value>two</value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <map>
+                            <update>
+                                <key type="ComplexKey">
+                                    <exchange>MOEX</exchange>
+                                    <classCode>TQCB</classCode>
+                                    <ticker>SBER</ticker>
+                                </key>
+                                <value>two</value>
+                            </update>
+                        </map>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="custom presenter of an object key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="CompactKey">
+                        <id>1</id>
+                        <ignored>a</ignored>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="CompactKey">
+                            <id>1</id>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="object key body keeps its own presenter">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="PresentedList">
+                        <item>a</item>
+                        <item>b</item>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="PresentedList">
+                            <size type="Integer">2</size>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="value presenter is not applied to an object key">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="KeyWithValuePresenter">
+                        <id>1</id>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="KeyWithValuePresenter">
+                            <id>1</id>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="object keys with the same presenter output are rejected">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMapObjectObject">
+                <entry>
+                    <key type="CompactKey">
+                        <id>1</id>
+                        <ignored>a</ignored>
+                    </key>
+                    <value>one</value>
+                </entry>
+                <entry>
+                    <key type="CompactKey">
+                        <id>1</id>
+                        <ignored>b</ignored>
+                    </key>
+                    <value>two</value>
+                </entry>
+            </request>
+            <response type="IllegalStateException">
+                <message>Map keys CompactKey 'CompactKey(id=1, ignored=a)' and CompactKey 'CompactKey(id=1, ignored=b)' are rendered as the same object key. Register a presenter via TestSetupModule.addDiffKeyPresenter that renders them differently</message>
+            </response>
+        </test>
+        <test type="Case" name="object key with a null value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key type="ComplexKey">
+                                <exchange>MOEX</exchange>
+                                <classCode>TQCB</classCode>
+                                <ticker>SBER</ticker>
+                            </key>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value">
+                        <map>
+                            <insert>
+                                <key type="ComplexKey">
+                                    <exchange>MOEX</exchange>
+                                    <classCode>TQCB</classCode>
+                                    <ticker>SBER</ticker>
+                                </key>
+                                <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            </insert>
+                        </map>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="object key with an empty string value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key type="ComplexKey">
+                                <exchange>MOEX</exchange>
+                                <classCode>TQCB</classCode>
+                                <ticker>SBER</ticker>
+                            </key>
+                            <value></value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value">
+                        <map>
+                            <insert>
+                                <key type="ComplexKey">
+                                    <exchange>MOEX</exchange>
+                                    <classCode>TQCB</classCode>
+                                    <ticker>SBER</ticker>
+                                </key>
+                                <value></value>
+                            </insert>
+                        </map>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="object key with an empty object value">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key type="ComplexKey">
+                                <exchange>MOEX</exchange>
+                                <classCode>TQCB</classCode>
+                                <ticker>SBER</ticker>
+                            </key>
+                            <value type="LinkedHashMap"/>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value">
+                        <map>
+                            <insert type="LinkedHashMap">
+                                <key type="ComplexKey">
+                                    <exchange>MOEX</exchange>
+                                    <classCode>TQCB</classCode>
+                                    <ticker>SBER</ticker>
+                                </key>
+                                <value/>
+                            </insert>
+                        </map>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="text and object keys are ordered together">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="HashMapObjectObject">
+                <entry>
+                    <key>text-key</key>
+                    <value>text</value>
+                </entry>
+                <entry>
+                    <key type="ComplexKey">
+                        <exchange>MOEX</exchange>
+                        <classCode>TQCB</classCode>
+                        <ticker>SBER</ticker>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="ComplexKey">
+                            <exchange>MOEX</exchange>
+                            <classCode>TQCB</classCode>
+                            <ticker>SBER</ticker>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                    <insert key="text-key">text</insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="object keys of different types are ordered by type">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="HashMapObjectObject">
+                <entry>
+                    <key type="ComplexKey">
+                        <exchange>MOEX</exchange>
+                        <classCode>TQCB</classCode>
+                        <ticker>SBER</ticker>
+                    </key>
+                    <value>one</value>
+                </entry>
+                <entry>
+                    <key type="CompactKey">
+                        <id>compact</id>
+                    </key>
+                    <value>two</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="CompactKey">
+                            <id>compact</id>
+                        </key>
+                        <value>two</value>
+                    </insert>
+                    <insert>
+                        <key type="ComplexKey">
+                            <exchange>MOEX</exchange>
+                            <classCode>TQCB</classCode>
+                            <ticker>SBER</ticker>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="object keys of the same type are ordered by their body">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="HashMapObjectObject">
+                <entry>
+                    <key type="CompactKey">
+                        <id>b</id>
+                    </key>
+                    <value>two</value>
+                </entry>
+                <entry>
+                    <key type="CompactKey">
+                        <id>a</id>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="CompactKey">
+                            <id>a</id>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                    <insert>
+                        <key type="CompactKey">
+                            <id>b</id>
+                        </key>
+                        <value>two</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="list keys are ordered by their members">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="HashMapObjectObject">
+                <entry>
+                    <key type="ArrayList">
+                        <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <item>b</item>
+                    </key>
+                    <value>two</value>
+                </entry>
+                <entry>
+                    <key type="ArrayList">
+                        <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <item>a</item>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="ArrayList">
+                            <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            <item>a</item>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                    <insert>
+                        <key type="ArrayList">
+                            <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            <item>b</item>
+                        </key>
+                        <value>two</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="list keys are ordered by the metadata of their members">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="HashMapObjectObject">
+                <entry>
+                    <key type="ArrayList">
+                        <item type="PresentedValue">
+                            <body>a</body>
+                            <ttl>2</ttl>
+                        </item>
+                    </key>
+                    <value>two</value>
+                </entry>
+                <entry>
+                    <key type="ArrayList">
+                        <item type="PresentedValue">
+                            <body>a</body>
+                            <ttl>1</ttl>
+                        </item>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="ArrayList">
+                            <item type="PresentedValue" ttl="1">a</item>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                    <insert>
+                        <key type="ArrayList">
+                            <item type="PresentedValue" ttl="2">a</item>
+                        </key>
+                        <value>two</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="shorter list keys go first">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="HashMapObjectObject">
+                <entry>
+                    <key type="ArrayList">
+                        <item>a</item>
+                        <item>b</item>
+                    </key>
+                    <value>two</value>
+                </entry>
+                <entry>
+                    <key type="ArrayList">
+                        <item>a</item>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key type="ArrayList">
+                            <item>a</item>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                    <insert>
+                        <key type="ArrayList">
+                            <item>a</item>
+                            <item>b</item>
+                        </key>
+                        <value>two</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="map keys are ordered by their fields">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="HashMapObjectObject">
+                <entry>
+                    <key type="LinkedHashMap">
+                        <b type="Integer">1</b>
+                    </key>
+                    <value>two</value>
+                </entry>
+                <entry>
+                    <key type="LinkedHashMap">
+                        <a type="Integer">1</a>
+                    </key>
+                    <value>one</value>
+                </entry>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert>
+                        <key>
+                            <a type="Integer">1</a>
+                        </key>
+                        <value>one</value>
+                    </insert>
+                    <insert>
+                        <key>
+                            <b type="Integer">1</b>
+                        </key>
+                        <value>two</value>
+                    </insert>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="attributes with a body">
+        <test type="Case" name="scalar body keeps its body when only the attribute changes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body>v1</body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body>v1</body>
+                    <ttl>20</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="20">v1</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="scalar body with a changed payload">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body>v1</body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body>v2</body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="10">v2</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="scalar body with unchanged payload and attribute">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body>v1</body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body>v1</body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="map body has no body when only the attribute changes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <payload>old</payload>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <payload>old</payload>
+                    </body>
+                    <ttl>2</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="2"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="body without presentation has no body when only the attribute changes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="TypedPayload">
+                        <payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="TypedPayload">
+                        <payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </body>
+                    <ttl>2</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="2"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="map body keeps the payload when it changes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <payload>old</payload>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <payload>new</payload>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="1">
+                        <payload>new</payload>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="list body keeps the snapshot when only the attribute changes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="ArrayList">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="ArrayList">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                    <ttl>20</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="20">
+                        <item>a</item>
+                        <item>b</item>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="list body with unchanged content has no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="ArrayList">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="ArrayList">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="set body has no body when only the attribute changes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashSet">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashSet">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                    <ttl>20</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="20"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="array body keeps the snapshot when only the attribute changes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="String[]">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="String[]">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                    <ttl>20</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="20">
+                        <item>a</item>
+                        <item>b</item>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="multi-value map body has no body when only the attribute changes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedMultiValueMapStringObject">
+                        <header>a</header>
+                        <header>b</header>
+                    </body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedMultiValueMapStringObject">
+                        <header>a</header>
+                        <header>b</header>
+                    </body>
+                    <ttl>20</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="20"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="added attribute is written with a changed body">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>left</name>
+                    </body>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>right</name>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="1">
+                        <name>right</name>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="changed attribute is written with a changed body">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>left</name>
+                    </body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>right</name>
+                    </body>
+                    <ttl>2</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="2">
+                        <name>right</name>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="unordered attributes are sorted by name in the full set">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>left</name>
+                    </body>
+                    <ttl>1</ttl>
+                    <score>5</score>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>right</name>
+                    </body>
+                    <ttl>1</ttl>
+                    <score>6</score>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" score="6" ttl="1">
+                        <name>right</name>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="ordered attributes keep the insertion order">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>left</name>
+                    </body>
+                    <ttl>1</ttl>
+                    <score>5</score>
+                    <orderedAttributes>true</orderedAttributes>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>right</name>
+                    </body>
+                    <ttl>2</ttl>
+                    <score>6</score>
+                    <orderedAttributes>true</orderedAttributes>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="2" score="6">
+                        <name>right</name>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="unordered attributes are sorted by name when all change">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>left</name>
+                    </body>
+                    <ttl>1</ttl>
+                    <score>5</score>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <name>right</name>
+                    </body>
+                    <ttl>2</ttl>
+                    <score>6</score>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" score="6" ttl="2">
+                        <name>right</name>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="removed attribute with an unchanged body keeps the entry">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body>v1</body>
+                    <ttl>1</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body>v1</body>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue">v1</update>
+                </test>
+            </response>
+        </test>
+    </test>
+    <test type="Container" name="unchanged nested values">
+        <test type="Case" name="unchanged multi-value map has no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedMultiValueMapStringObject">
+                        <header>a</header>
+                        <header>b</header>
+                    </body>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedMultiValueMapStringObject">
+                        <header>a</header>
+                        <header>b</header>
+                    </body>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="unchanged set has no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashSet">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashSet">
+                        <item>a</item>
+                        <item>b</item>
+                    </body>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="nested custom equals predicate">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key>id</key>
+                            <value type="CustomId">
+                                <value>1</value>
+                                <tag>before</tag>
+                            </value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key>id</key>
+                            <value type="CustomId">
+                                <value>1</value>
+                                <tag>after</tag>
+                            </value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="nested custom equals predicate with different values">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key>id</key>
+                            <value type="CustomId">
+                                <value>1</value>
+                                <tag>before</tag>
+                            </value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key>id</key>
+                            <value type="CustomId">
+                                <value>2</value>
+                                <tag>before</tag>
+                            </value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value">
+                        <map>
+                            <id type="CustomId">
+                                <value>2</value>
+                            </id>
+                        </map>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="nested map with colliding keys is rejected">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="LinkedHashMapObjectObject">
+                        <entry>
+                            <key type="CollidingKey"/>
+                            <value>one</value>
+                        </entry>
+                        <entry>
+                            <key type="CollidingKey"/>
+                            <value>two</value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <response type="IllegalStateException">
+                <message>Map keys CollidingKey 'same' and CollidingKey 'same' are rendered as the same object key. Register a presenter via TestSetupModule.addDiffKeyPresenter that renders them differently</message>
+            </response>
+        </test>
+        <test type="Case" name="unordered map with object keys is sorted structurally">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="HashMapObjectObject">
+                        <entry>
+                            <key type="ComplexKey">
+                                <exchange>SPB</exchange>
+                                <classCode>TQBR</classCode>
+                                <ticker>GAZP</ticker>
+                            </key>
+                            <value>spb</value>
+                        </entry>
+                        <entry>
+                            <key type="ComplexKey">
+                                <exchange>MOEX</exchange>
+                                <classCode>TQCB</classCode>
+                                <ticker>SBER</ticker>
+                            </key>
+                            <value>moex</value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <insert key="value">
+                        <map>
+                            <insert>
+                                <key type="ComplexKey">
+                                    <exchange>MOEX</exchange>
+                                    <classCode>TQCB</classCode>
+                                    <ticker>SBER</ticker>
+                                </key>
+                                <value>moex</value>
+                            </insert>
+                            <insert>
+                                <key type="ComplexKey">
+                                    <exchange>SPB</exchange>
+                                    <classCode>TQBR</classCode>
+                                    <ticker>GAZP</ticker>
+                                </key>
+                                <value>spb</value>
+                            </insert>
+                        </map>
+                    </insert>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="unchanged unordered map with object keys has no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="HashMapObjectObject">
+                        <entry>
+                            <key type="ComplexKey">
+                                <exchange>MOEX</exchange>
+                                <classCode>TQCB</classCode>
+                                <ticker>SBER</ticker>
+                            </key>
+                            <value>one</value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <map type="HashMapObjectObject">
+                        <entry>
+                            <key type="ComplexKey">
+                                <exchange>MOEX</exchange>
+                                <classCode>TQCB</classCode>
+                                <ticker>SBER</ticker>
+                            </key>
+                            <value>one</value>
+                        </entry>
+                    </map>
+                </value>
+            </request>
+        </test>
+    </test>
+    <test type="Container" name="value type change">
+        <test type="Case" name="set value becomes a list with the same content">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet">
+                    <item>a</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>a</item>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="ArrayList">
+                        <item>a</item>
+                    </update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="set value becomes an empty map">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet">
+                    <item>a</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="LinkedHashMap"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="map value becomes an empty set">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="LinkedHashSet"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="body disappears with the same attributes">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <body type="LinkedHashMap">
+                        <a>1</a>
+                    </body>
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="PresentedValue">
+                    <ttl>10</ttl>
+                </value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="PresentedValue" ttl="10"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="empty set becomes another set type">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashSet"/>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="TreeSet"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="TreeSet"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="integer value becomes a long">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="Integer">1</value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="Long">1</value>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="Long">1</update>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="empty map type change is a difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap"/>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="TreeMap"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="TreeMap"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="non-empty map type change is not a difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="LinkedHashMap">
+                    <a>1</a>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="TreeMap">
+                    <a>1</a>
+                </value>
+            </request>
+        </test>
+        <test type="Case" name="base type presenter keeps the type of a subtype">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="BaseValue">
+                    <payload>x</payload>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="DerivedValue">
+                    <payload>x</payload>
+                    <detail>hidden</detail>
+                </value>
+            </request>
+        </test>
+    </test>
+    <test type="Container" name="empty values">
+        <test type="Case" name="list value becomes empty">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ArrayList">
+                    <item>a</item>
+                </value>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ArrayList"/>
+            </request>
+            <response type="DiffResult">
+                <test>
+                    <update key="value" type="ArrayList"/>
+                </test>
+            </response>
+        </test>
+        <test type="Case" name="empty lists have no difference">
+            <bean>objectsDifferenceTestFacade</bean>
+            <method>diff</method>
+            <request type="LinkedHashMap">
+                <value type="ArrayList"/>
+            </request>
+            <request type="LinkedHashMap">
+                <value type="ArrayList"/>
+            </request>
+        </test>
+    </test>
+</test>

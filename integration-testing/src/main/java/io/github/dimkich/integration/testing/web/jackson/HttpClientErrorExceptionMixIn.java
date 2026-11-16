@@ -20,7 +20,7 @@ import java.util.Iterator;
 
 @SuppressWarnings("unused")
 @Getter(onMethod_ = @JsonProperty)
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(value = {"statusText"}, ignoreUnknown = true)
 @JsonPropertyOrder({"statusCode", "rawStatusCode", "responseHeaders", "message"})
 @JsonDeserialize(using = HttpClientErrorExceptionMixIn.Deserializer.class)
 public class HttpClientErrorExceptionMixIn {

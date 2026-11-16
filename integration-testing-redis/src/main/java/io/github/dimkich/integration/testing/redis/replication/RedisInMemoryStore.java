@@ -354,7 +354,7 @@ public class RedisInMemoryStore {
      * The snapshot reflects the in-memory mirror as is: replication is awaited by the
      * wait-completion phases (after initialization and after the test action), not here.
      *
-     * @return snapshot keyed by {@link RedisKey#toString()}; empty map if the store is empty
+     * @return snapshot keyed by {@link RedisKey#getDisplayKey()}; empty map if the store is empty
      */
     public Map<String, Object> getSnapshot() {
         lock.readLock().lock();
@@ -371,7 +371,7 @@ public class RedisInMemoryStore {
                 clonedEntry.refreshTtl(now);
                 RedisDataSchemaMetadata metadata = registry.findSchema(name, redisKey.getKey().toString());
                 metadata.getFieldExclusion().process(clonedEntry);
-                snapshot.put(redisKey.toString(), clonedEntry);
+                snapshot.put(redisKey.getDisplayKey(), clonedEntry);
             });
             return snapshot;
         } finally {

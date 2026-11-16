@@ -25,7 +25,9 @@ through `spring.kafka.bootstrap-servers`).
 
 ### Inheritance rules
 
-* scalar values (`ignore`, `ignore-inbound`) are overridden by the child level;
+* `ignore` and `ignore-inbound` are primitives with defaults `false`/`true`, so they are not
+  inherited: set them at the level where they are needed;
+* other scalar values are overridden by the child level;
 * sets (`excluded-fields`) are merged;
 * `serializer` and `deserializer` are merged recursively: `type`/`bean-ref` from the parent and the
   child levels do not mix (two mutually exclusive ways to select the source), while `key`/`value`/
@@ -45,33 +47,34 @@ Complete parameter reference
 | `ignore-inbound`                        | boolean         | `true`  | hide messages sent by the test itself from assertions                   |
 | `excluded-fields`                       | list of strings | not set | fields excluded from message comparison                                 |
 | `lag-polling-interval-ms`               | long            | `5`     | pause between lag checks, ms                                            |
-| `lag-polling-timeout-ms`                | long            | `10000` | total time to wait for lag to clear, ms                                 |
+| `lag-polling-timeout-ms`                | long            | `15000` | total time to wait for lag to clear, ms                                 |
 | `readiness-polling-interval-ms`         | long            | `100`   | pause between readiness checks of expected consumer groups, ms          |
 | `startup-stabilization-timeout-seconds` | long            | `30`    | time to wait for SUT readiness (sniffer + groups) before lag polling, s |
 | `connections`                           | map             | not set | broker connections                                                      |
 
 ### Connection level (`integration.testing.kafka.connections.<NAME>.*`)
 
-| Parameter                                                                   | Type            | Default  | Description                                                                 |
-|-----------------------------------------------------------------------------|-----------------|----------|-----------------------------------------------------------------------------|
-| `bootstrap-servers`                                                         | string          | required | broker address: `host:port` or a comma-separated list                       |
-| `properties`                                                                | map             | `{}`     | extra Kafka client properties (`acks`, `security.protocol`, `sasl.*`, etc.) |
-| `topics`                                                                    | map             | not set  | topic settings; the key is a regular expression                             |
-| `expected-groups`                                                           | list of strings | not set  | SUT consumer groups awaited before a test and during the wait cycle         |
-| `serializer`, `deserializer`, `ignore`, `ignore-inbound`, `excluded-fields` |                 |          | inherited from the global level                                             |
+| Parameter                                       | Type            | Default          | Description                                                                 |
+|-------------------------------------------------|-----------------|------------------|-----------------------------------------------------------------------------|
+| `bootstrap-servers`                             | string          | required         | broker address: `host:port` or a comma-separated list                       |
+| `properties`                                    | map             | `{}`             | extra Kafka client properties (`acks`, `security.protocol`, `sasl.*`, etc.) |
+| `topics`                                        | map             | not set          | topic settings; the key is a regular expression                             |
+| `expected-groups`                               | list of strings | not set          | SUT consumer groups awaited before a test and during the wait cycle         |
+| `serializer`, `deserializer`, `excluded-fields` |                 |                  | inherited from the global level                                             |
+| `ignore`, `ignore-inbound`                      | boolean         | `false` / `true` | not inherited: set the value at the connection or topic level               |
 
 If `bootstrap-servers` is missing, context startup fails — a connection without a broker address cannot
 be created.
 
 ### Topic level (`integration.testing.kafka.connections.<NAME>.topics.<REGEX>.*`)
 
-| Parameter         | Type            | Default   | Description                                       |
-|-------------------|-----------------|-----------|---------------------------------------------------|
-| `serializer`      | Serde object    | inherited | how to serialize messages from `<inboundMessage>` |
-| `deserializer`    | Serde object    | inherited | how to deserialize captured messages              |
-| `ignore`          | boolean         | inherited | exclude the topic from sniffer capture            |
-| `ignore-inbound`  | boolean         | inherited | hide messages sent by the test itself             |
-| `excluded-fields` | list of strings | inherited | fields excluded from comparison                   |
+| Parameter         | Type            | Default   | Description                                           |
+|-------------------|-----------------|-----------|-------------------------------------------------------|
+| `serializer`      | Serde object    | inherited | how to serialize messages from `<inboundMessage>`     |
+| `deserializer`    | Serde object    | inherited | how to deserialize captured messages                  |
+| `ignore`          | boolean         | `false`   | exclude the topic from sniffer capture; not inherited |
+| `ignore-inbound`  | boolean         | `true`    | hide messages sent by the test itself; not inherited  |
+| `excluded-fields` | list of strings | inherited | fields excluded from comparison                       |
 
 ### Serde object (`serializer` and `deserializer`)
 
@@ -225,7 +228,7 @@ members), so they must not be listed in `expected-groups` — waiting for them e
 Real broker in tests
 --------------------
 
-`@EnableTestKafka` adds `real-kafka.properties`: both the application and the framework talk to a real
+`@EnableTestKafka` adds `kafka.properties`: both the application and the framework talk to a real
 broker started by Testcontainers in Docker. The broker address is available as
 `${embedded.kafka.brokerList}`. Kafka tests will not run when Docker is not running.
 

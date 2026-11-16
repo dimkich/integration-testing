@@ -182,7 +182,7 @@ public class TestExecutor {
                 ? null : new ArrayList<>(test.getOutboundMessages());
         assertion.setExpected(test);
         test.setResponse(null);
-        test.setDataStorageDiff(null);
+        test.setDiff(null);
         test.setOutboundMessages(null);
         testMessages.resetInbound();
         waitCompletion.start();
@@ -273,7 +273,7 @@ public class TestExecutor {
 
         List<AbstractMessage> messages = testMessages.pollMessages();
         test.setOutboundMessages(messages.isEmpty() ? null : messages);
-        test.setDataStorageDiff(testDataStorages.getMapDiff());
+        test.setDiff(testDataStorages.getDiff());
         testConverters.forEach(c -> c.convertNoException(test));
         test.removeUnusedStubCalls();
         if (test.getOutboundMessages() != null) {

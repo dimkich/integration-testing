@@ -10,7 +10,7 @@ XML/JSON with full control over the environment (Database, Time, Stubs, and Asyn
 * **Declarative Testing**: Define tests in external files without re-compiling Java code.
 * **State Management**: Automatic "dirty table" tracking and intelligent SQL cleanup/reload.
 * **Asynchrony Synchronization**: 4 built-in strategies to wait for background tasks (Wait-Completion).
-* **Time Manipulation**: Full JVM-wide system time mocking via `@MockJavaTime`.
+* **Time Manipulation**: JVM-wide Java Time API mocking via `@MockJavaTime`; `System.currentTimeMillis()` in configured packages.
 * **Advanced Stubbing**: Support for static methods, constructors, and recording real interactions.
 
 ## Documentation Sections
@@ -22,6 +22,7 @@ XML/JSON with full control over the environment (Database, Time, Stubs, and Asyn
   triggers).
 * **[TestSetupModule Configuration](TestSetupModule.md)** — Type registration, aliases, and cloning setup.
 * **[Test Initialization](Initialization.md)** — Environment setup: Time, DB, Caches, and Stubs.
+* **[Storage Changes](Storage-Diff.md)** — `<diff>`, operations, keys and updating expectations.
 
 ### Serialization (Serde)
 
@@ -36,7 +37,7 @@ XML/JSON with full control over the environment (Database, Time, Stubs, and Asyn
 ### Redis
 
 * **[Redis Overview](redis/README.md)** — `@EnableTestRedis` setup, XML examples, data types.
-* **[Data Types](redis/Data-Types.md)** — Initialization, `dataStorageDiff`, XML templates for Hash, List, Set, ZSet,
+* **[Data Types](redis/Data-Types.md)** — Initialization, `<diff>`, XML templates for Hash, List, Set, ZSet,
   Stream, HyperLogLog.
 * **[Configuration](redis/Configuration.md)** — Connections, Deep Merge, Longest-Prefix Match,
   full `application-test.yml`.
@@ -44,7 +45,7 @@ XML/JSON with full control over the environment (Database, Time, Stubs, and Asyn
   `<inboundMessage>`/`<outboundMessage>`, channel schemas, deduplication.
 * **[TTL & Time Shift](redis/TTL-Time-Shift.md)** — Virtual time, hash-field TTL (Redis 7.4+), step-by-step scenario.
 * **[Troubleshooting](redis/Troubleshooting.md)** — `Method not found`, `No handler`, `Redis Sync Timeout`,
-  empty `dataStorageDiff`.
+  empty `<diff>`.
 * **[Extensibility](redis/Extensibility.md)** — Custom codec/schema/data access, stream & event
   handlers, `TestSetupModule.addSubTypes()`.
 
@@ -55,7 +56,7 @@ XML/JSON with full control over the environment (Database, Time, Stubs, and Asyn
 * **[Configuration](postgresql/Configuration.md)** — Connections, permissions, `columns`, `ignore`,
   `excludedFields`, and diff shape.
 * **[Data and Diff](postgresql/Data-and-Diff.md)** — `SqlStorageSetup`, `SqlStorageInit`, DBUnit
-  datasets, `dataStorageDiff`, and row keys.
+  datasets, `<diff>`, and row keys.
 * **[Types and Serde](postgresql/Types-and-Serde.md)** — PostgreSQL types in XML, arrays, JSON,
   composites, `hstore`, `bytea`, and custom converters.
 * **[Troubleshooting](postgresql/Troubleshooting.md)** — Empty diff, permission, schema, conversion,
@@ -90,6 +91,7 @@ XML/JSON with full control over the environment (Database, Time, Stubs, and Asyn
 ### Advanced Features
 
 * **[Wait-Completion System](wait-completion.md)** — Handling asynchrony in reactive and event-driven stacks.
+* **[Diff Extensibility](Storage-Diff-Extensibility.md)** — Custom presenters and renderers for `<diff>`.
 * **[Method Hooks](Method-Hooks.md)** — `@OnMethodEnter`/`@OnMethodExit`: observe and inject behavior into application
   methods.
 * **[Hooks and Converters](Hooks-and-Converters.md)** — Extending behavior via `BeforeTest`, `AfterTest`,

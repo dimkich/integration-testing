@@ -6,7 +6,7 @@
 Тестирование логики с Redis всегда состоит из двух шагов:
 
 1. **Запись начального состояния (Seed):** С помощью блока `<init>` вы наполняете Redis тестовыми ключами.
-2. **Проверка изменений (Assert):** С помощью блока `<dataStorageDiff>` вы описываете, какие ключи должны
+2. **Проверка изменений (Assert):** С помощью блока `<diff>` вы описываете, какие ключи должны
    были добавиться, измениться или удалиться в базе после выполнения кода вашего приложения.
 
 Решение проблемы двоеточий в ключах Redis
@@ -34,11 +34,11 @@
 ---------------------------------
 
 Секция инициализации описывается в начале контейнера или тест-кейса. Для Redis используется тип
-инициализатора `keyValueStorageInit`:
+инициализатора `KeyValueStorageInit`:
 
 ```xml
 
-<init type="keyValueStorageInit" name="имя_подключения" clear="true/false">
+<init type="KeyValueStorageInit" name="имя_подключения" clear="true/false">
     <map type="LinkedHashMapStringObject">
         <!-- Ваши данные -->
     </map>
@@ -47,7 +47,8 @@
 
 * `name` — имя подключения из `integration.testing.redis.connections` (например,
   `redissonConnectionFactory`).
-* `clear="true"` — полностью очистить базу перед тестом (выполняется команда `FLUSHALL` на сервере).
+* `clear="true"` — очистить базу перед тестом. Если in-memory mirror пуст, команда `FLUSHALL` не
+  отправляется.
 * `clear="false"` — не очищать базу (новые ключи допишутся или обновят существующие).
 
 Инициализатор поддерживает два формата записи данных: **Сокращённый** и **Полный**.
@@ -60,7 +61,7 @@
 
 ```xml
 
-<init type="keyValueStorageInit" name="redissonConnectionFactory" clear="true">
+<init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
     <map type="LinkedHashMapStringObject">
         <!-- Будет сохранено как строка (String) -->
         <entry key="global:app:status">ACTIVE</entry>
@@ -82,16 +83,16 @@
 Используется, когда вам необходимо задать время жизни ключа (`ttl`) или записать сложные структуры
 данных (хэши, списки, множества, упорядоченные множества, стримы).
 
-При полной записи значение ключа обязательно оборачивается в тег `<value type="RedisEntry">`, внутри
-которого располагаются теги `<data>` (само значение) и `<ttl>` (длительность жизни):
+При полной записи значение ключа помечается `utype="RedisEntry"`, а внутри располагаются теги
+`<data>` (само значение) и `<ttl>` (длительность жизни):
 
 ```xml
 
-<init type="keyValueStorageInit" name="redissonConnectionFactory" clear="true">
+<init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
     <map type="LinkedHashMapStringObject">
 
         <!-- Пример строки с временем жизни 5 минут -->
-        <entry key="temp:otp:code" type="RedisEntry">
+        <entry key="temp:otp:code" utype="RedisEntry">
             <data>9941</data>
             <ttl>PT5M</ttl> <!-- Формат ISO-8601: PT5M = 5 минут, PT30S = 30 секунд -->
         </entry>
@@ -100,51 +101,72 @@
 </init>
 ```
 
-> **Совет:** Если TTL не требуется, используйте сокращённую запись с `utype` — примеры для каждого
-> типа данных приведены ниже в соответствующих разделах.
+> **Совет:** Если TTL не требуется, используйте сокращённую запись без `RedisEntry` — примеры для
+> каждого типа данных приведены ниже в соответствующих разделах.
 
-Проверка изменений через `<dataStorageDiff>`
+Проверка изменений через `<diff>`
 --------------------------------------------
 
-Блок `<dataStorageDiff>` описывает, какие изменения произошли в Redis после работы вашего приложения.
+Блок `<diff>` описывает, какие изменения произошли в Redis после работы вашего приложения.
 Он строится на основе сравнения состояния «до» и «после» выполнения теста.
 
-Каждая запись внутри диффа имеет атрибут `change`, который указывает характер изменений:
+Запись хранилища — это ключ Redis (`key`), а при `multipleDatabases` — `db/key`. Операция задаётся
+тегом элемента (`insert`, `update` или `delete`). Тело — значение ключа: строка пишется текстом, структура —
+полями или элементами, TTL — атрибутом `ttl`. Значение, которого не было в базе, пишется как
+`insert`, изменившееся — `update`, исчезнувшее — `delete`.
 
-* `change="added"` — ключ или элемент был добавлен в пустую базу.
-* `change="changed"` — значение существующего ключа или элемента изменилось.
-* `change="deleted"` — ключ или элемент был полностью удалён.
-
-Пример диффа для удаления ключа:
+Пример: ключ удалён:
 
 ```xml
-<dataStorageDiff type="MapStringKeyObjectValue">
-    <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-        <!-- Указываем, что ключ был удален -->
-        <entry change="deleted">
-            <key>user:session:100</key>
-            <!-- Обязательно передаем пустое значение nil для удаленного элемента -->
-            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
-        </entry>
-    </redissonConnectionFactory>
-</dataStorageDiff>
+<diff storage="redissonConnectionFactory">
+    <delete key="user:session:100"/>
+</diff>
 ```
+
+Пример: строка с TTL:
+
+```xml
+<diff storage="redissonConnectionFactory">
+    <insert key="user:session:100" ttl="PT30M">ACTIVE_SESSION</insert>
+</diff>
+```
+
+Пример: у хэша добавилось поле со своим TTL:
+
+```xml
+<diff storage="redissonConnectionFactory">
+    <update key="user:profile:100" type="RedisHash">
+        <insert key="temp_token" ttl="PT30S">token_abc_123</insert>
+    </update>
+</diff>
+```
+
+TTL пишется атрибутом у записи. Как и остальные атрибуты, он описывает состояние после теста:
+`update` повторяет `ttl`, даже если TTL не изменился, а отсутствие атрибута значит, что TTL нет.
+Уменьшение TTL от сдвига времени само по себе изменением не считается: снимки «до» и «после»
+пересчитываются на один момент.
+
+Поле хэша тоже может быть объектом: если тип field-ключа структурный, имя поля пишется
+структурой `<key>` — так же, как ключ любой другой мапы; чтобы свернуть его в строку, верните
+скаляр из `addDiffKeyPresenter` (см.
+[Расширение diff](../Storage-Diff-Extensibility.md#ключ-записи--adddiffkeypresenter)).
 
 XML-представление для всех структур данных Redis (Полный формат)
 ----------------------------------------------------------------
 
-Ниже приведены готовые шаблоны для записи и сравнения любых типов данных Redis в полном формате.
-Вы можете использовать их как в `<init>` (для подготовки), так и в `<dataStorageDiff>` (для проверки
-результатов).
+Ниже приведены готовые шаблоны для записи любых типов данных Redis в полном формате. Используйте
+их в `<init>` (для подготовки состояния) — это формат значения, а не diff. `<diff>`
+строится по правилам выше; общий контракт собран в разделе
+[Изменения хранилищ](../Storage-Diff.md).
 
 ### HASH (Хэши / Таблицы)
 
 В Redis хэш хранит набор полей и значений. В нашей системе он представляется типом `RedisHash`.
 Каждое поле хэша является самостоятельным элементом `RedisEntry`, поэтому каждому полю хэша можно
-задать свой собственный TTL (команда `HEXPIRE`).
+задать свой собственный TTL (команда `HPEXPIREAT`, Redis 7.4+).
 
 ```xml
-<entry key="user:profile:100" type="RedisEntry">
+<entry key="user:profile:100" utype="RedisEntry">
     <data type="RedisHash">
         <!-- Обычное поле без TTL -->
         <entry>
@@ -189,7 +211,7 @@ XML-представление для всех структур данных Red
 Списки сохраняют строгий порядок добавления элементов. Представляются типом `RedisList`.
 
 ```xml
-<entry key="notifications:queue" type="RedisEntry">
+<entry key="notifications:queue" utype="RedisEntry">
     <data type="RedisList">
         <value>первое_сообщение</value>
         <value>второе_сообщение</value>
@@ -208,11 +230,11 @@ XML-представление для всех структур данных Red
 
 ### SET (Множества)
 
-Множества содержат только уникальные элементы. Элементы множества в XML автоматически сортируются по
-алфавиту для стабильности сравнения в тестах. Представляются типом `RedisSet`.
+Множества содержат только уникальные элементы. Элементы сортируются `RedisDataComparator`:
+строки — лексикографически, числа — численно. Представляются типом `RedisSet`.
 
 ```xml
-<entry key="user:roles:1" type="RedisEntry">
+<entry key="user:roles:1" utype="RedisEntry">
     <data type="RedisSet">
         <value>ROLE_ADMIN</value>
         <value>ROLE_USER</value>
@@ -236,7 +258,7 @@ XML-представление для всех структур данных Red
 `RedisZSetEntry`.
 
 ```xml
-<entry key="leaderboard" type="RedisEntry">
+<entry key="leaderboard" utype="RedisEntry">
     <data type="RedisZSet">
         <value type="RedisZSetEntry">
             <member>player_A</member>
@@ -265,6 +287,39 @@ XML-представление для всех структур данных Red
 </entry>
 ```
 
+**В diff** упорядоченное множество пишется по членам: член идентифицирует элемент, поэтому он
+становится `key`, а балл — атрибутом `score`. Появившийся член — это `insert`, изменившийся балл —
+`update`, исчезнувший член — `delete`:
+
+```xml
+<insert key="leaderboard" type="RedisZSet">
+    <player_A score="1500"/>
+    <player_C score="1200"/>
+</insert>
+```
+
+Изменение балла не создаёт новый элемент, поэтому обновление множества — одна строка. Для этого
+член должен выражаться идентификатором: строку задаёт
+[`addDiffKeyPresenter`](../Storage-Diff-Extensibility.md#ключ-записи--adddiffkeypresenter), вернувший скаляр, а
+структурный объект пишется объектным ключом по умолчанию, и его проекцию можно уточнить тем же
+методом. Тогда member пишется структурой, а балл остаётся атрибутом:
+
+```xml
+<insert key="leaderboard" type="RedisZSet">
+    <insert score="1500">
+        <key type="MarketInstrumentKey">
+            <exchange>MOEX</exchange>
+            <ticker>SBER</ticker>
+        </key>
+    </insert>
+</insert>
+```
+
+Если члены — большие значения без идентификатора, множество лучше представить коллекцией:
+зарегистрировать презентер `RedisZSet`, возвращающий само множество, и презентер
+`RedisZSetEntry`, у которого тело — член, а атрибут — балл. Тогда фреймворк прочитает значение как
+обычную коллекцию и напишет `<insert score="1500">{большой член}</insert>`.
+
 ### STREAM (Стримы)
 
 Стримы хранят упорядоченную последовательность записей, где у каждой записи есть уникальный ID
@@ -272,18 +327,14 @@ XML-представление для всех структур данных Red
 `RedisStreamEntry`.
 
 ```xml
-<entry key="orders:stream" type="RedisEntry">
+<entry key="orders:stream" utype="RedisEntry">
     <data type="RedisStream">
         <value type="RedisStreamEntry" id="1716530000000-0">
             <fields>
-                <entry>
-                    <key>order_id</key>
-                    <value>ORD-99</value>
-                </entry>
-                <entry>
-                    <key>amount</key>
-                    <value>450.00</value>
-                </entry>
+                <key>order_id</key>
+                <value>ORD-99</value>
+                <key>amount</key>
+                <value>450.00</value>
             </fields>
         </value>
     </data>
@@ -296,14 +347,10 @@ XML-представление для всех структур данных Red
 <entry key="orders:stream" utype="RedisStream">
     <value type="RedisStreamEntry" id="1716530000000-0">
         <fields>
-            <entry>
-                <key>order_id</key>
-                <value>ORD-99</value>
-            </entry>
-            <entry>
-                <key>amount</key>
-                <value>450.00</value>
-            </entry>
+            <key>order_id</key>
+            <value>ORD-99</value>
+            <key>amount</key>
+            <value>450.00</value>
         </fields>
     </value>
 </entry>
@@ -316,7 +363,7 @@ XML-представление для всех структур данных Red
 `RedisHyperLogLog`.
 
 ```xml
-<entry key="unique:visitors" type="RedisEntry">
+<entry key="unique:visitors" utype="RedisEntry">
     <data type="RedisHyperLogLog">
         <value>user_ip_1</value>
         <value>user_ip_2</value>

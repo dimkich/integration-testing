@@ -35,7 +35,16 @@ public class SecureRandomMixIn {
         }
 
         @Override
-        public SecureRandom deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        public SecureRandom deserialize(JsonParser p, DeserializationContext ctxt) {
+            return getSecureRandom();
+        }
+
+        @Override
+        public SecureRandom getEmptyValue(DeserializationContext ctxt) {
+            return getSecureRandom();
+        }
+
+        private static SecureRandom getSecureRandom() {
             if (secureRandom == null) {
                 secureRandom = new SecureRandom();
             }

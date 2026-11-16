@@ -10,6 +10,7 @@ import io.github.dimkich.integration.testing.DynamicTestBuilder;
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisSnapshotHandler;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisStreamHandler;
+import io.github.dimkich.integration.testing.wait.completion.MethodCountingAwait;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.TestFactory;
@@ -29,6 +30,8 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MockJavaTime(dockerImages = "redis.*")
+@MethodCountingAwait(pointcut = "t.name('io.github.dimkich.integration.testing.redis.RedisTestConfig$ExpiredKeyspaceListener')"
+        + " && m.name('onMessage')")
 @EnableTestRedis
 @ActiveProfiles("test")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)

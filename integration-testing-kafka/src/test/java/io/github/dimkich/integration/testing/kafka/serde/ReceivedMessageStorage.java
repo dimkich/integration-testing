@@ -1,7 +1,8 @@
 package io.github.dimkich.integration.testing.kafka.serde;
 
-import io.github.dimkich.integration.testing.storage.ObjectsDifference;
+import io.github.dimkich.integration.testing.storage.diff.ObjectsDifference;
 import io.github.dimkich.integration.testing.storage.SnapshotTestDataStorage;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffEntry;
 import io.github.dimkich.integration.testing.kafka.KafkaRecord;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -61,8 +62,8 @@ public class ReceivedMessageStorage extends SnapshotTestDataStorage {
     }
 
     @Override
-    public Object getDiff() throws Exception {
-        Object diff = super.getDiff();
+    public List<DiffEntry> getDiff() throws Exception {
+        List<DiffEntry> diff = super.getDiff();
         boolean hadMessages = !messages.isEmpty();
         messages.clear();
         counter.set(0);

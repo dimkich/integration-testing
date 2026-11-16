@@ -45,21 +45,31 @@ public final class PostgresRawKey {
     private byte[] tupleHash;
 
     /**
-     * Display key of the row in the difference engine and test XML. A primary-key row is rendered
-     * from the converted values; a table without a primary key uses the raw tuple hash.
+     * Display key of the row in the difference and in test XML: {@code table/key}. A table with a
+     * primary key renders the converted key values; a table without a primary key uses the first
+     * eight bytes of the raw tuple hash. Parts are escaped so the key stays unambiguous.
      */
     public String getDisplayKey(Map<String, ?> values) {
+        String displayName = escape(table.getDisplayName());
         if (!primaryKey) {
-            return table.getDisplayName() + "_" + HEX.formatHex(tupleHash());
+            return displayName + "/" + HEX.formatHex(tupleHash(), 0, 8);
         }
         List<String> primaryKey = table.getMetadata(PostgresTableMetadata.class).getPrimaryKey();
-        StringBuilder builder = new StringBuilder(table.getDisplayName().length()
-                + primaryKey.size() * 16);
-        builder.append(table.getDisplayName());
-        for (String column : primaryKey) {
-            builder.append('_').append(values.get(column));
+        StringBuilder builder = new StringBuilder(displayName.length() + primaryKey.size() * 16)
+                .append(displayName).append('/');
+        for (int i = 0; i < primaryKey.size(); i++) {
+            if (i > 0) {
+                builder.append(',');
+            }
+            builder.append(escape(String.valueOf(values.get(primaryKey.get(i)))));
         }
         return builder.toString();
+    }
+
+    private String escape(String value) {
+        return value.replace("%", "%25")
+                .replace("/", "%2F")
+                .replace(",", "%2C");
     }
 
     private byte[] tupleHash() {

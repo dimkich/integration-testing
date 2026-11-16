@@ -5,12 +5,14 @@ import com.fasterxml.jackson.core.base.ParserMinimalBase;
 import com.fasterxml.jackson.core.io.NumberInput;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.core.util.JacksonFeatureSet;
+import com.fasterxml.jackson.core.util.JsonParserDelegate;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.util.ClassUtil;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.fasterxml.jackson.databind.util.TokenBufferReadContext;
 import com.fasterxml.jackson.dataformat.xml.deser.ElementWrappable;
 import com.fasterxml.jackson.dataformat.xml.util.CaseInsensitiveNameSet;
+import io.github.dimkich.integration.testing.format.xml.AttributeAwareParser;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
@@ -24,11 +26,87 @@ import java.util.Objects;
 import java.util.Set;
 
 public class XmlTokenBuffer extends TokenBuffer {
+    /**
+     * Marks a field name that came from an XML attribute while buffering. The character cannot
+     * occur in an XML name, so it never clashes with real content, and the buffered parser removes
+     * it before returning the name.
+     */
+    private static final char ATTRIBUTE_MARKER = '\u0000';
+
     private final JsonToken currentToken;
+    private JsonParser source;
 
     public XmlTokenBuffer(JsonParser p, DeserializationContext ctxt) {
         super(p, ctxt);
         currentToken = p.currentToken();
+        source = p;
+    }
+
+    /**
+     * Copies the current structure, marking attribute field names so that
+     * {@link AttributeAwareParser} keeps working after buffering. {@link TokenBuffer} writes
+     * field names through a final method, so the copy is repeated here.
+     */
+    @Override
+    public void copyCurrentStructure(JsonParser p) throws IOException {
+        JsonParser previous = source;
+        source = p;
+        try {
+            copyStructure(p);
+        } finally {
+            source = previous;
+        }
+    }
+
+    private void copyStructure(JsonParser p) throws IOException {
+        JsonToken token = p.currentToken();
+        if (token == JsonToken.FIELD_NAME) {
+            copyFieldName(p);
+            token = p.nextToken();
+        } else if (token == null) {
+            throw new IllegalStateException("No token available from argument `JsonParser`");
+        }
+        switch (token) {
+            case START_ARRAY, START_OBJECT -> {
+                super.copyCurrentEvent(p);
+                copyContents(p, 1);
+            }
+            default -> super.copyCurrentEvent(p);
+        }
+    }
+
+    private void copyContents(JsonParser p, int depth) throws IOException {
+        JsonToken token;
+        while ((token = p.nextToken()) != null) {
+            switch (token) {
+                case FIELD_NAME -> copyFieldName(p);
+                case START_ARRAY, START_OBJECT -> {
+                    super.copyCurrentEvent(p);
+                    ++depth;
+                }
+                case END_ARRAY, END_OBJECT -> {
+                    super.copyCurrentEvent(p);
+                    if (--depth == 0) {
+                        return;
+                    }
+                }
+                default -> super.copyCurrentEvent(p);
+            }
+        }
+    }
+
+    private void copyFieldName(JsonParser p) throws IOException {
+        String name = p.currentName();
+        _writeContext.writeFieldName(name);
+        _appendFieldName(isAttribute(p) ? ATTRIBUTE_MARKER + name : name);
+    }
+
+    private boolean isAttribute(JsonParser p) {
+        JsonParser parser = p;
+        while (parser instanceof JsonParserDelegate delegate) {
+            parser = delegate.delegate();
+        }
+        return parser instanceof AttributeAwareParser attributeAware && attributeAware.isCurrentTokenAttribute();
     }
 
     @Override
@@ -51,7 +129,7 @@ public class XmlTokenBuffer extends TokenBuffer {
         return p;
     }
 
-    public static class XmlTokenParser extends ParserMinimalBase implements ElementWrappable {
+    public static class XmlTokenParser extends ParserMinimalBase implements ElementWrappable, AttributeAwareParser {
         protected final static JacksonFeatureSet<StreamReadCapability> XML_READ_CAPABILITIES =
                 DEFAULT_READ_CAPABILITIES
                         .with(StreamReadCapability.DUPLICATE_PROPERTIES)
@@ -108,8 +186,13 @@ public class XmlTokenBuffer extends TokenBuffer {
         protected transient ByteArrayBuilder _byteBuilder;
 
         protected JsonLocation _location = null;
-        private final Method findTypeId;
-        private final Method findObjectId;
+
+        /**
+         * Segment accessors are resolved once: the parser is created for every buffered value,
+         * and a reflective lookup per instance costs more than the access itself.
+         */
+        private static final Method FIND_TYPE_ID = segmentMethod("findTypeId");
+        private static final Method FIND_OBJECT_ID = segmentMethod("findObjectId");
 
         /*
         /**********************************************************
@@ -132,11 +215,13 @@ public class XmlTokenBuffer extends TokenBuffer {
             _parsingContext = XmlTokenBufferReadContext.createRootContext(currentToken, parentContext);
             _hasNativeTypeIds = hasNativeTypeIds;
             _hasNativeObjectIds = hasNativeObjectIds;
+        }
 
-            findTypeId = TokenBuffer.Segment.class.getDeclaredMethod("findTypeId", int.class);
-            findTypeId.setAccessible(true);
-            findObjectId = TokenBuffer.Segment.class.getDeclaredMethod("findObjectId", int.class);
-            findObjectId.setAccessible(true);
+        @SneakyThrows
+        private static Method segmentMethod(String name) {
+            Method method = TokenBuffer.Segment.class.getDeclaredMethod(name, int.class);
+            method.setAccessible(true);
+            return method;
         }
 
         @Override
@@ -253,6 +338,7 @@ public class XmlTokenBuffer extends TokenBuffer {
 
         private final Deque<JsonToken> nextToken = new ArrayDeque<>();
         private boolean repeatToken = false;
+        private boolean currentNameIsAttribute = false;
 
         @SuppressWarnings("UnusedReturnValue")
         private JsonToken _nextToken() {
@@ -281,9 +367,9 @@ public class XmlTokenBuffer extends TokenBuffer {
         @Override
         public JsonToken nextToken() throws IOException {
             _nextToken();
+            currentNameIsAttribute = false;
             if (_currToken == JsonToken.FIELD_NAME && _parsingContext.inArray()) {
-                Object ob = _currentObject();
-                String name = (ob instanceof String) ? ((String) ob) : ob.toString();
+                String name = _fieldName(_currentObject());
                 if (_parsingContext.getCurrentName() == null || Objects.equals(_parsingContext.getCurrentName(), name)) {
                     _nextToken();
                 } else {
@@ -294,8 +380,9 @@ public class XmlTokenBuffer extends TokenBuffer {
 
             // Field name? Need to update context
             if (_currToken == JsonToken.FIELD_NAME) {
-                Object ob = _currentObject();
-                String name = (ob instanceof String) ? ((String) ob) : ob.toString();
+                Object current = _currentObject();
+                currentNameIsAttribute = _isAttribute(current);
+                String name = _fieldName(current, currentNameIsAttribute);
                 if (!name.equals(_parsingContext.getCurrentName()) && _parsingContext.shouldWrap(name)) {
                     nextToken.addLast(JsonToken.START_OBJECT);
                 }
@@ -337,7 +424,8 @@ public class XmlTokenBuffer extends TokenBuffer {
                 _segmentPtr = ptr;
                 _currToken = JsonToken.FIELD_NAME;
                 Object ob = _segment.get(ptr); // inlined _currentObject();
-                String name = (ob instanceof String) ? ((String) ob) : ob.toString();
+                currentNameIsAttribute = _isAttribute(ob);
+                String name = _fieldName(ob, currentNameIsAttribute);
                 if (!name.equals(_parsingContext.getCurrentName()) && _parsingContext.shouldWrap(name)) {
                     nextToken.addLast(JsonToken.START_OBJECT);
                 }
@@ -345,6 +433,28 @@ public class XmlTokenBuffer extends TokenBuffer {
                 return name;
             }
             return (nextToken() == JsonToken.FIELD_NAME) ? currentName() : null;
+        }
+
+        @Override
+        public boolean isCurrentTokenAttribute() {
+            return _currToken == JsonToken.FIELD_NAME && currentNameIsAttribute;
+        }
+
+        /**
+         * Removes the attribute marker from a buffered field name.
+         */
+        private static String _fieldName(Object value) {
+            return _fieldName(value, _isAttribute(value));
+        }
+
+        private static String _fieldName(Object value, boolean attribute) {
+            String name = ClassUtil.nullOrToString(value);
+            return attribute ? name.substring(1) : name;
+        }
+
+        private static boolean _isAttribute(Object value) {
+            String name = ClassUtil.nullOrToString(value);
+            return !name.isEmpty() && name.charAt(0) == ATTRIBUTE_MARKER;
         }
 
         @Override
@@ -413,8 +523,10 @@ public class XmlTokenBuffer extends TokenBuffer {
         @Override
         public String getText() {
             // common cases first:
-            if (_currToken == JsonToken.VALUE_STRING
-                    || _currToken == JsonToken.FIELD_NAME) {
+            if (_currToken == JsonToken.FIELD_NAME) {
+                return currentName();
+            }
+            if (_currToken == JsonToken.VALUE_STRING) {
                 Object ob = _currentObject();
                 if (ob instanceof String) {
                     return (String) ob;
@@ -739,13 +851,13 @@ public class XmlTokenBuffer extends TokenBuffer {
         @Override
         @SneakyThrows
         public Object getTypeId() {
-            return findTypeId.invoke(_segment, _segmentPtr);
+            return FIND_TYPE_ID.invoke(_segment, _segmentPtr);
         }
 
         @Override
         @SneakyThrows
         public Object getObjectId() {
-            return findObjectId.invoke(_segment, _segmentPtr);
+            return FIND_OBJECT_ID.invoke(_segment, _segmentPtr);
         }
 
         /*

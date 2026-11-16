@@ -86,7 +86,7 @@ How the framework waits for completion
    [Configuration](Configuration.md)).
 3. **Polling loop.** Readiness is re-checked every `lag-polling-interval-ms` (5 ms by default), but no
    more often than once per `readiness-polling-interval-ms`. Once ready, lag is checked until it clears
-   or `lag-polling-timeout-ms` (10 seconds by default) expires.
+   or `lag-polling-timeout-ms` (15 seconds by default) expires.
 4. **Result.** As soon as lag clears and all consumers are ready, the case continues. If time runs
    out, the case fails with:
 
@@ -125,7 +125,7 @@ integration:
       # pause between lag checks
       lag-polling-interval-ms: 5
       # total time to wait for lag to clear
-      lag-polling-timeout-ms: 10000
+      lag-polling-timeout-ms: 15000
       # pause between readiness checks of expected groups
       readiness-polling-interval-ms: 100
       # wait for SUT readiness before lag polling

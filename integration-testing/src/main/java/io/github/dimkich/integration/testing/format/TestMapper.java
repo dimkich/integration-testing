@@ -50,7 +50,7 @@ public abstract class TestMapper {
                 + ":" + test.getLineNumber() + ":" + test.getColumnNumber();
     }
 
-    public Object unwrap() {
+    public ObjectMapper unwrap() {
         return objectMapper;
     }
 }

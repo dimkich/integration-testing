@@ -22,9 +22,9 @@ You don't need to write manual assertions in Java. The framework does everything
    a queue).
 3. **Database Monitoring:** A special background mechanism instantly captures any changes your
    application makes in Redis (creating, modifying, or deleting keys, or changing their TTL).
-4. **Result Verification:** At the end of the test, the framework compares the real database state
-   with what you described in the `<dataStorageDiff>` block and displays the difference as a
-   convenient visual diff if something went wrong.
+4. **Result Verification:** At the end of the test, the framework compares the in-memory mirror
+   snapshot maintained by Redis replication with what you described in the `<diff>` block and
+   displays the difference as a convenient visual diff if something went wrong.
 
 Project Setup
 -------------
@@ -73,7 +73,7 @@ Create the file `src/test/resources/tests/redis-user.xml`. In this example we wi
 <!-- @formatter:off -->
 <test type="Container">
     <!-- Clear the Redis database before running the test -->
-    <init type="keyValueStorageInit" name="redissonConnectionFactory" clear="true" />
+    <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true" />
 
     <test type="Case" name="Testing sessions in Redis">
         
@@ -85,16 +85,9 @@ Create the file `src/test/resources/tests/redis-user.xml`. In this example we wi
             <request>ACTIVE</request>
             
             <!-- Verify that the key was added to Redis -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="added">
-                        <key>user:session:100</key>
-                        <value type="RedisEntry">
-                            <data>ACTIVE</data>
-                        </value>
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+            <diff storage="redissonConnectionFactory">
+                <insert key="user:session:100">ACTIVE</insert>
+            </diff>
         </test>
 
         <test type="Part" name="Step 2: Verifying session read">
@@ -113,14 +106,9 @@ Create the file `src/test/resources/tests/redis-user.xml`. In this example we wi
             <response type="Boolean">true</response>
             
             <!-- Verify that the key was actually removed from Redis -->
-            <dataStorageDiff type="MapStringKeyObjectValue">
-                <redissonConnectionFactory type="EntriesObjectKeyObjectValue">
-                    <entry change="deleted">
-                        <key>user:session:100</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" />
-                    </entry>
-                </redissonConnectionFactory>
-            </dataStorageDiff>
+            <diff storage="redissonConnectionFactory">
+                <delete key="user:session:100"/>
+            </diff>
         </test>
         
     </test>

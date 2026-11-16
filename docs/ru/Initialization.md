@@ -27,11 +27,11 @@
 xml
 <test type="Container">
     <!-- Инициализация на уровне контейнера -->
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
 
     <test type="Case" name="тест1">
-        <!-- Наследует dateTimeInit от родителя + своя инициализация -->
-        <init type="sqlStorageInit" name="dataSource">
+        <!-- Наследует DateTimeInit от родителя + своя инициализация -->
+        <init type="SqlStorageInit" name="dataSource">
             <tablesToClear>users</tablesToClear>
         </init>
         <bean>userService</bean>
@@ -85,7 +85,7 @@ xml
 xml
 <!-- Абсолютное время для всех тестов в контейнере -->
 <test type="Container">
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
 
     <test type="Case" name="фиксированноеВремя">
         <bean>dateTimeService</bean>
@@ -101,9 +101,9 @@ xml
 <!-- Прогрессия времени внутри многошагового теста -->
 <test type="Case" name="многошаговыйСценарий">
     <!-- Базовое время для кейса -->
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
     <!-- Сдвиг на 1 минуту для каждого Part -->
-    <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
+    <init type="DateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
 
     <test type="Part" name="шаг1">
         <!-- Время: 2025-01-01T00:01:00Z -->
@@ -143,7 +143,7 @@ xml
 ```
 xml
 <!-- Базовая настройка с DBUnit -->
-<init type="sqlStorageSetup" name="dataSource">
+<init type="SqlStorageSetup" name="dataSource">
     <dbUnitPath>initializationData.xml</dbUnitPath>
 </init>
 
@@ -152,7 +152,7 @@ xml
 ```
 xml
 <!-- Настройка с SQL-файлами -->
-<init type="sqlStorageSetup" name="dataSource">
+<init type="SqlStorageSetup" name="dataSource">
     <sqlFilePath>schema.sql</sqlFilePath>
     <sqlFilePath>test-data.sql</sqlFilePath>
     <dbUnitPath>users.xml</dbUnitPath>
@@ -163,7 +163,7 @@ xml
 ```
 xml
 <!-- Настройка с inline SQL -->
-<init type="sqlStorageSetup" name="dataSource">
+<init type="SqlStorageSetup" name="dataSource">
     <sql>CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY, name VARCHAR(100))</sql>
     <sql>INSERT INTO users VALUES (1, 'John')</sql>
     <dbUnitPath>users.xml</dbUnitPath>
@@ -191,7 +191,7 @@ xml
 ```
 xml
 <!-- Очистить конкретные таблицы -->
-<init type="sqlStorageInit" name="dataSource">
+<init type="SqlStorageInit" name="dataSource">
     <tablesToClear>t1,t2</tablesToClear>
 </init>
 
@@ -200,14 +200,14 @@ xml
 ```
 xml
 <!-- Загрузить все таблицы из DBUnit -->
-<init type="sqlStorageInit" name="dataSource" loadAllTables="true"/>
+<init type="SqlStorageInit" name="dataSource" loadAllTables="true"/>
 
 ```
 
 ```
 xml
 <!-- Очистить и загрузить конкретные таблицы -->
-<init type="sqlStorageInit" name="dataSource">
+<init type="SqlStorageInit" name="dataSource">
     <tablesToClear>t1</tablesToClear>
     <tablesToLoad>t1</tablesToLoad>
 </init>
@@ -217,7 +217,7 @@ xml
 ```
 xml
 <!-- Выполнить SQL-запросы -->
-<init type="sqlStorageInit" name="dataSource">
+<init type="SqlStorageInit" name="dataSource">
     <sql>update t1 set column = 1</sql>
 </init>
 
@@ -357,7 +357,7 @@ xml
 ```
 xml
 <!-- Очистка кэша перед тестом -->
-<init type="beanInit">
+<init type="BeanInit">
     <bean name="cacheService" method="clear"/>
     <bean name="dataLoader" method="loadTestData"/>
 </init>
@@ -367,7 +367,7 @@ xml
 ```
 xml
 <!-- Инициализация только для TestCase -->
-<init type="beanInit" applyTo="TestCase">
+<init type="BeanInit" applyTo="TestCase">
     <bean name="setupService" method="init"/>
 </init>
 
@@ -542,7 +542,7 @@ xml
 ```
 xml
 <!-- Очистить и загрузить данные -->
-<init type="keyValueStorageInit" name="redisCache" clear="true">
+<init type="KeyValueStorageInit" name="redisCache" clear="true">
     <map type="LinkedHashMapStringObject">
         <entry key="user_123">John Doe</entry>
         <entry key="config_timeout" type="Integer">5000</entry>
@@ -555,7 +555,7 @@ xml
 ```
 xml
 <!-- Только загрузить данные без очистки -->
-<init type="keyValueStorageInit" name="localCache">
+<init type="KeyValueStorageInit" name="localCache">
     <map type="LinkedHashMapStringObject">
         <entry key="feature_enabled" type="Boolean">true</entry>
     </map>
@@ -566,7 +566,7 @@ xml
 ```
 xml
 <!-- Только очистить хранилище -->
-<init type="keyValueStorageInit" name="redisCache" clear="true"/>
+<init type="KeyValueStorageInit" name="redisCache" clear="true"/>
 
 ```
 
@@ -586,7 +586,7 @@ xml
 ```
 xml
 <!-- ✅ Правильно: через LinkedHashMapStringObject с атрибутом key -->
-<init type="keyValueStorageInit" name="redisCache" clear="true">
+<init type="KeyValueStorageInit" name="redisCache" clear="true">
     <map type="LinkedHashMapStringObject">
         <entry key="user:123">John Doe</entry>
         <entry key="user:456">Jane Doe</entry>
@@ -596,7 +596,7 @@ xml
 </init>
 
 <!-- ❌ Ошибка: двоеточие в имени тега -->
-<init type="keyValueStorageInit" name="redisCache" clear="true">
+<init type="KeyValueStorageInit" name="redisCache" clear="true">
     <map>
         <user:123>John Doe</user:123>
     </map>
@@ -685,21 +685,21 @@ xml
 ```
 xml
 <test type="Container" name="модуль">
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
-    <init type="beanInit">
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="BeanInit">
         <bean name="setupService" method="init"/>
     </init>
 
     <test type="Case" name="кейс1">
-        <!-- Наследует dateTimeInit и beanInit от родителя -->
-        <init type="sqlStorageInit" name="dataSource">
+        <!-- Наследует DateTimeInit и BeanInit от родителя -->
+        <init type="SqlStorageInit" name="dataSource">
             <tablesToClear>t1</tablesToClear>
         </init>
     </test>
 
     <test type="Case" name="кейс2">
-        <!-- Наследует dateTimeInit и beanInit от родителя -->
-        <!-- Не наследует sqlStorageInit из кейс1 -->
+        <!-- Наследует DateTimeInit и BeanInit от родителя -->
+        <!-- Не наследует SqlStorageInit из кейс1 -->
     </test>
 </test>
 
@@ -717,11 +717,11 @@ xml
 xml
 <test type="Container">
     <!-- Этот init НЕ применится к TestPart (нет applyTo="TestPart") -->
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
 
     <test type="Case" name="многошаговый">
         <!-- Этот init применится ко всем Part внутри кейса -->
-        <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
+        <init type="DateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
 
         <test type="Part" name="шаг1">
             <!-- Время: 2025-01-01T00:01:00Z (только от applyTo="TestPart") -->
@@ -730,7 +730,7 @@ xml
         <test type="Part" name="шаг2">
             <!-- Время: 2025-01-01T00:02:00Z (накопленный сдвиг) -->
             <!-- Можно переопределить локально -->
-            <init type="dateTimeInit" dateTime="2025-02-02T00:00:00Z"/>
+            <init type="DateTimeInit" dateTime="2025-02-02T00:00:00Z"/>
         </test>
     </test>
 </test>
@@ -825,9 +825,9 @@ xml
 <?xml version='1.1' encoding='UTF-8'?>
 <test type="Container">
     <!-- Глобальные настройки для всех тестов -->
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
 
-    <init type="sqlStorageSetup" name="dataSource">
+    <init type="SqlStorageSetup" name="dataSource">
         <sqlFilePath>schema.sql</sqlFilePath>
         <dbUnitPath>initializationData.xml</dbUnitPath>
     </init>
@@ -837,7 +837,7 @@ xml
 
     <test type="Case" name="созданиеПользователя">
         <!-- Настройки только для этого кейса -->
-        <init type="sqlStorageInit" name="dataSource">
+        <init type="SqlStorageInit" name="dataSource">
             <tablesToClear>users</tablesToClear>
             <tablesToLoad>users</tablesToLoad>
         </init>
@@ -854,8 +854,8 @@ xml
     </test>
 
     <test type="Case" name="удалениеПользователя">
-        <!-- Наследует dateTimeInit и sqlStorageSetup от родителя -->
-        <init type="sqlStorageInit" name="dataSource">
+        <!-- Наследует DateTimeInit и SqlStorageSetup от родителя -->
+        <init type="SqlStorageInit" name="dataSource">
             <tablesToClear>users</tablesToClear>
         </init>
 
@@ -878,8 +878,8 @@ xml
 <test type="Container">
     <test type="Case" name="полныйЦиклЗаказа">
         <!-- Инициализация применяется один раз перед всеми Part -->
-        <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
-        <init type="sqlStorageInit" name="dataSource">
+        <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+        <init type="SqlStorageInit" name="dataSource">
             <tablesToClear>orders,payments</tablesToClear>
             <tablesToLoad>orders</tablesToLoad>
         </init>
@@ -896,7 +896,7 @@ xml
 
         <!-- Шаг 2: Оплата (видит результат шага 1) -->
         <test type="Part" name="оплата">
-            <init type="dateTimeInit" addDuration="PT1M"/>
+            <init type="DateTimeInit" addDuration="PT1M"/>
             <bean>paymentService</bean>
             <method>pay</method>
             <request>
@@ -907,7 +907,7 @@ xml
 
         <!-- Шаг 3: Доставка (видит результаты шагов 1-2) -->
         <test type="Part" name="доставка">
-            <init type="dateTimeInit" addDuration="PT30M"/>
+            <init type="DateTimeInit" addDuration="PT30M"/>
             <bean>deliveryService</bean>
             <method>ship</method>
             <request>
@@ -970,10 +970,10 @@ xml
 ```
 xml
 <!-- ✅ Правильно: имя совпадает с бином в Spring-контексте -->
-<init type="sqlStorageInit" name="dataSource"/>
+<init type="SqlStorageInit" name="dataSource"/>
 
 <!-- ❌ Ошибка: имя не совпадает -->
-<init type="sqlStorageInit" name="wrongName"/>
+<init type="SqlStorageInit" name="wrongName"/>
 
 ```
 
@@ -986,9 +986,9 @@ xml
 xml
 <!-- ✅ Правильно: явное переопределение в дочернем тесте -->
 <test type="Container">
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
     <test type="Case" name="кейс">
-        <init type="dateTimeInit" dateTime="2025-02-02T00:00:00Z"/>
+        <init type="DateTimeInit" dateTime="2025-02-02T00:00:00Z"/>
     </test>
 </test>
 
@@ -1021,8 +1021,8 @@ xml
 xml
 <!-- ✅ Правильно: явно указать applyTo="TestPart" -->
 <test type="Case" name="многошаговый">
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
-    <init type="dateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="DateTimeInit" applyTo="TestPart" addDuration="PT1M"/>
 
     <test type="Part" name="шаг1">
         <!-- Инициализация применится -->
@@ -1031,8 +1031,8 @@ xml
 
 <!-- ❌ Ошибка: без applyTo="TestPart" не применится к Part -->
 <test type="Case" name="многошаговый">
-    <init type="dateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
-    <init type="dateTimeInit" addDuration="PT1M"/>
+    <init type="DateTimeInit" dateTime="2025-01-01T00:00:00Z"/>
+    <init type="DateTimeInit" addDuration="PT1M"/>
 
     <test type="Part" name="шаг1">
         <!-- Инициализация НЕ применится -->
@@ -1046,7 +1046,7 @@ xml
 Рекомендации
 ------------
 
-1. **Выносите общие настройки на уровень контейнера** --- `dateTimeInit`, `sqlStorageSetup` можно определить в
+1. **Выносите общие настройки на уровень контейнера** --- `DateTimeInit`, `SqlStorageSetup` можно определить в
    родительском `Container` для переиспользования.
 2. **Используйте `applyTo` для массового применения** --- например, `StubInit` с `applyTo="TestCase"` применится ко всем
    кейсам в контейнере одной записью.

@@ -7,7 +7,7 @@ Troubleshooting
 
 Check the following:
 
-1. **Connection name.** `name` in `<init>` and the tag inside `<dataStorageDiff>` must match a key in
+1. **Connection name.** `name` in `<init>` and the `storage` attribute in `<diff>` must match a key in
    `integration.testing.postgresql.connections`.
 2. **Same database.** The framework opens its own JDBC connection. If the application writes to a
    different database or schema, the diff sees nothing.
@@ -21,9 +21,9 @@ table is part of the initialization.
 
 ## `PostgreSQL connection '...' is not configured`
 
-The configuration does not contain a connection with that name. Check the key in
-`integration.testing.postgresql.connections` and `name` in XML. Remember that the connection name is
-not necessarily an application `DataSource` bean name.
+`integration.testing.postgresql.connections` has no connection with that name. This is a connection
+configuration error, not a wrong `name` in XML. Remember that the connection name is not necessarily
+an application `DataSource` bean name.
 
 ## `TestDataStorage '...' not found`
 
@@ -57,7 +57,7 @@ In a test environment, the simplest option is to use the schema owner or a dedic
 explicit grants. If `SET session_replication_role` is forbidden, the module cannot load fixtures or
 execute service SQL transitions.
 
-## `bytea` Is Displayed as Text
+## `bytea` Renders Incorrectly with `bytea_output = 'escape'`
 
 Check the PostgreSQL setting:
 
@@ -65,7 +65,8 @@ Check the PostgreSQL setting:
 SHOW bytea_output;
 ```
 
-The module expects `hex`. With `escape`, binary values may appear as text instead of Base64 `byte[]`.
+The module expects `hex`. With `escape`, the value is not decoded: the escape literal stays a
+`byte[]` and renders incorrectly as Base64.
 
 ## Column Conversion Error
 
@@ -105,20 +106,10 @@ stage.
 
 ## No `change` Attribute in the Diff
 
-Check the diff shape setting:
-
-```yaml
-integration:
-  testing:
-    storage:
-      storages:
-        dataSource:
-          keyType: [ STRING, OBJECT ]
-          valueType: [ OBJECT, OBJECT ]
-          changeType: [ false, true ]
-```
-
-Without `changeType`, records may be rendered without `change="added|changed|deleted"`.
+The `change` attribute no longer exists: the operation is the element tag — `insert`, `update` or
+`delete`. The former `integration.testing.storage.storages.*.changeType` setting is not read. If the
+expected record is missing from the diff, check that the change went through the PostgreSQL triggers
+and that the column is not excluded (`ignore`, `excludedFields`).
 
 ## DBUnit Data Was Not Loaded
 

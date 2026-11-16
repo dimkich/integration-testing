@@ -17,9 +17,7 @@ A key in `connections` is a storage name. It is used in XML:
 ```xml
 <init type="SqlStorageSetup" name="dataSource">...</init>
 <init type="SqlStorageInit" name="dataSource">...</init>
-<dataStorageDiff>
-    <dataSource>...</dataSource>
-</dataStorageDiff>
+<diff storage="dataSource">...</diff>
 ```
 
 The name can be arbitrary, for example `dataSource`, `orders`, or `billing`. It does not have to match
@@ -52,7 +50,7 @@ Each connection can override the global values:
 | `database`             | String | Database name                                 | global   |
 | `user`                 | String | User                                          | global   |
 | `password`             | String | Password                                      | global   |
-| `defaultSchema`        | String | Schema for unqualified names and diff keys   | `public` |
+| `defaultSchema`        | String | Schema for unqualified names and diff keys    | `public` |
 | `batchSize`            | int    | JDBC batch size for DBUnit fixture loading    | `10000`  |
 | `sequenceRestartValue` | long   | `RESTART WITH` value for connection sequences | `1`      |
 | `columns`              | Map    | Per-column settings                           | empty    |
@@ -60,9 +58,9 @@ Each connection can override the global values:
 `defaultSchema` affects how names such as `users` and `orders` are resolved. If the tables live in a
 different schema, set `defaultSchema` or use fully qualified `schema.table` names.
 
-The same value controls the table prefix in `<dataStorageDiff>` row keys: tables from
-`defaultSchema` use a bare name (`users_1`), while tables from other schemas keep the schema
-(`billing.users_1`).
+The same value controls the table prefix in `<diff>` row keys: tables from
+`defaultSchema` use a bare name (`users/1`), while tables from other schemas keep the schema
+(`billing.users/1`).
 
 Two connections:
 
@@ -126,27 +124,13 @@ automatic sequence reset.
 
 ## Diff Shape in XML
 
-The module stores changes in the framework's regular storage. To get the familiar
-`MapStringKeyObjectValue` → `EntriesObjectKeyObjectValue` shape with a `change` attribute, add:
-
-```yaml
-integration:
-  testing:
-    storage:
-      storages:
-        dataSource:
-          keyType: [ STRING, OBJECT ]
-          valueType: [ OBJECT, OBJECT ]
-          changeType: [ false, true ]
-```
-
-The levels mean:
-
-* the first element is the root diff, keyed by connection name;
-* the second element is a record inside the connection, keyed by a string such as `users_100`.
-
-`changeType` enables `change="added|changed|deleted"`. Add a similar `storages.billing` block for a
-second connection.
+The diff shape is not configurable: `<diff>` follows the general rules — the
+operation is the `insert`, `update` or `delete` tag and the identifier is the `key` attribute (see
+[Storage Changes](../Storage-Diff.md) and [Data and Diff](Data-and-Diff.md)). A PostgreSQL row key
+is always text (`[schema.]table/pk`); object keys apply to maps inside values when their type is
+structured. The former `integration.testing.storage.storages` section with
+`keyType`, `valueType` and `changeType` is no longer read; if it is still present in the
+configuration, it can be removed.
 
 ## Column Settings
 
@@ -218,11 +202,13 @@ If the tests use `hstore` columns, the extension must be installed beforehand:
 CREATE EXTENSION IF NOT EXISTS hstore;
 ```
 
-The module expects the standard `bytea_output = 'hex'`. With `bytea_output = 'escape'`, binary values
-may appear as text instead of `byte[]`.
+The module expects the standard `bytea_output = 'hex'`. With `bytea_output = 'escape'`, the value is
+not decoded: the converter keeps the escape literal as `byte[]`, so it renders incorrectly in XML.
+Use `hex`.
 
-Service tables with the `_it_` prefix are not intended for test data: the module excludes them from
-metadata and fixtures. Do not clear or modify them manually.
+Service journal tables (the legacy audit log and `_it_postgres_journal_` tables) are excluded from
+metadata. DBUnit fixtures are not filtered: do not add these tables to a dataset. Do not clear or
+modify them manually.
 
 By default, `@EnableTestPostgreSQL` imports `postgresql.properties` and enables embedded PostgreSQL
 from Testcontainers. For an external database, disable the embedded mode through test properties:
@@ -256,12 +242,6 @@ integration:
               type: json
               excludedFields:
                 - secret
-    storage:
-      storages:
-        dataSource:
-          keyType: [ STRING, OBJECT ]
-          valueType: [ OBJECT, OBJECT ]
-          changeType: [ false, true ]
 ```
 
 ---

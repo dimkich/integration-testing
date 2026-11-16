@@ -1,12 +1,17 @@
 package io.github.dimkich.integration.testing.storage;
 
 import io.github.dimkich.integration.testing.TestDataStorage;
-import io.github.dimkich.integration.testing.storage.mapping.Container;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffEntry;
+import io.github.dimkich.integration.testing.storage.diff.model.StorageDiff;
+import io.github.dimkich.integration.testing.util.FastPath;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -15,11 +20,10 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class TestDataStorages {
     private final Map<String, TestDataStorage> storageMap;
-    private final StorageProperties properties;
 
     @PostConstruct
     void init() {
-        Map<String, TestDataStorage> map = new LinkedHashMap<>();
+        Map<String, TestDataStorage> map = new LinkedHashMap<>(FastPath.hashCapacity(storageMap.size()));
         for (TestDataStorage storage : storageMap.values()) {
             TestDataStorage previous = map.putIfAbsent(storage.getName(), storage);
             if (previous != null) {
@@ -43,19 +47,16 @@ public class TestDataStorages {
         return storageMap.values().stream().filter(cls::isInstance).map(cls::cast);
     }
 
-    public Object getMapDiff() throws Exception {
-        Container rootContainer = Container.create(
-                properties.getKeyType(0), properties.getValueType(0),
-                properties.getSort(0), properties.getChangeType(0));
-
+    public List<StorageDiff> getDiff() throws Exception {
+        List<StorageDiff> diff = new ArrayList<>();
         for (TestDataStorage storage : storageMap.values()) {
-            Object storageDiff = storage.getDiff();
-            if (storageDiff != null) {
-                rootContainer.addEntry(Container.ChangeType.changed, storage.getName(), storageDiff, String::valueOf);
+            List<DiffEntry> entries = storage.getDiff();
+            if (entries != null && !entries.isEmpty()) {
+                diff.add(new StorageDiff(storage.getName(), entries));
             }
         }
-        rootContainer.clearNullValueKeys();
-        return rootContainer.isEmpty() ? null : rootContainer;
+        diff.sort(Comparator.comparing(StorageDiff::storage));
+        return diff.isEmpty() ? null : diff;
     }
 
     /**

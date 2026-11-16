@@ -10,7 +10,7 @@
 * **Декларативность**: Описание тестов во внешних файлах без перекомпиляции кода.
 * **Управление состоянием**: Автоматическое отслеживание «грязных» таблиц БД и интеллектуальная очистка.
 * **Синхронизация асинхронности**: 4 стратегии ожидания завершения фоновых задач (Wait-Completion).
-* **Манипуляция временем**: Полная подмена системного времени во всей JVM через `@MockJavaTime`.
+* **Манипуляция временем**: Подмена Java Time API во всей JVM через `@MockJavaTime`; `System.currentTimeMillis()` — в указанных пакетах.
 * **Продвинутые стабы**: Поддержка статических методов, конструкторов и запись реальных вызовов.
 
 ## Разделы документации
@@ -22,6 +22,7 @@
   inboundMessage).
 * **[Конфигурация TestSetupModule](TestSetupModule.md)** — Регистрация типов, алиасов и настройка клонирования.
 * **[Инициализация тестов](Initialization.md)** — Настройка окружения: время, БД, кэши, стабы.
+* **[Изменения хранилищ](Storage-Diff.md)** — `<diff>`, операции, ключи и обновление эталонов.
 
 ### Сериализация (Serde)
 
@@ -36,7 +37,7 @@
 ### Redis
 
 * **[Обзор Redis](redis/README.md)** — Настройка `@EnableTestRedis`, XML-примеры, типы данных.
-* **[Типы данных](redis/Data-Types.md)** — Инициализация, `dataStorageDiff`, XML-шаблоны для Hash, List, Set, ZSet,
+* **[Типы данных](redis/Data-Types.md)** — Инициализация, `<diff>`, XML-шаблоны для Hash, List, Set, ZSet,
   Stream, HyperLogLog.
 * **[Конфигурация](redis/Configuration.md)** — Подключения, Deep Merge, Longest-Prefix Match,
   полный `application-test.yml`.
@@ -44,7 +45,7 @@
   `<inboundMessage>`/`<outboundMessage>`, схемы каналов, дедупликация.
 * **[TTL и Time Shift](redis/TTL-Time-Shift.md)** — Виртуальное время, TTL хэш-полей (Redis 7.4+), пошаговый сценарий.
 * **[Устранение неполадок](redis/Troubleshooting.md)** — `Method not found`, `No handler`, `Redis Sync Timeout`,
-  пустой `dataStorageDiff`.
+  пустой `<diff>`.
 * **[Расширяемость](redis/Extensibility.md)** — Кастомные кодек/схема/доступ к данным, обработчики
   потоков и событий, `TestSetupModule.addSubTypes()`.
 
@@ -55,7 +56,7 @@
 * **[Конфигурация](postgresql/Configuration.md)** — Подключения, права, `columns`, `ignore`,
   `excludedFields` и форма diff.
 * **[Данные и diff](postgresql/Data-and-Diff.md)** — `SqlStorageSetup`, `SqlStorageInit`,
-  DBUnit-датасеты, `dataStorageDiff` и ключи строк.
+  DBUnit-датасеты, `<diff>` и ключи строк.
 * **[Типы и serde](postgresql/Types-and-Serde.md)** — PostgreSQL-типы в XML, массивы, JSON,
   composite, `hstore`, `bytea` и свои конвертеры.
 * **[Устранение неполадок](postgresql/Troubleshooting.md)** — Пустой diff, ошибки прав, схемы,
@@ -90,6 +91,7 @@
 ### Расширенные возможности
 
 * **[Система Wait-Completion](wait-completion.md)** — Ожидание завершения асинхронных процессов.
+* **[Расширение diff](Storage-Diff-Extensibility.md)** — Свои презентеры и рендереры для `<diff>`.
 * **[Хуки на методы](Method-Hooks.md)** — `@OnMethodEnter`/`@OnMethodExit`: наблюдение и внедрение поведения в методы
   приложения.
 * **[Хуки и преобразователи](Hooks-and-Converters.md)** — Использование `BeforeTest`, `AfterTest` и `TestConverter`.

@@ -2,8 +2,11 @@ package io.github.dimkich.integration.testing.postgresql.service.diff;
 
 import io.github.dimkich.integration.testing.execution.StubAnswer;
 import io.github.dimkich.integration.testing.postgresql.model.change.PostgresChangeBatch;
-import io.github.dimkich.integration.testing.storage.ObjectsDifference;
+import io.github.dimkich.integration.testing.storage.diff.ObjectsDifference;
+import io.github.dimkich.integration.testing.storage.diff.model.DiffEntry;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 /**
  * Builds the difference for the SUT part of a change batch. Reading the journal, resolving tags
@@ -11,11 +14,9 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public class PostgresDiffService {
-    // The order of the fields is coupled to the bean definition in PostgresConfig.PostProcessor.
-    private final String storageName;
     private final ObjectsDifference objectsDifference;
 
-    public Object calculate(PostgresChangeBatch batch) {
+    public List<DiffEntry> calculate(PostgresChangeBatch batch) {
         if (batch.getRecords().isEmpty()) {
             return null;
         }
@@ -23,7 +24,6 @@ public class PostgresDiffService {
         if (diff.getBefore().isEmpty() && diff.getAfter().isEmpty()) {
             return null;
         }
-        return StubAnswer.enable(() -> objectsDifference.getDifference(
-                storageName, diff.getBefore(), diff.getAfter()));
+        return StubAnswer.enable(() -> objectsDifference.getDifference(diff.getBefore(), diff.getAfter()));
     }
 }

@@ -23,8 +23,7 @@ The module solves the following tasks:
 Creating a Module
 -----------------
 
-```
-java  
+```java
 @Bean  
 TestSetupModule testSetupModule() {  
     return new TestSetupModule()  
@@ -77,13 +76,29 @@ Configuration Methods
 |-----------------------------------------------------------------------------|--------------------------------------------|-------------------------------------------------------------|
 | `addEqualsForType(Class<T> type, BiPredicate<? super T, ? super T> equals)` | Registers an equality predicate for a type | `.addEqualsForType(SecureRandom.class, (sr1, sr2) -> true)` |
 
+### Representation in `<diff>`
+
+The methods below define how your types look in `<diff>`:
+
+| Method                                                                    | What it defines                                                                                              |
+|---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| `addDiffKeyPresenter(Class<T> type, DiffPresenter<? super T> presenter)`  | representation of a record key: a scalar body as text, a structured body as an object                        |
+| `addDiffPresenter(Class<T> type, DiffPresenter<? super T> presenter)`     | representation of a value: body, type and attributes (the framework builds the diff itself)                  |
+| `addDiffRenderer(Class<T> type, DiffRenderer<? extends T> renderer)`      | renderer of the body: how the difference of the body is calculated and written                               |
+| `addEqualsForType(Class<T> type, BiPredicate<? super T, ? super T>)`      | equality predicate: a change of this type is not a diff                                                      |
+
+A user registration of the same type replaces the built-in one: built-in presenters and renderers
+are applied first. Key and value presenters are looked up separately.
+
+Contracts, examples and rules are in [Diff Extensibility](Storage-Diff-Extensibility.md). How to
+read and write `<diff>` is described in [Storage Changes](Storage-Diff.md).
+
 Configuration Examples
 ----------------------
 
 ### Basic Configuration
 
-```
-java  
+```java
 @Configuration  
 public class TestConfig {  
     
@@ -106,8 +121,7 @@ public class TestConfig {
 
 ### Advanced Configuration
 
-```
-java  
+```java
 @Configuration  
 public class AdvancedTestConfig {  
     
@@ -142,8 +156,7 @@ public class AdvancedTestConfig {
 
 ### Example: Cloning a Field via Reflection
 
-```
-java  
+```java
 @Configuration  
 public class TestConfig {  
     
@@ -165,7 +178,7 @@ public class TestConfig {
 Pre-registered Types
 --------------------
 
-The framework already registers the following common types via `CommonFormatConfig`:
+The framework already registers the following common types:
 
 ### Test Types
 
@@ -212,65 +225,9 @@ The framework already registers the following common types via `CommonFormatConf
 How It Works
 ------------
 
-### 1. Type Registration
-
-```
-java  
-// In configuration  
-.addSubTypes(MyDto.class, "MyDto")  
-
-// In XML  
-<response type="MyDto">  
-    <id>1</id>  
-    <name>test</name>  
-</response>  
-
-// In JSON  
-{  
-    "type": "MyDto",  
-    "id": 1,  
-    "name": "test"  
-}  
-
-```
-
-### 2. Serialization
-
-During serialization, the framework uses the **short name** of the type registered in `TestSetupModule`:
-
-```
-java  
-// If MyDto.class is registered as "MyDto"  
-// XML/JSON will always have type="MyDto"  
-// Fully qualified names are not used  
-
-```
-
-### 3. Deserialization
-
-During deserialization, the framework looks up the type by its short name:
-
-```
-1. Jackson reads attribute/field "type": "MyDto"  
-2. TypeResolverFactory.resolve("MyDto") → MyDto.class  
-3. Jackson deserializes into MyDto.class  
-
-```
-
-⚠️ **Important:** If a type is not registered, deserialization will fail. Using fully qualified names in XML/JSON does
-not work --- the framework always expects short names.
-
-Interaction with Other Components
----------------------------------
-
-| Component                  | Interaction                                                  |
-|----------------------------|--------------------------------------------------------------|
-| `TypeResolverFactory`      | Collects data from all `TestSetupModule` instances           |
-| `TestTypeResolverBuilder`  | Uses `TypeResolverFactory` to resolve types                  |
-| `SharedTypeNameIdResolver` | Created by `TypeResolverFactory` based on module settings    |
-| `IntegrationTestConfig`    | Imports configuration, creates `Cloner` with module settings |
-| `XmlConfig` / `JsonConfig` | Use `TestTypeResolverBuilder` for polymorphism               |
-| `CommonFormatConfig`       | Provides a base `TestSetupModule` with standard types        |
+A type that appears in the `type` attribute must be registered. The test file uses the **short name**
+from the registration; a fully qualified class name is not supported. Registering two types under the
+same name is an error at startup. If a type is not registered, deserialization fails.
 
 CopyAction for Cloning
 ----------------------
@@ -289,8 +246,7 @@ Common Problems
 **Cause:** Two types are registered with the same logical name.  
 **Solution:**
 
-```
-java  
+```java
 // ❌ Error: two types with name "Dto"  
 .addSubTypes(FirstDto.class, "Dto")  
 .addSubTypes(SecondDto.class, "Dto")  
@@ -306,8 +262,7 @@ java
 **Cause:** Type is not registered in `TestSetupModule`.  
 **Solution:**
 
-```
-java  
+```java
 // Add type registration  
 .addSubTypes(MyMissingType.class, "MyMissingType")  
 
@@ -323,8 +278,7 @@ java
 **Cause:** Cloning action is not configured for the type.  
 **Solution:**
 
-```
-java  
+```java
 // Configure cloning  
 .clonerTypeAction(MyType.class, CopyAction.DEEP_COPY)  
 
@@ -341,8 +295,7 @@ Recommendations
 2. **Check name uniqueness** --- the framework will throw an exception if a type name is duplicated.
 3. **Use package scanning for DTOs** --- instead of manually registering each type:
 
-   ```
-   java  
+   ```java
    .addSubTypes("com.example.dto")  
 
    ```

@@ -7,7 +7,7 @@
 
 1. **Подготовка.** В `<init>` вы создаёте схему, загружаете DBUnit-датасет и при необходимости
    выполняете SQL.
-2. **Проверка.** В `<dataStorageDiff>` вы описываете, какие строки и колонки должны измениться после
+2. **Проверка.** В `<diff>` вы описываете, какие строки и колонки должны измениться после
    вызова кода приложения.
 
 ## SqlStorageSetup
@@ -23,12 +23,12 @@ SQL-файлы, inline SQL и регистрируется DBUnit-датасет
 </init>
 ```
 
-| Элемент       | Описание                                                        |
-|---------------|-----------------------------------------------------------------|
-| `name`        | Имя подключения из `integration.testing.postgresql.connections` |
-| `sqlFilePath` | Пути к SQL-файлам на classpath; выполняются по порядку          |
-| `sql`         | Inline SQL-запросы; выполняются после `sqlFilePath`             |
-| `dbUnitPath`  | Пути к DBUnit-датасетам на classpath                            |
+| Атрибут/элемент | Описание                                                        |
+|-----------------|-----------------------------------------------------------------|
+| `name`          | Имя подключения из `integration.testing.postgresql.connections` |
+| `sqlFilePath`   | Пути к SQL-файлам на classpath; выполняются по порядку          |
+| `sql`           | Inline SQL-запросы; выполняются после `sqlFilePath`             |
+| `dbUnitPath`    | Пути к DBUnit-датасетам на classpath                            |
 
 `dbUnitPath` только регистрирует датасет. Данные из него загружаются позже через `SqlStorageInit`
 с `tablesToLoad` или `loadAllTables="true"`.
@@ -148,28 +148,32 @@ DBUnit-файл — обычный XML-документ с корневым те
 * Identity-колонки обычно не указываются: PostgreSQL сгенерирует значение сам.
 * Для `hstore` нужно установить расширение `hstore`.
 
-## dataStorageDiff
+## `<diff>`
 
-`<dataStorageDiff>` описывает изменения после выполнения теста. Diff строится по строкам и содержит
-только изменившиеся колонки.
+`<diff>` описывает изменения после выполнения теста. Атрибут `storage` задаёт имя хранилища
+(`storage="dataSource"`), внутри — записи: строки таблиц. Запись всегда имеет один атрибут `key`,
+а операция задаёт тег элемента: `insert`, `update` или `delete`.
+
+Поля записи выводятся в порядке колонок таблицы (`CREATE TABLE` или `ALTER TABLE ... ADD COLUMN`),
+а не по алфавиту.
+
+Остальные правила — общие для всех хранилищ, они собраны в разделе
+[Изменения хранилищ](../Storage-Diff.md). Особенности PostgreSQL: `hstore` выводится по алфавиту
+(PostgreSQL не гарантирует порядок его полей), `json` — в порядке документа, `jsonb` — в том
+порядке, в котором его вернул PostgreSQL.
 
 ### Вставка
 
 При вставке показывается вся новая строка:
 
 ```xml
-<dataStorageDiff type="MapStringKeyObjectValue">
-    <dataSource type="EntriesObjectKeyObjectValue">
-        <entry change="added">
-            <key>users_100</key>
-            <value type="MapStringKeyObjectValue">
-                <id type="Long">100</id>
-                <name>Ivan</name>
-                <email>ivan@example.com</email>
-            </value>
-        </entry>
-    </dataSource>
-</dataStorageDiff>
+<diff storage="dataSource">
+    <insert key="users/100">
+        <id type="Integer">100</id>
+        <name>Ivan</name>
+        <email>ivan@example.com</email>
+    </insert>
+</diff>
 ```
 
 ### Обновление
@@ -177,69 +181,63 @@ DBUnit-файл — обычный XML-документ с корневым те
 При обновлении показываются только изменённые колонки:
 
 ```xml
-<dataStorageDiff type="MapStringKeyObjectValue">
-    <dataSource type="EntriesObjectKeyObjectValue">
-        <entry change="changed">
-            <key>users_1</key>
-            <value type="MapStringKeyObjectValue">
-                <name>Ivan Updated</name>
-            </value>
-        </entry>
-    </dataSource>
-</dataStorageDiff>
+<diff storage="dataSource">
+    <update key="users/1">
+        <name>Ivan Updated</name>
+    </update>
+</diff>
 ```
 
 ### Удаление
 
-У удалённой строки значение обязательно `nil`:
+У удалённой строки тела нет, только ключ:
 
 ```xml
-<dataStorageDiff type="MapStringKeyObjectValue">
-    <dataSource type="EntriesObjectKeyObjectValue">
-        <entry change="deleted">
-            <key>users_1</key>
-            <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-        </entry>
-    </dataSource>
-</dataStorageDiff>
+<diff storage="dataSource">
+    <delete key="users/1"/>
+</diff>
 ```
+
+JSONB и hstore диффятся по ключам, события и вложенные объекты — по полям. Та же логика
+работает на любой глубине: изменившееся поле — тег или `update key`, добавленное — `insert key`,
+удалённое — `delete key`.
 
 ### Ключи строк
 
-Если у таблицы есть первичный ключ, ключ строки имеет вид:
+Если у таблицы есть первичный ключ, ключ строки имеет вид `[schema.]table/значение`:
 
 ```text
-<таблица>_<значение первичного ключа>
+users/1
+orders/42
+billing.invoices/7
 ```
 
-Примеры:
+Для составного первичного ключа значения добавляются через запятую:
 
 ```text
-users_1
-orders_42
-billing.invoices_7
+orders/1,2
 ```
-
-Для составного первичного ключа значения добавляются через `_`. Для читаемости лучше использовать
-простые первичные ключи.
 
 Часть ключа, относящаяся к таблице, зависит от `defaultSchema`: таблица из `defaultSchema`
-записывается без схемы (`users_1`), таблица из другой схемы — с префиксом (`billing.invoices_7`).
-Неквалифицированные имена в конфигурации и фикстурах разрешаются в `defaultSchema`; для таблицы
-из другой схемы используйте `schema.table`.
+записывается без схемы (`users/1`), таблица из другой схемы — с префиксом
+(`billing.invoices/7`). Неквалифицированные имена в конфигурации и фикстурах разрешаются
+в `defaultSchema`; для таблицы из другой схемы используйте `schema.table`.
 
-Если первичного ключа нет, строка идентифицируется хешем всего содержимого:
+Если первичного ключа нет, строка идентифицируется первыми 16 hex-символами хеша содержимого:
 
 ```text
-nokey_data_20e4a4ea34a193578fdcbb989221baab40a137646521718fbe55d9df70db52ad
+nokey_data/20e4a4ea34a19357
 ```
 
-В таблице без первичного ключа обновление выглядит как удаление старой строки и добавление новой.
-Если такие diff'ы неудобны, добавьте первичный ключ.
+В таблице без первичного ключа обновление выглядит как удаление старой строки и добавление
+новой. Если такие diff'ы неудобны, добавьте первичный ключ.
+
+Символы `/`, `,` и `%` внутри частей ключа экранируются как `%2F`, `%2C` и `%25`, поэтому
+ключ всегда однозначно разбирается.
 
 ### Несколько частей теста
 
-Внутри одного кейса `<dataStorageDiff>` можно указывать у каждой `<test type="Part">`. Diff каждой
+Внутри одного кейса `<diff>` можно указывать у каждой `<test type="Part">`. Diff каждой
 части считается относительно состояния после предыдущей части:
 
 ```xml
@@ -250,17 +248,17 @@ nokey_data_20e4a4ea34a193578fdcbb989221baab40a137646521718fbe55d9df70db52ad
 
     <test type="Part" name="Insert">
         <!-- ... -->
-        <dataStorageDiff>... added ...</dataStorageDiff>
+        <diff storage="dataSource">... insert ...</diff>
     </test>
 
     <test type="Part" name="Update">
         <!-- ... -->
-        <dataStorageDiff>... changed ...</dataStorageDiff>
+        <diff storage="dataSource">... update ...</diff>
     </test>
 
     <test type="Part" name="Delete">
         <!-- ... -->
-        <dataStorageDiff>... deleted ...</dataStorageDiff>
+        <diff storage="dataSource">... delete ...</diff>
     </test>
 </test>
 ```
