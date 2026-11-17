@@ -70,11 +70,12 @@ public class CommonFormatConfig {
                 .addAlias(Class.forName("java.util.Arrays$ArrayList"), "ArrayList")
                 .addAlias(Class.forName("java.util.Collections$UnmodifiableMap"), "LinkedHashMap")
                 .addAlias(Class.forName("java.time.ZoneRegion"), "ZoneId")
+                .addAlias(ZoneOffset.class, "ZoneId")
                 .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,
                         LocalTime.class, OffsetTime.class, LocalDate.class, LocalDateTime.class,
-                        ZonedDateTime.class, Instant.class,
+                        ZonedDateTime.class, Instant.class, ZoneId.class,
                         boolean.class, char.class, byte.class, short.class, int.class, long.class, double.class,
                         float.class, SecureRandom.class, SpringErrorDto.class, Resource.class, ByteArrayInputStream.class,
                         LinkedHashMapObjectObject.class, LinkedHashMapStringObject.class, RuntimeException.class,

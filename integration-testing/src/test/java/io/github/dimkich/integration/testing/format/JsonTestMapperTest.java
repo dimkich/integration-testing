@@ -43,6 +43,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.security.SecureRandom;
+import java.time.ZoneId;
 import java.util.*;
 
 import static io.github.dimkich.integration.testing.format.FormatTestUtils.compConfig;
@@ -79,6 +80,8 @@ class JsonTestMapperTest {
                 {new Value('2'), "{\"value\":[\"Character\",\"2\"]}"},
                 {new Value(' '), "{\"value\":[\"Character\",\" \"]}"},
                 {new Value(new BigDecimal("1.230000")), "{\"value\":[\"BigDecimal\",\"1.23\"]}"},
+                {new Value(ZoneId.of("Europe/Moscow")), "{\"value\":[\"ZoneId\",\"Europe/Moscow\"]}"},
+                {new Value(ZoneId.of("Z")), "{\"value\":[\"ZoneId\",\"Z\"]}"},
                 {new Value(new byte[]{1, 2, 3}), "{\"value\":[\"byte[]\",\"AQID\"]}"},
                 {new Value(new ByteArrayResource(new byte[]{3, 2, 1})), "{\"value\":[\"Resource\",\"AwIB\"]}"},
                 {new Value(new SecureRandom()), "{\"value\":[\"SecureRandom\",\"\"]}"},

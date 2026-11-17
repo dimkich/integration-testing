@@ -51,6 +51,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.security.SecureRandom;
+import java.time.ZoneId;
 import java.util.*;
 
 import static io.github.dimkich.integration.testing.format.FormatTestUtils.compConfig;
@@ -148,6 +149,16 @@ class XmlTestMapperTest {
                 {new Value(new BigDecimal("1.230000")), """
 <Value>
     <value type="BigDecimal">1.23</value>
+</Value>
+"""},
+                {new Value(ZoneId.of("Europe/Moscow")), """
+<Value>
+    <value type="ZoneId">Europe/Moscow</value>
+</Value>
+"""},
+                {new Value(ZoneId.of("Z")), """
+<Value>
+    <value type="ZoneId">Z</value>
 </Value>
 """},
                 {new Value(new byte[]{1, 2, 3}), """

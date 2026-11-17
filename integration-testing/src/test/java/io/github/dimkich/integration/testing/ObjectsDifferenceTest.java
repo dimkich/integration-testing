@@ -32,7 +32,6 @@ import java.io.File;
 import java.net.URI;
 import java.time.MonthDay;
 import java.time.Period;
-import java.time.ZoneId;
 import java.util.ArrayDeque;
 import java.util.Currency;
 import java.util.HashMap;
@@ -72,7 +71,7 @@ public class ObjectsDifferenceTest {
                     .addEqualsForType(CustomId.class, (id1, id2) -> id1.getValue().equals(id2.getValue()))
                     .addEqualsForType(BaseValue.class,
                             (value1, value2) -> value1.getPayload().equals(value2.getPayload()))
-                    .addSubTypes(ZoneId.class, Period.class, MonthDay.class, File.class,
+                    .addSubTypes(Period.class, MonthDay.class, File.class,
                             URI.class, Locale.class, Currency.class);
         }
 
