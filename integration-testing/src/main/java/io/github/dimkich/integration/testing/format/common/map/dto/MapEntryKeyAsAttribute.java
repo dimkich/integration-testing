@@ -3,6 +3,7 @@ package io.github.dimkich.integration.testing.format.common.map.dto;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import io.github.dimkich.integration.testing.format.common.polymorphic.unwrapped.UnwrappedTypeProperty;
 import lombok.Data;
 
 /**
@@ -25,5 +26,6 @@ public class MapEntryKeyAsAttribute<K, V> implements MapEntry<K, V> {
      * Map entry value serialized as the element body (unwrapped).
      */
     @JsonUnwrapped
+    @UnwrappedTypeProperty("type")
     private V value;
 }

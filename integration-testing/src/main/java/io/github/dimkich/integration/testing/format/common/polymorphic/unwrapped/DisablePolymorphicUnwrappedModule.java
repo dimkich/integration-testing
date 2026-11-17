@@ -4,25 +4,17 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.github.dimkich.integration.testing.format.common.map.dto.MapEntryKeyAsAttribute;
 import io.github.dimkich.integration.testing.initialization.bean.property.BeanPropertyInit;
-import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
 import lombok.Data;
 
 public class DisablePolymorphicUnwrappedModule extends SimpleModule {
     public DisablePolymorphicUnwrappedModule() {
         super();
         setMixInAnnotation(MapEntryKeyAsAttribute.class, MapEntryKeyAsAttributeMixIn.class);
-        setMixInAnnotation(EntryStringKeyObjectValue.class, EntryStringKeyObjectValueMixIn.class);
         setMixInAnnotation(BeanPropertyInit.PropertyEntry.class, PropertyEntryMixIn.class);
     }
 
     @Data
     public static class MapEntryKeyAsAttributeMixIn {
-        @JsonUnwrapped(enabled = false)
-        private Object value;
-    }
-
-    @Data
-    public static class EntryStringKeyObjectValueMixIn {
         @JsonUnwrapped(enabled = false)
         private Object value;
     }

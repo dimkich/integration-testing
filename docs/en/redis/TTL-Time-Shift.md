@@ -87,7 +87,7 @@ rest untouched.
 ### Describing a Hash with Per-Field TTL in XML:
 
 ```xml
-<entry key="user:session:active" utype="RedisEntry">
+<entry key="user:session:active" type="RedisEntry">
     <data type="RedisHash">
         <!-- Field without TTL (permanent) -->
         <entry>

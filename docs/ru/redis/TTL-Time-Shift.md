@@ -84,7 +84,7 @@ JVM и продолжает жить по реальному системном�
 ### Как описать хэш с TTL полей в XML:
 
 ```xml
-<entry key="user:session:active" utype="RedisEntry">
+<entry key="user:session:active" type="RedisEntry">
     <data type="RedisHash">
         <!-- Поле без TTL (вечное) -->
         <entry>

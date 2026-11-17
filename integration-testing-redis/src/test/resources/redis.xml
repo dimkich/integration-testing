@@ -202,7 +202,7 @@
                 <test type="Case" name="Multi-set mixed updates">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.existing.key" utype="String">original.data</entry>
+                            <entry key="redisson.existing.key" type="String">original.data</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -234,7 +234,7 @@
                 <test type="Case" name="Multi-set if absent atomic failure">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.msetnx.blocking.key" utype="String">initial.value</entry>
+                            <entry key="redisson.msetnx.blocking.key" type="String">initial.value</entry>
                         </map>
                     </init>
                     <test type="Part" name="Try mSetNX where one key already exists">
@@ -257,7 +257,7 @@
                 <test type="Case" name="Increment Long values">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.num.long" utype="String">100</entry>
+                            <entry key="redisson.num.long" type="String">100</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -272,7 +272,7 @@
                 <test type="Case" name="Increment Float values">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.num.float" utype="String">10.5</entry>
+                            <entry key="redisson.num.float" type="String">10.5</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -287,7 +287,7 @@
                 <test type="Case" name="Numeric boundaries">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.num.boundary" utype="String">127</entry>
+                            <entry key="redisson.num.boundary" type="String">127</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -302,7 +302,7 @@
                 <test type="Case" name="Negative increment">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.num.neg" utype="String">10</entry>
+                            <entry key="redisson.num.neg" type="String">10</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -319,7 +319,7 @@
                 <test type="Case" name="String key">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.key.old" utype="String">some.value</entry>
+                            <entry key="redisson.key.old" type="String">some.value</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -334,8 +334,8 @@
                 <test type="Case" name="With overwrite">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.key.source" utype="String">data.A</entry>
-                            <entry key="redisson.key.target" utype="String">data.B</entry>
+                            <entry key="redisson.key.source" type="String">data.A</entry>
+                            <entry key="redisson.key.target" type="String">data.B</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -378,7 +378,7 @@
                 <test type="Case" name="Success">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.renamenx.src" utype="String">important.data</entry>
+                            <entry key="redisson.renamenx.src" type="String">important.data</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -394,8 +394,8 @@
                 <test type="Case" name="Failure (target exists)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.renamenx.src.fail" utype="String">source.data</entry>
-                            <entry key="redisson.renamenx.target.fail" utype="String">existing.data</entry>
+                            <entry key="redisson.renamenx.src.fail" type="String">source.data</entry>
+                            <entry key="redisson.renamenx.target.fail" type="String">existing.data</entry>
                         </map>
                     </init>
                     <test type="Part" name="Try renameNX where target exists">
@@ -425,7 +425,7 @@
             <test type="Case" name="APPEND">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.str.append" utype="String">Hello</entry>
+                        <entry key="redisson.str.append" type="String">Hello</entry>
                     </map>
                 </init>
                 <bean>redisStringFacade</bean>
@@ -440,7 +440,7 @@
             <test type="Case" name="INCR and DECR">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.counter" utype="String">10</entry>
+                        <entry key="redisson.counter" type="String">10</entry>
                     </map>
                 </init>
                 <test type="Part" name="Increment">
@@ -475,7 +475,7 @@
             <test type="Case" name="GETSET">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.gs.key" utype="String">OldValue</entry>
+                        <entry key="redisson.gs.key" type="String">OldValue</entry>
                     </map>
                 </init>
                 <bean>redisStringFacade</bean>
@@ -491,7 +491,7 @@
                 <test type="Case" name="Overwrite part of string">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.str.range" utype="String">Hello World</entry>
+                            <entry key="redisson.str.range" type="String">Hello World</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -528,7 +528,7 @@
                 <test type="Case" name="Overwrite existing">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.setex.existing" utype="String">old_val</entry>
+                            <entry key="redisson.setex.existing" type="String">old_val</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -557,7 +557,7 @@
                 <test type="Case" name="Initialization">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.init.bit" utype="RedisEntry">
+                            <entry key="redisson.init.bit" type="RedisEntry">
                                 <data type="byte[]">gQ==</data>
                             </entry>
                         </map>
@@ -611,8 +611,8 @@
                 <test type="Case" name="Existing byte[] values">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.str" utype="byte[]">QQ==</entry>
-                            <entry key="redisson.bit.full" utype="byte[]">/w==</entry>
+                            <entry key="redisson.bit.str" type="byte[]">QQ==</entry>
+                            <entry key="redisson.bit.full" type="byte[]">/w==</entry>
                         </map>
                     </init>
                     <test type="Part" name="Set bit on existing value">
@@ -665,8 +665,8 @@
                 <test type="Case" name="OR with different lengths">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.a" utype="byte[]">8A==</entry>
-                            <entry key="redisson.bit.b" utype="byte[]">Dw8=</entry>
+                            <entry key="redisson.bit.a" type="byte[]">8A==</entry>
+                            <entry key="redisson.bit.b" type="byte[]">Dw8=</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -685,8 +685,8 @@
                 <test type="Case" name="XOR same values">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.xor.1" utype="byte[]">/w==</entry>
-                            <entry key="redisson.xor.2" utype="byte[]">/w==</entry>
+                            <entry key="redisson.xor.1" type="byte[]">/w==</entry>
+                            <entry key="redisson.xor.2" type="byte[]">/w==</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -705,8 +705,8 @@
                 <test type="Case" name="AND with different lengths">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.a" utype="byte[]">8A==</entry>
-                            <entry key="redisson.bit.b" utype="byte[]">Dw8=</entry>
+                            <entry key="redisson.bit.a" type="byte[]">8A==</entry>
+                            <entry key="redisson.bit.b" type="byte[]">Dw8=</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -725,7 +725,7 @@
                 <test type="Case" name="handle missing sources and removal">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.dest" utype="byte[]">AQID</entry>
+                            <entry key="redisson.bit.dest" type="byte[]">AQID</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -744,8 +744,8 @@
                 <test type="Case" name="NOT and AND implementation">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.zero" utype="byte[]">AA==</entry>
-                            <entry key="redisson.bit.full" utype="byte[]">/w==</entry>
+                            <entry key="redisson.bit.zero" type="byte[]">AA==</entry>
+                            <entry key="redisson.bit.full" type="byte[]">/w==</entry>
                         </map>
                     </init>
                     <test type="Part" name="BITOP NOT coverage">
@@ -810,7 +810,7 @@
                 <test type="Case" name="SAT Overflow">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bf.sat.0" utype="byte[]">eA==</entry>
+                            <entry key="redisson.bf.sat.0" type="byte[]">eA==</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -834,7 +834,7 @@
                 <test type="Case" name="FAIL Overflow with sticky state">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.fail" utype="byte[]">+g==</entry>
+                            <entry key="redisson.bit.fail" type="byte[]">+g==</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -882,8 +882,8 @@
                 <test type="Case" name="SAT boundaries with two-pass">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.sat.u" utype="byte[]">+g==</entry>
-                            <entry key="redisson.bit.sat.i" utype="byte[]">iA==</entry>
+                            <entry key="redisson.bit.sat.u" type="byte[]">+g==</entry>
+                            <entry key="redisson.bit.sat.i" type="byte[]">iA==</entry>
                         </map>
                     </init>
                     <test type="Part" name="SAT Upper: 250 + 10 -> 255">
@@ -940,7 +940,7 @@
                 <test type="Case" name="FAIL Signed with two-pass">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.fail.s" utype="byte[]">eA==</entry>
+                            <entry key="redisson.bit.fail.s" type="byte[]">eA==</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -967,7 +967,7 @@
                 <test type="Case" name="FAIL Overflow (i16 safe test)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.fail.safe" utype="byte[]">f/g=</entry>
+                            <entry key="redisson.bit.fail.safe" type="byte[]">f/g=</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -994,7 +994,7 @@
                 <test type="Case" name="Java Long Overflow logic">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.l.overflow" utype="byte[]">AAAAAAAAAAA=</entry>
+                            <entry key="redisson.bit.l.overflow" type="byte[]">AAAAAAAAAAA=</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -1030,8 +1030,8 @@
                 <test type="Case" name="Signed FAIL with mutation">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.bit.fail.up" utype="byte[]">Mg==</entry>
-                            <entry key="redisson.bit.fail.down" utype="byte[]">zg==</entry>
+                            <entry key="redisson.bit.fail.up" type="byte[]">Mg==</entry>
+                            <entry key="redisson.bit.fail.down" type="byte[]">zg==</entry>
                         </map>
                     </init>
                     <test type="Part" name="Signed Upper FAIL with mutation">
@@ -1092,7 +1092,7 @@
                 <test type="Case" name="Check initialization">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.hll.init.test" utype="RedisHyperLogLog">
+                            <entry key="redisson.hll.init.test" type="RedisHyperLogLog">
                                 <value type="TestRedisDto">
                                     <id>init-1</id>
                                     <active>true</active>
@@ -1204,7 +1204,7 @@
                 <test type="Case" name="Count single with DTOs">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.hll.count.dto" utype="RedisHyperLogLog">
+                            <entry key="redisson.hll.count.dto" type="RedisHyperLogLog">
                                 <value type="TestRedisDto">
                                     <id>user1</id>
                                     <active>false</active>
@@ -1226,7 +1226,7 @@
                 <test type="Case" name="Count single with Strings">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.str.hll.count" utype="RedisHyperLogLog">
+                            <entry key="redisson.str.hll.count" type="RedisHyperLogLog">
                                 <value>string1</value>
                                 <value>string2</value>
                                 <value>string3</value>
@@ -1243,11 +1243,11 @@
                 <test type="Case" name="Multi-key union count">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.str.hll.multi1" utype="RedisHyperLogLog">
+                            <entry key="redisson.str.hll.multi1" type="RedisHyperLogLog">
                                 <value>A</value>
                                 <value>B</value>
                             </entry>
-                            <entry key="redisson.str.hll.multi2" utype="RedisHyperLogLog">
+                            <entry key="redisson.str.hll.multi2" type="RedisHyperLogLog">
                                 <value>B</value>
                                 <value>C</value>
                             </entry>
@@ -1274,11 +1274,11 @@
                 <test type="Case" name="Merge multiple">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.str.hll.src1" utype="RedisHyperLogLog">
+                            <entry key="redisson.str.hll.src1" type="RedisHyperLogLog">
                                 <value>A</value>
                                 <value>B</value>
                             </entry>
-                            <entry key="redisson.str.hll.src2" utype="RedisHyperLogLog">
+                            <entry key="redisson.str.hll.src2" type="RedisHyperLogLog">
                                 <value>B</value>
                                 <value>C</value>
                             </entry>
@@ -1303,13 +1303,13 @@
                 <test type="Case" name="Merge with DTOs">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.hll.dto1" utype="RedisHyperLogLog">
+                            <entry key="redisson.hll.dto1" type="RedisHyperLogLog">
                                 <value type="TestRedisDto">
                                     <id>1</id>
                                     <active>false</active>
                                 </value>
                             </entry>
-                            <entry key="redisson.hll.dto2" utype="RedisHyperLogLog">
+                            <entry key="redisson.hll.dto2" type="RedisHyperLogLog">
                                 <value type="TestRedisDto">
                                     <id>2</id>
                                     <active>false</active>
@@ -1341,10 +1341,10 @@
                 <test type="Case" name="Overwrite destination">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.str.hll.src" utype="RedisHyperLogLog">
+                            <entry key="redisson.str.hll.src" type="RedisHyperLogLog">
                                 <value>new_val</value>
                             </entry>
-                            <entry key="redisson.str.hll.dest_old" utype="RedisHyperLogLog">
+                            <entry key="redisson.str.hll.dest_old" type="RedisHyperLogLog">
                                 <value>old_val</value>
                             </entry>
                         </map>
@@ -1365,7 +1365,7 @@
                 <test type="Case" name="With missing sources">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.str.hll.exist" utype="RedisHyperLogLog">
+                            <entry key="redisson.str.hll.exist" type="RedisHyperLogLog">
                                 <value>only_me</value>
                             </entry>
                         </map>
@@ -1416,7 +1416,7 @@
             <test type="Case" name="HSetNx">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.settings:1" utype="RedisHash">
+                        <entry key="redisson.settings:1" type="RedisHash">
                             <entry>
                                 <key>mode</key>
                                 <value>
@@ -1469,7 +1469,7 @@
                 <test type="Case" name="Native HEXPIRE logic">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.user.auth.tokens" utype="RedisHash">
+                            <entry key="redisson.user.auth.tokens" type="RedisHash">
                                 <entry>
                                     <key>device.mobile</key>
                                     <value>
@@ -1514,7 +1514,7 @@
                 <test type="Case" name="Partial fields expiry">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.hash.partial.test" utype="RedisHash">
+                            <entry key="redisson.hash.partial.test" type="RedisHash">
                                 <entry>
                                     <key>field.permanent</key>
                                     <value>
@@ -1710,7 +1710,7 @@
                 <test type="Case" name="HIncrBy and HDel">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.stocks:apple" utype="RedisHash">
+                            <entry key="redisson.stocks:apple" type="RedisHash">
                                 <entry>
                                     <key>count</key>
                                     <value>
@@ -1755,7 +1755,7 @@
                 <test type="Case" name="Increment hash field">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.hash.counters" utype="RedisHash">
+                            <entry key="redisson.hash.counters" type="RedisHash">
                                 <entry>
                                     <key>retries</key>
                                     <value>
@@ -1780,7 +1780,7 @@
                 <test type="Case" name="Increment hash field by float">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.wallet.123" utype="RedisHash">
+                            <entry key="redisson.wallet.123" type="RedisHash">
                                 <entry>
                                     <key>balance</key>
                                     <value>
@@ -1805,7 +1805,7 @@
                 <test type="Case" name="Increment missing field">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.hash.incr.missing.field" utype="RedisHash">
+                            <entry key="redisson.hash.incr.missing.field" type="RedisHash">
                                 <entry>
                                     <key>existing</key>
                                     <value>
@@ -1845,7 +1845,7 @@
             <test type="Case" name="Rename hash to new name">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.hash.old" utype="RedisHash">
+                        <entry key="redisson.hash.old" type="RedisHash">
                             <entry>
                                 <key>field1</key>
                                 <value>
@@ -1869,7 +1869,7 @@
             <test type="Case" name="Remove TTL via HPERSIST">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.hash.persist.test" utype="RedisHash">
+                        <entry key="redisson.hash.persist.test" type="RedisHash">
                             <entry>
                                 <key>f1</key>
                                 <value>
@@ -2150,7 +2150,7 @@
                 <test type="Case" name="BEFORE: Insert in middle">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.list.insert.middle" utype="RedisList">
+                            <entry key="redisson.list.insert.middle" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2175,7 +2175,7 @@
                 <test type="Case" name="AFTER: Insert in middle">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.list.insert.after" utype="RedisList">
+                            <entry key="redisson.list.insert.after" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2200,7 +2200,7 @@
                 <test type="Case" name="Pivot not found">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.list.insert.missing" utype="RedisList">
+                            <entry key="redisson.list.insert.missing" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                             </entry>
@@ -2216,7 +2216,7 @@
                 <test type="Case" name="Target first occurrence">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.list.insert.dups" utype="RedisList">
+                            <entry key="redisson.list.insert.dups" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>B</value>
@@ -2243,7 +2243,7 @@
                 <test type="Case" name="Boundaries check">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.list.insert.edge" utype="RedisList">
+                            <entry key="redisson.list.insert.edge" type="RedisList">
                                 <value>HEAD</value>
                                 <value>TAIL</value>
                             </entry>
@@ -2294,11 +2294,11 @@
                 <test type="Case" name="Success: Move tail to head">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lmove.src1" utype="RedisList">
+                            <entry key="redisson.lmove.src1" type="RedisList">
                                 <value>item1</value>
                                 <value>item2</value>
                             </entry>
-                            <entry key="redisson.lmove.dst1" utype="RedisList">
+                            <entry key="redisson.lmove.dst1" type="RedisList">
                                 <value>item3</value>
                             </entry>
                         </map>
@@ -2342,7 +2342,7 @@
                 <test type="Case" name="Source list is empty">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lmove.dst2" utype="RedisEntry">
+                            <entry key="redisson.lmove.dst2" type="RedisEntry">
                                 <data>initial</data>
                             </entry>
                         </map>
@@ -2357,7 +2357,7 @@
                 <test type="Case" name="Success: Create destination">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lmove.src4" utype="RedisList">
+                            <entry key="redisson.lmove.src4" type="RedisList">
                                 <value>solo_item</value>
                             </entry>
                         </map>
@@ -2379,7 +2379,7 @@
                 <test type="Case" name="Success: Circular move">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lmove.circular" utype="RedisList">
+                            <entry key="redisson.lmove.circular" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2406,7 +2406,7 @@
                 <test type="Case" name="Basic: Pop single">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lpop.single" utype="RedisList">
+                            <entry key="redisson.lpop.single" type="RedisList">
                                 <value>first</value>
                                 <value>second</value>
                             </entry>
@@ -2425,7 +2425,7 @@
                 <test type="Case" name="With count: Pop multiple">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lpop.count" utype="RedisList">
+                            <entry key="redisson.lpop.count" type="RedisList">
                                 <value>1</value>
                                 <value>2</value>
                                 <value>3</value>
@@ -2451,7 +2451,7 @@
                 <test type="Case" name="Count exceeds size">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lpop.exceed" utype="RedisList">
+                            <entry key="redisson.lpop.exceed" type="RedisList">
                                 <value>A</value>
                             </entry>
                         </map>
@@ -2509,7 +2509,7 @@
                 <test type="Case" name="LPUSH: Prepend to existing list">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lpush.existing" utype="RedisList">
+                            <entry key="redisson.lpush.existing" type="RedisList">
                                 <value>existing1</value>
                             </entry>
                         </map>
@@ -2533,7 +2533,7 @@
                 <test type="Case" name="LPUSHX key exists">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lpushx.exists" utype="RedisList">
+                            <entry key="redisson.lpushx.exists" type="RedisList">
                                 <value>existing_item</value>
                             </entry>
                         </map>
@@ -2562,7 +2562,7 @@
                 <test type="Case" name="LREM positive count: remove from head">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lrem.pos" utype="RedisList">
+                            <entry key="redisson.lrem.pos" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>A</value>
@@ -2588,7 +2588,7 @@
                 <test type="Case" name="LREM negative count: remove from tail">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lrem.neg" utype="RedisList">
+                            <entry key="redisson.lrem.neg" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>A</value>
@@ -2614,7 +2614,7 @@
                 <test type="Case" name="LREM zero count: remove all">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lrem.zero" utype="RedisList">
+                            <entry key="redisson.lrem.zero" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>A</value>
@@ -2636,7 +2636,7 @@
                 <test type="Case" name="LREM edge cases: not found and count exceed">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lrem.edge" utype="RedisList">
+                            <entry key="redisson.lrem.edge" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                             </entry>
@@ -2669,7 +2669,7 @@
                 <test type="Case" name="LSET success: update by positive index">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lset.pos" utype="RedisList">
+                            <entry key="redisson.lset.pos" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2692,7 +2692,7 @@
                 <test type="Case" name="LSET success: update by negative index">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lset.neg" utype="RedisList">
+                            <entry key="redisson.lset.neg" type="RedisList">
                                 <value>v1</value>
                                 <value>v2</value>
                             </entry>
@@ -2713,7 +2713,7 @@
                 <test type="Case" name="LSET failure: index out of bounds">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.lset.bounds" utype="RedisList">
+                            <entry key="redisson.lset.bounds" type="RedisList">
                                 <value>only_one</value>
                             </entry>
                         </map>
@@ -2742,7 +2742,7 @@
                 <test type="Case" name="LTRIM success: trim middle">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.ltrim.middle" utype="RedisList">
+                            <entry key="redisson.ltrim.middle" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2767,7 +2767,7 @@
                 <test type="Case" name="LTRIM success: negative indices">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.ltrim.neg" utype="RedisList">
+                            <entry key="redisson.ltrim.neg" type="RedisList">
                                 <value>v1</value>
                                 <value>v2</value>
                                 <value>v3</value>
@@ -2789,7 +2789,7 @@
                 <test type="Case" name="LTRIM condition: result in empty list">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.ltrim.empty" utype="RedisList">
+                            <entry key="redisson.ltrim.empty" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                             </entry>
@@ -2807,7 +2807,7 @@
                 <test type="Case" name="LTRIM condition: out of bounds clamping">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.ltrim.bounds" utype="RedisList">
+                            <entry key="redisson.ltrim.bounds" type="RedisList">
                                 <value>X</value>
                                 <value>Y</value>
                             </entry>
@@ -2829,7 +2829,7 @@
                 <test type="Case" name="LTRIM: Normalize negative start within bounds">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.ltrim.norm.neg" utype="RedisList">
+                            <entry key="redisson.ltrim.norm.neg" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2850,7 +2850,7 @@
                 <test type="Case" name="LTRIM: Clamp extreme negative start to zero">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.ltrim.clamp.neg" utype="RedisList">
+                            <entry key="redisson.ltrim.clamp.neg" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2872,7 +2872,7 @@
                 <test type="Case" name="LTRIM: Clamp stop index to actual size">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.ltrim.clamp.stop" utype="RedisList">
+                            <entry key="redisson.ltrim.clamp.stop" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2894,7 +2894,7 @@
                 <test type="Case" name="LTRIM: long extreme indices">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.ltrim.long" utype="RedisList">
+                            <entry key="redisson.ltrim.long" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2912,7 +2912,7 @@
                 <test type="Case" name="RPOP success: pop single element from tail">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.rpop.single" utype="RedisList">
+                            <entry key="redisson.rpop.single" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -2933,7 +2933,7 @@
                 <test type="Case" name="RPOP with count: pop multiple from tail">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.rpop.count" utype="RedisList">
+                            <entry key="redisson.rpop.count" type="RedisList">
                                 <value>1</value>
                                 <value>2</value>
                                 <value>3</value>
@@ -2959,7 +2959,7 @@
                 <test type="Case" name="RPOP count exceeds size">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.rpop.exceed" utype="RedisList">
+                            <entry key="redisson.rpop.exceed" type="RedisList">
                                 <value>X</value>
                             </entry>
                         </map>
@@ -2985,11 +2985,11 @@
                 <test type="Case" name="Move between different lists">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.rplp.src" utype="RedisList">
+                            <entry key="redisson.rplp.src" type="RedisList">
                                 <value>src1</value>
                                 <value>src2</value>
                             </entry>
-                            <entry key="redisson.rplp.dst" utype="RedisList">
+                            <entry key="redisson.rplp.dst" type="RedisList">
                                 <value>dst1</value>
                             </entry>
                         </map>
@@ -3012,7 +3012,7 @@
                 <test type="Case" name="Circular move in same list">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.rplp.same" utype="RedisList">
+                            <entry key="redisson.rplp.same" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -3061,7 +3061,7 @@
                 <test type="Case" name="RPUSH: Append to existing list">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.rpush.existing" utype="RedisList">
+                            <entry key="redisson.rpush.existing" type="RedisList">
                                 <value>existing1</value>
                             </entry>
                         </map>
@@ -3085,7 +3085,7 @@
                 <test type="Case" name="RPUSHX key exists">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.rpushx.exists" utype="RedisList">
+                            <entry key="redisson.rpushx.exists" type="RedisList">
                                 <value>head_item</value>
                             </entry>
                         </map>
@@ -3113,11 +3113,11 @@
             <test type="Case" name="BRPopLPush move existing element">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.brplp.src" utype="RedisList">
+                        <entry key="redisson.brplp.src" type="RedisList">
                             <value>item1</value>
                             <value>item2</value>
                         </entry>
-                        <entry key="redisson.brplp.dst" utype="RedisList">
+                        <entry key="redisson.brplp.dst" type="RedisList">
                             <value>existing_dst</value>
                         </entry>
                     </map>
@@ -3142,7 +3142,7 @@
                 <test type="Case" name="BLMOVE: Right to Left move between lists">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.blmove.src.rl" utype="RedisList">
+                            <entry key="redisson.blmove.src.rl" type="RedisList">
                                 <value>base_item</value>
                                 <value>move_me</value>
                             </entry>
@@ -3168,7 +3168,7 @@
                 <test type="Case" name="BLMOVE: Left to Left (Circular on same list)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.blmove.circular" utype="RedisList">
+                            <entry key="redisson.blmove.circular" type="RedisList">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -3231,12 +3231,12 @@
                 <test type="Case" name="SDIFFSTORE success: calculate difference">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sdiff.src_a" utype="RedisSet">
+                            <entry key="redisson.sdiff.src_a" type="RedisSet">
                                 <value>1</value>
                                 <value>2</value>
                                 <value>3</value>
                             </entry>
-                            <entry key="redisson.sdiff.src_b" utype="RedisSet">
+                            <entry key="redisson.sdiff.src_b" type="RedisSet">
                                 <value>2</value>
                                 <value>4</value>
                             </entry>
@@ -3260,13 +3260,13 @@
                 <test type="Case" name="SDIFFSTORE results in empty (Delete destination)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sdiff.dst_del" utype="RedisEntry">
+                            <entry key="redisson.sdiff.dst_del" type="RedisEntry">
                                 <data>OldValue</data>
                             </entry>
-                            <entry key="redisson.sdiff.src_x" utype="RedisSet">
+                            <entry key="redisson.sdiff.src_x" type="RedisSet">
                                 <value>X</value>
                             </entry>
-                            <entry key="redisson.sdiff.src_y" utype="RedisSet">
+                            <entry key="redisson.sdiff.src_y" type="RedisSet">
                                 <value>X</value>
                             </entry>
                         </map>
@@ -3286,7 +3286,7 @@
                 <test type="Case" name="SDIFFSTORE with missing subtrahend">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sdiff.src_exists" utype="RedisSet">
+                            <entry key="redisson.sdiff.src_exists" type="RedisSet">
                                 <value>Data</value>
                             </entry>
                         </map>
@@ -3310,11 +3310,11 @@
                 <test type="Case" name="Intersection with common elements">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sinter.src_a" utype="RedisSet">
+                            <entry key="redisson.sinter.src_a" type="RedisSet">
                                 <value>common</value>
                                 <value>only_a</value>
                             </entry>
-                            <entry key="redisson.sinter.src_b" utype="RedisSet">
+                            <entry key="redisson.sinter.src_b" type="RedisSet">
                                 <value>common</value>
                                 <value>only_b</value>
                             </entry>
@@ -3337,13 +3337,13 @@
                 <test type="Case" name="Intersection results in empty set (Delete destination)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sinter.dst_del" utype="RedisEntry">
+                            <entry key="redisson.sinter.dst_del" type="RedisEntry">
                                 <data>To be deleted</data>
                             </entry>
-                            <entry key="redisson.sinter.src_x" utype="RedisSet">
+                            <entry key="redisson.sinter.src_x" type="RedisSet">
                                 <value>1</value>
                             </entry>
-                            <entry key="redisson.sinter.src_y" utype="RedisSet">
+                            <entry key="redisson.sinter.src_y" type="RedisSet">
                                 <value>2</value>
                             </entry>
                         </map>
@@ -3363,7 +3363,7 @@
                 <test type="Case" name="Intersection with missing source key">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sinter.exists" utype="RedisSet">
+                            <entry key="redisson.sinter.exists" type="RedisSet">
                                 <value>data</value>
                             </entry>
                         </map>
@@ -3382,11 +3382,11 @@
                 <test type="Case" name="SMOVE success: move between sets">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.smove.src" utype="RedisSet">
+                            <entry key="redisson.smove.src" type="RedisSet">
                                 <value>Member1</value>
                                 <value>Member2</value>
                             </entry>
-                            <entry key="redisson.smove.dst" utype="RedisSet">
+                            <entry key="redisson.smove.dst" type="RedisSet">
                                 <value>Existing</value>
                             </entry>
                         </map>
@@ -3409,7 +3409,7 @@
                 <test type="Case" name="SMOVE success: move last element">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.smove.last" utype="RedisSet">
+                            <entry key="redisson.smove.last" type="RedisSet">
                                 <value>TheLastOne</value>
                             </entry>
                         </map>
@@ -3430,7 +3430,7 @@
                 <test type="Case" name="SMOVE failure: member not in source">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.smove.empty.src" utype="RedisSet">
+                            <entry key="redisson.smove.empty.src" type="RedisSet">
                                 <value>ActualMember</value>
                             </entry>
                         </map>
@@ -3447,7 +3447,7 @@
                 <test type="Case" name="Remove elements from existing set">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.set.srem" utype="RedisSet">
+                            <entry key="redisson.set.srem" type="RedisSet">
                                 <value>A</value>
                                 <value>B</value>
                                 <value>C</value>
@@ -3473,7 +3473,7 @@
                 <test type="Case" name="Remove last element (Key deletion)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.set.srem.last" utype="RedisSet">
+                            <entry key="redisson.set.srem.last" type="RedisSet">
                                 <value>last_one</value>
                             </entry>
                         </map>
@@ -3503,11 +3503,11 @@
                 <test type="Case" name="Union of two sets with overlapping elements">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sunion.src1" utype="RedisSet">
+                            <entry key="redisson.sunion.src1" type="RedisSet">
                                 <value>A</value>
                                 <value>B</value>
                             </entry>
-                            <entry key="redisson.sunion.src2" utype="RedisSet">
+                            <entry key="redisson.sunion.src2" type="RedisSet">
                                 <value>B</value>
                                 <value>C</value>
                             </entry>
@@ -3532,7 +3532,7 @@
                 <test type="Case" name="Union with one non-existent key">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sunion.exists" utype="RedisSet">
+                            <entry key="redisson.sunion.exists" type="RedisSet">
                                 <value>data1</value>
                             </entry>
                         </map>
@@ -3554,7 +3554,7 @@
                 <test type="Case" name="Union results in empty set (Delete destination)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sunion.will_be_deleted" utype="RedisEntry">
+                            <entry key="redisson.sunion.will_be_deleted" type="RedisEntry">
                                 <data>ExistingValue</data>
                             </entry>
                         </map>
@@ -3574,13 +3574,13 @@
                 <test type="Case" name="Overwrite existing destination with union">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.sunion.src_a" utype="RedisSet">
+                            <entry key="redisson.sunion.src_a" type="RedisSet">
                                 <value>VAL_A</value>
                             </entry>
-                            <entry key="redisson.sunion.src_b" utype="RedisSet">
+                            <entry key="redisson.sunion.src_b" type="RedisSet">
                                 <value>VAL_B</value>
                             </entry>
-                            <entry key="redisson.sunion.dst_overwrite" utype="RedisSet">
+                            <entry key="redisson.sunion.dst_overwrite" type="RedisSet">
                                 <value>OLD_DATA_1</value>
                                 <value>OLD_DATA_2</value>
                             </entry>
@@ -3623,7 +3623,7 @@
                 <test type="Case" name="ZADD: Update existing score">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.update" utype="RedisZSet">
+                            <entry key="redisson.zset.update" type="RedisZSet">
                                 <value>
                                     <member>player1</member>
                                     <score>100</score>
@@ -3646,7 +3646,7 @@
                 <test type="Case" name="ZADD NX: Only add if missing">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.nx" utype="RedisZSet">
+                            <entry key="redisson.z.nx" type="RedisZSet">
                                 <value>
                                     <member>member1</member>
                                     <score>10</score>
@@ -3672,7 +3672,7 @@
                 <test type="Case" name="ZADD GT and LT: Compare scores">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.compare" utype="RedisZSet">
+                            <entry key="redisson.z.compare" type="RedisZSet">
                                 <value>
                                     <member>m1</member>
                                     <score>100</score>
@@ -3718,7 +3718,7 @@
                 <test type="Case" name="ZADD NX adds missing member">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.nx.add" utype="RedisZSet">
+                            <entry key="redisson.z.nx.add" type="RedisZSet">
                                 <value>
                                     <member>member1</member>
                                     <score>10</score>
@@ -3741,7 +3741,7 @@
                 <test type="Case" name="ZADD XX updates existing member">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.xx.upd" utype="RedisZSet">
+                            <entry key="redisson.z.xx.upd" type="RedisZSet">
                                 <value>
                                     <member>member1</member>
                                     <score>10</score>
@@ -3764,7 +3764,7 @@
                 <test type="Case" name="ZADD LT skips higher score">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.lt.skip" utype="RedisZSet">
+                            <entry key="redisson.z.lt.skip" type="RedisZSet">
                                 <value>
                                     <member>member1</member>
                                     <score>10</score>
@@ -3784,7 +3784,7 @@
                 <test type="Case" name="Increment score of existing member">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.incr" utype="RedisZSet">
+                            <entry key="redisson.zset.incr" type="RedisZSet">
                                 <value>
                                     <member>m1</member>
                                     <score>10</score>
@@ -3821,7 +3821,7 @@
             <test type="Case" name="ZREM">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.z.rem.test" utype="RedisZSet">
+                        <entry key="redisson.z.rem.test" type="RedisZSet">
                             <value>
                                 <member>A</member>
                                 <score>1</score>
@@ -3864,7 +3864,7 @@
                 <test type="Case" name="Remove middle range by rank">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.rank" utype="RedisZSet">
+                            <entry key="redisson.zset.rank" type="RedisZSet">
                                 <value>
                                     <member>m1</member>
                                     <score>10</score>
@@ -3900,7 +3900,7 @@
                 <test type="Case" name="Remove using negative rank">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.rank.neg" utype="RedisZSet">
+                            <entry key="redisson.zset.rank.neg" type="RedisZSet">
                                 <value>
                                     <member>low</member>
                                     <score>1</score>
@@ -3927,7 +3927,7 @@
                 <test type="Case" name="ZREMRANGEBYRANK: Extreme negative start">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.rank.extreme" utype="RedisZSet">
+                            <entry key="redisson.zset.rank.extreme" type="RedisZSet">
                                 <value>
                                     <member>m1</member>
                                     <score>10</score>
@@ -3954,7 +3954,7 @@
                 <test type="Case" name="ZREMRANGEBYRANK: Start beyond size">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.rank.out" utype="RedisZSet">
+                            <entry key="redisson.zset.rank.out" type="RedisZSet">
                                 <value>
                                     <member>item</member>
                                     <score>1</score>
@@ -3972,7 +3972,7 @@
                 <test type="Case" name="ZREMRANGEBYRANK: Inverted range">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.rank.inv" utype="RedisZSet">
+                            <entry key="redisson.zset.rank.inv" type="RedisZSet">
                                 <value>
                                     <member>item</member>
                                     <score>1</score>
@@ -3990,7 +3990,7 @@
                 <test type="Case" name="ZREMRANGEBYRANK: Clamp stop beyond size">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.rank.clamp" utype="RedisZSet">
+                            <entry key="redisson.zset.rank.clamp" type="RedisZSet">
                                 <value>
                                     <member>m0</member>
                                     <score>10</score>
@@ -4022,7 +4022,7 @@
                 <test type="Case" name="ZREMRANGEBYRANK: long extreme range">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.rank.long" utype="RedisZSet">
+                            <entry key="redisson.zset.rank.long" type="RedisZSet">
                                 <value>
                                     <member>m1</member>
                                     <score>10</score>
@@ -4049,7 +4049,7 @@
                 <test type="Case" name="Remove members by score range">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.score" utype="RedisZSet">
+                            <entry key="redisson.zset.score" type="RedisZSet">
                                 <value>
                                     <member>cheap</member>
                                     <score>10</score>
@@ -4080,7 +4080,7 @@
                 <test type="Case" name="ZREMRANGEBYSCORE with no match">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.score.none" utype="RedisZSet">
+                            <entry key="redisson.zset.score.none" type="RedisZSet">
                                 <value>
                                     <member>item</member>
                                     <score>1</score>
@@ -4098,7 +4098,7 @@
                 <test type="Case" name="Range boundary logic">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.range.logic" utype="RedisZSet">
+                            <entry key="redisson.zset.range.logic" type="RedisZSet">
                                 <value>
                                     <member>m10</member>
                                     <score>10</score>
@@ -4129,7 +4129,7 @@
                 <test type="Case" name="Infinity boundaries">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.inf" utype="RedisZSet">
+                            <entry key="redisson.zset.inf" type="RedisZSet">
                                 <value>
                                     <member>small</member>
                                     <score>5</score>
@@ -4171,7 +4171,7 @@
                 <test type="Case" name="Remove from [banana to (eggplant (banana, cherry, date deleted)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.lex" utype="RedisZSet">
+                            <entry key="redisson.zset.lex" type="RedisZSet">
                                 <value>
                                     <member>apple</member>
                                     <score>0</score>
@@ -4212,7 +4212,7 @@
                 <test type="Case" name="Remove everything using - and +">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.lex.all" utype="RedisZSet">
+                            <entry key="redisson.zset.lex.all" type="RedisZSet">
                                 <value>
                                     <member>a</member>
                                     <score>0</score>
@@ -4237,7 +4237,7 @@
                 <test type="Case" name="Remove with bare strings 'aaa' and 'bbb' (should be inclusive)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.lex.no.prefix" utype="RedisZSet">
+                            <entry key="redisson.zset.lex.no.prefix" type="RedisZSet">
                                 <value>
                                     <member>aaa</member>
                                     <score>0</score>
@@ -4271,7 +4271,7 @@
                 <test type="Case" name="ZUNIONSTORE: simple union of two sets">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zunion.a" utype="RedisZSet">
+                            <entry key="redisson.zunion.a" type="RedisZSet">
                                 <value>
                                     <member>m1</member>
                                     <score>10</score>
@@ -4281,7 +4281,7 @@
                                     <score>20</score>
                                 </value>
                             </entry>
-                            <entry key="redisson.zunion.b" utype="RedisZSet">
+                            <entry key="redisson.zunion.b" type="RedisZSet">
                                 <value>
                                     <member>m2</member>
                                     <score>5</score>
@@ -4312,7 +4312,7 @@
                 <test type="Case" name="ZUNIONSTORE with weights and Aggregate SUM">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zset.src.1" utype="RedisZSet">
+                            <entry key="redisson.zset.src.1" type="RedisZSet">
                                 <value>
                                     <member>A</member>
                                     <score>10</score>
@@ -4322,7 +4322,7 @@
                                     <score>20</score>
                                 </value>
                             </entry>
-                            <entry key="redisson.zset.src.2" utype="RedisZSet">
+                            <entry key="redisson.zset.src.2" type="RedisZSet">
                                 <value>
                                     <member>B</member>
                                     <score>30</score>
@@ -4358,7 +4358,7 @@
                 <test type="Case" name="ZUNIONSTORE: MIN and MAX coverage">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.minmax.1" utype="RedisZSet">
+                            <entry key="redisson.z.minmax.1" type="RedisZSet">
                                 <value>
                                     <member>A</member>
                                     <score>10</score>
@@ -4368,7 +4368,7 @@
                                     <score>20</score>
                                 </value>
                             </entry>
-                            <entry key="redisson.z.minmax.2" utype="RedisZSet">
+                            <entry key="redisson.z.minmax.2" type="RedisZSet">
                                 <value>
                                     <member>A</member>
                                     <score>5</score>
@@ -4426,7 +4426,7 @@
                 <test type="Case" name="ZUNIONSTORE: empty result triggers store.remove">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.union.will_be_deleted" utype="RedisZSet">
+                            <entry key="redisson.z.union.will_be_deleted" type="RedisZSet">
                                 <value>
                                     <member>ghost</member>
                                     <score>1</score>
@@ -4451,7 +4451,7 @@
                 <test type="Case" name="ZINTERSTORE: basic intersection and weights">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.inter.1" utype="RedisZSet">
+                            <entry key="redisson.z.inter.1" type="RedisZSet">
                                 <value>
                                     <member>common</member>
                                     <score>10</score>
@@ -4461,7 +4461,7 @@
                                     <score>20</score>
                                 </value>
                             </entry>
-                            <entry key="redisson.z.inter.2" utype="RedisZSet">
+                            <entry key="redisson.z.inter.2" type="RedisZSet">
                                 <value>
                                     <member>common</member>
                                     <score>20</score>
@@ -4495,13 +4495,13 @@
                 <test type="Case" name="ZINTERSTORE: MIN and MAX aggregation">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.inter.a" utype="RedisZSet">
+                            <entry key="redisson.z.inter.a" type="RedisZSet">
                                 <value>
                                     <member>X</member>
                                     <score>100</score>
                                 </value>
                             </entry>
-                            <entry key="redisson.z.inter.b" utype="RedisZSet">
+                            <entry key="redisson.z.inter.b" type="RedisZSet">
                                 <value>
                                     <member>X</member>
                                     <score>200</score>
@@ -4553,19 +4553,19 @@
                 <test type="Case" name="ZINTERSTORE: empty result (No overlapping members)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.z.inter.src.1" utype="RedisZSet">
+                            <entry key="redisson.z.inter.src.1" type="RedisZSet">
                                 <value>
                                     <member>1</member>
                                     <score>1</score>
                                 </value>
                             </entry>
-                            <entry key="redisson.z.inter.src.2" utype="RedisZSet">
+                            <entry key="redisson.z.inter.src.2" type="RedisZSet">
                                 <value>
                                     <member>2</member>
                                     <score>1</score>
                                 </value>
                             </entry>
-                            <entry key="redisson.z.inter.existing.dest" utype="RedisZSet">
+                            <entry key="redisson.z.inter.existing.dest" type="RedisZSet">
                                 <value>
                                     <member>old</member>
                                     <score>1</score>
@@ -4590,7 +4590,7 @@
                 <test type="Case" name="ZDIFFSTORE: calculate difference of sets">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zdiff.src1" utype="RedisZSet">
+                            <entry key="redisson.zdiff.src1" type="RedisZSet">
                                 <value>
                                     <member>member1</member>
                                     <score>10</score>
@@ -4604,7 +4604,7 @@
                                     <score>30</score>
                                 </value>
                             </entry>
-                            <entry key="redisson.zdiff.src2" utype="RedisZSet">
+                            <entry key="redisson.zdiff.src2" type="RedisZSet">
                                 <value>
                                     <member>member2</member>
                                     <score>999</score>
@@ -4630,16 +4630,16 @@
                 <test type="Case" name="ZDIFFSTORE: results in empty set (key deletion)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zdiff.existing.dest" utype="RedisEntry">
+                            <entry key="redisson.zdiff.existing.dest" type="RedisEntry">
                                 <data>OldData</data>
                             </entry>
-                            <entry key="redisson.zdiff.src.a" utype="RedisZSet">
+                            <entry key="redisson.zdiff.src.a" type="RedisZSet">
                                 <value>
                                     <member>X</member>
                                     <score>1</score>
                                 </value>
                             </entry>
-                            <entry key="redisson.zdiff.src.b" utype="RedisZSet">
+                            <entry key="redisson.zdiff.src.b" type="RedisZSet">
                                 <value>
                                     <member>X</member>
                                     <score>1</score>
@@ -4664,7 +4664,7 @@
                 <test type="Case" name="ZRANGESTORE RANK: indices">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.rank.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.rank.src" type="RedisZSet">
                                 <value>
                                     <member>first</member>
                                     <score>10</score>
@@ -4697,7 +4697,7 @@
                 <test type="Case" name="ZRANGESTORE BYSCORE: filter">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.score.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.score.src" type="RedisZSet">
                                 <value>
                                     <member>low</member>
                                     <score>1.5</score>
@@ -4730,7 +4730,7 @@
                 <test type="Case" name="ZRANGESTORE BYLEX: range">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.lex.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.lex.src" type="RedisZSet">
                                 <value>
                                     <member>apple</member>
                                     <score>0</score>
@@ -4763,7 +4763,7 @@
                 <test type="Case" name="ZRANGESTORE BYSCORE REV LIMIT: successful replication">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.rev.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.rev.src" type="RedisZSet">
                                 <value>
                                     <member>p1</member>
                                     <score>1</score>
@@ -4802,7 +4802,7 @@
                 <test type="Case" name="ZRANGESTORE BYSCORE infinity bounds">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.inf.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.inf.src" type="RedisZSet">
                                 <value>
                                     <member>low</member>
                                     <score>1</score>
@@ -4837,7 +4837,7 @@
                 <test type="Case" name="ZRANGESTORE BYSCORE exclusive bounds">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.excl.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.excl.src" type="RedisZSet">
                                 <value>
                                     <member>low</member>
                                     <score>1</score>
@@ -4870,7 +4870,7 @@
                 <test type="Case" name="ZRANGESTORE BYSCORE REV LIMIT negative count">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.neg.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.neg.src" type="RedisZSet">
                                 <value>
                                     <member>p1</member>
                                     <score>1</score>
@@ -4911,7 +4911,7 @@
                 <test type="Case" name="ZRANGESTORE BYLEX unbounded">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.unb.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.unb.src" type="RedisZSet">
                                 <value>
                                     <member>apple</member>
                                     <score>0</score>
@@ -4945,7 +4945,7 @@
                 <test type="Case" name="ZRANGESTORE BYLEX exclusive lower bound">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.lexl.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.lexl.src" type="RedisZSet">
                                 <value>
                                     <member>apple</member>
                                     <score>0</score>
@@ -4978,7 +4978,7 @@
                 <test type="Case" name="ZRANGESTORE RANK negative indices">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.rneg.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.rneg.src" type="RedisZSet">
                                 <value>
                                     <member>first</member>
                                     <score>10</score>
@@ -5011,8 +5011,8 @@
                 <test type="Case" name="ZRANGESTORE RANK start beyond size clears destination">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.beyond.dst" utype="String">old</entry>
-                            <entry key="redisson.zrange.beyond.src" utype="RedisZSet">
+                            <entry key="redisson.zrange.beyond.dst" type="String">old</entry>
+                            <entry key="redisson.zrange.beyond.src" type="RedisZSet">
                                 <value>
                                     <member>first</member>
                                     <score>10</score>
@@ -5038,7 +5038,7 @@
                 <test type="Case" name="ZRANGESTORE missing source clears destination">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.miss.dst" utype="String">old</entry>
+                            <entry key="redisson.zrange.miss.dst" type="String">old</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -5071,7 +5071,7 @@
                 <test type="Case" name="GEOSEARCHSTORE: find and store results">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.points.src" utype="RedisZSet">
+                            <entry key="redisson.points.src" type="RedisZSet">
                                 <value>
                                     <member>PointFar</member>
                                     <score>100</score>
@@ -5100,7 +5100,7 @@
                 <test type="Case" name="Search in Meters (M) - Should find 1">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.src" utype="RedisZSet">
+                            <entry key="redisson.geo.src" type="RedisZSet">
                                 <value>
                                     <member>FarPoint</member>
                                     <score>4058321035651540</score>
@@ -5139,7 +5139,7 @@
                 <test type="Case" name="Search in 100x100 km box">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.src" utype="RedisZSet">
+                            <entry key="redisson.geo.src" type="RedisZSet">
                                 <value>
                                     <member>InsideBox</member>
                                     <score>4059032231940141</score>
@@ -5165,7 +5165,7 @@
                 <test type="Case" name="Limit results to 1 nearest - Fixed">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.multi" utype="RedisZSet">
+                            <entry key="redisson.geo.multi" type="RedisZSet">
                                 <value>
                                     <member>Point2</member>
                                     <score>4058321035651540</score>
@@ -5194,8 +5194,8 @@
                 <test type="Case" name="Clear destination if nothing found">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.dst.old" utype="String">should_be_deleted</entry>
-                            <entry key="redisson.geo.src.empty" utype="RedisZSet">
+                            <entry key="redisson.geo.dst.old" type="String">should_be_deleted</entry>
+                            <entry key="redisson.geo.src.empty" type="RedisZSet">
                                 <value>
                                     <member>FarAway</member>
                                     <score>100</score>
@@ -5218,7 +5218,7 @@
                 <test type="Case" name="GEOSEARCHSTORE FROMMEMBER">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.member.src" utype="RedisZSet">
+                            <entry key="redisson.geo.member.src" type="RedisZSet">
                                 <value>
                                     <member>FarPoint</member>
                                     <score>4058321035651540</score>
@@ -5246,7 +5246,7 @@
                 <test type="Case" name="GEOSEARCHSTORE BYBOX with point outside">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.box2.src" utype="RedisZSet">
+                            <entry key="redisson.geo.box2.src" type="RedisZSet">
                                 <value>
                                     <member>FarPoint</member>
                                     <score>4058321035651540</score>
@@ -5276,7 +5276,7 @@
                 <test type="Case" name="GEOSEARCHSTORE miles unit">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.mi.src" utype="RedisZSet">
+                            <entry key="redisson.geo.mi.src" type="RedisZSet">
                                 <value>
                                     <member>FarPoint</member>
                                     <score>4058321035651540</score>
@@ -5306,7 +5306,7 @@
                 <test type="Case" name="GEOSEARCHSTORE feet unit">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.ft.src" utype="RedisZSet">
+                            <entry key="redisson.geo.ft.src" type="RedisZSet">
                                 <value>
                                     <member>FarPoint</member>
                                     <score>4058321035651540</score>
@@ -5336,7 +5336,7 @@
                 <test type="Case" name="GEOSEARCHSTORE STOREDIST">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.dist.src" utype="RedisZSet">
+                            <entry key="redisson.geo.dist.src" type="RedisZSet">
                                 <value>
                                     <member>ClosePoint</member>
                                     <score>4059032231940141</score>
@@ -5439,7 +5439,7 @@
             <test type="Case" name="XDEL: Remove entries by ID">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.stream.del" utype="RedisStream">
+                        <entry key="redisson.stream.del" type="RedisStream">
                             <value id="1000-0">
                                 <fields>
                                     <key>msg</key>
@@ -5580,7 +5580,7 @@
                 <test type="Case" name="Trim to last 2 elements">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.stream.trim.len" utype="RedisStream">
+                            <entry key="redisson.stream.trim.len" type="RedisStream">
                                 <value id="1000-0">
                                     <fields>
                                         <key>n</key>
@@ -5616,7 +5616,7 @@
                 <test type="Case" name="Remove everything before 2000-0">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.stream.trim.id" utype="RedisStream">
+                            <entry key="redisson.stream.trim.id" type="RedisStream">
                                 <value id="1000-0">
                                     <fields>
                                         <key>v</key>
@@ -5667,7 +5667,7 @@
             <test type="Case" name="EXPIRE">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key:seconds" utype="RedisEntry">
+                        <entry key="redisson.key:seconds" type="RedisEntry">
                             <data>val1</data>
                         </entry>
                     </map>
@@ -5699,7 +5699,7 @@
             <test type="Case" name="PEXPIRE">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key:millis" utype="RedisEntry">
+                        <entry key="redisson.key:millis" type="RedisEntry">
                             <data>val2</data>
                         </entry>
                     </map>
@@ -5731,7 +5731,7 @@
             <test type="Case" name="EXPIREAT">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key:at_sec" utype="RedisEntry">
+                        <entry key="redisson.key:at_sec" type="RedisEntry">
                             <data>val3</data>
                         </entry>
                     </map>
@@ -5763,7 +5763,7 @@
             <test type="Case" name="PEXPIREAT">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key:at_ms" utype="RedisEntry">
+                        <entry key="redisson.key:at_ms" type="RedisEntry">
                             <data>val4</data>
                         </entry>
                     </map>
@@ -5795,7 +5795,7 @@
             <test type="Case" name="Condition XX">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key.xx" utype="RedisEntry">
+                        <entry key="redisson.key.xx" type="RedisEntry">
                             <data>val</data>
                             <ttl>PT10S</ttl>
                         </entry>
@@ -5813,7 +5813,7 @@
             <test type="Case" name="Condition GT">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key.gt" utype="RedisEntry">
+                        <entry key="redisson.key.gt" type="RedisEntry">
                             <data>val</data>
                             <ttl>PT1M40S</ttl>
                         </entry>
@@ -5840,7 +5840,7 @@
             <test type="Case" name="Condition LT">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key.lt" utype="RedisEntry">
+                        <entry key="redisson.key.lt" type="RedisEntry">
                             <data>val</data>
                             <ttl>PT1M40S</ttl>
                         </entry>
@@ -5858,7 +5858,7 @@
             <test type="Case" name="Condition NX">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key.nx" utype="RedisEntry">
+                        <entry key="redisson.key.nx" type="RedisEntry">
                             <data>val</data>
                         </entry>
                     </map>
@@ -5884,7 +5884,7 @@
             <test type="Case" name="Condition NX Failure">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key.nx.fail" utype="RedisEntry">
+                        <entry key="redisson.key.nx.fail" type="RedisEntry">
                             <data>value</data>
                             <ttl>PT1M</ttl>
                         </entry>
@@ -5899,7 +5899,7 @@
             <test type="Case" name="Condition XX Failure">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key.xx.fail" utype="RedisEntry">
+                        <entry key="redisson.key.xx.fail" type="RedisEntry">
                             <data>value</data>
                         </entry>
                     </map>
@@ -5913,7 +5913,7 @@
             <test type="Case" name="Condition GT Failure">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key.gt.fail" utype="RedisEntry">
+                        <entry key="redisson.key.gt.fail" type="RedisEntry">
                             <data>value</data>
                         </entry>
                     </map>
@@ -5946,7 +5946,7 @@
             <test type="Case" name="Condition LT Failure">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key.lt.fail" utype="RedisEntry">
+                        <entry key="redisson.key.lt.fail" type="RedisEntry">
                             <data>value</data>
                             <ttl>PT50S</ttl>
                         </entry>
@@ -5970,7 +5970,7 @@
             <test type="Case" name="EXPIRE 0 deletes key">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.key.expire.zero" utype="RedisEntry">
+                        <entry key="redisson.key.expire.zero" type="RedisEntry">
                             <data>value</data>
                         </entry>
                     </map>
@@ -5988,11 +5988,11 @@
                 <init type="DateTimeInit" dateTime="2026-01-01T00:00:00.001Z"/>
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.expired.token" utype="RedisEntry">
+                        <entry key="redisson.expired.token" type="RedisEntry">
                             <data>token</data>
                             <ttl>PT1S</ttl>
                         </entry>
-                        <entry key="redisson.expired.index" utype="RedisSet">
+                        <entry key="redisson.expired.index" type="RedisSet">
                             <value>redisson.expired.token</value>
                         </entry>
                     </map>
@@ -6017,7 +6017,7 @@
             <test type="Case" name="PERSIST">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.persist.key" utype="RedisEntry">
+                        <entry key="redisson.persist.key" type="RedisEntry">
                             <data>value</data>
                             <ttl>PT1H</ttl>
                         </entry>
@@ -6034,7 +6034,7 @@
             <test type="Case" name="PERSIST without TTL">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.persist.no.ttl" utype="String">value</entry>
+                        <entry key="redisson.persist.no.ttl" type="String">value</entry>
                     </map>
                 </init>
                 <bean>redisStringFacade</bean>
@@ -6046,7 +6046,7 @@
                 <test type="Case" name="copy string key">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.copy.src" utype="RedisEntry">
+                            <entry key="redisson.copy.src" type="RedisEntry">
                                 <data>SourceValue</data>
                             </entry>
                         </map>
@@ -6064,10 +6064,10 @@
                 <test type="Case" name="copy to existing key">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.copy.src" utype="RedisEntry">
+                            <entry key="redisson.copy.src" type="RedisEntry">
                                 <data>value.from.src</data>
                             </entry>
-                            <entry key="redisson.copy.dest" utype="RedisEntry">
+                            <entry key="redisson.copy.dest" type="RedisEntry">
                                 <data>OldStringValue</data>
                             </entry>
                         </map>
@@ -6082,10 +6082,10 @@
                 <test type="Case" name="copy with replace existing key">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.copy.src" utype="RedisEntry">
+                            <entry key="redisson.copy.src" type="RedisEntry">
                                 <data>value.from.src</data>
                             </entry>
-                            <entry key="redisson.copy.dest" utype="RedisEntry">
+                            <entry key="redisson.copy.dest" type="RedisEntry">
                                 <data>OldStringValue</data>
                             </entry>
                         </map>
@@ -6104,10 +6104,10 @@
             <test type="Case" name="Unlink multiple keys">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.unlink.str" utype="RedisEntry">
+                        <entry key="redisson.unlink.str" type="RedisEntry">
                             <data>val</data>
                         </entry>
-                        <entry key="redisson.unlink.hash" utype="RedisHash">
+                        <entry key="redisson.unlink.hash" type="RedisHash">
                             <entry>
                                 <key>f</key>
                                 <value>
@@ -6317,7 +6317,7 @@
             <test type="Case" name="KEEPTTL preserves existing TTL">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.set.keepttl" utype="RedisEntry">
+                        <entry key="jedis.set.keepttl" type="RedisEntry">
                             <data>old</data>
                             <ttl>PT1M40S</ttl>
                         </entry>
@@ -6346,7 +6346,7 @@
             <test type="Case" name="SET without options resets TTL">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.set.reset" utype="RedisEntry">
+                        <entry key="jedis.set.reset" type="RedisEntry">
                             <data>old</data>
                             <ttl>PT1M</ttl>
                         </entry>
@@ -6371,7 +6371,7 @@
             <test type="Case" name="NX existing key">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.set.nx" utype="String">old</entry>
+                        <entry key="jedis.set.nx" type="String">old</entry>
                     </map>
                 </init>
                 <test type="Part" name="Set NX">
@@ -6409,7 +6409,7 @@
             <test type="Case" name="GET returns the old value">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.set.get" utype="String">old</entry>
+                        <entry key="jedis.set.get" type="String">old</entry>
                     </map>
                 </init>
                 <test type="Part" name="Set GET">
@@ -6437,7 +6437,7 @@
             <test type="Case" name="without REPLACE leaves existing key">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.restore.keep" utype="String">old</entry>
+                        <entry key="jedis.restore.keep" type="String">old</entry>
                     </map>
                 </init>
                 <test type="Part" name="Restore">
@@ -6460,7 +6460,7 @@
             <test type="Case" name="with REPLACE overwrites existing key">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.restore.replace" utype="String">old</entry>
+                        <entry key="jedis.restore.replace" type="String">old</entry>
                     </map>
                 </init>
                 <test type="Part" name="Restore">
@@ -6529,7 +6529,7 @@
             <test type="Case" name="TTL 0 clears existing TTL">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.restore.clear" utype="RedisEntry">
+                        <entry key="jedis.restore.clear" type="RedisEntry">
                             <data>old</data>
                             <ttl>PT1M</ttl>
                         </entry>
@@ -6561,7 +6561,7 @@
                 <test type="Case" name="ZPOPMAX basic: pop single highest element">
                     <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="jedis.zset.popmax" utype="RedisZSet">
+                            <entry key="jedis.zset.popmax" type="RedisZSet">
                                 <value>
                                     <member>member1</member>
                                     <score>10.5</score>
@@ -6590,7 +6590,7 @@
                 <test type="Case" name="ZPOPMAX with count: pop multiple elements">
                     <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="jedis.zset.popmax.multi" utype="RedisZSet">
+                            <entry key="jedis.zset.popmax.multi" type="RedisZSet">
                                 <value>
                                     <member>a</member>
                                     <score>1</score>
@@ -6633,7 +6633,7 @@
                 <test type="Case" name="ZPOPMAX with count exceeding size">
                     <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="jedis.zset.pop.multi" utype="RedisZSet">
+                            <entry key="jedis.zset.pop.multi" type="RedisZSet">
                                 <value>
                                     <member>a</member>
                                     <score>1</score>
@@ -6667,7 +6667,7 @@
                 <test type="Case" name="ZPOPMIN basic: pop single lowest element">
                     <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="jedis.zset.popmin" utype="RedisZSet">
+                            <entry key="jedis.zset.popmin" type="RedisZSet">
                                 <value>
                                     <member>low</member>
                                     <score>1</score>
@@ -6696,7 +6696,7 @@
                 <test type="Case" name="ZPOPMIN with count: pop multiple elements">
                     <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="jedis.zset.popmin.multi" utype="RedisZSet">
+                            <entry key="jedis.zset.popmin.multi" type="RedisZSet">
                                 <value>
                                     <member>a</member>
                                     <score>1</score>
@@ -6762,11 +6762,11 @@
         <test type="Case" name="Check List size">
             <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                 <map type="LinkedHashMapStringObject">
-                    <entry key="jedis.list.init" utype="RedisList">
+                    <entry key="jedis.list.init" type="RedisList">
                         <value>item1</value>
                         <value>item2</value>
                     </entry>
-                    <entry key="jedis.set.init" utype="RedisSet">
+                    <entry key="jedis.set.init" type="RedisSet">
                         <value>memberA</value>
                         <value>memberB</value>
                     </entry>
@@ -6840,7 +6840,7 @@
             <test type="Case" name="SORT STORE numbers (Jedis)">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.src" utype="RedisList">
+                        <entry key="jedis.sort.src" type="RedisList">
                             <value>100</value>
                             <value>10</value>
                             <value>50</value>
@@ -6869,7 +6869,7 @@
             <test type="Case" name="SORT STORE alpha desc (Jedis)">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.alpha.src" utype="RedisSet">
+                        <entry key="jedis.sort.alpha.src" type="RedisSet">
                             <value>ant</value>
                             <value>bear</value>
                             <value>zebra</value>
@@ -6898,7 +6898,7 @@
             <test type="Case" name="SORT STORE with limit (Jedis)">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.limit.src" utype="RedisList">
+                        <entry key="jedis.limit.src" type="RedisList">
                             <value>1</value>
                             <value>3</value>
                             <value>2</value>
@@ -6929,17 +6929,17 @@
             <test type="Case" name="SORT STORE by weight pattern with GET">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.by.src" utype="RedisList">
+                        <entry key="jedis.sort.by.src" type="RedisList">
                             <value>a</value>
                             <value>b</value>
                             <value>c</value>
                         </entry>
-                        <entry key="jedis.sort.weight_a" utype="String">3</entry>
-                        <entry key="jedis.sort.weight_b" utype="String">1</entry>
-                        <entry key="jedis.sort.weight_c" utype="String">2</entry>
-                        <entry key="jedis.sort.data_a" utype="String">A</entry>
-                        <entry key="jedis.sort.data_b" utype="String">B</entry>
-                        <entry key="jedis.sort.data_c" utype="String">C</entry>
+                        <entry key="jedis.sort.weight_a" type="String">3</entry>
+                        <entry key="jedis.sort.weight_b" type="String">1</entry>
+                        <entry key="jedis.sort.weight_c" type="String">2</entry>
+                        <entry key="jedis.sort.data_a" type="String">A</entry>
+                        <entry key="jedis.sort.data_b" type="String">B</entry>
+                        <entry key="jedis.sort.data_c" type="String">C</entry>
                     </map>
                 </init>
                 <bean>jedisFacade</bean>
@@ -6970,11 +6970,11 @@
             <test type="Case" name="SORT STORE by hash field pattern">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.hash.src" utype="RedisList">
+                        <entry key="jedis.sort.hash.src" type="RedisList">
                             <value>x</value>
                             <value>y</value>
                         </entry>
-                        <entry key="jedis.sort.h_x" utype="RedisHash">
+                        <entry key="jedis.sort.h_x" type="RedisHash">
                             <entry>
                                 <key>w</key>
                                 <value>
@@ -6982,7 +6982,7 @@
                                 </value>
                             </entry>
                         </entry>
-                        <entry key="jedis.sort.h_y" utype="RedisHash">
+                        <entry key="jedis.sort.h_y" type="RedisHash">
                             <entry>
                                 <key>w</key>
                                 <value>
@@ -7013,7 +7013,7 @@
             <test type="Case" name="SORT STORE constant BY pattern skips sorting">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.const.src" utype="RedisList">
+                        <entry key="jedis.sort.const.src" type="RedisList">
                             <value>3</value>
                             <value>1</value>
                             <value>2</value>
@@ -7042,11 +7042,11 @@
             <test type="Case" name="SORT STORE missing weight sorts as zero">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.zero.src" utype="RedisList">
+                        <entry key="jedis.sort.zero.src" type="RedisList">
                             <value>a</value>
                             <value>b</value>
                         </entry>
-                        <entry key="jedis.sort.w_a" utype="String">5</entry>
+                        <entry key="jedis.sort.w_a" type="String">5</entry>
                     </map>
                 </init>
                 <bean>jedisFacade</bean>
@@ -7070,7 +7070,7 @@
             <test type="Case" name="SORT STORE zset source alpha">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.zset.src" utype="RedisZSet">
+                        <entry key="jedis.sort.zset.src" type="RedisZSet">
                             <value>
                                 <member>pear</member>
                                 <score>1</score>
@@ -7103,7 +7103,7 @@
             <test type="Case" name="SORT STORE limit negative count">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.neg.src" utype="RedisList">
+                        <entry key="jedis.sort.neg.src" type="RedisList">
                             <value>3</value>
                             <value>1</value>
                             <value>2</value>
@@ -7135,8 +7135,8 @@
             <test type="Case" name="SORT STORE empty result removes destination">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.empty.dst" utype="String">old</entry>
-                        <entry key="jedis.sort.empty.src" utype="RedisList">
+                        <entry key="jedis.sort.empty.dst" type="String">old</entry>
+                        <entry key="jedis.sort.empty.src" type="RedisList">
                             <value>1</value>
                             <value>2</value>
                             <value>3</value>
@@ -7161,7 +7161,7 @@
             <test type="Case" name="SORT STORE missing source removes destination">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.miss.dst" utype="String">old</entry>
+                        <entry key="jedis.sort.miss.dst" type="String">old</entry>
                     </map>
                 </init>
                 <bean>jedisFacade</bean>
@@ -7227,7 +7227,7 @@
             <test type="Case" name="FLUSHDB">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.key" utype="RedisEntry">
+                        <entry key="jedis.key" type="RedisEntry">
                             <data>jedis.value.from</data>
                         </entry>
                     </map>
@@ -7242,7 +7242,7 @@
                 <test type="Case" name="Move key between databases">
                     <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="jedis.move.key" utype="RedisEntry">
+                            <entry key="jedis.move.key" type="RedisEntry">
                                 <data>MoveMe</data>
                             </entry>
                         </map>
@@ -8993,7 +8993,7 @@
             <test type="Case" name="FLUSHDB drops keys without a database index">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.flushdb.key" utype="RedisEntry">
+                        <entry key="redisson.flushdb.key" type="RedisEntry">
                             <data>redisson.flushdb.value</data>
                         </entry>
                     </map>

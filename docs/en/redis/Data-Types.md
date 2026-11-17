@@ -83,7 +83,7 @@ In this format, the key value is written as text directly inside the `<entry>` t
 Used when you need to set a key's time-to-live (`ttl`) or write complex data structures (hashes,
 lists, sets, sorted sets, streams).
 
-In full mode, the key value is marked with `utype="RedisEntry"`, and the `<data>` (the value
+In full mode, the key value is marked with `type="RedisEntry"`, and the `<data>` (the value
 itself) and `<ttl>` (the lifetime duration) tags are placed inside:
 
 ```xml
@@ -92,7 +92,7 @@ itself) and `<ttl>` (the lifetime duration) tags are placed inside:
     <map type="LinkedHashMapStringObject">
 
         <!-- Example string with a 5-minute TTL -->
-        <entry key="temp:otp:code" utype="RedisEntry">
+        <entry key="temp:otp:code" type="RedisEntry">
             <data>9941</data>
             <ttl>PT5M</ttl> <!-- ISO-8601 format: PT5M = 5 minutes, PT30S = 30 seconds -->
         </entry>
@@ -167,7 +167,7 @@ In Redis, a hash stores a set of fields and values. In our system it is represen
 own TTL (via the `HPEXPIREAT` command, Redis 7.4+).
 
 ```xml
-<entry key="user:profile:100" utype="RedisEntry">
+<entry key="user:profile:100" type="RedisEntry">
     <data type="RedisHash">
         <!-- Field without TTL (permanent) -->
         <entry>
@@ -191,7 +191,7 @@ own TTL (via the `HPEXPIREAT` command, Redis 7.4+).
 **Abbreviated format (no TTL):**
 
 ```xml
-<entry key="user:profile:100" utype="RedisHash">
+<entry key="user:profile:100" type="RedisHash">
     <entry>
         <key>username</key>
         <value>
@@ -212,7 +212,7 @@ own TTL (via the `HPEXPIREAT` command, Redis 7.4+).
 Lists preserve strict insertion order. They are represented by the `RedisList` type.
 
 ```xml
-<entry key="notifications:queue" utype="RedisEntry">
+<entry key="notifications:queue" type="RedisEntry">
     <data type="RedisList">
         <value>first_message</value>
         <value>second_message</value>
@@ -223,7 +223,7 @@ Lists preserve strict insertion order. They are represented by the `RedisList` t
 **Abbreviated format (no TTL):**
 
 ```xml
-<entry key="notifications:queue" utype="RedisList">
+<entry key="notifications:queue" type="RedisList">
     <value>first_message</value>
     <value>second_message</value>
 </entry>
@@ -235,7 +235,7 @@ Sets contain only unique elements. Elements are sorted by `RedisDataComparator`:
 lexicographically, numbers numerically. Represented by the `RedisSet` type.
 
 ```xml
-<entry key="user:roles:1" utype="RedisEntry">
+<entry key="user:roles:1" type="RedisEntry">
     <data type="RedisSet">
         <value>ROLE_ADMIN</value>
         <value>ROLE_USER</value>
@@ -246,7 +246,7 @@ lexicographically, numbers numerically. Represented by the `RedisSet` type.
 **Abbreviated format (no TTL):**
 
 ```xml
-<entry key="user:roles:1" utype="RedisSet">
+<entry key="user:roles:1" type="RedisSet">
     <value>ROLE_ADMIN</value>
     <value>ROLE_USER</value>
 </entry>
@@ -258,7 +258,7 @@ Each entry consists of a member and its numeric score, which determines sort ord
 by the `RedisZSet` type, with elements of type `RedisZSetEntry`.
 
 ```xml
-<entry key="leaderboard" utype="RedisEntry">
+<entry key="leaderboard" type="RedisEntry">
     <data type="RedisZSet">
         <value type="RedisZSetEntry">
             <member>player_A</member>
@@ -275,7 +275,7 @@ by the `RedisZSet` type, with elements of type `RedisZSetEntry`.
 **Abbreviated format (no TTL):**
 
 ```xml
-<entry key="leaderboard" utype="RedisZSet">
+<entry key="leaderboard" type="RedisZSet">
     <value type="RedisZSetEntry">
         <member>player_A</member>
         <score type="BigDecimal">1500</score>
@@ -329,7 +329,7 @@ and a set of fields. Represented by the `RedisStream` type, with elements of typ
 
 ```xml
 
-<entry key="orders:stream" utype="RedisEntry">
+<entry key="orders:stream" type="RedisEntry">
     <data type="RedisStream">
         <value type="RedisStreamEntry" id="1716530000000-0">
             <fields>
@@ -346,7 +346,7 @@ and a set of fields. Represented by the `RedisStream` type, with elements of typ
 **Abbreviated format (no TTL):**
 
 ```xml
-<entry key="orders:stream" utype="RedisStream">
+<entry key="orders:stream" type="RedisStream">
     <value type="RedisStreamEntry" id="1716530000000-0">
         <fields>
             <key>order_id</key>
@@ -364,7 +364,7 @@ Since HyperLogLog is used for probabilistic unique element counting, the framewo
 as a regular unique set for testing convenience. Represented by the `RedisHyperLogLog` type.
 
 ```xml
-<entry key="unique:visitors" utype="RedisEntry">
+<entry key="unique:visitors" type="RedisEntry">
     <data type="RedisHyperLogLog">
         <value>user_ip_1</value>
         <value>user_ip_2</value>
@@ -376,7 +376,7 @@ as a regular unique set for testing convenience. Represented by the `RedisHyperL
 
 ```xml
 
-<entry key="unique:visitors" utype="RedisHyperLogLog">
+<entry key="unique:visitors" type="RedisHyperLogLog">
     <value>user_ip_1</value>
     <value>user_ip_2</value>
 </entry>

@@ -83,7 +83,7 @@
 Используется, когда вам необходимо задать время жизни ключа (`ttl`) или записать сложные структуры
 данных (хэши, списки, множества, упорядоченные множества, стримы).
 
-При полной записи значение ключа помечается `utype="RedisEntry"`, а внутри располагаются теги
+При полной записи значение ключа помечается `type="RedisEntry"`, а внутри располагаются теги
 `<data>` (само значение) и `<ttl>` (длительность жизни):
 
 ```xml
@@ -92,7 +92,7 @@
     <map type="LinkedHashMapStringObject">
 
         <!-- Пример строки с временем жизни 5 минут -->
-        <entry key="temp:otp:code" utype="RedisEntry">
+        <entry key="temp:otp:code" type="RedisEntry">
             <data>9941</data>
             <ttl>PT5M</ttl> <!-- Формат ISO-8601: PT5M = 5 минут, PT30S = 30 секунд -->
         </entry>
@@ -166,7 +166,7 @@ XML-представление для всех структур данных Red
 задать свой собственный TTL (команда `HPEXPIREAT`, Redis 7.4+).
 
 ```xml
-<entry key="user:profile:100" utype="RedisEntry">
+<entry key="user:profile:100" type="RedisEntry">
     <data type="RedisHash">
         <!-- Обычное поле без TTL -->
         <entry>
@@ -190,7 +190,7 @@ XML-представление для всех структур данных Red
 **Сокращённый формат (без TTL):**
 
 ```xml
-<entry key="user:profile:100" utype="RedisHash">
+<entry key="user:profile:100" type="RedisHash">
     <entry>
         <key>username</key>
         <value>
@@ -211,7 +211,7 @@ XML-представление для всех структур данных Red
 Списки сохраняют строгий порядок добавления элементов. Представляются типом `RedisList`.
 
 ```xml
-<entry key="notifications:queue" utype="RedisEntry">
+<entry key="notifications:queue" type="RedisEntry">
     <data type="RedisList">
         <value>первое_сообщение</value>
         <value>второе_сообщение</value>
@@ -222,7 +222,7 @@ XML-представление для всех структур данных Red
 **Сокращённый формат (без TTL):**
 
 ```xml
-<entry key="notifications:queue" utype="RedisList">
+<entry key="notifications:queue" type="RedisList">
     <value>первое_сообщение</value>
     <value>второе_сообщение</value>
 </entry>
@@ -234,7 +234,7 @@ XML-представление для всех структур данных Red
 строки — лексикографически, числа — численно. Представляются типом `RedisSet`.
 
 ```xml
-<entry key="user:roles:1" utype="RedisEntry">
+<entry key="user:roles:1" type="RedisEntry">
     <data type="RedisSet">
         <value>ROLE_ADMIN</value>
         <value>ROLE_USER</value>
@@ -245,7 +245,7 @@ XML-представление для всех структур данных Red
 **Сокращённый формат (без TTL):**
 
 ```xml
-<entry key="user:roles:1" utype="RedisSet">
+<entry key="user:roles:1" type="RedisSet">
     <value>ROLE_ADMIN</value>
     <value>ROLE_USER</value>
 </entry>
@@ -258,7 +258,7 @@ XML-представление для всех структур данных Red
 `RedisZSetEntry`.
 
 ```xml
-<entry key="leaderboard" utype="RedisEntry">
+<entry key="leaderboard" type="RedisEntry">
     <data type="RedisZSet">
         <value type="RedisZSetEntry">
             <member>player_A</member>
@@ -275,7 +275,7 @@ XML-представление для всех структур данных Red
 **Сокращённый формат (без TTL):**
 
 ```xml
-<entry key="leaderboard" utype="RedisZSet">
+<entry key="leaderboard" type="RedisZSet">
     <value type="RedisZSetEntry">
         <member>player_A</member>
         <score type="BigDecimal">1500</score>
@@ -327,7 +327,7 @@ XML-представление для всех структур данных Red
 `RedisStreamEntry`.
 
 ```xml
-<entry key="orders:stream" utype="RedisEntry">
+<entry key="orders:stream" type="RedisEntry">
     <data type="RedisStream">
         <value type="RedisStreamEntry" id="1716530000000-0">
             <fields>
@@ -344,7 +344,7 @@ XML-представление для всех структур данных Red
 **Сокращённый формат (без TTL):**
 
 ```xml
-<entry key="orders:stream" utype="RedisStream">
+<entry key="orders:stream" type="RedisStream">
     <value type="RedisStreamEntry" id="1716530000000-0">
         <fields>
             <key>order_id</key>
@@ -363,7 +363,7 @@ XML-представление для всех структур данных Red
 `RedisHyperLogLog`.
 
 ```xml
-<entry key="unique:visitors" utype="RedisEntry">
+<entry key="unique:visitors" type="RedisEntry">
     <data type="RedisHyperLogLog">
         <value>user_ip_1</value>
         <value>user_ip_2</value>
@@ -374,7 +374,7 @@ XML-представление для всех структур данных Red
 **Сокращённый формат (без TTL):**
 
 ```xml
-<entry key="unique:visitors" utype="RedisHyperLogLog">
+<entry key="unique:visitors" type="RedisHyperLogLog">
     <value>user_ip_1</value>
     <value>user_ip_2</value>
 </entry>

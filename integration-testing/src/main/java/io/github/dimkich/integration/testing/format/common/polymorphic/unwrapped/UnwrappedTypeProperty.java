@@ -9,13 +9,14 @@ import java.lang.annotation.Target;
  * Overrides the name of the attribute (field) that holds the polymorphic type id of an
  * unwrapped value.
  * <p>
- * Unwrapped values use {@code "utype"} by default: unlike a regular typed property, the
- * type attribute is written into the same XML element as the declaring object, so
- * {@code "type"} may already be occupied by the declaring object itself (for example
- * {@code <data type="MapAttrNotWrapped" key="k1" utype="Integer">1</data>}).
+ * Unwrapped values use {@code "utype"} by default: unlike a regular typed property, the type id
+ * is written into the same XML element as the declaring object, so it needs a separate attribute
+ * when {@code "type"} is already occupied by that object.
  * <p>
- * When there is no such collision the attribute may be renamed, which makes the syntax
- * more natural: {@code <property name="amount" type="PeriodDuration">PT0M</property>}.
+ * An unwrapped value without this annotation keeps the default, for example
+ * {@code <CreatorUnwrappedValue key="k" utype="Integer">1</CreatorUnwrappedValue>}.
+ * When there is no collision the attribute may be renamed, which makes the syntax more natural:
+ * {@code <property name="amount" type="PeriodDuration">PT0M</property>}.
  * <p>
  * The annotation is read both by {@code PolymorphicUnwrappedSerializerModifier} (the name
  * of the attribute to write) and by {@code PolymorphicUnwrappedDeserializerModifier} (the

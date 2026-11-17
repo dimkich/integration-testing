@@ -22,8 +22,6 @@ import io.github.dimkich.integration.testing.format.json.JsonTestMapper;
 import io.github.dimkich.integration.testing.initialization.TestInit;
 import io.github.dimkich.integration.testing.initialization.bean.property.BeanPropertyInit;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
-import io.github.dimkich.integration.testing.storage.mapping.Container;
-import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
 import io.github.dimkich.integration.testing.web.WebConfig;
 import io.github.dimkich.integration.testing.web.jackson.LinkedMultiValueMapStringObject;
 import io.github.dimkich.integration.testing.web.jackson.LinkedMultiValueMapStringString;
@@ -110,8 +108,6 @@ class JsonTestMapperTest {
                 {new ListOfListOfObject(List.of(List.of(""))), "{\"data\":[[\"\"]]}"},
                 {new ListOfListOfObject(List.of(List.of(" "))), "{\"data\":[[\" \"]]}"},
                 {new ListOfListOfObject(List.of(List.of())), "{\"data\":[[]]}"},
-                {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"),
-                        "{\"key\":\"k\",\"change\":\"added\",\"value\":\"str\"}"},
                 {HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
                         FormatTestUtils.httpHeaders("Expires", List.of("0"), "Custom", List.of("c", "a")),
                         new byte[]{}, null),

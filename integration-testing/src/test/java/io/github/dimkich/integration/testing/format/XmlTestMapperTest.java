@@ -26,8 +26,6 @@ import io.github.dimkich.integration.testing.initialization.TestInit;
 import io.github.dimkich.integration.testing.initialization.bean.BeanInit;
 import io.github.dimkich.integration.testing.initialization.bean.property.BeanPropertyInit;
 import io.github.dimkich.integration.testing.message.AbstractMessage;
-import io.github.dimkich.integration.testing.storage.mapping.Container;
-import io.github.dimkich.integration.testing.storage.mapping.EntryStringKeyObjectValue;
 import io.github.dimkich.integration.testing.web.WebConfig;
 import io.github.dimkich.integration.testing.web.jackson.LinkedMultiValueMapStringObject;
 import io.github.dimkich.integration.testing.web.jackson.LinkedMultiValueMapStringString;
@@ -338,12 +336,6 @@ class XmlTestMapperTest {
     <data/>
 </root>
 """},
-                {new EntryStringKeyObjectValue("k", Container.ChangeType.added, "str"), """
-<EntryStringKeyObjectValue key="k" change="added" utype="String">str</EntryStringKeyObjectValue>
-"""},
-                {new EntryStringKeyObjectValue("k", Container.ChangeType.added, 1), """
-<EntryStringKeyObjectValue key="k" change="added" utype="Integer">1</EntryStringKeyObjectValue>
-"""},
                 {new CreatorUnwrappedValue("k", 1), """
 <CreatorUnwrappedValue key="k" utype="Integer">1</CreatorUnwrappedValue>
 """},
@@ -506,7 +498,7 @@ class XmlTestMapperTest {
 <TypeTest>
     <id>1</id>
     <data type="LinkedHashMapStringObject">
-        <entry key="k" utype="LinkedHashMapObjectObject">
+        <entry key="k" type="LinkedHashMapObjectObject">
             <entry>
                 <key>k1</key>
                 <value type="Integer">1</value>
@@ -528,8 +520,8 @@ class XmlTestMapperTest {
         <entry>
             <key>k</key>
             <value type="LinkedHashMapStringObject">
-                <entry key="k1" utype="Integer">1</entry>
-                <entry key="k2" utype="String">s</entry>
+                <entry key="k1" type="Integer">1</entry>
+                <entry key="k2" type="String">s</entry>
             </value>
         </entry>
     </data>
@@ -538,7 +530,7 @@ class XmlTestMapperTest {
 """},
                 {map(new LinkedHashMapStringObject<>(), "k", List.of(1, 2, 3)), """
 <LinkedHashMapStringObject>
-    <entry key="k" utype="ArrayList">
+    <entry key="k" type="ArrayList">
         <value type="Integer">1</value>
         <value type="Integer">2</value>
         <value type="Integer">3</value>
@@ -547,7 +539,7 @@ class XmlTestMapperTest {
 """},
                 {map(new LinkedHashMapStringObject<>(), "k", new TypeTest(1, List.of(1, 2, 3), "s")), """
 <LinkedHashMapStringObject>
-    <entry key="k" utype="TypeTest">
+    <entry key="k" type="TypeTest">
         <id>1</id>
         <data type="ArrayList">
             <data type="Integer">1</data>
@@ -563,7 +555,7 @@ class XmlTestMapperTest {
 <TypeTest>
     <id>1</id>
     <data type="LinkedHashMapStringObject">
-        <entry key="k" utype="TypeTest">
+        <entry key="k" type="TypeTest">
             <data type="ArrayList">
                 <data>1</data>
             </data>
@@ -576,8 +568,8 @@ class XmlTestMapperTest {
 <TypeTest>
     <id>1</id>
     <data type="LinkedHashMapStringObject">
-        <entry key="k1" utype="Integer">1</entry>
-        <entry key="k2" utype="String">s</entry>
+        <entry key="k1" type="Integer">1</entry>
+        <entry key="k2" type="String">s</entry>
         <entry key="k3"/>
     </data>
     <name>s</name>
@@ -587,8 +579,8 @@ class XmlTestMapperTest {
 <TypeTest>
     <id>1</id>
     <data type="MapAttrNotWrapped">
-        <data key="k1" utype="Integer">1</data>
-        <data key="k2" utype="String">s</data>
+        <data key="k1" type="Integer">1</data>
+        <data key="k2" type="String">s</data>
         <data key="k3"/>
     </data>
     <name>s</name>

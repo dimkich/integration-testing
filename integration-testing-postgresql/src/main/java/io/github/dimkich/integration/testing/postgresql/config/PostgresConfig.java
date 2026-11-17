@@ -25,7 +25,6 @@ import io.github.dimkich.integration.testing.serde.SerdeManager;
 import io.github.dimkich.integration.testing.serde.impl.JacksonDeserializer;
 import io.github.dimkich.integration.testing.storage.diff.ObjectsDifference;
 import io.github.dimkich.integration.testing.storage.exclusion.FieldExclusionProcessor;
-import io.github.dimkich.integration.testing.storage.mapping.StorageMappingConfig;
 import io.github.dimkich.integration.testing.storage.sql.SQLDataStorageService;
 import io.github.dimkich.integration.testing.storage.sql.SequenceResetScheduler;
 import io.github.dimkich.integration.testing.storage.sql.StorageStateFactory;
@@ -56,7 +55,7 @@ import java.util.Map;
 /**
  * Spring configuration for the trigger based PostgreSQL delta storage.
  * <p>
- * Imports {@link StorageMappingConfig} and, for every connection declared under
+ * For every connection declared under
  * {@code integration.testing.postgresql.connections}, registers its components and a
  * {@link SQLDataStorageService} bean (named {@code <connection>TestDataStorage} to avoid
  * clashing with the application {@code DataSource} bean). Connections are read straight from the
@@ -67,7 +66,6 @@ import java.util.Map;
 @Configuration
 @EnableConfigurationProperties(PostgresProperties.class)
 @Import({
-        StorageMappingConfig.class,
         PostgresFieldSerdeFactory.class,
         PostgresBeanFactory.class,
         PostgresConfig.PostProcessor.class

@@ -54,7 +54,7 @@ import java.lang.annotation.Target;
  * // Output:
  * // <data>
  * //     <key>k1</key>
- * //     <value type="integer">1</value>
+ * //     <value type="Integer">1</value>
  * // </data>
  * // <data>
  * //     <key>k2</key>
@@ -69,12 +69,12 @@ import java.lang.annotation.Target;
  *
  * // Output:
  * // <entry>
- * //     <key type="typeTest">
+ * //     <key type="TypeTest">
  * //         <id>1</id>
  * //         <name>1</name>
  * //     </key>
- * //     <value type="value" attr="a">
- * //         <value type="long">12</value>
+ * //     <value type="Value" attr="a">
+ * //         <value type="Long">12</value>
  * //     </value>
  * // </entry>
  * }</pre>
@@ -85,8 +85,8 @@ import java.lang.annotation.Target;
  * private MapAttrNotWrapped<String, Object> data;
  *
  * // Output:
- * // <data key="k1" utype="integer">1</data>
- * // <data key="k2" utype="string">s</data>
+ * // <data key="k1" type="Integer">1</data>
+ * // <data key="k2" type="String">s</data>
  * }</pre>
  *
  * @see EntryFormat
@@ -144,8 +144,8 @@ public @interface JsonMapAsEntries {
          * <p>
          * Example output:
          * <pre>{@code
-         * <entry key="k1" utype="integer">1</entry>
-         * <entry key="k2" utype="string">s</entry>
+         * <entry key="k1" type="Integer">1</entry>
+         * <entry key="k2" type="String">s</entry>
          * }</pre>
          * <p>
          * Used in examples:
@@ -164,12 +164,12 @@ public @interface JsonMapAsEntries {
          * Example output:
          * <pre>{@code
          * <entry>
-         *     <key type="typeTest">
+         *     <key type="TypeTest">
          *         <id>1</id>
          *         <name>1</name>
          *     </key>
-         *     <value type="value" attr="a">
-         *         <value type="long">12</value>
+         *     <value type="Value" attr="a">
+         *         <value type="Long">12</value>
          *     </value>
          * </entry>
          * }</pre>
