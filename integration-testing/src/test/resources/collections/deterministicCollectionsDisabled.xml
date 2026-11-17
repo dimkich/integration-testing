@@ -15,9 +15,9 @@
         <test type="Case" name="Map.of is still ordered">
             <bean>collectionsProbe</bean>
             <method>mapOfOrder</method>
-            <request type="String">c</request>
-            <request type="String">a</request>
-            <request type="String">b</request>
+            <request>c</request>
+            <request>a</request>
+            <request>b</request>
             <response type="ArrayList">
                 <response>c</response>
                 <response>a</response>

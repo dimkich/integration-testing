@@ -7,14 +7,14 @@
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="int[]">
-                    <item>1</item>
-                    <item>2</item>
+                    <value>1</value>
+                    <value>2</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="int[]">
-                    <item>1</item>
-                    <item>3</item>
+                    <value>1</value>
+                    <value>3</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -31,14 +31,14 @@
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="int[]">
-                    <item>1</item>
-                    <item>2</item>
+                    <value>1</value>
+                    <value>2</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="int[]">
-                    <item>1</item>
-                    <item>2</item>
+                    <value>1</value>
+                    <value>2</value>
                 </value>
             </request>
         </test>
@@ -47,14 +47,14 @@
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>a</item>
-                    <item>b</item>
+                    <value>a</value>
+                    <value>b</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>a</item>
-                    <item>c</item>
+                    <value>a</value>
+                    <value>c</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -113,6 +113,7 @@
                         <score type="Integer">1</score>
                     </body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -134,6 +135,7 @@
                         <score type="Integer">1</score>
                     </body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -143,6 +145,7 @@
                         <score type="Integer">1</score>
                     </body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -163,6 +166,7 @@
                         <score type="Integer">1</score>
                     </body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
@@ -178,9 +182,8 @@
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
-                    <body type="TypedPayload">
-                        <payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </body>
+                    <body type="TypedPayload"/>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -302,8 +305,8 @@
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>a</item>
-                    <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    <value>a</value>
+                    <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                 </value>
             </request>
             <response type="DiffResult">
@@ -349,10 +352,12 @@
             <bean>objectsDifferenceTestFacade</bean>
             <method>diff</method>
             <request type="LinkedHashMap">
-                <value type="byte[]">YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFh</value>
+                <value type="byte[]">YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFh
+YWFh</value>
             </request>
             <request type="LinkedHashMap">
-                <value type="byte[]">YmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJi</value>
+                <value type="byte[]">YmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJi
+YmJi</value>
             </request>
             <response type="DiffResult">
                 <test>
@@ -385,7 +390,7 @@ YmJi</update>
                 <value type="BigDecimal">0.1</value>
             </request>
             <request type="LinkedHashMap">
-                <value type="BigDecimal">0.1000</value>
+                <value type="BigDecimal">0.1</value>
             </request>
         </test>
         <test type="Case" name="bigDecimal different value">
@@ -408,14 +413,14 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="MapHolder">
-                    <entry key="1.0">first</entry>
-                    <entry key="2.00">second</entry>
+                    <entry key="1">first</entry>
+                    <entry key="2">second</entry>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="MapHolder">
-                    <entry key="1.00">first</entry>
-                    <entry key="2.0">second</entry>
+                    <entry key="1">first</entry>
+                    <entry key="2">second</entry>
                 </value>
             </request>
         </test>
@@ -424,12 +429,12 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="MapHolder">
-                    <entry key="1.0">first</entry>
+                    <entry key="1">first</entry>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="MapHolder">
-                    <entry key="1.00">other</entry>
+                    <entry key="1">other</entry>
                 </value>
             </request>
             <response type="DiffResult">
@@ -446,7 +451,7 @@ YmJi</update>
             <bean>objectsDifferenceTestFacade</bean>
             <method>diff</method>
             <request type="LinkedHashMap">
-                <value type="ZonedDateTime">2025-01-01T03:00:00+03:00</value>
+                <value type="ZonedDateTime">2025-01-01T00:00:00Z</value>
             </request>
             <request type="LinkedHashMap">
                 <value type="ZonedDateTime">2025-01-01T00:00:00Z</value>
@@ -456,7 +461,7 @@ YmJi</update>
             <bean>objectsDifferenceTestFacade</bean>
             <method>diff</method>
             <request type="LinkedHashMap">
-                <value type="ZonedDateTime">2025-01-01T03:00:00+03:00</value>
+                <value type="ZonedDateTime">2025-01-01T00:00:00Z</value>
             </request>
             <request type="LinkedHashMap">
                 <value type="ZonedDateTime">2025-01-01T00:00:01Z</value>
@@ -472,7 +477,7 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="ZonedHolder">
-                    <value>2025-01-01T03:00:00+03:00</value>
+                    <value>2025-01-01T00:00:00Z</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -564,11 +569,11 @@ YmJi</update>
                     <uuid type="UUID">00000000-0000-0000-0000-000000000001</uuid>
                     <bigInteger type="BigInteger">12345678901234567890</bigInteger>
                     <duration type="Duration">PT1H</duration>
-                    <date type="Date">1704067200000</date>
+                    <date type="Date">2024-01-01T00:00:00.000+00:00</date>
                     <zoneId type="ZoneId">Europe/Moscow</zoneId>
                     <period type="Period">P1D</period>
                     <monthDay type="MonthDay">--01-01</monthDay>
-                    <file type="File">C:/temp/a</file>
+                    <file type="File">C:\temp\a</file>
                     <uri type="URI">https://example.com/a</uri>
                     <locale type="Locale">en_US</locale>
                     <currency type="Currency">EUR</currency>
@@ -579,11 +584,11 @@ YmJi</update>
                     <uuid type="UUID">00000000-0000-0000-0000-000000000001</uuid>
                     <bigInteger type="BigInteger">12345678901234567890</bigInteger>
                     <duration type="Duration">PT1H</duration>
-                    <date type="Date">1704067200000</date>
+                    <date type="Date">2024-01-01T00:00:00.000+00:00</date>
                     <zoneId type="ZoneId">Europe/Moscow</zoneId>
                     <period type="Period">P1D</period>
                     <monthDay type="MonthDay">--01-01</monthDay>
-                    <file type="File">C:/temp/a</file>
+                    <file type="File">C:\temp\a</file>
                     <uri type="URI">https://example.com/a</uri>
                     <locale type="Locale">en_US</locale>
                     <currency type="Currency">EUR</currency>
@@ -682,7 +687,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">some key</key>
+                        <key>some key</key>
                         <value>old</value>
                     </entry>
                 </value>
@@ -690,7 +695,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">some key</key>
+                        <key>some key</key>
                         <value></value>
                     </entry>
                 </value>
@@ -709,7 +714,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">some key</key>
+                        <key>some key</key>
                         <value>v</value>
                     </entry>
                 </value>
@@ -717,8 +722,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">some key</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <key>some key</key>
                     </entry>
                 </value>
             </request>
@@ -734,20 +738,11 @@ YmJi</update>
             <bean>objectsDifferenceTestFacade</bean>
             <method>diff</method>
             <request type="LinkedHashMap">
-                <value type="LinkedHashMap">
-                    <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                </value>
+                <value type="LinkedHashMap"/>
             </request>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMap"/>
             </request>
-            <response type="DiffResult">
-                <test>
-                    <update key="value">
-                        <delete key="a"/>
-                    </update>
-                </test>
-            </response>
         </test>
         <test type="Case" name="snapshot field with non-tag name is written as insert">
             <bean>objectsDifferenceTestFacade</bean>
@@ -756,7 +751,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">some key</key>
+                        <key>some key</key>
                         <value>v</value>
                     </entry>
                 </value>
@@ -775,7 +770,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">some key</key>
+                        <key>some key</key>
                         <value>v</value>
                     </entry>
                 </value>
@@ -783,7 +778,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">some key</key>
+                        <key>some key</key>
                         <value>w</value>
                     </entry>
                 </value>
@@ -868,15 +863,15 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMap">
                     <tags type="ArrayList">
-                        <item>a</item>
+                        <tags>a</tags>
                     </tags>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMap">
                     <tags type="ArrayList">
-                        <item>a</item>
-                        <item>b</item>
+                        <tags>a</tags>
+                        <tags>b</tags>
                     </tags>
                 </value>
             </request>
@@ -940,13 +935,13 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>a</item>
+                    <value>a</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="LinkedHashSet">
-                    <item>a</item>
-                    <item>b</item>
+                    <value>a</value>
+                    <value>b</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -989,8 +984,8 @@ YmJi</update>
             </request>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>x</item>
-                    <item>y</item>
+                    <value>x</value>
+                    <value>y</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1012,8 +1007,8 @@ YmJi</update>
             </request>
             <request type="LinkedHashMap">
                 <value type="LinkedHashSet">
-                    <item>x</item>
-                    <item>y</item>
+                    <value>x</value>
+                    <value>y</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1030,7 +1025,7 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="LinkedHashSet">
-                    <item>a</item>
+                    <value>a</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -1051,7 +1046,7 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>a</item>
+                    <value>a</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -1072,13 +1067,13 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="int[]">
-                    <item>1</item>
-                    <item>2</item>
+                    <value>1</value>
+                    <value>2</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>3</item>
+                    <value>3</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1098,7 +1093,6 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                         <value>v</value>
                     </entry>
                 </value>
@@ -1117,11 +1111,10 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">a</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <key>a</key>
                     </entry>
                     <entry>
-                        <key type="String">b</key>
+                        <key>b</key>
                         <value>1</value>
                     </entry>
                 </value>
@@ -1129,11 +1122,10 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">a</key>
-                        <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <key>a</key>
                     </entry>
                     <entry>
-                        <key type="String">b</key>
+                        <key>b</key>
                         <value>2</value>
                     </entry>
                 </value>
@@ -1180,14 +1172,14 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="LinkedHashSet">
-                    <item>a</item>
-                    <item>b</item>
+                    <value>a</value>
+                    <value>b</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="LinkedHashSet">
-                    <item>b</item>
-                    <item>c</item>
+                    <value>b</value>
+                    <value>c</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1204,14 +1196,15 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="HashSet">
-                    <item type="PresentedValue">
+                    <value type="PresentedValue">
                         <body type="LinkedHashMapObjectObject">
                             <entry>
-                                <key type="String">some key</key>
+                                <key>some key</key>
                                 <value>v</value>
                             </entry>
                         </body>
-                    </item>
+                        <orderedAttributes>false</orderedAttributes>
+                    </value>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -1233,16 +1226,16 @@ YmJi</update>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <request type="LinkedHashMap">
                 <value type="HashSet">
-                    <item type="Item">
-                        <name>a</name>
-                        <count>1</count>
-                        <note>b</note>
-                    </item>
-                    <item type="Item">
+                    <value type="Item">
                         <name>a</name>
                         <count>1</count>
                         <note>aa</note>
-                    </item>
+                    </value>
+                    <value type="Item">
+                        <name>a</name>
+                        <count>1</count>
+                        <note>b</note>
+                    </value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1488,14 +1481,14 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="AnnotatedOrder">
-                    <first>first</first>
                     <second>second</second>
+                    <first>first</first>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="AnnotatedOrder">
-                    <first>first-new</first>
                     <second>second-new</second>
+                    <first>first-new</first>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1540,15 +1533,15 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="HashMap">
                     <zeta>1</zeta>
-                    <alpha>2</alpha>
                     <middle>3</middle>
+                    <alpha>2</alpha>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="HashMap">
                     <zeta>10</zeta>
-                    <alpha>20</alpha>
                     <middle>30</middle>
+                    <alpha>20</alpha>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1566,16 +1559,16 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="DescendingTreeMap">
-                    <alpha>1</alpha>
-                    <middle>2</middle>
                     <zeta>3</zeta>
+                    <middle>2</middle>
+                    <alpha>1</alpha>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="DescendingTreeMap">
-                    <alpha>10</alpha>
-                    <middle>20</middle>
                     <zeta>30</zeta>
+                    <middle>20</middle>
+                    <alpha>10</alpha>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1646,9 +1639,9 @@ YmJi</update>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <request type="LinkedHashMap">
                 <value type="LinkedHashSet">
-                    <item>zeta</item>
-                    <item>alpha</item>
-                    <item>middle</item>
+                    <value>zeta</value>
+                    <value>alpha</value>
+                    <value>middle</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1667,9 +1660,9 @@ YmJi</update>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <request type="LinkedHashMap">
                 <value type="HashSet">
-                    <item>zeta</item>
-                    <item>alpha</item>
-                    <item>middle</item>
+                    <value>zeta</value>
+                    <value>middle</value>
+                    <value>alpha</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1688,9 +1681,9 @@ YmJi</update>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <request type="LinkedHashMap">
                 <value type="TreeSet">
-                    <item type="Integer">10</item>
-                    <item type="Integer">2</item>
-                    <item type="Integer">1</item>
+                    <value type="Integer">1</value>
+                    <value type="Integer">2</value>
+                    <value type="Integer">10</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1709,8 +1702,8 @@ YmJi</update>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <request type="LinkedHashMap">
                 <value type="ArrayDeque">
-                    <item>zeta</item>
-                    <item>alpha</item>
+                    <value>zeta</value>
+                    <value>alpha</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -1747,14 +1740,14 @@ YmJi</update>
             <bean>objectsDifferenceTestFacade</bean>
             <method>diff</method>
             <request type="HashMap">
-                <c>1</c>
                 <a>2</a>
                 <b>3</b>
+                <c>1</c>
             </request>
             <request type="HashMap">
-                <c>10</c>
                 <a>20</a>
                 <b>30</b>
+                <c>10</c>
             </request>
             <response type="DiffResult">
                 <test>
@@ -1927,6 +1920,7 @@ YmJi</update>
                         <header>a</header>
                         <header>b</header>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -1935,6 +1929,7 @@ YmJi</update>
                         <header>b</header>
                         <header>a</header>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
         </test>
@@ -2042,15 +2037,17 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="LinkedMultiValueMapStringObject">
-                        <header type="BigDecimal">1.0</header>
+                        <header type="BigDecimal">1</header>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="LinkedMultiValueMapStringObject">
-                        <header type="BigDecimal">1.00</header>
+                        <header type="BigDecimal">1</header>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
         </test>
@@ -2059,7 +2056,7 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>a</item>
+                    <value>a</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -2207,6 +2204,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -2221,11 +2219,13 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <ttl>20</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -2368,9 +2368,10 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="PresentedList">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -2387,12 +2388,13 @@ YmJi</update>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
-                    <ttl>5</ttl>
                     <body type="AttributedValue">
                         <body>x</body>
                         <attributeName>version</attributeName>
                         <attributeValue>1</attributeValue>
                     </body>
+                    <ttl>5</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -2411,6 +2413,7 @@ YmJi</update>
                         <attributeName>version</attributeName>
                         <attributeValue>1</attributeValue>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -2420,6 +2423,7 @@ YmJi</update>
                         <attributeName>version</attributeName>
                         <attributeValue>2</attributeValue>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -2435,9 +2439,10 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="LinkedHashSet">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -2459,6 +2464,7 @@ YmJi</update>
                         <header>a</header>
                         <header>b</header>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -2478,14 +2484,12 @@ YmJi</update>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
             <request type="LinkedHashMap">
                 <value type="IncludeAware">
-                    <text></text>
-                    <map/>
                     <number>5</number>
                     <always xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                     <anyValue>a</anyValue>
-                    <writeOnly>hidden</writeOnly>
                     <first>f</first>
                     <second>s</second>
+                    <extra>a</extra>
                 </value>
             </request>
             <response type="DiffResult">
@@ -2510,9 +2514,11 @@ YmJi</update>
                     <map>
                         <k>old</k>
                     </map>
+                    <always xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                     <anyValue>old</anyValue>
                     <first>old</first>
                     <second>s</second>
+                    <extra>old</extra>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -2521,9 +2527,11 @@ YmJi</update>
                     <map>
                         <k>new</k>
                     </map>
+                    <always xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
                     <anyValue>new</anyValue>
                     <first>new</first>
                     <second>s</second>
+                    <extra>new</extra>
                 </value>
             </request>
             <response type="DiffResult">
@@ -2575,7 +2583,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">xmlns</key>
+                        <key>xmlns</key>
                         <value>old</value>
                     </entry>
                 </value>
@@ -2583,7 +2591,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">xmlns</key>
+                        <key>xmlns</key>
                         <value>new</value>
                     </entry>
                 </value>
@@ -2602,7 +2610,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">1 field</key>
+                        <key>1 field</key>
                         <value>old</value>
                     </entry>
                 </value>
@@ -2610,7 +2618,7 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String">1 field</key>
+                        <key>1 field</key>
                         <value>new</value>
                     </entry>
                 </value>
@@ -2677,15 +2685,15 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String"></key>
+                        <key></key>
                         <value>old</value>
                     </entry>
                     <entry>
-                        <key type="String">a№b</key>
+                        <key>a№b</key>
                         <value>old</value>
                     </entry>
                     <entry>
-                        <key type="String">😀</key>
+                        <key>😀</key>
                         <value>old</value>
                     </entry>
                 </value>
@@ -2693,15 +2701,15 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="LinkedHashMapObjectObject">
                     <entry>
-                        <key type="String"></key>
+                        <key></key>
                         <value>new</value>
                     </entry>
                     <entry>
-                        <key type="String">a№b</key>
+                        <key>a№b</key>
                         <value>new</value>
                     </entry>
                     <entry>
-                        <key type="String">😀</key>
+                        <key>😀</key>
                         <value>new</value>
                     </entry>
                 </value>
@@ -2886,6 +2894,7 @@ YmJi</update>
                     </key>
                     <value type="PresentedValue">
                         <ttl>10</ttl>
+                        <orderedAttributes>false</orderedAttributes>
                     </value>
                 </entry>
             </request>
@@ -2980,8 +2989,8 @@ YmJi</update>
             <request type="LinkedHashMapObjectObject">
                 <entry>
                     <key type="PresentedList">
-                        <item>a</item>
-                        <item>b</item>
+                        <key>a</key>
+                        <key>b</key>
                     </key>
                     <value>one</value>
                 </entry>
@@ -3261,17 +3270,17 @@ YmJi</update>
             <request type="HashMapObjectObject">
                 <entry>
                     <key type="ArrayList">
-                        <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        <item>b</item>
+                        <key xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <key>a</key>
                     </key>
-                    <value>two</value>
+                    <value>one</value>
                 </entry>
                 <entry>
                     <key type="ArrayList">
-                        <item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                        <item>a</item>
+                        <key xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <key>b</key>
                     </key>
-                    <value>one</value>
+                    <value>two</value>
                 </entry>
             </request>
             <response type="DiffResult">
@@ -3300,19 +3309,21 @@ YmJi</update>
             <request type="HashMapObjectObject">
                 <entry>
                     <key type="ArrayList">
-                        <item type="PresentedValue">
+                        <key type="PresentedValue">
                             <body>a</body>
                             <ttl>2</ttl>
-                        </item>
+                            <orderedAttributes>false</orderedAttributes>
+                        </key>
                     </key>
                     <value>two</value>
                 </entry>
                 <entry>
                     <key type="ArrayList">
-                        <item type="PresentedValue">
+                        <key type="PresentedValue">
                             <body>a</body>
                             <ttl>1</ttl>
-                        </item>
+                            <orderedAttributes>false</orderedAttributes>
+                        </key>
                     </key>
                     <value>one</value>
                 </entry>
@@ -3341,16 +3352,16 @@ YmJi</update>
             <request type="HashMapObjectObject">
                 <entry>
                     <key type="ArrayList">
-                        <item>a</item>
-                        <item>b</item>
+                        <key>a</key>
                     </key>
-                    <value>two</value>
+                    <value>one</value>
                 </entry>
                 <entry>
                     <key type="ArrayList">
-                        <item>a</item>
+                        <key>a</key>
+                        <key>b</key>
                     </key>
-                    <value>one</value>
+                    <value>two</value>
                 </entry>
             </request>
             <response type="DiffResult">
@@ -3378,15 +3389,15 @@ YmJi</update>
             <request type="HashMapObjectObject">
                 <entry>
                     <key type="LinkedHashMap">
-                        <b type="Integer">1</b>
-                    </key>
-                    <value>two</value>
-                </entry>
-                <entry>
-                    <key type="LinkedHashMap">
                         <a type="Integer">1</a>
                     </key>
                     <value>one</value>
+                </entry>
+                <entry>
+                    <key type="LinkedHashMap">
+                        <b type="Integer">1</b>
+                    </key>
+                    <value>two</value>
                 </entry>
             </request>
             <response type="DiffResult">
@@ -3415,12 +3426,14 @@ YmJi</update>
                 <value type="PresentedValue">
                     <body>v1</body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body>v1</body>
                     <ttl>20</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3436,12 +3449,14 @@ YmJi</update>
                 <value type="PresentedValue">
                     <body>v1</body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body>v2</body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3457,12 +3472,14 @@ YmJi</update>
                 <value type="PresentedValue">
                     <body>v1</body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body>v1</body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
         </test>
@@ -3475,6 +3492,7 @@ YmJi</update>
                         <payload>old</payload>
                     </body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -3483,6 +3501,7 @@ YmJi</update>
                         <payload>old</payload>
                     </body>
                     <ttl>2</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3496,18 +3515,16 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
-                    <body type="TypedPayload">
-                        <payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </body>
+                    <body type="TypedPayload"/>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
-                    <body type="TypedPayload">
-                        <payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-                    </body>
+                    <body type="TypedPayload"/>
                     <ttl>2</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3525,6 +3542,7 @@ YmJi</update>
                         <payload>old</payload>
                     </body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -3533,6 +3551,7 @@ YmJi</update>
                         <payload>new</payload>
                     </body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3549,19 +3568,21 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="ArrayList">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="ArrayList">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
                     <ttl>20</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3579,19 +3600,21 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="ArrayList">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="ArrayList">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
         </test>
@@ -3601,19 +3624,21 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="LinkedHashSet">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="LinkedHashSet">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
                     <ttl>20</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3628,19 +3653,21 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="String[]">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="String[]">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
                     <ttl>20</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3662,6 +3689,7 @@ YmJi</update>
                         <header>b</header>
                     </body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -3671,6 +3699,7 @@ YmJi</update>
                         <header>b</header>
                     </body>
                     <ttl>20</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3687,6 +3716,7 @@ YmJi</update>
                     <body type="LinkedHashMap">
                         <name>left</name>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -3695,6 +3725,7 @@ YmJi</update>
                         <name>right</name>
                     </body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3714,6 +3745,7 @@ YmJi</update>
                         <name>left</name>
                     </body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -3722,6 +3754,7 @@ YmJi</update>
                         <name>right</name>
                     </body>
                     <ttl>2</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3742,6 +3775,7 @@ YmJi</update>
                     </body>
                     <ttl>1</ttl>
                     <score>5</score>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -3751,6 +3785,7 @@ YmJi</update>
                     </body>
                     <ttl>1</ttl>
                     <score>6</score>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3802,6 +3837,7 @@ YmJi</update>
                     </body>
                     <ttl>1</ttl>
                     <score>5</score>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -3811,6 +3847,7 @@ YmJi</update>
                     </body>
                     <ttl>2</ttl>
                     <score>6</score>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3828,11 +3865,13 @@ YmJi</update>
                 <value type="PresentedValue">
                     <body>v1</body>
                     <ttl>1</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body>v1</body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -3852,6 +3891,7 @@ YmJi</update>
                         <header>a</header>
                         <header>b</header>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -3860,6 +3900,7 @@ YmJi</update>
                         <header>a</header>
                         <header>b</header>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
         </test>
@@ -3869,17 +3910,19 @@ YmJi</update>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="LinkedHashSet">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <body type="LinkedHashSet">
-                        <item>a</item>
-                        <item>b</item>
+                        <body>a</body>
+                        <body>b</body>
                     </body>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
         </test>
@@ -4066,12 +4109,12 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="LinkedHashSet">
-                    <item>a</item>
+                    <value>a</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>a</item>
+                    <value>a</value>
                 </value>
             </request>
             <response type="DiffResult">
@@ -4087,7 +4130,7 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="LinkedHashSet">
-                    <item>a</item>
+                    <value>a</value>
                 </value>
             </request>
             <request type="LinkedHashMap">
@@ -4125,11 +4168,13 @@ YmJi</update>
                         <a>1</a>
                     </body>
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <request type="LinkedHashMap">
                 <value type="PresentedValue">
                     <ttl>10</ttl>
+                    <orderedAttributes>false</orderedAttributes>
                 </value>
             </request>
             <response type="DiffResult">
@@ -4219,7 +4264,7 @@ YmJi</update>
             <method>diff</method>
             <request type="LinkedHashMap">
                 <value type="ArrayList">
-                    <item>a</item>
+                    <value>a</value>
                 </value>
             </request>
             <request type="LinkedHashMap">

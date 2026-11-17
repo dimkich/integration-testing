@@ -340,7 +340,7 @@ class XmlTestMapperTest {
 <CreatorUnwrappedValue key="k" utype="Integer">1</CreatorUnwrappedValue>
 """},
                 {new CreatorUnwrappedValue("k", "s"), """
-<CreatorUnwrappedValue key="k" utype="String">s</CreatorUnwrappedValue>
+<CreatorUnwrappedValue key="k">s</CreatorUnwrappedValue>
 """},
                 {new CreatorUnwrappedValue("k", new TypeTest(1, null, "s")), """
 <CreatorUnwrappedValue key="k" utype="TypeTest">
@@ -521,7 +521,7 @@ class XmlTestMapperTest {
             <key>k</key>
             <value type="LinkedHashMapStringObject">
                 <entry key="k1" type="Integer">1</entry>
-                <entry key="k2" type="String">s</entry>
+                <entry key="k2">s</entry>
             </value>
         </entry>
     </data>
@@ -569,7 +569,7 @@ class XmlTestMapperTest {
     <id>1</id>
     <data type="LinkedHashMapStringObject">
         <entry key="k1" type="Integer">1</entry>
-        <entry key="k2" type="String">s</entry>
+        <entry key="k2">s</entry>
         <entry key="k3"/>
     </data>
     <name>s</name>
@@ -580,7 +580,7 @@ class XmlTestMapperTest {
     <id>1</id>
     <data type="MapAttrNotWrapped">
         <data key="k1" type="Integer">1</data>
-        <data key="k2" type="String">s</data>
+        <data key="k2">s</data>
         <data key="k3"/>
     </data>
     <name>s</name>
@@ -822,13 +822,13 @@ class XmlTestMapperTest {
     <init type="BeanPropertyInit" applyTo="TestCase">
         <property bean="fieldAccessBean" name="activeFlag" type="Boolean">true</property>
         <property bean="fieldAccessBean" name="duration" type="PeriodDuration">PT5M</property>
-        <property bean="fieldAccessBean" name="text" type="String">case</property>
+        <property bean="fieldAccessBean" name="text">case</property>
         <property bean="fieldAccessBean" name="currencies" type="ArrayList">
             <value>RUB</value>
             <value>USD</value>
         </property>
         <property bean="fieldAccessBean" name="optional"/>
-        <property bean="propertyAccessBean" name="label" type="String">case</property>
+        <property bean="propertyAccessBean" name="label">case</property>
     </init>
 </test>
 """},
@@ -837,11 +837,11 @@ class XmlTestMapperTest {
     <init type="BeanPropertyInit" bean="fieldAccessBean">
         <property name="activeFlag" type="Boolean">true</property>
         <property name="duration" type="PeriodDuration">PT5M</property>
-        <property name="text" type="String">case</property>
+        <property name="text">case</property>
         <property name="optional"/>
     </init>
     <init type="BeanPropertyInit" applyTo="TestCase">
-        <property bean="propertyAccessBean" name="label" type="String">case</property>
+        <property bean="propertyAccessBean" name="label">case</property>
     </init>
 </test>
 """},

@@ -68,7 +68,7 @@
             <bean>serdeTestFacade</bean>
             <method>roundTripToString</method>
             <request>json</request>
-            <request>java.util.List&lt;java.lang.String&gt;</request>
+            <request>java.util.List&lt;java.lang.String></request>
             <request type="ArrayList">
                 <item>a</item>
                 <item>b</item>
@@ -82,7 +82,7 @@
             <request></request>
             <request></request>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-            <response>&lt;null&gt;</response>
+            <response>&lt;null></response>
         </test>
         <test type="Case" name="Bytes serialization">
             <bean>serdeTestFacade</bean>
@@ -103,7 +103,7 @@
             <method>roundTripBytesHex</method>
             <request>bytes</request>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-            <response>&lt;null&gt;</response>
+            <response>&lt;null></response>
         </test>
         <test type="Case" name="Tagged null round trip">
             <bean>serdeTestFacade</bean>
@@ -111,7 +111,7 @@
             <request>tagged</request>
             <request></request>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-            <response>&lt;null&gt;</response>
+            <response>&lt;null></response>
         </test>
         <test type="Case" name="Native bridge null round trip">
             <bean>serdeTestFacade</bean>
@@ -119,7 +119,7 @@
             <request>native-bridge</request>
             <request></request>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-            <response>&lt;null&gt;</response>
+            <response>&lt;null></response>
         </test>
         <test type="Case" name="Deserialize text">
             <bean>serdeTestFacade</bean>
@@ -272,7 +272,7 @@
             <bean>serdeTestFacade</bean>
             <method>roundTripDefaultFactoryBytes</method>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-            <response>&lt;null&gt;</response>
+            <response>&lt;null></response>
         </test>
         <test type="Case" name="No default factory for config">
             <bean>serdeTestFacade</bean>
@@ -354,7 +354,7 @@
             <method>deserializePlatformToText</method>
             <request>platform-context</request>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-            <response>&lt;null&gt;</response>
+            <response>&lt;null></response>
         </test>
     </test>
     <test type="Container" name="Record level">
@@ -570,7 +570,7 @@
             <bean>serdeTestFacade</bean>
             <method>roundTripUnrelated</method>
             <request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-            <response>&lt;null&gt;</response>
+            <response>&lt;null></response>
         </test>
     </test>
     <test type="Container" name="binaryLayout">

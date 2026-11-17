@@ -69,6 +69,7 @@ public class CommonFormatConfig {
                 .addAlias(Class.forName("java.util.Collections$SingletonList"), "ArrayList")
                 .addAlias(Class.forName("java.util.Arrays$ArrayList"), "ArrayList")
                 .addAlias(Class.forName("java.util.Collections$UnmodifiableMap"), "LinkedHashMap")
+                .addAlias(Class.forName("java.time.ZoneRegion"), "ZoneId")
                 .addSubTypes(String.class, Character.class, Long.class, Integer.class, Short.class, Byte.class,
                         Double.class, Float.class, BigDecimal.class, BigInteger.class, Boolean.class, ArrayList.class,
                         LinkedHashMap.class, TreeMap.class, LinkedHashSet.class, TreeSet.class, Class.class, Date.class,

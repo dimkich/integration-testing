@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.UnwrappingBeanPropertyWriter;
+import com.fasterxml.jackson.databind.ser.std.StringSerializer;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import io.github.dimkich.integration.testing.config.SimpleTypeDetector;
@@ -28,7 +29,10 @@ public class PolymorphicUnwrappedBeanPropertyWriter extends UnwrappingBeanProper
     public void serializeAsField(Object bean, JsonGenerator gen, SerializerProvider prov) throws Exception {
         ToXmlGenerator generator = (ToXmlGenerator) gen;
         Object value = get(bean);
-        if (value != null && unwrappedTypeSerializer != null) {
+        // StringSerializer.serializeWithType ignores the type serializer and writes the string as a
+        // natural scalar. Mirror that decision here so unwrapped strings do not get a type attribute.
+        if (value != null && unwrappedTypeSerializer != null
+                && !(prov.findValueSerializer(value.getClass()) instanceof StringSerializer)) {
             generator.setNextIsAttribute(true);
             generator.writeStringField(unwrappedTypeProperty, unwrappedTypeSerializer.getTypeIdResolver().idFromValue(value));
             generator.setNextIsAttribute(false);

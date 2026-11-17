@@ -120,14 +120,14 @@
         <test type="Case" name="bigDecimal scalar">
             <bean>converter</bean>
             <method>charge</method>
-            <request type="BigDecimal">0.1000</request>
+            <request type="BigDecimal">0.1</request>
             <response>right</response>
         </test>
         <test type="Case" name="bigDecimal field">
             <bean>converter</bean>
             <method>amount</method>
             <request type="Amount">
-                <value>0.1000</value>
+                <value>0.1</value>
             </request>
             <response>right</response>
         </test>
@@ -135,7 +135,7 @@
             <bean>converter</bean>
             <method>sorted</method>
             <request type="SortedBook">
-                <bid key="0.10">12.300</bid>
+                <bid key="0.1">12.3</bid>
             </request>
             <response>right</response>
         </test>
@@ -143,7 +143,7 @@
             <bean>converter</bean>
             <method>unordered</method>
             <request type="UnorderedBook">
-                <entry key="0.10">first</entry>
+                <entry key="0.1">first</entry>
             </request>
             <response>right</response>
         </test>

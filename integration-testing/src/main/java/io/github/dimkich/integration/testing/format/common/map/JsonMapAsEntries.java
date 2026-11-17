@@ -86,7 +86,7 @@ import java.lang.annotation.Target;
  *
  * // Output:
  * // <data key="k1" type="Integer">1</data>
- * // <data key="k2" type="String">s</data>
+ * // <data key="k2">s</data>
  * }</pre>
  *
  * @see EntryFormat
@@ -145,7 +145,7 @@ public @interface JsonMapAsEntries {
          * Example output:
          * <pre>{@code
          * <entry key="k1" type="Integer">1</entry>
-         * <entry key="k2" type="String">s</entry>
+         * <entry key="k2">s</entry>
          * }</pre>
          * <p>
          * Used in examples:

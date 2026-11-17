@@ -202,7 +202,7 @@
                 <test type="Case" name="Multi-set mixed updates">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.existing.key" type="String">original.data</entry>
+                            <entry key="redisson.existing.key">original.data</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -234,7 +234,7 @@
                 <test type="Case" name="Multi-set if absent atomic failure">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.msetnx.blocking.key" type="String">initial.value</entry>
+                            <entry key="redisson.msetnx.blocking.key">initial.value</entry>
                         </map>
                     </init>
                     <test type="Part" name="Try mSetNX where one key already exists">
@@ -257,7 +257,7 @@
                 <test type="Case" name="Increment Long values">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.num.long" type="String">100</entry>
+                            <entry key="redisson.num.long">100</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -272,7 +272,7 @@
                 <test type="Case" name="Increment Float values">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.num.float" type="String">10.5</entry>
+                            <entry key="redisson.num.float">10.5</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -287,7 +287,7 @@
                 <test type="Case" name="Numeric boundaries">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.num.boundary" type="String">127</entry>
+                            <entry key="redisson.num.boundary">127</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -302,7 +302,7 @@
                 <test type="Case" name="Negative increment">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.num.neg" type="String">10</entry>
+                            <entry key="redisson.num.neg">10</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -319,7 +319,7 @@
                 <test type="Case" name="String key">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.key.old" type="String">some.value</entry>
+                            <entry key="redisson.key.old">some.value</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -334,8 +334,8 @@
                 <test type="Case" name="With overwrite">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.key.source" type="String">data.A</entry>
-                            <entry key="redisson.key.target" type="String">data.B</entry>
+                            <entry key="redisson.key.source">data.A</entry>
+                            <entry key="redisson.key.target">data.B</entry>
                         </map>
                     </init>
                     <bean>redissonTestFacade</bean>
@@ -378,7 +378,7 @@
                 <test type="Case" name="Success">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.renamenx.src" type="String">important.data</entry>
+                            <entry key="redisson.renamenx.src">important.data</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -394,8 +394,8 @@
                 <test type="Case" name="Failure (target exists)">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.renamenx.src.fail" type="String">source.data</entry>
-                            <entry key="redisson.renamenx.target.fail" type="String">existing.data</entry>
+                            <entry key="redisson.renamenx.src.fail">source.data</entry>
+                            <entry key="redisson.renamenx.target.fail">existing.data</entry>
                         </map>
                     </init>
                     <test type="Part" name="Try renameNX where target exists">
@@ -425,7 +425,7 @@
             <test type="Case" name="APPEND">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.str.append" type="String">Hello</entry>
+                        <entry key="redisson.str.append">Hello</entry>
                     </map>
                 </init>
                 <bean>redisStringFacade</bean>
@@ -440,7 +440,7 @@
             <test type="Case" name="INCR and DECR">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.counter" type="String">10</entry>
+                        <entry key="redisson.counter">10</entry>
                     </map>
                 </init>
                 <test type="Part" name="Increment">
@@ -475,7 +475,7 @@
             <test type="Case" name="GETSET">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.gs.key" type="String">OldValue</entry>
+                        <entry key="redisson.gs.key">OldValue</entry>
                     </map>
                 </init>
                 <bean>redisStringFacade</bean>
@@ -491,7 +491,7 @@
                 <test type="Case" name="Overwrite part of string">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.str.range" type="String">Hello World</entry>
+                            <entry key="redisson.str.range">Hello World</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -528,7 +528,7 @@
                 <test type="Case" name="Overwrite existing">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.setex.existing" type="String">old_val</entry>
+                            <entry key="redisson.setex.existing">old_val</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -5011,7 +5011,7 @@
                 <test type="Case" name="ZRANGESTORE RANK start beyond size clears destination">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.beyond.dst" type="String">old</entry>
+                            <entry key="redisson.zrange.beyond.dst">old</entry>
                             <entry key="redisson.zrange.beyond.src" type="RedisZSet">
                                 <value>
                                     <member>first</member>
@@ -5038,7 +5038,7 @@
                 <test type="Case" name="ZRANGESTORE missing source clears destination">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory" clear="true">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.zrange.miss.dst" type="String">old</entry>
+                            <entry key="redisson.zrange.miss.dst">old</entry>
                         </map>
                     </init>
                     <bean>redisStringFacade</bean>
@@ -5194,7 +5194,7 @@
                 <test type="Case" name="Clear destination if nothing found">
                     <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                         <map type="LinkedHashMapStringObject">
-                            <entry key="redisson.geo.dst.old" type="String">should_be_deleted</entry>
+                            <entry key="redisson.geo.dst.old">should_be_deleted</entry>
                             <entry key="redisson.geo.src.empty" type="RedisZSet">
                                 <value>
                                     <member>FarAway</member>
@@ -6034,7 +6034,7 @@
             <test type="Case" name="PERSIST without TTL">
                 <init type="KeyValueStorageInit" name="redissonConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="redisson.persist.no.ttl" type="String">value</entry>
+                        <entry key="redisson.persist.no.ttl">value</entry>
                     </map>
                 </init>
                 <bean>redisStringFacade</bean>
@@ -6371,7 +6371,7 @@
             <test type="Case" name="NX existing key">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.set.nx" type="String">old</entry>
+                        <entry key="jedis.set.nx">old</entry>
                     </map>
                 </init>
                 <test type="Part" name="Set NX">
@@ -6409,7 +6409,7 @@
             <test type="Case" name="GET returns the old value">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.set.get" type="String">old</entry>
+                        <entry key="jedis.set.get">old</entry>
                     </map>
                 </init>
                 <test type="Part" name="Set GET">
@@ -6437,7 +6437,7 @@
             <test type="Case" name="without REPLACE leaves existing key">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.restore.keep" type="String">old</entry>
+                        <entry key="jedis.restore.keep">old</entry>
                     </map>
                 </init>
                 <test type="Part" name="Restore">
@@ -6460,7 +6460,7 @@
             <test type="Case" name="with REPLACE overwrites existing key">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.restore.replace" type="String">old</entry>
+                        <entry key="jedis.restore.replace">old</entry>
                     </map>
                 </init>
                 <test type="Part" name="Restore">
@@ -6934,12 +6934,12 @@
                             <value>b</value>
                             <value>c</value>
                         </entry>
-                        <entry key="jedis.sort.weight_a" type="String">3</entry>
-                        <entry key="jedis.sort.weight_b" type="String">1</entry>
-                        <entry key="jedis.sort.weight_c" type="String">2</entry>
-                        <entry key="jedis.sort.data_a" type="String">A</entry>
-                        <entry key="jedis.sort.data_b" type="String">B</entry>
-                        <entry key="jedis.sort.data_c" type="String">C</entry>
+                        <entry key="jedis.sort.weight_a">3</entry>
+                        <entry key="jedis.sort.weight_b">1</entry>
+                        <entry key="jedis.sort.weight_c">2</entry>
+                        <entry key="jedis.sort.data_a">A</entry>
+                        <entry key="jedis.sort.data_b">B</entry>
+                        <entry key="jedis.sort.data_c">C</entry>
                     </map>
                 </init>
                 <bean>jedisFacade</bean>
@@ -7046,7 +7046,7 @@
                             <value>a</value>
                             <value>b</value>
                         </entry>
-                        <entry key="jedis.sort.w_a" type="String">5</entry>
+                        <entry key="jedis.sort.w_a">5</entry>
                     </map>
                 </init>
                 <bean>jedisFacade</bean>
@@ -7135,7 +7135,7 @@
             <test type="Case" name="SORT STORE empty result removes destination">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.empty.dst" type="String">old</entry>
+                        <entry key="jedis.sort.empty.dst">old</entry>
                         <entry key="jedis.sort.empty.src" type="RedisList">
                             <value>1</value>
                             <value>2</value>
@@ -7161,7 +7161,7 @@
             <test type="Case" name="SORT STORE missing source removes destination">
                 <init type="KeyValueStorageInit" name="jedisConnectionFactory" clear="true">
                     <map type="LinkedHashMapStringObject">
-                        <entry key="jedis.sort.miss.dst" type="String">old</entry>
+                        <entry key="jedis.sort.miss.dst">old</entry>
                     </map>
                 </init>
                 <bean>jedisFacade</bean>

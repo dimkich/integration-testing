@@ -5,9 +5,9 @@
         <test type="Case" name="keeps insertion order">
             <bean>collectionsProbe</bean>
             <method>mapOfOrder</method>
-            <request type="String">c</request>
-            <request type="String">a</request>
-            <request type="String">b</request>
+            <request>c</request>
+            <request>a</request>
+            <request>b</request>
             <response type="ArrayList">
                 <response>c</response>
                 <response>a</response>
@@ -31,7 +31,6 @@
             <response>nullKey=java.lang.NullPointerException,nullValue=java.lang.NullPointerException,duplicate=java.lang.IllegalArgumentException,unmodifiable=java.lang.UnsupportedOperationException</response>
         </test>
     </test>
-
     <test type="Container" name="Map.copyOf">
         <test type="Case" name="order, wrapper class and contract">
             <bean>collectionsProbe</bean>
@@ -46,14 +45,13 @@
             </response>
         </test>
     </test>
-
     <test type="Container" name="Set.of">
         <test type="Case" name="keeps insertion order">
             <bean>collectionsProbe</bean>
             <method>setOfOrder</method>
-            <request type="String">c</request>
-            <request type="String">a</request>
-            <request type="String">b</request>
+            <request>c</request>
+            <request>a</request>
+            <request>b</request>
             <response type="ArrayList">
                 <response>c</response>
                 <response>a</response>
@@ -77,7 +75,6 @@
             <response>null=java.lang.NullPointerException,duplicate=java.lang.IllegalArgumentException,unmodifiable=java.lang.UnsupportedOperationException</response>
         </test>
     </test>
-
     <test type="Container" name="Set.copyOf">
         <test type="Case" name="order, wrapper class, dedupe and contract">
             <bean>collectionsProbe</bean>
@@ -93,7 +90,6 @@
             </response>
         </test>
     </test>
-
     <test type="Container" name="Collectors">
         <test type="Case" name="toSet order, class and mutability">
             <bean>collectionsProbe</bean>
@@ -153,7 +149,6 @@
             </response>
         </test>
     </test>
-
     <test type="Container" name="HashMap">
         <test type="Case" name="constructors keep insertion order">
             <bean>collectionsProbe</bean>
@@ -169,7 +164,7 @@
         <test type="Case" name="nested Map.of and branch keep insertion order">
             <bean>collectionsProbe</bean>
             <method>hashMapNestedAndBranch</method>
-            <request type="String">x</request>
+            <request>x</request>
             <response type="ArrayList">
                 <response>nested=c,a,b</response>
                 <response>branch=c,a,b</response>
@@ -178,7 +173,7 @@
         <test type="Case" name="nested Map.of and else branch keep insertion order">
             <bean>collectionsProbe</bean>
             <method>hashMapNestedAndBranch</method>
-            <request type="String">y</request>
+            <request>y</request>
             <response type="ArrayList">
                 <response>nested=c,a,b</response>
                 <response>branch=c,a,b</response>
@@ -193,7 +188,6 @@
             </response>
         </test>
     </test>
-
     <test type="Container" name="HashSet">
         <test type="Case" name="constructors keep insertion order">
             <bean>collectionsProbe</bean>
