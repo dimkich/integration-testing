@@ -21,7 +21,7 @@ import java.util.Map;
  * the acknowledged cache revision it invokes the configured bean method and acknowledges the
  * synchronization.
  *
- * <p>Runs after {@link SqlStorageInitSetup} (order 2000) and after {@link
+ * <p>Runs after {@link SqlStorageInitSetup} (order 3000) and after {@link
  * io.github.dimkich.integration.testing.initialization.bean.BeanInitSetup} (order 10000), so the
  * actions see the data of all storages already applied. State is not persisted: the action is
  * executed every time it is in scope, which is what keeps a stale cache from a previous test

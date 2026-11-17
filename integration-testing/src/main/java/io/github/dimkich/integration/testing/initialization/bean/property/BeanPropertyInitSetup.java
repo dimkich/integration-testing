@@ -94,11 +94,11 @@ public class BeanPropertyInitSetup implements InitSetup<BeanPropertyInit, BeanPr
      * Runs after the date/time initialization and before the storage initializations and
      * {@code BeanInit}, so other initializations see the overridden values.
      *
-     * @return the order value {@code 500}
+     * @return the order value {@code 1000}
      */
     @Override
     public Integer getOrder() {
-        return 500;
+        return 1000;
     }
 
     /**

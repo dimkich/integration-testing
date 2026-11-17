@@ -43,6 +43,6 @@ public class SqlStorageInitSetup implements InitSetup<SqlStorageInit, SqlStorage
 
     @Override
     public Integer getOrder() {
-        return 2000;
+        return 3000;
     }
 }

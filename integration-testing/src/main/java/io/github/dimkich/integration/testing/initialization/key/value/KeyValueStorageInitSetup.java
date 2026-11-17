@@ -23,7 +23,7 @@ import java.util.Map;
  *   <li>Converts {@link KeyValueStorageInit} configurations into {@link KeyValueStorageInitState} objects</li>
  *   <li>Clears storage data when the {@code clear} flag is set</li>
  *   <li>Loads key-value pairs into storage from the configuration</li>
- *   <li>Runs with an execution order of 3000, allowing earlier initializations (like date/time) to occur first</li>
+ *   <li>Runs with an execution order of 4000, allowing earlier initializations (like date/time) to occur first</li>
  * </ul>
  *
  * <p>The initialization process follows these steps:
@@ -120,15 +120,15 @@ public class KeyValueStorageInitSetup implements InitSetup<KeyValueStorageInit, 
     /**
      * Returns the execution order for this setup relative to other initialization setups.
      *
-     * <p>Returns 3000, which places this setup in the middle of the execution order,
+     * <p>Returns 4000, which places this setup in the middle of the execution order,
      * allowing earlier initializations (such as date/time with order 0) to occur first,
      * but before later initializations (such as bean initialization with order 10000).
      * Lower order values are executed before higher ones.
      *
-     * @return the order value {@code 3000}
+     * @return the order value {@code 4000}
      */
     @Override
     public Integer getOrder() {
-        return 3000;
+        return 4000;
     }
 }
