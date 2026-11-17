@@ -58,9 +58,8 @@ public class OrderKafkaIntegrationTest {
 }
 ```
 
-`@EnableTestKafka` activates the wait-completion subsystem on its own: the
-`integration.testing.wait.completion.enabled` property
-is already defined in `kafka.properties`, so you do not need to set it in `@SpringBootTest`.
+`@EnableTestKafka` activates the wait-completion subsystem: the framework waits for messages sent
+via `KafkaProducer.send(...)` to finish before assertions.
 
 The only thing left is to set the broker address in `application-test.yml`. Embedded Kafka publishes
 it in the `embedded.kafka.brokerList` property:

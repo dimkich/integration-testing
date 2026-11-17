@@ -11,11 +11,8 @@ import java.lang.annotation.*;
 /**
  * Enables Kafka testing support for a test class: imports message and Kafka
  * configuration, points the bootstrap servers to the test Kafka instance and makes
- * the framework wait for completed {@code KafkaProducer.send(...)} calls.
- *
- * <p>The wait-completion subsystem is activated automatically through
- * {@code kafka.properties} ({@code integration.testing.wait.completion.enabled}),
- * so no extra test properties are required.</p>
+ * the framework wait for completed {@code KafkaProducer.send(...)} calls through the
+ * wait-completion subsystem.
  *
  * <p>See the module documentation for the supported serde configurations.</p>
  */

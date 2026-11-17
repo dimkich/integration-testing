@@ -58,9 +58,8 @@ public class OrderKafkaIntegrationTest {
 }
 ```
 
-`@EnableTestKafka` сам активирует подсистему ожиданий: свойство
-`integration.testing.wait.completion.enabled` уже задано в
-`kafka.properties`, поэтому указывать его в `@SpringBootTest` не нужно.
+`@EnableTestKafka` активирует подсистему ожиданий: фреймворк дождётся завершения отправленных
+через `KafkaProducer.send(...)` сообщений перед проверками.
 
 Остаётся указать адрес брокера в `application-test.yml`. Embedded Kafka публикует его в свойстве
 `embedded.kafka.brokerList`:

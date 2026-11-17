@@ -8,17 +8,7 @@ framework holds the test until that work is finished.
 
 ## Enabling
 
-The subsystem is disabled by default. Enable it with the property:
-
-```yaml
-integration:
-  testing:
-    wait:
-      completion:
-        enabled: true
-```
-
-`@EnableTestRedis` and `@EnableTestKafka` enable it themselves through their `properties`.
+The subsystem is always active whenever the framework is enabled; no separate property is needed.
 Wait annotations are placed on a test class that already enables the framework
 (`@IntegrationTesting` or a module annotation).
 

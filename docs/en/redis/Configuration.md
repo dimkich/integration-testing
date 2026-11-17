@@ -284,9 +284,7 @@ connection's `keyCodec`, like key names. This is how pushes are captured and sen
 
 Replication is awaited through the wait-completion subsystem: after initialization (so data
 storage snapshots and diffs are read from a caught-up mirror) and after the test action (so
-pushes and mutations are captured before assertions). This requires
-`integration.testing.wait.completion.enabled=true`; `redis.properties` already sets it, so no
-extra test properties are needed. With an explicit `false` the module does not await replication.
+pushes and mutations are captured before assertions). No extra test properties are needed.
 
 ### Escaping Special Characters in YAML
 

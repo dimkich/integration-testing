@@ -154,8 +154,7 @@ snapshots and diffs are read from a caught-up mirror) and after the test action 
 mutations are captured before assertions). To do that, the module publishes a barrier token into
 a technical channel and waits until the replication stream catches up with Redis. The barrier
 channel (`__integration_testing_sync__`) itself is never captured; do not use it in the
-application. This requires `integration.testing.wait.completion.enabled=true` (already set in
-`redis.properties`); with an explicit `false` the module does not await replication.
+application. No extra test properties are needed.
 
 Ignoring Noise
 --------------

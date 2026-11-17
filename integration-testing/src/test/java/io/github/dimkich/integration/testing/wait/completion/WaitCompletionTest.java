@@ -71,8 +71,7 @@ import static io.github.dimkich.integration.testing.wait.completion.WaitCompleti
         sizeFunction = QueueLikeFunction6.class)
 @RepeatInstrumentation({FL, MC, MP, QL})
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@SpringBootTest(classes = WaitCompletionTest.Config.class,
-        properties = {"integration.testing.wait.completion.enabled=true"})
+@SpringBootTest(classes = WaitCompletionTest.Config.class)
 public class WaitCompletionTest {
     static final String pkg = "io.github.dimkich.integration.testing.wait.completion";
     static final String FL = pkg + ".future.like";
