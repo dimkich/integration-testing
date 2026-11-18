@@ -10,7 +10,6 @@ import io.github.dimkich.integration.testing.DynamicTestBuilder;
 import io.github.dimkich.integration.testing.date.time.MockJavaTime;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisSnapshotHandler;
 import io.github.dimkich.integration.testing.redis.replication.event.listener.RedisStreamHandler;
-import io.github.dimkich.integration.testing.wait.completion.MethodCountingAwait;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.TestFactory;
@@ -30,8 +29,16 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MockJavaTime(dockerImages = "redis.*")
-@MethodCountingAwait(pointcut = "t.name('io.github.dimkich.integration.testing.redis.RedisTestConfig$ExpiredKeyspaceListener')"
-        + " && m.name('onMessage')")
+@RedisKeyspaceEventsAwait(events = {"expired"}, connection = "redissonConnectionFactory",
+        pointcut = "t.name('io.github.dimkich.integration.testing.redis.RedisTestConfig$ExpiredKeyspaceListener')"
+                + " && m.name('onMessage')")
+@RedisKeyspaceEventsAwait(events = {"del"}, connection = "redissonConnectionFactory",
+        pointcut = "t.name('io.github.dimkich.integration.testing.redis.RedisTestConfig$DeletedKeyspaceListener')"
+                + " && m.name('onMessage')")
+@RedisKeyspaceEventsAwait(events = {"set", "hset", "lpush", "sadd", "zadd", "expire", "persist",
+        "rename_from", "rename_to"}, connection = "redissonConnectionFactory",
+        pointcut = "t.name('io.github.dimkich.integration.testing.redis.RedisTestConfig$EventKeyspaceListener')"
+                + " && m.name('onMessage')")
 @EnableTestRedis
 @ActiveProfiles("test")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -50,7 +57,6 @@ public class RedisTest {
     @TestFactory
     Stream<DynamicNode> tests() {
         return dynamicTestBuilder.build("redis.xml"
-//                ,List.of("redis operations", "redis expiration")
         );
     }
 

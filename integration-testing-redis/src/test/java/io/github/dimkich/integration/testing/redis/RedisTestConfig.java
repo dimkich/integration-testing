@@ -55,6 +55,7 @@ import redis.clients.jedis.Jedis;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.mock;
@@ -106,15 +107,17 @@ public class RedisTestConfig {
     }
 
     /**
-     * Enables keyspace notifications and registers a listener that mimics an application
-     * cleaning index sets on natural key expiration. The listener removes expired keys from
-     * {@code redisson.expired.index}; the test class waits for {@code onMessage} with
-     * {@link io.github.dimkich.integration.testing.wait.completion.MethodCountingAwait}.
+     * Enables keyspace notifications and registers listeners that mimic application handlers
+     * reacting to different keyspace events. The expiry listener cleans an index set, the
+     * deletion listener records keys, and the multi-event listener counts notifications, so the
+     * test class can wait for {@code onMessage} with
+     * {@link io.github.dimkich.integration.testing.redis.RedisKeyspaceEventsAwait} and then assert
+     * the number of handled notifications.
      */
     @Bean
-    public RedisMessageListenerContainer expiredKeyspaceListenerContainer(
+    public RedisMessageListenerContainer keyspaceListenerContainer(
             RedisConnectionFactory redissonConnectionFactory,
-            StringRedisTemplate expiredKeyspaceStringRedisTemplate) {
+            StringRedisTemplate keyspaceStringRedisTemplate) {
         try (Jedis jedis = new Jedis(redisHost, redisPort)) {
             if (!redisPassword.isEmpty()) {
                 jedis.auth(redisPassword);
@@ -123,13 +126,25 @@ public class RedisTestConfig {
         }
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redissonConnectionFactory);
-        container.addMessageListener(new ExpiredKeyspaceListener(expiredKeyspaceStringRedisTemplate),
+        container.addMessageListener(new ExpiredKeyspaceListener(keyspaceStringRedisTemplate),
                 new PatternTopic("__keyevent@*__:expired"));
+        container.addMessageListener(new DeletedKeyspaceListener(keyspaceStringRedisTemplate),
+                new PatternTopic("__keyevent@*__:del"));
+        container.addMessageListener(new EventKeyspaceListener(keyspaceStringRedisTemplate),
+                List.of(new PatternTopic("__keyevent@*__:set"),
+                        new PatternTopic("__keyevent@*__:hset"),
+                        new PatternTopic("__keyevent@*__:lpush"),
+                        new PatternTopic("__keyevent@*__:sadd"),
+                        new PatternTopic("__keyevent@*__:zadd"),
+                        new PatternTopic("__keyevent@*__:expire"),
+                        new PatternTopic("__keyevent@*__:persist"),
+                        new PatternTopic("__keyevent@*__:rename_from"),
+                        new PatternTopic("__keyevent@*__:rename_to")));
         return container;
     }
 
     @Bean
-    public StringRedisTemplate expiredKeyspaceStringRedisTemplate(RedisConnectionFactory redissonConnectionFactory) {
+    public StringRedisTemplate keyspaceStringRedisTemplate(RedisConnectionFactory redissonConnectionFactory) {
         return new StringRedisTemplate(redissonConnectionFactory);
     }
 
@@ -449,16 +464,13 @@ public class RedisTestConfig {
 
     /**
      * Mimics an application listener that cleans index sets when a key expires. The listener
-     * removes the expired key from {@code redisson.expired.index} and then pushes it to
-     * {@code redisson.expired.received}; keys outside the {@code redisson.expired.} prefix are
-     * ignored. The signal is pushed after the removal, so the test's blocking {@code BRPOP}
-     * proves that the index cleanup has already happened.
+     * removes the expired key from {@code redisson.expired.index}; keys outside the
+     * {@code redisson.expired.} prefix are ignored.
      */
     @RequiredArgsConstructor
     public static class ExpiredKeyspaceListener implements MessageListener {
         private static final String PREFIX = "redisson.expired.";
         private static final String INDEX_KEY = "redisson.expired.index";
-        private static final String RECEIVED_KEY = "redisson.expired.received";
 
         private final StringRedisTemplate template;
 
@@ -467,8 +479,80 @@ public class RedisTestConfig {
             String key = new String(message.getBody(), StandardCharsets.UTF_8);
             if (key.startsWith(PREFIX)) {
                 template.opsForSet().remove(INDEX_KEY, key);
+            }
+        }
+    }
+
+    /** Records deleted keys with the {@code redisson.await.del.} prefix in a signal list. */
+    @RequiredArgsConstructor
+    public static class DeletedKeyspaceListener implements MessageListener {
+        private static final String PREFIX = "redisson.await.del.";
+        private static final String RECEIVED_KEY = "redisson.await.del.received";
+
+        private final StringRedisTemplate template;
+
+        @Override
+        public void onMessage(Message message, @Nullable byte[] pattern) {
+            String key = new String(message.getBody(), StandardCharsets.UTF_8);
+            if (key.startsWith(PREFIX)) {
                 template.opsForList().rightPush(RECEIVED_KEY, key);
             }
+        }
+    }
+
+    /**
+     * Counts notifications for keys with the given prefix. A counter is used instead of a
+     * signal list because the listener container dispatches messages concurrently, so the
+     * order of {@code onMessage} calls is not guaranteed.
+     */
+    private static void countKeyspaceEvent(StringRedisTemplate template, Message message,
+                                           String prefix, String counterKey) {
+        String key = new String(message.getBody(), StandardCharsets.UTF_8);
+        if (key.startsWith(prefix)) {
+            template.opsForValue().increment(counterKey);
+        }
+    }
+
+    /**
+     * Counts keyspace notifications of all awaited types. One listener serves all event types,
+     * so the test needs only one instrumented pointcut and one subscription.
+     */
+    @RequiredArgsConstructor
+    public static class EventKeyspaceListener implements MessageListener {
+        private static final Map<String, EventCounter> EVENTS = Map.ofEntries(
+                Map.entry("set", new EventCounter("redisson.await.set.",
+                        "redisson.await.keyspace.set.count")),
+                Map.entry("hset", new EventCounter("redisson.await.hset.",
+                        "redisson.await.keyspace.hset.count")),
+                Map.entry("lpush", new EventCounter("redisson.await.lpush.",
+                        "redisson.await.keyspace.lpush.count")),
+                Map.entry("sadd", new EventCounter("redisson.await.sadd.",
+                        "redisson.await.keyspace.sadd.count")),
+                Map.entry("zadd", new EventCounter("redisson.await.zadd.",
+                        "redisson.await.keyspace.zadd.count")),
+                Map.entry("expire", new EventCounter("redisson.await.expire.",
+                        "redisson.await.keyspace.expire.count")),
+                Map.entry("persist", new EventCounter("redisson.await.persist.",
+                        "redisson.await.keyspace.persist.count")),
+                Map.entry("rename_from", new EventCounter("redisson.await.rename.",
+                        "redisson.await.keyspace.rename.from.count")),
+                Map.entry("rename_to", new EventCounter("redisson.await.rename.",
+                        "redisson.await.keyspace.rename.to.count"))
+        );
+
+        private final StringRedisTemplate template;
+
+        @Override
+        public void onMessage(Message message, @Nullable byte[] pattern) {
+            String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
+            String type = channel.substring(channel.lastIndexOf(':') + 1);
+            EventCounter event = EVENTS.get(type);
+            if (event != null) {
+                countKeyspaceEvent(template, message, event.prefix(), event.counterKey());
+            }
+        }
+
+        private record EventCounter(String prefix, String counterKey) {
         }
     }
 

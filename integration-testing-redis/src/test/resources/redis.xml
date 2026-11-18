@@ -6006,10 +6006,240 @@
                 <test type="Part" name="Time shift expires token and cleans index">
                     <init type="DateTimeInit" addDuration="PT2S"/>
                     <bean>redisStringFacade</bean>
-                    <method>brPop</method>
-                    <request>redisson.expired.received</request>
-                    <request type="Long">1</request>
-                    <response>redisson.expired.token</response>
+                    <method>sCard</method>
+                    <request>redisson.expired.index</request>
+                    <response type="Long">0</response>
+                </test>
+            </test>
+            <test type="Case" name="Delete produces del keyspace event">
+                <init type="KeyValueStorageInit" name="redissonConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="redisson.await.del.key" type="RedisEntry">
+                            <data>value</data>
+                        </entry>
+                    </map>
+                </init>
+                <test type="Part" name="Delete key">
+                    <bean>redisStringFacade</bean>
+                    <method>delete</method>
+                    <request>redisson.await.del.key</request>
+                    <response type="Boolean">true</response>
+                    <diff storage="redissonConnectionFactory">
+                        <delete key="redisson.await.del.key"/>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler recorded the deletion">
+                    <bean>redisStringFacade</bean>
+                    <method>lRange</method>
+                    <request>redisson.await.del.received</request>
+                    <request type="Long">0</request>
+                    <request type="Long">-1</request>
+                    <response type="ArrayList">
+                        <value>redisson.await.del.key</value>
+                    </response>
+                </test>
+            </test>
+        </test>
+        <test type="Container" name="keyspace events">
+            <test type="Case" name="Set produces set keyspace event">
+                <test type="Part" name="Write string">
+                    <bean>redisStringFacade</bean>
+                    <method>set</method>
+                    <request>redisson.await.set.key</request>
+                    <request>value</request>
+                    <diff storage="redissonConnectionFactory">
+                        <insert key="redisson.await.set.key">value</insert>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler was called once">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.set.count</request>
+                    <response>1</response>
+                </test>
+            </test>
+            <test type="Case" name="MSet waits for every set keyspace event">
+                <test type="Part" name="Multi-set three keys">
+                    <bean>redisStringFacade</bean>
+                    <method>mSet</method>
+                    <request type="LinkedHashMap">
+                        <redisson.await.set.key.1>value.1</redisson.await.set.key.1>
+                        <redisson.await.set.key.2>value.2</redisson.await.set.key.2>
+                        <redisson.await.set.key.3>value.3</redisson.await.set.key.3>
+                    </request>
+                    <diff storage="redissonConnectionFactory">
+                        <insert key="redisson.await.set.key.1">value.1</insert>
+                        <insert key="redisson.await.set.key.2">value.2</insert>
+                        <insert key="redisson.await.set.key.3">value.3</insert>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler was called for every key">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.set.count</request>
+                    <response>3</response>
+                </test>
+            </test>
+            <test type="Case" name="HSet produces hset keyspace event">
+                <test type="Part" name="Write hash field">
+                    <bean>redisStringFacade</bean>
+                    <method>hSet</method>
+                    <request>redisson.await.hset.key</request>
+                    <request>field</request>
+                    <request>value</request>
+                    <diff storage="redissonConnectionFactory">
+                        <insert key="redisson.await.hset.key" type="RedisHash">
+                            <field>value</field>
+                        </insert>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler was called once">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.hset.count</request>
+                    <response>1</response>
+                </test>
+            </test>
+            <test type="Case" name="LPush produces lpush keyspace event">
+                <test type="Part" name="Push list element">
+                    <bean>redisStringFacade</bean>
+                    <method>lPush</method>
+                    <request>redisson.await.lpush.key</request>
+                    <request type="Object[]">
+                        <item>value</item>
+                    </request>
+                    <response type="Long">1</response>
+                    <diff storage="redissonConnectionFactory">
+                        <insert key="redisson.await.lpush.key" type="RedisList">
+                            <item>value</item>
+                        </insert>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler was called once">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.lpush.count</request>
+                    <response>1</response>
+                </test>
+            </test>
+            <test type="Case" name="SAdd produces sadd keyspace event">
+                <test type="Part" name="Add set member">
+                    <bean>redisStringFacade</bean>
+                    <method>sAdd</method>
+                    <request>redisson.await.sadd.key</request>
+                    <request type="Object[]">
+                        <item>member</item>
+                    </request>
+                    <response type="Long">1</response>
+                    <diff storage="redissonConnectionFactory">
+                        <insert key="redisson.await.sadd.key" type="RedisSet">
+                            <item>member</item>
+                        </insert>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler was called once">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.sadd.count</request>
+                    <response>1</response>
+                </test>
+            </test>
+            <test type="Case" name="ZAdd produces zadd keyspace event">
+                <test type="Part" name="Add sorted set member">
+                    <bean>redisStringFacade</bean>
+                    <method>zAdd</method>
+                    <request>redisson.await.zadd.key</request>
+                    <request>member</request>
+                    <request type="Double">1.0</request>
+                    <response type="Boolean">true</response>
+                    <diff storage="redissonConnectionFactory">
+                        <insert key="redisson.await.zadd.key" type="RedisZSet">
+                            <member score="1"/>
+                        </insert>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler was called once">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.zadd.count</request>
+                    <response>1</response>
+                </test>
+            </test>
+            <test type="Case" name="Expire produces expire keyspace event">
+                <init type="KeyValueStorageInit" name="redissonConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="redisson.await.expire.key">value</entry>
+                    </map>
+                </init>
+                <test type="Part" name="Set TTL">
+                    <bean>redisStringFacade</bean>
+                    <method>expire</method>
+                    <request>redisson.await.expire.key</request>
+                    <request type="Long">60</request>
+                    <response type="Boolean">true</response>
+                    <diff storage="redissonConnectionFactory">
+                        <update key="redisson.await.expire.key" ttl="PT1M">value</update>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler was called once">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.expire.count</request>
+                    <response>1</response>
+                </test>
+            </test>
+            <test type="Case" name="Persist produces persist keyspace event">
+                <init type="KeyValueStorageInit" name="redissonConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="redisson.await.persist.key" type="RedisEntry">
+                            <data>value</data>
+                            <ttl>PT1H</ttl>
+                        </entry>
+                    </map>
+                </init>
+                <test type="Part" name="Remove TTL">
+                    <bean>redisStringFacade</bean>
+                    <method>persist</method>
+                    <request>redisson.await.persist.key</request>
+                    <response type="Boolean">true</response>
+                    <diff storage="redissonConnectionFactory">
+                        <update key="redisson.await.persist.key">value</update>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler was called once">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.persist.count</request>
+                    <response>1</response>
+                </test>
+            </test>
+            <test type="Case" name="Rename produces rename_from and rename_to keyspace events">
+                <init type="KeyValueStorageInit" name="redissonConnectionFactory">
+                    <map type="LinkedHashMapStringObject">
+                        <entry key="redisson.await.rename.old">value</entry>
+                    </map>
+                </init>
+                <test type="Part" name="Rename key">
+                    <bean>redisStringFacade</bean>
+                    <method>rename</method>
+                    <request>redisson.await.rename.old</request>
+                    <request>redisson.await.rename.new</request>
+                    <diff storage="redissonConnectionFactory">
+                        <insert key="redisson.await.rename.new">value</insert>
+                        <delete key="redisson.await.rename.old"/>
+                    </diff>
+                </test>
+                <test type="Part" name="Handler was called for the source key">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.rename.from.count</request>
+                    <response>1</response>
+                </test>
+                <test type="Part" name="Handler was called for the destination key">
+                    <bean>redisStringFacade</bean>
+                    <method>get</method>
+                    <request>redisson.await.keyspace.rename.to.count</request>
+                    <response>1</response>
                 </test>
             </test>
         </test>

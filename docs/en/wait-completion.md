@@ -27,12 +27,13 @@ Keep `pointcut` narrow: instrumenting every application method slows the tests d
 
 ## Choosing a strategy
 
-| Situation in code                    | Strategy               | When the task is considered complete     |
-|--------------------------------------|------------------------|------------------------------------------|
-| There is a task handle object        | `@FutureLikeAwait`     | A blocking method of the object returned |
-| The task is a method execution       | `@MethodCountingAwait` | The method exits                         |
-| Start and end are different methods  | `@MethodPairAwait`     | Start/end calls are balanced             |
-| The service has a queue or a counter | `@QueueLikeAwait`      | The queue is empty                       |
+| Situation in code                      | Strategy                    | When the task is considered complete     |
+|----------------------------------------|-----------------------------|------------------------------------------|
+| There is a task handle object          | `@FutureLikeAwait`          | A blocking method of the object returned |
+| The task is a method execution         | `@MethodCountingAwait`      | The method exits                         |
+| Start and end are different methods    | `@MethodPairAwait`          | Start/end calls are balanced             |
+| The service has a queue or a counter   | `@QueueLikeAwait`           | The queue is empty                       |
+| The application reacts to Redis events | `@RedisKeyspaceEventsAwait` | The handler has processed every event    |
 
 ### `@FutureLikeAwait`
 
@@ -94,6 +95,46 @@ For a service that knows the size of its queue or pool.
   no-args constructor.
 
 When `pointcut` has no method matcher, constructors of the matching type are instrumented.
+
+### `@RedisKeyspaceEventsAwait` (Redis module)
+
+For tests where the application reacts to Redis events: a TTL expiry, a key deletion, a value
+write, and so on. The handler receives events asynchronously and may not finish before the checks.
+The annotation replaces `Thread.sleep()`: the test continues when the handler has been called for
+every event.
+
+Key change notifications must be enabled in Redis (keyspace notifications,
+`notify-keyspace-events`, for example `KEA`). If the required type is not enabled, Redis sends
+nothing and the wait passes immediately without checking anything.
+
+```java
+@RedisKeyspaceEventsAwait(
+        events = {"expired"},
+        connection = "myRedis",
+        pointcut = "t.name('com.app.ExpiredListener') && m.name('onMessage')")
+```
+
+* `events` — event names as used in `notify-keyspace-events`: `expired`, `del`, `set`, `hset`,
+  `lpush`, `sadd`, `zadd`, `expire`, `persist`, `rename_from`, `rename_to`, and others;
+* `pointcut` — the method that handles the notifications;
+* `connection` — connection name from `integration.testing.redis.connections`; it can be omitted
+  when only one connection is configured;
+* `timeoutMs` — how long to wait for a handler call, `5000` by default.
+
+Things to keep in mind:
+
+* The wait counts handler calls, not keys: the handler must be called for every notification even
+  when it ignores some keys inside. If the filtering happens before the method is called, the wait
+  misses calls and fails with `Timed out waiting for keyspace handler calls`.
+* One command may produce several notifications: `mset` of three keys — three `set` events,
+  `rename` — `rename_from` and `rename_to`. The handler must be called as many times.
+* Only notifications published during the current test action are counted; anything published
+  earlier is not awaited again.
+* If the handler is not called within `timeoutMs`, the test fails with a wait error instead of
+  hanging.
+
+The annotation is repeatable: different event types may be handled by different methods,
+including on different connections.
 
 ## How it works
 

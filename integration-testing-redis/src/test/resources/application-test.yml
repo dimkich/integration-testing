@@ -85,7 +85,25 @@ integration:
               ignore: true
             "[redisson.expired.index]":
               ignore: true
-            "[redisson.expired.received]":
+            "[redisson.await.del.received]":
+              ignore: true
+            "[redisson.await.keyspace.set.count]":
+              ignore: true
+            "[redisson.await.keyspace.hset.count]":
+              ignore: true
+            "[redisson.await.keyspace.lpush.count]":
+              ignore: true
+            "[redisson.await.keyspace.sadd.count]":
+              ignore: true
+            "[redisson.await.keyspace.zadd.count]":
+              ignore: true
+            "[redisson.await.keyspace.expire.count]":
+              ignore: true
+            "[redisson.await.keyspace.persist.count]":
+              ignore: true
+            "[redisson.await.keyspace.rename.from.count]":
+              ignore: true
+            "[redisson.await.keyspace.rename.to.count]":
               ignore: true
         jedisConnectionFactory:
           host: ${embedded.redis.host}

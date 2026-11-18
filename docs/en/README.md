@@ -9,7 +9,7 @@ XML/JSON with full control over the environment (Database, Time, Stubs, and Asyn
 
 * **Declarative Testing**: Define tests in external files without re-compiling Java code.
 * **State Management**: Automatic "dirty table" tracking and intelligent SQL cleanup/reload.
-* **Asynchrony Synchronization**: 4 built-in strategies to wait for background tasks (Wait-Completion).
+* **Asynchrony Synchronization**: 5 built-in strategies to wait for background tasks (Wait-Completion).
 * **Time Manipulation**: JVM-wide Java Time API mocking via `@MockJavaTime`; `System.currentTimeMillis()` in configured packages.
 * **Advanced Stubbing**: Support for static methods, constructors, and recording real interactions.
 

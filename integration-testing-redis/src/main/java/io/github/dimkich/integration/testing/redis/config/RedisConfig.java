@@ -2,6 +2,7 @@ package io.github.dimkich.integration.testing.redis.config;
 
 import io.github.dimkich.integration.testing.TestSetupModule;
 import io.github.dimkich.integration.testing.message.TestMessages;
+import io.github.dimkich.integration.testing.redis.RedisKeyspaceEventsAwait;
 import io.github.dimkich.integration.testing.redis.RedisTestDataStorage;
 import io.github.dimkich.integration.testing.redis.RedisWaitCompletion;
 import io.github.dimkich.integration.testing.redis.accessor.*;
@@ -27,6 +28,9 @@ import io.github.dimkich.integration.testing.redis.serde.adapter.RedisRedissonDe
 import io.github.dimkich.integration.testing.redis.serde.adapter.RedisRedissonSerializerAdapter;
 import io.github.dimkich.integration.testing.redis.serde.adapter.RedisSpringDataDeserializerAdapter;
 import io.github.dimkich.integration.testing.redis.serde.adapter.RedisSpringDataSerializerAdapter;
+import io.github.dimkich.integration.testing.redis.wait.RedisKeyspaceEventsPlugin;
+import io.github.dimkich.integration.testing.redis.wait.RedisKeyspaceEventsWaitCompletion;
+import io.github.dimkich.integration.testing.redis.wait.RedisKeyspaceSubscriber;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +70,8 @@ import java.util.Set;
  * of the Redis driver used by the application under test. For every configured connection,
  * {@link PostProcessor} registers a per-connection stack: client, sync state, sync barrier,
  * in-memory store, test data storage, sync-state delegator, replicator, push sender and
- * wait-completion beans (see {@link BeanNames} for naming).
+ * wait-completion beans, plus a keyspace subscriber and wait completion when a connection is
+ * targeted by {@link RedisKeyspaceEventsAwait} (see {@link BeanNames} for naming).
  *
  * @see RedisProperties
  * @see io.github.dimkich.integration.testing.redis.EnableTestRedis
@@ -152,18 +157,21 @@ public class RedisConfig {
 
         /**
          * Binds connection names and registers the derived bean definitions named by
-         * {@link BeanNames}.
+         * {@link BeanNames}. Keyspace subscriber and wait completion are registered only for
+         * connections targeted by {@link RedisKeyspaceEventsAwait}.
          */
         @Override
         public void postProcessBeanDefinitionRegistry(@NonNull BeanDefinitionRegistry registry) throws BeansException {
             Set<String> connectionNames = bindConnectionNames();
+            RedisKeyspaceEventsPlugin.validateConnections(connectionNames);
             if (connectionNames.isEmpty()) {
                 return;
             }
             String propertiesName = findPropertiesBeanName((ListableBeanFactory) registry);
+            boolean singleConnection = connectionNames.size() == 1;
 
             for (String connectionName : connectionNames) {
-                BeanNames beans = new BeanNames(connectionName, propertiesName);
+                BeanNames beans = new BeanNames(connectionName, propertiesName, singleConnection);
                 register(registry, beans.client, createClientDef(beans));
                 register(registry, beans.syncState, createSyncStateDef(beans));
                 register(registry, beans.barrier, createBarrierDef(beans));
@@ -173,6 +181,10 @@ public class RedisConfig {
                 register(registry, beans.replicator, createReplicatorDef(beans));
                 register(registry, beans.pushSender, createPushSenderDef(beans));
                 register(registry, beans.waitCompletion, createWaitCompletionDef(beans));
+                if (!beans.keyspaceAwaits.isEmpty()) {
+                    register(registry, beans.keyspaceSubscriber, createKeyspaceSubscriberDef(beans));
+                    register(registry, beans.keyspaceWaitCompletion, createKeyspaceWaitCompletionDef(beans));
+                }
             }
         }
 
@@ -276,6 +288,26 @@ public class RedisConfig {
             return def;
         }
 
+        private BeanDefinition createKeyspaceSubscriberDef(BeanNames beans) {
+            AbstractBeanDefinition def = BeanDefinitionBuilder
+                    .genericBeanDefinition(RedisKeyspaceSubscriber.class)
+                    .addConstructorArgValue(beans.name)
+                    .addConstructorArgReference(beans.properties)
+                    .addConstructorArgValue(beans.keyspaceAwaits)
+                    .getBeanDefinition();
+            def.setDestroyMethodName("close");
+            return def;
+        }
+
+        private BeanDefinition createKeyspaceWaitCompletionDef(BeanNames beans) {
+            return BeanDefinitionBuilder
+                    .genericBeanDefinition(RedisKeyspaceEventsWaitCompletion.class)
+                    .addConstructorArgReference(beans.keyspaceSubscriber)
+                    .addConstructorArgReference(beans.properties)
+                    .addConstructorArgValue(beans.keyspaceAwaits)
+                    .getBeanDefinition();
+        }
+
         private BeanDefinition createWaitCompletionDef(BeanNames beans) {
             AbstractBeanDefinition def = BeanDefinitionBuilder
                     .genericBeanDefinition(RedisWaitCompletion.class)
@@ -322,14 +354,21 @@ public class RedisConfig {
         final String pushSender;
         /** Wait-completion bean name ({@code name + "RedisWaitCompletion"}). */
         final String waitCompletion;
+        /** Keyspace subscriber bean name ({@code name + "KeyspaceSubscriber"}). */
+        final String keyspaceSubscriber;
+        /** Keyspace wait-completion bean name ({@code name + "KeyspaceEventsWaitCompletion"}). */
+        final String keyspaceWaitCompletion;
+        /** Keyspace declarations targeting this connection; empty when none are declared. */
+        final List<RedisKeyspaceEventsAwait> keyspaceAwaits;
         /** Fully qualified name of {@link RedisReplicatorFactory} for factory-method lookup. */
         final String replicatorFactory;
 
         /**
-         * @param name           logical connection name
-         * @param propertiesName {@link RedisProperties} bean name
+         * @param name             logical connection name
+         * @param propertiesName   {@link RedisProperties} bean name
+         * @param singleConnection whether this is the only configured connection
          */
-        BeanNames(String name, String propertiesName) {
+        BeanNames(String name, String propertiesName, boolean singleConnection) {
             this.name = name;
             this.properties = propertiesName;
             this.client = name + "RedisClient";
@@ -341,6 +380,9 @@ public class RedisConfig {
             this.delegator = name + "SyncStateDelegator";
             this.pushSender = name + "RedisPushSender";
             this.waitCompletion = name + "RedisWaitCompletion";
+            this.keyspaceSubscriber = name + "KeyspaceSubscriber";
+            this.keyspaceWaitCompletion = name + "KeyspaceEventsWaitCompletion";
+            this.keyspaceAwaits = RedisKeyspaceEventsPlugin.annotationsFor(name, singleConnection);
             this.replicatorFactory = RedisReplicatorFactory.class.getName();
         }
     }

@@ -690,6 +690,10 @@ public class RedisTestFacade<K, V> {
         return jedis.pttl(serializeKey(key));
     }
 
+    public Long sCard(K key) {
+        return jedis.scard(serializeKey(key));
+    }
+
     public Long sortStore(K sourceKey, K destKey, String by, List<String> get, Integer offset, Integer count,
                           String order, boolean alpha) {
         SortingParams params = new SortingParams();
