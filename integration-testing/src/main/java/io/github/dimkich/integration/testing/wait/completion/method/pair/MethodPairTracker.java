@@ -6,6 +6,7 @@ import lombok.Getter;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -132,7 +133,7 @@ public class MethodPairTracker {
      *
      * <p>Invoked by {@link MethodPairExitAdvice}. If the total number of active tasks
      * across all pairs drops to zero, it notifies any threads blocked in
-     * {@link #awaitAndCheckActivity()}.</p>
+     * {@link #awaitAndCheckActivity(long)}.</p>
      *
      * @param pointcutId the unique ID for pointcut settings and counter lookup.
      * @param obj        the target object instance.
@@ -166,13 +167,22 @@ public class MethodPairTracker {
      * then atomically takes the activity accumulated since {@link #reset()} or the previous
      * call.
      *
+     * @param timeoutMs maximum time to wait, in milliseconds
      * @return {@code true} if at least one paired chain was started during the window
      * @throws InterruptedException if the thread is interrupted while waiting.
+     * @throws IllegalStateException if pairs do not balance within the given timeout.
      */
-    public static boolean awaitAndCheckActivity() throws InterruptedException {
+    public static boolean awaitAndCheckActivity(long timeoutMs) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         synchronized (lock) {
             while (getActiveTasks() > 0) {
-                lock.wait();
+                long remainingNanos = deadline - System.nanoTime();
+                if (remainingNanos <= 0) {
+                    throw new IllegalStateException("Timed out waiting for method pairs after " + timeoutMs
+                            + " ms, " + getActiveTasks() + " active task(s). Check that start/end pointcuts "
+                            + "and their when conditions are balanced");
+                }
+                lock.wait(Math.max(1L, TimeUnit.NANOSECONDS.toMillis(remainingNanos)));
             }
             boolean activity = anyActivity;
             anyActivity = false;

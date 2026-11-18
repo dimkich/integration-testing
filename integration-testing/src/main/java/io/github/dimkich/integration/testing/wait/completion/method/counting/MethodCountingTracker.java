@@ -4,6 +4,7 @@ import io.github.dimkich.integration.testing.expression.PointcutRegistry;
 import lombok.Getter;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,7 +53,7 @@ public class MethodCountingTracker {
 
     /**
      * Flag indicating whether any tracked activity has been observed since the last
-     * {@link #reset()} or {@link #awaitAndCheckActivity()} call.
+     * {@link #reset()} or {@link #awaitAndCheckActivity(long)} call.
      */
     @Getter
     private static volatile boolean anyActivity;
@@ -64,7 +65,7 @@ public class MethodCountingTracker {
      * <p>The in-flight counter is deliberately kept. A task that started before this call
      * (for example, a message handler triggered by initialization) must still be awaited by
      * the current window. Zeroing the counter would make its later {@link #endTask} decrement
-     * below zero, after which {@link #awaitAndCheckActivity()} would never block again.
+     * below zero, after which {@link #awaitAndCheckActivity(long)} would never block again.
      * Keeping the counter makes the wait engage until such a task finishes, and the
      * {@code true} flag forces one extra stabilization step to re-check the system after
      * it is done.</p>
@@ -88,7 +89,7 @@ public class MethodCountingTracker {
      * <p>Called by {@link MethodCountingAdvice#enter}. It retrieves the pointcut
      * settings and evaluates the dynamic 'when' condition. If the condition is met,
      * the counter is incremented and the activity flag is set to {@code true} under
-     * the monitor, so a concurrent {@link #awaitAndCheckActivity()} cannot miss it.</p>
+     * the monitor, so a concurrent {@link #awaitAndCheckActivity(long)} cannot miss it.</p>
      *
      * @param pointcutId the unique ID used to fetch settings from the {@link PointcutRegistry}.
      * @param obj        the target object of the intercepted method.
@@ -138,13 +139,22 @@ public class MethodCountingTracker {
      * <p>The wait and the flag reset are performed under the same monitor that guards task
      * registration, so no event can slip between the quiescence check and the reset.</p>
      *
+     * @param timeoutMs maximum time to wait, in milliseconds
      * @return {@code true} if at least one tracked method was invoked during the window
      * @throws InterruptedException if the thread is interrupted while waiting.
+     * @throws IllegalStateException if methods do not finish within the given timeout.
      */
-    public static boolean awaitAndCheckActivity() throws InterruptedException {
+    public static boolean awaitAndCheckActivity(long timeoutMs) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         synchronized (lock) {
             while (activeTasks.get() > 0) {
-                lock.wait();
+                long remainingNanos = deadline - System.nanoTime();
+                if (remainingNanos <= 0) {
+                    throw new IllegalStateException("Timed out waiting for method calls after " + timeoutMs
+                            + " ms, " + activeTasks.get() + " active task(s). Check that every tracked "
+                            + "method exits and that its when condition is balanced");
+                }
+                lock.wait(Math.max(1L, TimeUnit.NANOSECONDS.toMillis(remainingNanos)));
             }
             boolean activity = anyActivity;
             anyActivity = false;

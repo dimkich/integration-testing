@@ -7,8 +7,11 @@ import io.github.dimkich.integration.testing.expression.PointcutSettings;
 import io.github.dimkich.integration.testing.instrumentation.InstrumentationPlugin;
 import io.github.dimkich.integration.testing.wait.completion.MethodCountingAwait;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletion;
+import io.github.dimkich.integration.testing.wait.completion.WaitCompletionProperties;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
 
@@ -38,7 +41,19 @@ import static org.springframework.core.annotation.AnnotatedElementUtils.findMerg
  * @see MethodCountingTracker
  * @see MethodCountingAdvice
  */
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class MethodCountingWaitCompletion implements WaitCompletion, InstrumentationPlugin {
+
+    private final WaitCompletionProperties properties;
+
+    /**
+     * Creates the ServiceLoader plugin instance. It only configures instrumentation;
+     * the wait methods run on the Spring bean, which receives the settings through
+     * the constructor with {@link WaitCompletionProperties}.
+     */
+    public MethodCountingWaitCompletion() {
+        this(null);
+    }
 
     @Override
     public boolean isApplicable(Class<?> testClass) {
@@ -78,6 +93,6 @@ public class MethodCountingWaitCompletion implements WaitCompletion, Instrumenta
     @Override
     @SneakyThrows
     public boolean awaitAndCheckActivity() {
-        return MethodCountingTracker.awaitAndCheckActivity();
+        return MethodCountingTracker.awaitAndCheckActivity(properties.getTimeoutMs());
     }
 }

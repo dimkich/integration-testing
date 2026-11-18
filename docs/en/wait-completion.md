@@ -78,7 +78,7 @@ response is processed in another.
 * `endPointcut` / `endWhen` — the completion of the task.
 
 `startWhen` and `endWhen` must be consistent: if start is counted but end is not, the counter
-stays positive and the wait never completes.
+stays positive and the test fails with a timeout that reports the number of unfinished tasks.
 
 ### `@QueueLikeAwait`
 
@@ -135,6 +135,29 @@ Things to keep in mind:
 
 The annotation is repeatable: different event types may be handled by different methods,
 including on different connections.
+
+## Wait timeout
+
+`@MethodPairAwait`, `@MethodCountingAwait` and `@QueueLikeAwait` never wait forever. A single limit
+applies to all strategies, and the countdown restarts on every stabilization step:
+
+```yaml
+integration:
+  testing:
+    wait-completion:
+      timeout-ms: 5000
+```
+
+The default is `5000` ms. In `@SpringBootTest` the value can be overridden:
+`@SpringBootTest(properties = "integration.testing.wait-completion.timeout-ms=10000")`.
+
+If the work does not finish in time, the test fails with an `IllegalStateException` that reports the
+number of active tasks and a hint about what to check. For `@MethodPairAwait` this is usually an
+inconsistent `startWhen`/`endWhen` pair, for `@MethodCountingAwait` — a method that never exits, and
+for `@QueueLikeAwait` — a queue that never drains.
+
+`@FutureLikeAwait` and `@RedisKeyspaceEventsAwait` are not controlled by this property: Redis has
+its own `timeoutMs` in the annotation.
 
 ## How it works
 

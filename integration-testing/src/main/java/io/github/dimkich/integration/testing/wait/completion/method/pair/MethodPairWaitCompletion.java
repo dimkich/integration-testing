@@ -6,8 +6,11 @@ import io.github.dimkich.integration.testing.expression.PointcutRegistry;
 import io.github.dimkich.integration.testing.instrumentation.InstrumentationPlugin;
 import io.github.dimkich.integration.testing.wait.completion.MethodPairAwait;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletion;
+import io.github.dimkich.integration.testing.wait.completion.WaitCompletionProperties;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
 
@@ -38,7 +41,19 @@ import static org.springframework.core.annotation.AnnotatedElementUtils.findMerg
  * @see MethodPairEnterAdvice
  * @see MethodPairExitAdvice
  */
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class MethodPairWaitCompletion implements WaitCompletion, InstrumentationPlugin {
+
+    private final WaitCompletionProperties properties;
+
+    /**
+     * Creates the ServiceLoader plugin instance. It only configures instrumentation;
+     * the wait methods run on the Spring bean, which receives the settings through
+     * the constructor with {@link WaitCompletionProperties}.
+     */
+    public MethodPairWaitCompletion() {
+        this(null);
+    }
 
     @Override
     public boolean isApplicable(Class<?> testClass) {
@@ -89,6 +104,6 @@ public class MethodPairWaitCompletion implements WaitCompletion, Instrumentation
     @Override
     @SneakyThrows
     public boolean awaitAndCheckActivity() {
-        return MethodPairTracker.awaitAndCheckActivity();
+        return MethodPairTracker.awaitAndCheckActivity(properties.getTimeoutMs());
     }
 }

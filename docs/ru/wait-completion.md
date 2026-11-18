@@ -78,7 +78,7 @@ when     = "o.isSameClass(com.app.CriticalProcessor.class)"
 * `endPointcut` / `endWhen` — завершение задачи.
 
 Условия `startWhen` и `endWhen` должны быть согласованы: если start учтён, а end — нет, счётчик
-останется положительным и ожидание не завершится.
+останется положительным и тест упадёт по таймауту с числом незавершённых задач.
 
 ### `@QueueLikeAwait`
 
@@ -134,6 +134,29 @@ when     = "o.isSameClass(com.app.CriticalProcessor.class)"
 
 Аннотация повторяемая: разные типы событий могут обрабатываться разными методами, в том числе
 на разных соединениях.
+
+## Таймаут ожидания
+
+`@MethodPairAwait`, `@MethodCountingAwait` и `@QueueLikeAwait` не ждут бесконечно. Один предел
+задан для всех стратегий, отсчёт начинается заново на каждом шаге стабилизации:
+
+```yaml
+integration:
+  testing:
+    wait-completion:
+      timeout-ms: 5000
+```
+
+По умолчанию `5000` мс. В `@SpringBootTest` значение можно переопределить:
+`@SpringBootTest(properties = "integration.testing.wait-completion.timeout-ms=10000")`.
+
+Если работа не укладывается в таймаут, тест падает с `IllegalStateException`: в сообщении указано
+число активных задач и подсказка, что проверять. Для `@MethodPairAwait` это обычно несогласованные
+`startWhen` и `endWhen`, для `@MethodCountingAwait` — метод, который не завершился, для
+`@QueueLikeAwait` — очередь, которая не опустела.
+
+`@FutureLikeAwait` и `@RedisKeyspaceEventsAwait` этим свойством не управляются: у Redis есть свой
+`timeoutMs` в аннотации.
 
 ## Как это работает
 

@@ -7,11 +7,15 @@ import io.github.dimkich.integration.testing.expression.PointcutSettings;
 import io.github.dimkich.integration.testing.instrumentation.InstrumentationPlugin;
 import io.github.dimkich.integration.testing.wait.completion.QueueLikeAwait;
 import io.github.dimkich.integration.testing.wait.completion.WaitCompletion;
+import io.github.dimkich.integration.testing.wait.completion.WaitCompletionProperties;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.core.annotation.AnnotatedElementUtils.findMergedRepeatableAnnotations;
 
@@ -39,7 +43,19 @@ import static org.springframework.core.annotation.AnnotatedElementUtils.findMerg
  * @see QueueLikeAdvice
  */
 @Slf4j
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class QueueLikeWaitCompletion implements WaitCompletion, InstrumentationPlugin {
+
+    private final WaitCompletionProperties properties;
+
+    /**
+     * Creates the ServiceLoader plugin instance. It only configures instrumentation;
+     * the wait methods run on the Spring bean, which receives the settings through
+     * the constructor with {@link WaitCompletionProperties}.
+     */
+    public QueueLikeWaitCompletion() {
+        this(null);
+    }
 
     @Override
     public boolean isApplicable(Class<?> testClass) {
@@ -87,12 +103,21 @@ public class QueueLikeWaitCompletion implements WaitCompletion, InstrumentationP
      * maintaining high responsiveness to task completion.</p>
      *
      * @return {@code true} if a service was registered or a non-empty queue was observed
+     * @throws IllegalStateException if queues do not drain within the given timeout
      */
     @Override
     @SneakyThrows
     @SuppressWarnings("BusyWait")
     public boolean awaitAndCheckActivity() {
-        while (QueueLikeTracker.getCount(true) > 0) {
+        long timeoutMs = properties.getTimeoutMs();
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
+        int count;
+        while ((count = QueueLikeTracker.getCount(true)) > 0) {
+            long remainingNanos = deadline - System.nanoTime();
+            if (remainingNanos <= 0) {
+                throw new IllegalStateException("Timed out waiting for queue-like tasks to drain after "
+                        + timeoutMs + " ms, " + count + " pending task(s)");
+            }
             Thread.sleep(1);
         }
         boolean activity = QueueLikeTracker.takeActivity();
