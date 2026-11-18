@@ -353,13 +353,11 @@ xml
             <value type="BigDecimal">100.00</value>  
         </args>  
         <!-- Expected result -->  
-        <result>  
-            <return type="PaymentResult">  
-                <status>SUCCESS</status>  
-            </return>  
+        <result type="PaymentResult">  
+            <status>SUCCESS</status>  
         </result>  
         <!-- Or expected exception -->  
-        <!-- <result><throw type="PaymentException">Error</throw></result> -->  
+        <!-- <result type="PaymentException">Error</result> -->  
     </stubCall>
     
     <response type="Order">  
@@ -380,15 +378,9 @@ xml
 <test type="Container">  
     <!-- Common stubs for all tests in this container -->
     <stubCall name="IdGenerator" method="generate">
-        <result>  
-            <return type="String">ID-001</return>  
-        </result>  
-        <result>  
-            <return type="String">ID-002</return>  
-        </result>  
-        <result>  
-            <return type="String">ID-003</return>  
-        </result>  
+        <result>ID-001</result>  
+        <result>ID-002</result>  
+        <result>ID-003</result>  
     </stubCall>
     
     <test type="Case" name="test1">  
@@ -429,10 +421,8 @@ was recorded after a real method invocation.
 
 | Element    | Description                                 |
 |------------|---------------------------------------------|
-| `<args>`   | Expected call arguments (list of `<value>`) |
-| `<result>` | Expected result: `<return>` or `<throw>`    |
-| `<return>` | Value to return from the stubbed method     |
-| `<throw>`  | Exception to throw from the stubbed method  |
+| `<args>`   | Expected call arguments (list of `<value>`)            |
+| `<result>` | Expected result: `Throwable` is thrown, others returned |
 
 ### Result Sequence
 
@@ -441,9 +431,9 @@ If multiple `<result>` are specified, they are returned in sequence:
 ```
 xml  
 <stubCall name="counter" method="next">
-    <result><return type="Integer">1</return></result>  
-    <result><return type="Integer">2</return></result>  
-    <result><return type="Integer">3</return></result>  
+    <result type="Integer">1</result>  
+    <result type="Integer">2</result>  
+    <result type="Integer">3</result>  
 </stubCall>
 
 ```

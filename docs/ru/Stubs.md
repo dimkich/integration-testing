@@ -353,10 +353,8 @@ xml
             <value type="BigDecimal">100.00</value>  
         </args>  
         <!-- Ожидаемый результат -->  
-        <result>  
-            <return type="PaymentResult">  
-                <status>SUCCESS</status>  
-            </return>  
+        <result type="PaymentResult">  
+            <status>SUCCESS</status>  
         </result>  
     </stubCall>
     
@@ -378,15 +376,9 @@ xml
 <test type="Container">  
     <!-- Общие стабы для всех тестов в этом контейнере -->
     <stubCall name="IdGenerator" method="generate">
-        <result>  
-            <return type="String">ID-001</return>  
-        </result>  
-        <result>  
-            <return type="String">ID-002</return>  
-        </result>  
-        <result>  
-            <return type="String">ID-003</return>  
-        </result>  
+        <result>ID-001</result>  
+        <result>ID-002</result>  
+        <result>ID-003</result>  
     </stubCall>
     
     <test type="Case" name="тест1">  
@@ -428,10 +420,8 @@ xml
 
 | Элемент    | Описание                                        |
 |------------|-------------------------------------------------|
-| `<args>`   | Ожидаемые аргументы вызова (список `<value>`)   |
-| `<result>` | Ожидаемый результат: `<return>` или `<throw>`   |
-| `<return>` | Значение для возврата из стабированного метода  |
-| `<throw>`  | Исключение для выброса из стабированного метода |
+| `<args>`   | Ожидаемые аргументы вызова (список `<value>`)                      |
+| `<result>` | Ожидаемый результат: `Throwable` бросается, остальные возвращаются |
 
 ### Последовательность результатов
 
@@ -440,9 +430,9 @@ xml
 ```
 xml  
 <stubCall name="counter" method="next">
-    <result><return type="Integer">1</return></result>  
-    <result><return type="Integer">2</return></result>  
-    <result><return type="Integer">3</return></result>  
+    <result type="Integer">1</result>  
+    <result type="Integer">2</result>  
+    <result type="Integer">3</result>  
 </stubCall>
 
 ```

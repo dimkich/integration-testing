@@ -4,22 +4,14 @@
     <test type="Container" name="stubCall">
         <stubCall name="converter" method="convertToString">
             <arg type="Integer">1</arg>
-            <result>
-                <return>1</return>
+            <result>1</result>
+            <result>2</result>
+            <result type="HttpClientErrorException.BadRequest">
+                <statusCode>BAD_REQUEST</statusCode>
+                <rawStatusCode>400</rawStatusCode>
+                <message>Not supported yet.</message>
             </result>
-            <result>
-                <return>2</return>
-            </result>
-            <result>
-                <throw type="HttpClientErrorException.BadRequest">
-                    <statusCode>BAD_REQUEST</statusCode>
-                    <rawStatusCode>400</rawStatusCode>
-                    <message>Not supported yet.</message>
-                </throw>
-            </result>
-            <result>
-                <return>4</return>
-            </result>
+            <result>4</result>
         </stubCall>
         <test type="Case" name="1">
             <bean>converter</bean>
@@ -59,63 +51,47 @@
     <test type="Container" name="argument equality">
         <stubCall name="converter" method="charge">
             <arg type="BigDecimal">0.2</arg>
-            <result>
-                <return>wrong</return>
-            </result>
+            <result>wrong</result>
         </stubCall>
         <stubCall name="converter" method="charge">
             <arg type="BigDecimal">0.1</arg>
-            <result>
-                <return>right</return>
-            </result>
+            <result>right</result>
         </stubCall>
         <stubCall name="converter" method="amount">
             <arg type="Amount">
                 <value>0.2</value>
             </arg>
-            <result>
-                <return>wrong</return>
-            </result>
+            <result>wrong</result>
         </stubCall>
         <stubCall name="converter" method="amount">
             <arg type="Amount">
                 <value>0.1</value>
             </arg>
-            <result>
-                <return>right</return>
-            </result>
+            <result>right</result>
         </stubCall>
         <stubCall name="converter" method="sorted">
             <arg type="SortedBook">
                 <bid key="0.2">12.3</bid>
             </arg>
-            <result>
-                <return>wrong</return>
-            </result>
+            <result>wrong</result>
         </stubCall>
         <stubCall name="converter" method="sorted">
             <arg type="SortedBook">
                 <bid key="0.1">12.3</bid>
             </arg>
-            <result>
-                <return>right</return>
-            </result>
+            <result>right</result>
         </stubCall>
         <stubCall name="converter" method="unordered">
             <arg type="UnorderedBook">
                 <entry key="0.1">other</entry>
             </arg>
-            <result>
-                <return>wrong</return>
-            </result>
+            <result>wrong</result>
         </stubCall>
         <stubCall name="converter" method="unordered">
             <arg type="UnorderedBook">
                 <entry key="0.1">first</entry>
             </arg>
-            <result>
-                <return>right</return>
-            </result>
+            <result>right</result>
         </stubCall>
         <test type="Case" name="bigDecimal scalar">
             <bean>converter</bean>

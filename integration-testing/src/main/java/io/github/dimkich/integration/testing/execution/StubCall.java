@@ -12,8 +12,9 @@ import java.util.List;
 /**
  * Describes a single stubbed call configuration.
  * <p>
- * The instance holds a method name, arguments and a sequence of {@link StubCallResult}
- * objects that should be returned or thrown on subsequent invocations. Argument matching
+ * The instance holds a method name, arguments and a sequence of values that should
+ * be returned or thrown on subsequent invocations. A {@link Throwable} value is thrown,
+ * any other value is returned. Argument matching
  * is performed by {@link io.github.dimkich.integration.testing.comparison.ObjectComparisonService}.
  */
 @Data
@@ -40,10 +41,11 @@ public class StubCall {
      */
     private List<Object> arg;
     /**
-     * Sequence of results/exceptions that will be produced by this stub.
+     * Sequence of values that will be produced by this stub. A {@link Throwable}
+     * value is thrown, any other value is returned.
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private List<StubCallResult> result;
+    private List<Object> result;
     @JsonIgnore
     private int resultIndex = 0;
     /**
@@ -65,7 +67,7 @@ public class StubCall {
         if (this.result == null) {
             this.result = new ArrayList<>();
         }
-        this.result.add(new StubCallResult(result));
+        this.result.add(result);
     }
 
     /**
@@ -77,12 +79,12 @@ public class StubCall {
         if (this.result == null) {
             this.result = new ArrayList<>();
         }
-        this.result.add(new StubCallResult(e));
+        this.result.add(e);
     }
 
     /**
      * Resets the internal result index so that subsequent invocations start
-     * from the first configured {@link StubCallResult}.
+     * from the first configured result.
      */
     @JsonIgnore
     public void reset() {
@@ -101,26 +103,26 @@ public class StubCall {
         if (this.result == null) {
             return null;
         }
-        StubCallResult r = result.get(resultIndex % result.size());
+        Object r = result.get(resultIndex % result.size());
         resultIndex++;
-        return r.getReturn1();
+        return r;
     }
 
     /**
-     * If the current {@link StubCallResult} contains an exception, advances
-     * the internal index and throws that exception.
+     * If the current result is a {@link Throwable}, advances the internal index
+     * and throws it.
      *
-     * @throws Throwable when the current result is configured with an exception
+     * @throws Throwable when the current result is a throwable
      */
     @JsonIgnore
     public void tryThrowException() throws Throwable {
         if (this.result == null) {
             return;
         }
-        StubCallResult r = result.get(resultIndex % result.size());
-        if (r.getThrow1() != null) {
+        Object r = result.get(resultIndex % result.size());
+        if (r instanceof Throwable e) {
             resultIndex++;
-            throw r.getThrow1();
+            throw e;
         }
     }
 }
